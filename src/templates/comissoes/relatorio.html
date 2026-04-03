@@ -1,0 +1,165 @@
+{% extends "layout.html" %}
+
+{% block title %}Relatório de Comissões{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h3">
+                <i class="fas fa-chart-bar"></i> Relatório de Comissões por Vendedor
+            </h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('comissoes.listar') }}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">Data Início</label>
+                    <input type="date" class="form-control" name="data_inicio" value="{{ data_inicio }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data Fim</label>
+                    <input type="date" class="form-control" name="data_fim" value="{{ data_fim }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Vendedor</label>
+                    <select class="form-select" name="vendedor_id">
+                        <option value="">Todos</option>
+                        {% for vendedor in vendedores %}
+                        <option value="{{ vendedor.id }}" {% if vendedor.id == vendedor_id %}selected{% endif %}>
+                            {{ vendedor.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Cliente</label>
+                    <select class="form-select" name="cliente_id">
+                        <option value="">Todos</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}" {% if cliente.id == cliente_id %}selected{% endif %}>
+                            {{ cliente.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Totais Gerais -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total de Notas</h6>
+                    <h3>R$ {{ total_geral.total_notas | brl }}</h3>
+                    <small class="text-muted">{{ total_geral.quantidade_lancamentos }} lançamentos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total Repasse</h6>
+                    <h3>R$ {{ total_geral.total_repasse | brl }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total Líquido</h6>
+                    <h3>R$ {{ total_geral.total_liquido | brl }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Comissões</h6>
+                    <h3>R$ {{ total_geral.total_comissoes | brl }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatório por Vendedor -->
+    {% for resumo in resumo_vendedores %}
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="fas fa-user-tie"></i> {{ resumo.vendedor.nome }}
+            </h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data Pagamento</th>
+                        <th>Cliente</th>
+                        <th class="text-end">Valor Nota</th>
+                        <th class="text-end">Imposto</th>
+                        <th class="text-end">Outros Custos</th>
+                        <th class="text-end">Repasse</th>
+                        <th class="text-end">Valor Líquido</th>
+                        <th class="text-end">Alíquota</th>
+                        <th class="text-end">Comissão</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comissao in resumo.comissoes %}
+                    <tr>
+                        <td>{{ comissao.dt_pagamento_recebimento.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% set cliente = clientes | selectattr('id', 'equalto', comissao.entidade_cliente_id) | first %}
+                            {{ cliente.nome if cliente else '' }}
+                        </td>
+                        <td class="text-end">R$ {{ comissao.vl_nota | brl }}</td>
+                        <td class="text-end">R$ {{ comissao.vl_imposto | brl }}</td>
+                        <td class="text-end">R$ {{ comissao.vl_outros_custos | brl }}</td>
+                        <td class="text-end">R$ {{ comissao.vl_repasse | brl }}</td>
+                        <td class="text-end">R$ {{ comissao.vl_liquido | brl }}</td>
+                        <td class="text-end">{{ comissao.aliquota_aplicada | round(2) }}%</td>
+                        <td class="text-end fw-bold text-success">R$ {{ comissao.vl_comissao | brl }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <td colspan="2" class="text-end">Subtotal:</td>
+                        <td class="text-end">R$ {{ resumo.total_notas | brl }}</td>
+                        <td colspan="1"></td>
+                        <td class="text-end">R$ {{ resumo.total_repasse | brl }}</td>
+                        <td class="text-end">R$ {{ resumo.total_liquido | brl }}</td>
+                        <td colspan="1"></td>
+                        <td class="text-end"></td>
+                        <td class="text-end bg-success bg-opacity-25">R$ {{ resumo.total_comissoes | brl }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if not resumo_vendedores %}
+    <div class="alert alert-info" role="alert">
+        <i class="fas fa-info-circle"></i>
+        Nenhuma comissão encontrada no período informado.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

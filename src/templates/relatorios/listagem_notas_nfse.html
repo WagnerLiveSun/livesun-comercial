@@ -1,0 +1,181 @@
+{% extends 'layout.html' %}
+{% block content %}
+<style>
+  .rel-lanc-title {
+    color: #f8fafc;
+  }
+  .rel-lanc-subtitle,
+  .rel-lanc-meta {
+    color: #e2e8f0;
+  }
+  .rel-lanc-filter-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+  }
+  .rel-lanc-filter-card .form-label {
+    color: #0f172a;
+    font-weight: 600;
+  }
+  .rel-lanc-filter-card .form-control,
+  .rel-lanc-filter-card .form-select {
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+  #tabela-relatorio-nfse thead th {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+    border-bottom: 2px solid #94a3b8;
+    font-size: 0.86rem;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  #tabela-relatorio-nfse tbody td {
+    color: #0f172a;
+    border-color: #e2e8f0;
+    background: #ffffff;
+    font-size: 0.84rem;
+    line-height: 1.2;
+  }
+  #tabela-relatorio-nfse {
+    font-size: 0.85rem;
+    table-layout: fixed;
+    width: 100%;
+    min-width: 1400px;
+  }
+  #tabela-relatorio-nfse th, #tabela-relatorio-nfse td {
+    vertical-align: middle;
+    padding: 0.45rem 0.4rem;
+  }
+  #tabela-relatorio-nfse td.col-desc {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .rel-lanc-hint {
+    color: #e2e8f0;
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h2 class="mb-0 rel-lanc-title">Relatório de Listagem de Notas Emitidas (NFSe)</h2>
+      <small class="rel-lanc-subtitle">Empresa: {{ empresa_nome }} {% if empresa_cnpj and empresa_cnpj != '-' %}| CNPJ: {{ empresa_cnpj }}{% endif %}</small>
+    </div>
+    <small class="rel-lanc-meta">Gerado em {{ gerado_em }}</small>
+  </div>
+
+  <form method="get" class="card card-body mb-3 rel-lanc-filter-card">
+    <div class="row g-2">
+      <div class="col-md-3">
+        <label class="form-label">Cliente</label>
+        <input type="text" name="nome_cliente" class="form-control" value="{{ nome_cliente }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Emissão de</label>
+        <input type="date" name="data_emissao_de" class="form-control" value="{{ data_emissao_de }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Emissão até</label>
+        <input type="date" name="data_emissao_ate" class="form-control" value="{{ data_emissao_ate }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Vencimento de</label>
+        <input type="date" name="data_venc_de" class="form-control" value="{{ data_venc_de }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Vencimento até</label>
+        <input type="date" name="data_venc_ate" class="form-control" value="{{ data_venc_ate }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select">
+          <option value="">Todos</option>
+          <option value="pago" {% if status=='pago' %}selected{% endif %}>Pago</option>
+          <option value="vencido" {% if status=='vencido' %}selected{% endif %}>Vencido</option>
+          <option value="aberto" {% if status=='aberto' %}selected{% endif %}>Em aberto</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        <a href="{{ url_for('relatorios.listagem_notas_nfse') }}" class="btn btn-outline-secondary">Limpar</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="mb-3">
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        Exportar
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{{ url_for('relatorios.export_listagem_notas_nfse', formato='xlsx', nome_cliente=nome_cliente, data_emissao_de=data_emissao_de, data_emissao_ate=data_emissao_ate, data_venc_de=data_venc_de, data_venc_ate=data_venc_ate, status=status) }}">Excel (XLSX)</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('relatorios.export_listagem_notas_nfse', formato='pdf', nome_cliente=nome_cliente, data_emissao_de=data_emissao_de, data_emissao_ate=data_emissao_ate, data_venc_de=data_venc_de, data_venc_ate=data_venc_ate, status=status) }}">PDF</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-3">
+      <div class="rounded p-2 rel-lanc-total-card">
+        <small class="d-block rel-lanc-total-label">Total Valor Bruto</small>
+        <strong class="rel-lanc-total-value">R$ {{ total_valor_bruto|default(0)|float|round(2)|string|replace('.', ',') }}</strong>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="rounded p-2 rel-lanc-total-card">
+        <small class="d-block rel-lanc-total-label">Total Impostos</small>
+        <strong class="rel-lanc-total-value">R$ {{ total_valor_impostos|default(0)|float|round(2)|string|replace('.', ',') }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-responsive bg-white rounded border">
+    <table class="table table-sm table-hover mb-0 align-middle" id="tabela-relatorio-nfse">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Empresa ID</th>
+          <th>Nº Nota</th>
+          <th>Data Emissão</th>
+          <th>CNPJ Tomador</th>
+          <th>Cliente</th>
+          <th class="text-end">Valor Bruto</th>
+          <th class="text-end">Alíquota ISS</th>
+          <th class="text-end">Valor Impostos</th>
+          <th>Status</th>
+          <th>Vencimento</th>
+          <th>Pagamento</th>
+          <th class="col-desc">Descrição Serviço</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for n in notas %}
+        <tr>
+          <td>{{ n.id }}</td>
+          <td>{{ n.empresa_id }}</td>
+          <td>{{ n.numero_nota }}</td>
+          <td>{{ n.data_emissao.strftime('%d/%m/%Y') if n.data_emissao }}</td>
+          <td>{{ n.cnpj_tomador }}</td>
+          <td>{{ n.entidade.nome if n.entidade }}</td>
+          <td class="text-end">{{ '%.2f'|format(n.valor_bruto or 0) }}</td>
+          <td class="text-end">{{ '%.2f'|format(n.aliquota_iss or 0) }}</td>
+          <td class="text-end">{{ '%.2f'|format(get_valor_imposto(n)) }}</td>
+          <td>{{ n.lancamento.status if n.lancamento }}</td>
+          <td>{{ n.lancamento.data_vencimento.strftime('%d/%m/%Y') if n.lancamento and n.lancamento.data_vencimento }}</td>
+          <td>{{ n.lancamento.data_pagamento.strftime('%d/%m/%Y') if n.lancamento and n.lancamento.data_pagamento }}</td>
+          <td class="col-desc" title="{{ n.descricao_servico|e }}">{{ n.descricao_servico[:80] ~ ('...' if n.descricao_servico and n.descricao_servico|length > 80 else '') }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="13" class="text-center py-4 rel-lanc-empty">Nenhuma nota encontrada para os filtros informados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <small class="d-block mt-2 rel-lanc-hint">Dica: passe o mouse sobre a descrição para ver o texto completo.</small>
+</div>
+{% endblock %}

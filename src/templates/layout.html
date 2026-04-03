@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveSun Controller - {% block title %}{% endblock %}</title>
+
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3079088931491086"
+        crossorigin="anonymous"></script>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+
+    <style>
+        :root {
+            --ls-bg-main: #020617;
+            --ls-bg-elevated: #020617;
+            --ls-border-subtle: rgba(148, 163, 184, 0.25);
+            --ls-text-main: #e5e7eb;
+            --ls-text-muted: #9ca3af;
+            --ls-primary: #2563eb;
+            --ls-primary-soft: rgba(37, 99, 235, 0.2);
+            --ls-accent: #22c55e;
+        }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(circle at top, rgba(52, 211, 153, 0.16), transparent 55%),
+                radial-gradient(circle at bottom, rgba(59, 130, 246, 0.18), transparent 60%),
+                var(--ls-bg-main);
+            color: var(--ls-text-main);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .text-muted {
+            color: #cbd5e1 !important;
+        }
+
+        .ls-shell {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        .ls-topbar {
+            border-bottom: 1px solid var(--ls-border-subtle);
+            background-color: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(12px);
+            z-index: 1030;
+            padding: 1rem;
+        }
+
+        .ls-topbar .navbar-brand {
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            font-size: 18px;
+            color: #f9fafb;
+        }
+
+        .ls-topbar .nav-link {
+            color: var(--ls-text-muted) !important;
+            font-size: 0.9rem;
+        }
+
+        .ls-topbar .nav-link:hover,
+        .ls-topbar .nav-link.active {
+            color: #f9fafb !important;
+        }
+
+        .ls-layout {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+
+        .ls-sidebar {
+            width: 240px;
+            border-right: 1px solid var(--ls-border-subtle);
+            background-color: rgba(15, 23, 42, 0.98);
+            padding: 16px 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ls-sidebar-section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ls-text-muted);
+            margin: 12px 12px 8px;
+            font-weight: 600;
+        }
+
+        .ls-sidebar-nav {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .ls-sidebar-nav li + li {
+            margin-top: 4px;
+        }
+
+        .ls-sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            color: var(--ls-text-muted);
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+
+        .ls-sidebar-link i {
+            width: 18px;
+            text-align: center;
+        }
+
+        /* Improve icon alignment and menu text consistency */
+        .ls-sidebar-link i {
+            width: 22px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ls-sidebar-link {
+            font-weight: 500;
+            min-height: 36px;
+            padding: 8px 12px;
+            align-items: center;
+        }
+
+        .ls-sidebar-link:hover {
+            background-color: rgba(30, 64, 175, 0.55);
+            color: #f9fafb;
+            transform: translateX(2px);
+        }
+
+        .ls-sidebar-link.active {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(56, 189, 248, 0.9));
+            color: #f9fafb;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.9);
+        }
+
+        .ls-sidebar-footer {
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(55, 65, 81, 0.8);
+            font-size: 11px;
+            color: var(--ls-text-muted);
+            text-align: center;
+        }
+
+        .ls-content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .ls-card {
+            background-color: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+        }
+
+        .ls-card:hover {
+            border-color: rgba(148, 163, 184, 0.5);
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.1);
+        }
+
+        .ls-btn-primary {
+            background: linear-gradient(135deg, var(--ls-primary), rgba(56, 189, 248, 0.9));
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .ls-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(56, 189, 248, 1));
+        }
+
+        .alert {
+            border: none;
+            border-radius: 10px;
+        }
+
+        .alert-success {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .alert-warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #fcd34d;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .alert-info {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .ls-footer {
+            background: rgba(15, 23, 42, 0.98);
+            border-top: 1px solid #334155;
+            padding: 14px 0;
+        }
+
+        @media (max-width: 768px) {
+            .ls-sidebar {
+                display: none;
+            }
+
+            .ls-content {
+                padding: 16px;
+            }
+
+        }
+    </style>
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="ls-shell">
+        <!-- Topbar -->
+        <nav class="navbar navbar-expand-lg ls-topbar">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{{ url_for('dashboard.index') }}">
+                    <i class="fas fa-chart-line" style="color: var(--ls-accent); margin-right: 8px;"></i>
+                    <span>LiveSun Controller</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle"></i> {{ current_user.full_name or current_user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="userDropdown">
+                                {% if current_user.is_admin %}
+                                    <li><a class="dropdown-item" href="{{ safe_url_for('auth.perfil') or '#' }}">Perfil</a></li>
+                                    {% if has_permission('usuarios') %}
+                                        {% set add_user_url = safe_url_for('auth.add_user') %}
+                                        <li><a class="dropdown-item" href="{{ add_user_url or '#' }}">Adicionar Usuário</a></li>
+                                    {% endif %}
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{{ url_for('suporte') }}">Suporte</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Sair</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Layout Container -->
+        <div class="ls-layout">
+            <!-- Sidebar -->
+            <aside class="ls-sidebar">
+                <div class="ls-sidebar-section-label">
+                    <i class="fas fa-home"></i> Menu Principal
+                </div>
+                <ul class="ls-sidebar-nav">
+                    <li>
+                        {% if has_permission('dashboard') %}
+                            <a class="ls-sidebar-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" href="{{ url_for('dashboard.index') }}">
+                                <i class="fas fa-chart-pie"></i> Dashboard
+                            </a>
+                        {% endif %}
+                    </li>
+                    {% if current_user.is_admin %}
+                    {% if has_permission('usuarios') %}
+                        {% set add_user_url = safe_url_for('auth.add_user') %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint == 'auth.add_user' %}active{% endif %}" href="{{ add_user_url or '#' }}">
+                                <i class="fas fa-user-plus"></i> Adicionar Usuário
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if has_permission('controle_acesso') %}
+                        {% set controle_acesso_url = safe_url_for('auth.controle_acesso') %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint == 'auth.controle_acesso' %}active{% endif %}" href="{{ controle_acesso_url or '#' }}">
+                                <i class="fas fa-user-shield"></i> Controle de Acesso
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+
+                <div class="ls-sidebar-section-label">
+                    <i class="fas fa-database"></i> Cadastros
+                </div>
+                <ul class="ls-sidebar-nav">
+                    {% if has_permission('entidades') %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('entidades') %}active{% endif %}" href="{{ url_for('entidades.index') }}">
+                                <i class="fas fa-users"></i> Entidades
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if has_permission('fluxo') %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('fluxo') %}active{% endif %}" href="{{ url_for('fluxo.index') }}">
+                                <i class="fas fa-stream"></i> Fluxo Caixa
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if has_permission('contas_banco') %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('contas_banco') %}active{% endif %}" href="{{ url_for('contas_banco.index') }}">
+                                <i class="fas fa-university"></i> Contas Banco
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+
+                <div class="ls-sidebar-section-label">
+                    <i class="fas fa-exchange-alt"></i> Movimentação
+                </div>
+                <ul class="ls-sidebar-nav">
+                    {% if has_permission('lancamentos') %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('lancamentos') %}active{% endif %}" href="{{ url_for('lancamentos.index') }}">
+                                <i class="fas fa-receipt"></i> Lançamentos
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+
+                <div class="ls-sidebar-section-label">
+                    <i class="fas fa-percent"></i> Comissões
+                </div>
+                <ul class="ls-sidebar-nav">
+                    {% if has_permission('comissoes') %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comissoes') and request.endpoint != 'comissoes.apurar' and request.endpoint != 'comissoes.relatorio' and request.endpoint != 'comissoes.parametros' %}active{% endif %}" href="{{ url_for('comissoes.listar') }}">
+                                <i class="fas fa-list"></i> Comissões
+                            </a>
+                        </li>
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint == 'comissoes.apurar' %}active{% endif %}" href="{{ url_for('comissoes.apurar') }}">
+                                <i class="fas fa-calculator"></i> Apuração
+                            </a>
+                        </li>
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint == 'comissoes.relatorio' %}active{% endif %}" href="{{ url_for('comissoes.relatorio') }}">
+                                <i class="fas fa-chart-line"></i> Listagem de Comissões
+                            </a>
+                        </li>
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint == 'comissoes.parametros' %}active{% endif %}" href="{{ url_for('comissoes.parametros') }}">
+                                <i class="fas fa-sliders-h"></i> Parâmetros
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+
+                <div class="ls-sidebar-section-label">
+                    <i class="fas fa-chart-bar"></i> Relatórios
+                </div>
+                <ul class="ls-sidebar-nav">
+                    {% if has_permission('relatorios') %}
+                        <li>
+                            <a class="ls-sidebar-link" href="{{ url_for('relatorios.fluxo_caixa') }}">
+                                <i class="fas fa-stream"></i> Fluxo Caixa
+                            </a>
+                        </li>
+                        <li>
+                            <a class="ls-sidebar-link" href="{{ url_for('relatorios.fluxo_caixa_csv') }}">
+                                <i class="fas fa-file-excel"></i> Listagem de Fluxo de Caixa
+                            </a>
+                        </li>
+                        <li>
+                            <a class="ls-sidebar-link" href="{{ url_for('relatorios.listagem_lancamentos') }}">
+                                <i class="fas fa-list"></i> Listagem de Lançamentos
+                            </a>
+                        </li>
+                        <li>
+                            <a class="ls-sidebar-link" href="{{ url_for('relatorios.listagem_notas_nfse') }}">
+                                <i class="fas fa-file-invoice"></i> Listagem de Notas NFSe
+                            </a>
+                        </li>
+                    {% endif %}
+                    </ul>
+
+                    <div class="ls-sidebar-section-label">
+                        <i class="fas fa-file-import"></i> Importação
+                    </div>
+                    <ul class="ls-sidebar-nav">
+                        {% if has_permission('importar_nfse') %}
+                            <li>
+                                <a class="ls-sidebar-link {% if request.endpoint == 'importacoes.importar_nfse' %}active{% endif %}" href="{{ url_for('importacoes.importar_nfse') }}">
+                                    <i class="fas fa-file-upload"></i> Importação de XML (NFSe)
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% if has_permission('importar_ofx') %}
+                            <li>
+                                <a class="ls-sidebar-link {% if request.endpoint == 'importacoes.importar_ofx' %}active{% endif %}" href="{{ url_for('importacoes.importar_ofx') }}">
+                                    <i class="fas fa-file-invoice-dollar"></i> Importação OFX
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% if has_permission('conciliacao') %}
+                            <li>
+                                <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('conciliacao.') %}active{% endif %}" href="{{ url_for('conciliacao.index') }}">
+                                    <i class="fas fa-link"></i> Conciliação Bancária
+                                </a>
+                            </li>
+                        {% endif %}
+                </ul>
+
+                <div class="ls-sidebar-footer">
+                    {{ powered_by }}<br>
+                    v1.0.0
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <div class="ls-content">
+                <!-- Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                    <li>
+                        <a class="ls-sidebar-link {% if request.endpoint == 'suporte' %}active{% endif %}" href="{{ url_for('suporte') }}">
+                            <i class="fas fa-headset"></i> Suporte
+                        </a>
+                    </li>
+                </ul>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Page Content -->
+                {% block content %}{% endblock %}
+
+            <!-- Rodapé com AdSense -->
+            <footer class="ls-footer text-muted">
+                <div class="container">
+                    <small class="d-block text-center">&copy; {{ current_year }} LiveSun Controller. Todos os direitos reservados.</small>
+                    <div class="my-3">
+                        <!-- Google AdSense Rodapé -->
+                        <ins class="adsbygoogle"
+                            style="display:block;text-align:center;"
+                            data-ad-client="ca-pub-3079088931491086"
+                            data-ad-slot="1234567890"
+                            data-ad-format="auto"
+                            data-full-width-responsive="true"></ins>
+                        <script>
+                            (adsbygoogle = window.adsbygoogle || []).push({});
+                        </script>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    {% else %}
+        <!-- Not authenticated - render login page -->
+        {% block login %}{% endblock %}
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

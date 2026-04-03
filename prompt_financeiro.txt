@@ -1,0 +1,89 @@
+Quero que você atue como um arquiteto de software sênior e desenvolvedor full-stack em Python.
+Seu objetivo é projetar e implementar um sistema completo com backend em Python e frontends web e mobile, focado na automação das fases de um programa financeiro em Pynthon com interface web moderna e intuitiva, e toda sua estrutura fisica em drive local d:\app_livesun\ 
+Com tela de login sendo o padrão admin com senha admin123, 
+com banco de dados mysql ou sqlacadhemy para lançamento de despesas e receitas co fluxo de caixa previsto e realizado
+Acesso pela permitido rede local
+Acessível para PC, Mobile incluindo tablet reponsível para uso com teclado
+
+Considerando:
+- Cadastros
+	- Entidade
+		Campos:
+			Tipo: C - Cliente  F - Fornecedor  C - Colaborador  V - Vendedor
+			CNPJ/CPF (id)
+			Inscrição estadual
+			Incrição municipal
+			Nome
+			Endereço (Rua, numero bairro, cidade, UF, Cep)
+			Contrato/Produto
+	- Cadastro de fluxo de caixa agrupados por categoria pagamento e recebimento
+		Plano de fluxo respeitando mascara de grau a ser definida em castri de modelo obedecendo os exemplode de regra: 999 ou 9.99, quando houver mascara definir grau de sintético e analitico
+	- Cadastro de fluxo de caixa agrupados por categoria pagamento e recebimento
+		Plano de fluxo respeitando máscara de grau a ser definida em castri de modelo obedecendo os exemplode de regra: 999 ou 9.99, quando hoouver mascara definir grau de sintético e analitico
+	- Cadastro de contas de banco relacionando à conta de fluxo analitica (seleção das contas já cadastradas)
+	- Cadastro de despesas e receitas, codificadas com codigo de fluxo de caixa analitico (seleção das contas já cadastradas)
+	
+- Lançamentos
+	tela de movimentações de receitas e despesas 
+		Deve ser informado:
+			data do evento
+			Data de vencimento
+			Data de pagamento
+			Status (pago, em aberto ou vencido)
+			conta de fluxo
+			cliente ou fornecedor
+			Documento
+			Valor
+			Observações
+			
+- Relatórios
+	- Listagem de contas a pagar
+		Filtros:
+			- Intervalo: data de vencimento ou de pagamento
+			- Periodo de data
+			- Conta de fluxo
+			- Conta de banco
+			- Fornecedor
+		Colunas:
+			- Data de lançamento
+			- Data de vencimento
+			- Data de pagamento (se foi pago)
+			- Fornecedor
+			- Conta de banco
+			- Conta de fluxo
+			- Valor real
+			- Valor pago
+			- Observação
+	- Listagem de contas a receber
+			Filtros:
+				- Intervalo: data de vencimento ou de recebimento
+				- Periodo de data
+				- Conta de fluxo
+				- Conta de banco
+				- cliente
+			Colunas:
+				- Data de lançamento
+				- Data de vencimento
+				- Data de recebimento (se foi recebido)
+				- cliente
+				- Conta de banco
+				- Conta de fluxo
+				- Valor real
+				- Valor recebido
+				- Observação
+	- Listagem de fluxo de caixa
+		- Previsto
+		- Realizado
+			Filtros:
+				- Intervalo de data
+				- Intervalo de conta de fluxo
+			Colunas
+				- Data
+				- Conta de fluxo
+				- Saldo anterior
+				- Valor pago
+				- Valor recebido
+				- Saldo atual (na data final)
+
+Use o mesmo tema e cores do projeto em: D:\App_LiveSun\CoPilot_Git_LivesunAnalyzer
+Logo da LiveSun em D:\Temp\Logos Site\Logo_livesun.png

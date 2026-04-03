@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+
+{% block title %}{% if action == 'editar' %}Editar{% else %}Nova{% endif %} Conta Bancária{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">
+        {% if action == 'editar' %}Editar Conta Bancária{% else %}Nova Conta Bancária{% endif %}
+    </h2>
+    <a href="{{ url_for('contas_banco.index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Empresa (informativo + hidden) -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Empresa (código)</label>
+                <input type="text" class="form-control" value="{{ current_user.empresa_id }}" disabled style="background-color: rgba(30, 41, 59, 0.6); color: #cbd5e1;">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Empresa (nome)</label>
+                <input type="text" class="form-control" value="{{ current_user.empresa.nome if current_user.empresa else '' }}" disabled style="background-color: rgba(30, 41, 59, 0.6); color: #cbd5e1;">
+            </div>
+            <input type="hidden" name="empresa_id" value="{{ current_user.empresa_id }}">
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Nome da Conta *</label>
+                <input type="text" name="nome" class="form-control"
+                    value="{{ conta.nome if conta else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Banco *</label>
+                <input type="text" name="banco" class="form-control"
+                    value="{{ conta.banco if conta else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Agência *</label>
+                <input type="text" name="agencia" class="form-control"
+                    value="{{ conta.agencia if conta else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Número da Conta *</label>
+                <input type="text" name="numero_conta" class="form-control"
+                    value="{{ conta.numero_conta if conta else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">DV</label>
+                <input type="text" name="dv" class="form-control" maxlength="2"
+                    value="{{ conta.dv if conta else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Tipo</label>
+                <input type="text" name="tipo" class="form-control" placeholder="Corrente, Poupança..."
+                    value="{{ conta.tipo if conta else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Conta de Fluxo *</label>
+                <select name="fluxo_conta_id" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <option value="">Selecione...</option>
+                    {% for cf in contas_fluxo %}
+                    <option value="{{ cf.id }}" {% if conta and conta.fluxo_conta_id == cf.id %}selected{% endif %}>
+                        {{ cf.codigo }} - {{ cf.descricao }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Saldo Inicial</label>
+                <input type="number" name="saldo_inicial" class="form-control" step="0.01"
+                    value="{{ conta.saldo_inicial if conta else '0' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ativo" name="ativo"
+                        {% if not conta or conta.ativo %}checked{% endif %}>
+                    <label class="form-check-label" for="ativo">
+                        Conta Ativa
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="is_principal" name="is_principal"
+                        {% if conta and conta.is_principal %}checked{% endif %}>
+                    <label class="form-check-label" for="is_principal">
+                        Conta Principal
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn ls-btn-primary">
+                <i class="fas fa-save"></i> Salvar
+            </button>
+            <a href="{{ url_for('contas_banco.index') }}" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25) !important;
+    }
+
+    .form-check-input {
+        border-color: rgba(148, 163, 184, 0.25);
+    }
+
+    .form-check-input:checked {
+        background-color: #2563eb;
+        border-color: #2563eb;
+    }
+</style>
+{% endblock %}

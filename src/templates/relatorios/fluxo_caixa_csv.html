@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block title %}Listagem de Fluxo de Caixa{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">Listagem de Fluxo de Caixa</h2>
+    <a class="btn btn-outline-success" href="{{ url_for('relatorios.export_fluxo_caixa_csv', data_inicio=data_inicio, data_fim=data_fim) }}">
+        <i class="fas fa-file-excel"></i> Exportar para XLSX
+    </a>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">De</label>
+            <input type="date" name="data_inicio" class="form-control"
+                value="{{ data_inicio }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Até</label>
+            <input type="date" name="data_fim" class="form-control"
+                value="{{ data_fim }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn ls-btn-primary w-100">
+                <i class="fas fa-search"></i> Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+                <tr>
+                    <th>Data</th>
+                    <th>Conta Fluxo</th>
+                    <th>Descrição</th>
+                    <th>Tipo</th>
+                    <th class="text-end">Valor Real (R$)</th>
+                    <th class="text-end">Valor Pago/Recebido (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in dados_csv %}
+                <tr>
+                    <td>{{ row.data|default('-') }}</td>
+                    <td>{{ row.conta_fluxo|default('-') }}</td>
+                    <td>{{ row.descricao|default('-') }}</td>
+                    <td>{{ row.tipo|default('-') }}</td>
+                    {% set vr = row.valor_real or 0 %}
+                    {% set vp = row.valor_pago or 0 %}
+                    <td class="text-end">{{ ('%.2f' % vr)|replace('.', ',') }}</td>
+                    <td class="text-end">{{ ('%.2f' % vp)|replace('.', ',') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                        Nenhum dado encontrado para o período.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    table tbody tr:hover {
+        background-color: rgba(37, 99, 235, 0.1) !important;
+    }
+
+    table tbody td {
+        padding: 12px 8px;
+        border-color: rgba(148, 163, 184, 0.15) !important;
+    }
+</style>
+{% endblock %}

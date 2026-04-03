@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block title %}Conciliações{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold" style="color: #f9fafb;">Conciliações</h1>
+        <p class="text-muted mb-0">Sessões de conciliação bancária do Controller.</p>
+    </div>
+    <a href="{{ url_for('conciliacao.nova') }}" class="btn ls-btn-primary">Nova Conciliação</a>
+</div>
+
+<div class="ls-card p-4">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Período</th>
+                    <th>Conta</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conciliacao in conciliacoes %}
+                <tr>
+                    <td>{{ conciliacao.id }}</td>
+                    <td>{{ conciliacao.periodo_inicio }} a {{ conciliacao.periodo_fim }}</td>
+                    <td>{{ conciliacao.conta_banco.nome if conciliacao.conta_banco else '-' }}</td>
+                    <td>{{ conciliacao.status }}</td>
+                    <td>
+                        <a class="btn btn-outline-info btn-sm" href="{{ url_for('conciliacao.detalhe', conciliacao_id=conciliacao.id) }}">Abrir</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">Nenhuma conciliação criada ainda.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

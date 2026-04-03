@@ -1,0 +1,292 @@
+{% extends "layout.html" %}
+
+{% block title %}Fluxo de Caixa{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">Fluxo de Caixa</h2>
+    <a class="btn btn-outline-info" href="{{ url_for('relatorios.export_fluxo_caixa', data_inicio=data_inicio, data_fim=data_fim, conta_banco_id=conta_banco_id, conta_fluxo_id=conta_fluxo_id) }}">
+        <i class="fas fa-file-excel"></i> Exportar Excel
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="ls-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label">De</label>
+            <input type="date" name="data_inicio" class="form-control"
+                value="{{ data_inicio }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Até</label>
+            <input type="date" name="data_fim" class="form-control"
+                value="{{ data_fim }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Conta Banco</label>
+            <select name="conta_banco_id" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                <option value="">Todas</option>
+                {% for cb in contas_banco %}
+                <option value="{{ cb.id }}" {% if conta_banco_id == cb.id %}selected{% endif %}>{{ cb.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Conta Fluxo</label>
+            <select name="conta_fluxo_id" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                <option value="">Todas</option>
+                {% for cf in contas_fluxo %}
+                <option value="{{ cf.id }}" {% if conta_fluxo_id == cf.id %}selected{% endif %}>{{ cf.codigo }} - {{ cf.descricao }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
+            <button type="submit" class="btn ls-btn-primary w-100">
+                <i class="fas fa-search"></i> Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" id="fluxoTabs" role="tablist" style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="realizado-tab" data-bs-toggle="tab" data-bs-target="#realizado" type="button"
+            style="color: #9ca3af; border-bottom: 2px solid transparent;">
+            <i class="fas fa-check-circle"></i> Fluxo Realizado
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="previsto-tab" data-bs-toggle="tab" data-bs-target="#previsto" type="button"
+            style="color: #9ca3af; border-bottom: 2px solid transparent;">
+            <i class="fas fa-calendar"></i> Fluxo Previsto
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="diario-tab" data-bs-toggle="tab" data-bs-target="#diario" type="button"
+            style="color: #9ca3af; border-bottom: 2px solid transparent;">
+            <i class="fas fa-calendar-day"></i> Resumo Diario
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="fluxoContent">
+    <!-- Fluxo Realizado -->
+    <div class="tab-pane fade show active" id="realizado" role="tabpanel">
+        <div class="ls-card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+                        <tr>
+                            <th>Data</th>
+                            <th>Conta Fluxo</th>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            {# Coluna removida por harmonização #}
+                            <th class="text-end">Saldo Anterior</th>
+                            <th class="text-end" style="color: #ef4444;">Valor Pago</th>
+                            <th class="text-end" style="color: #22c55e;">Valor Recebido</th>
+                            <th class="text-end">Saldo Atual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set linha_atual = 0 %}
+                        {% for item in lancamentos_realizado %}
+                            {% set l = item.lancamento %}
+                            {% set linha_atual = loop.index %}
+                            <tr>
+                                <td>{{ l.data_pagamento.strftime('%d/%m/%Y') if l.data_pagamento else '-' }}</td>
+                                <td>{% if l.fluxo_conta %}{{ l.fluxo_conta.codigo }} - {{ l.fluxo_conta.descricao }}{% else %}N/A{% endif %}</td>
+                                <td>{{ l.observacoes or l.numero_documento or '-' }}</td>
+                                <td>{{ 'Despesa' if l.fluxo_conta and l.fluxo_conta.tipo == 'P' else 'Receita' }}</td>
+                                {# Coluna removida por harmonização #}
+                                <td class="text-end">R$ {{ item.saldo_anterior|brl }}</td>
+                                <td class="text-end" style="color: #ef4444;">
+                                    {% if l.fluxo_conta and l.fluxo_conta.tipo == 'P' %}
+                                        -R$ {{ l.valor_pago|brl }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-end" style="color: #22c55e;">
+                                    {% if l.fluxo_conta and l.fluxo_conta.tipo == 'R' %}
+                                        R$ {{ l.valor_pago|brl }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-end fw-bold">R$ {{ item.saldo_atual|brl }}</td>
+                            </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                Nenhum lançamento realizado
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fluxo Previsto -->
+    <div class="tab-pane fade" id="previsto" role="tabpanel">
+        <div class="ls-card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+                        <tr>
+                            <th>Data Vencimento</th>
+                            <th>Conta Fluxo</th>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Valor Real</th>
+                            <th class="text-end">Saldo Anterior</th>
+                            <th class="text-end" style="color: #ef4444;">Valor a Pagar</th>
+                            <th class="text-end" style="color: #22c55e;">Valor a Receber</th>
+                            <th class="text-end">Saldo Previsto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in lancamentos_previsto %}
+                        {% set l = item.lancamento %}
+                        <tr>
+                            <td>{{ l.data_vencimento.strftime('%d/%m/%Y') }}</td>
+                            <td>{% if l.fluxo_conta %}{{ l.fluxo_conta.codigo }} - {{ l.fluxo_conta.descricao }}{% else %}N/A{% endif %}</td>
+                            <td>{{ l.observacoes or l.numero_documento or '-' }}</td>
+                            <td>{{ 'Despesa' if l.fluxo_conta and l.fluxo_conta.tipo == 'P' else 'Receita' }}</td>
+                            <td class="text-end">R$ {{ l.valor_real|brl }}</td>
+                            <td class="text-end">R$ {{ item.saldo_anterior|brl }}</td>
+                            <td class="text-end" style="color: #ef4444;">
+                                {% if l.fluxo_conta and l.fluxo_conta.tipo == 'P' %}
+                                    -R$ {{ l.valor_real|brl }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-end" style="color: #22c55e;">
+                                {% if l.fluxo_conta and l.fluxo_conta.tipo == 'R' %}
+                                    R$ {{ l.valor_real|brl }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-end fw-bold">R$ {{ item.saldo_atual|brl }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                Nenhum lançamento previsto
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo Diario -->
+    <div class="tab-pane fade" id="diario" role="tabpanel">
+        <div class="ls-card p-4 mb-4">
+            <h5 class="mb-3" style="color: #f9fafb;">Previsto (por vencimento)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+                        <tr>
+                            <th>Data</th>
+                            <th class="text-end">Saldo Anterior</th>
+                            <th class="text-end" style="color: #ef4444;">Pagamentos</th>
+                            <th class="text-end" style="color: #22c55e;">Recebimentos</th>
+                            <th class="text-end">Saldo do Dia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in resumo_diario_previsto %}
+                        <tr>
+                            <td>{{ row.data.strftime('%d/%m/%Y') }}</td>
+                            <td class="text-end">R$ {{ row.saldo_anterior|brl }}</td>
+                            <td class="text-end" style="color: #ef4444;">R$ {{ row.pagamentos|brl }}</td>
+                            <td class="text-end" style="color: #22c55e;">R$ {{ row.recebimentos|brl }}</td>
+                            <td class="text-end fw-bold">R$ {{ row.saldo_atual|brl }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                Nenhum registro previsto
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="ls-card p-4">
+            <h5 class="mb-3" style="color: #f9fafb;">Realizado (por pagamento)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+                        <tr>
+                            <th>Data</th>
+                            <th class="text-end">Saldo Anterior</th>
+                            <th class="text-end" style="color: #ef4444;">Pagamentos</th>
+                            <th class="text-end" style="color: #22c55e;">Recebimentos</th>
+                            <th class="text-end">Saldo do Dia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in resumo_diario_realizado %}
+                        <tr>
+                            <td>{{ row.data.strftime('%d/%m/%Y') }}</td>
+                            <td class="text-end">R$ {{ row.saldo_anterior|brl }}</td>
+                            <td class="text-end" style="color: #ef4444;">R$ {{ row.pagamentos|brl }}</td>
+                            <td class="text-end" style="color: #22c55e;">R$ {{ row.recebimentos|brl }}</td>
+                            <td class="text-end fw-bold">R$ {{ row.saldo_atual|brl }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                Nenhum registro realizado
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-tabs .nav-link.active {
+        color: #e5e7eb !important;
+        border-bottom: 3px solid #2563eb !important;
+        background-color: transparent;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #e5e7eb !important;
+    }
+
+    table tbody tr:hover {
+        background-color: rgba(37, 99, 235, 0.1) !important;
+    }
+
+    table tbody td {
+        padding: 12px 8px;
+        border-color: rgba(148, 163, 184, 0.15) !important;
+    }
+</style>
+{% endblock %}

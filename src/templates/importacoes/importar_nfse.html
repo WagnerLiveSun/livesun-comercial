@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block title %}Importar NFSe{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">
+        <i class="fas fa-file-upload"></i> Importação de Notas de Serviço (NFSe)
+    </h2>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <form method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="col-md-6">
+            <label for="file" class="form-label">Selecione o arquivo XML</label>
+            <input class="form-control" type="file" id="file" name="file" accept=".xml" required>
+        </div>
+        <div class="col-md-3 d-flex align-items-end gap-2">
+            <button type="submit" class="btn ls-btn-primary w-100">
+                <i class="fas fa-upload"></i> Importar
+            </button>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <div class="text-muted small">
+                Apenas arquivos XML individuais são suportados no momento.
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

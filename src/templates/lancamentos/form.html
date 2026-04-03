@@ -1,0 +1,210 @@
+{% extends "layout.html" %}
+
+{% block title %}{% if action == 'editar' %}Editar{% else %}Novo{% endif %} Lançamento{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">
+        {% if action == 'editar' %}Editar Lançamento{% else %}Novo Lançamento{% endif %}
+    </h2>
+    <a href="{{ url_for('lancamentos.index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST" id="form-lancamento">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Empresa (informativo) -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label class="form-label">Empresa (código)</label>
+                <input type="text" class="form-control" value="{{ current_user.empresa_id }}" disabled style="background-color: rgba(30, 41, 59, 0.6); color: #cbd5e1;">
+            </div>
+            <div class="col-md-9">
+                <label class="form-label">Empresa (nome)</label>
+                <input type="text" class="form-control" value="{{ current_user.empresa.nome if current_user.empresa else '' }}" disabled style="background-color: rgba(30, 41, 59, 0.6); color: #cbd5e1;">
+            </div>
+            <input type="hidden" name="empresa_id" value="{{ current_user.empresa_id }}">
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Data do Evento *</label>
+                <input type="date" name="data_evento" class="form-control"
+                    value="{{ lancamento.data_evento if lancamento else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Data de Vencimento *</label>
+                <input type="date" name="data_vencimento" class="form-control"
+                    value="{{ lancamento.data_vencimento if lancamento else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Data de Pagamento</label>
+                <input type="date" name="data_pagamento" class="form-control"
+                    value="{{ lancamento.data_pagamento if lancamento else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-2">
+                <label class="form-label">Entidade (Cliente/Fornecedor) *</label>
+                <select name="entidade_id" id="entidade_id" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); color: #e5e7eb; border-color: rgba(148, 163, 184, 0.25);">
+                    <option value="">Selecione...</option>
+                    {% for ent in entidades %}
+                    <option value="{{ ent.id }}" data-fluxo-conta-id="{{ ent.fluxo_conta_id or '' }}" data-tipo="{{ ent.get_tipo_descricao() }}" data-conta-banco-id="{{ ent.conta_banco_id if ent.conta_banco_id is defined else '' }}" {% if lancamento and lancamento.entidade_id == ent.id %}selected{% endif %}>{{ ent.nome }} ({{ ent.cnpj_cpf }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 mb-2">
+                <label class="form-label">Tipo da Entidade</label>
+                <input type="text" id="tipo_entidade" class="form-control" value="" readonly style="background-color: rgba(30, 41, 59, 0.6); color: #cbd5e1;">
+            </div>
+            <div class="col-md-3 mb-2">
+                <label class="form-label">Conta de Fluxo *</label>
+                <select name="fluxo_conta_id" id="fluxo_conta_id" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); color: #e5e7eb; border-color: rgba(148, 163, 184, 0.25);">
+                    <option value="">Selecione...</option>
+                    {% for cf in contas_fluxo %}
+                    <option value="{{ cf.id }}" {% if lancamento and lancamento.fluxo_conta_id == cf.id %}selected{% endif %}>{{ cf.codigo }} - {{ cf.descricao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 mb-2">
+                <label class="form-label">Conta de Banco *</label>
+                <select name="conta_banco_id" id="conta_banco_id" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); color: #e5e7eb; border-color: rgba(148, 163, 184, 0.25);">
+                    <option value="">Selecione...</option>
+                    {% for cb in contas_banco %}
+                    <option value="{{ cb.id }}" {% if lancamento and lancamento.conta_banco_id == cb.id %}selected{% endif %}>{{ cb.nome }} - {{ cb.banco }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Número do Documento *</label>
+                <input type="text" name="numero_documento" class="form-control"
+                    value="{{ lancamento.numero_documento if lancamento else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Valor Real *</label>
+                <input type="number" name="valor_real" class="form-control" step="0.01"
+                    min="0.01"
+                    value="{{ lancamento.valor_real if lancamento and lancamento.valor_real != 0 else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Valor Pago</label>
+                <input type="number" name="valor_pago" class="form-control" step="0.01"
+                    value="{{ lancamento.valor_pago if lancamento and lancamento.valor_pago != 0 else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Valor Imposto</label>
+                <input type="number" name="valor_imposto" class="form-control" step="0.01"
+                    value="{{ '%.2f' % lancamento.valor_imposto if lancamento and lancamento.valor_imposto is not none else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Valor Outros Custos</label>
+                <input type="number" name="valor_outros_custos" class="form-control" step="0.01"
+                    value="{{ lancamento.valor_outros_custos if lancamento and lancamento.valor_outros_custos != 0 else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-3">
+                <label class="form-label">Observações</label>
+                <textarea name="observacoes" class="form-control" rows="3" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">{{ lancamento.observacoes if lancamento else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn ls-btn-primary" id="btn-salvar-lancamento">
+                <i class="fas fa-save"></i> Salvar
+            </button>
+            <a href="{{ url_for('lancamentos.index') }}" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25) !important;
+    }
+    .form-label, .form-control, .form-select, input, textarea, select {
+        font-size: 0.92rem !important;
+    }
+    .form-control, .form-select, input, textarea, select {
+        padding: 0.35rem 0.5rem !important;
+        height: 2.1rem !important;
+    }
+    .fw-bold, h2, h3, h4, h5, h6 {
+        font-size: 1.15rem !important;
+    }
+    .ls-card {
+        font-size: 0.95rem !important;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const entidadeSelect = document.getElementById('entidade_id');
+    const fluxoContaSelect = document.getElementById('fluxo_conta_id');
+    const contaBancoSelect = document.getElementById('conta_banco_id');
+    const tipoEntidadeInput = document.getElementById('tipo_entidade');
+
+    function preencherTipoFluxoBanco() {
+        if (!entidadeSelect) return;
+        const selectedOption = entidadeSelect.options[entidadeSelect.selectedIndex];
+        const tipoEntidade = selectedOption.getAttribute('data-tipo') || '';
+        if (tipoEntidadeInput) {
+            tipoEntidadeInput.value = tipoEntidade;
+        }
+        const fluxoContaId = selectedOption.getAttribute('data-fluxo-conta-id');
+        if (fluxoContaId && fluxoContaSelect) {
+            for (let i = 0; i < fluxoContaSelect.options.length; i++) {
+                if (fluxoContaSelect.options[i].value === fluxoContaId) {
+                    fluxoContaSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        const contaBancoId = selectedOption.getAttribute('data-conta-banco-id');
+        if (contaBancoId && contaBancoSelect) {
+            for (let i = 0; i < contaBancoSelect.options.length; i++) {
+                if (contaBancoSelect.options[i].value === contaBancoId) {
+                    contaBancoSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (entidadeSelect) {
+        entidadeSelect.addEventListener('change', preencherTipoFluxoBanco);
+        preencherTipoFluxoBanco();
+    }
+});
+</script>
+
+<script>
+(function () {
+    const form = document.getElementById('form-lancamento');
+    const button = document.getElementById('btn-salvar-lancamento');
+    if (!form || !button) return;
+
+    form.addEventListener('submit', function () {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    });
+})();
+</script>
+{% endblock %}

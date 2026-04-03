@@ -1,0 +1,213 @@
+{% extends "layout.html" %}
+
+{% block title %}Detalhe Entidade{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">{{ entidade.nome }}</h2>
+    <div>
+        <a href="{{ url_for('entidades.editar', id=entidade.id) }}" class="btn btn-outline-primary">
+            <i class="fas fa-edit"></i> Editar
+        </a>
+        <a href="{{ url_for('entidades.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informações Principal -->
+    <div class="col-md-6 mb-4">
+        <div class="ls-card p-4">
+            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+                <i class="fas fa-info-circle" style="color: var(--ls-accent);"></i> Informações Principais
+            </h5>
+            
+            <div class="mb-3">
+                <p class="text-muted mb-1">Tipo</p>
+                <span class="badge bg-primary">{{ entidade.get_tipo_descricao() }}</span>
+            </div>
+
+            <div class="mb-3">
+                <p class="text-muted mb-1">CPF/CNPJ</p>
+                <p style="color: #e5e7eb;"><strong>{{ entidade.cnpj_cpf }}</strong></p>
+            </div>
+
+            <div class="mb-3">
+                <p class="text-muted mb-1">Inscrição Estadual</p>
+                <p style="color: #e5e7eb;">{{ entidade.inscricao_estadual or 'N/A' }}</p>
+            </div>
+
+            <div class="mb-3">
+                <p class="text-muted mb-1">Inscrição Municipal</p>
+                <p style="color: #e5e7eb;">{{ entidade.inscricao_municipal or 'N/A' }}</p>
+            </div>
+
+            <div class="mb-3">
+                <p class="text-muted mb-1">Status</p>
+                {% if entidade.ativo %}
+                    <span class="badge bg-success">Ativo</span>
+                {% else %}
+                    <span class="badge bg-danger">Inativo</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Endereço -->
+    <div class="col-md-6 mb-4">
+        <div class="ls-card p-4">
+            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+                <i class="fas fa-map-marker-alt" style="color: var(--ls-accent);"></i> Endereço
+            </h5>
+            
+            <p style="color: #e5e7eb;">
+                {% if entidade.endereco_rua %}
+                    {{ entidade.endereco_rua }}, {{ entidade.endereco_numero }}<br>
+                    {{ entidade.endereco_bairro }}<br>
+                    {{ entidade.endereco_cidade }}, {{ entidade.endereco_uf }} - {{ entidade.endereco_cep }}
+                {% else %}
+                    <span class="text-muted">Não informado</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Contato -->
+    <div class="col-md-6 mb-4">
+        <div class="ls-card p-4">
+            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+                <i class="fas fa-phone" style="color: var(--ls-accent);"></i> Contato
+            </h5>
+            
+            <div class="mb-3">
+                <p class="text-muted mb-1">Telefone</p>
+                <p style="color: #e5e7eb;">{{ entidade.telefone or 'N/A' }}</p>
+            </div>
+
+            <div class="mb-3">
+                <p class="text-muted mb-1">Email</p>
+                <p style="color: #e5e7eb;">
+                    {% if entidade.email %}
+                        <a href="mailto:{{ entidade.email }}" style="color: #3b82f6;">{{ entidade.email }}</a>
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contrato/Produto -->
+    <div class="col-md-6 mb-4">
+        <div class="ls-card p-4">
+            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+                <i class="fas fa-file-contract" style="color: var(--ls-accent);"></i> Contrato/Produto
+            </h5>
+            <p style="color: #e5e7eb; white-space: pre-wrap;">{{ entidade.contrato_produto or 'Não informado' }}</p>
+        </div>
+    </div>
+
+    <!-- Comissão (apenas se tipo Cliente) -->
+    {% if entidade.tipo == 'C' %}
+    <div class="col-md-12 mb-4">
+        <div class="ls-card p-4">
+            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+                <i class="fas fa-percent" style="color: var(--ls-accent);"></i> Configurações de Comissão
+            </h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <p class="text-muted mb-1">Alíquota Específica de Comissão (%)</p>
+                    <p style="color: #e5e7eb;">
+                        {% if entidade.aliquota_comissao_especifica is not none %}
+                            {{ entidade.aliquota_comissao_especifica }}%
+                        {% else %}
+                            <span class="text-muted">Padrão do sistema</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <p class="text-muted mb-1">Valor de Repasse ao Fornecedor (R$)</p>
+                    <p style="color: #e5e7eb;">
+                        {% if entidade.valor_repasse is not none %}
+                            R$ {{ entidade.valor_repasse|brl }}
+                        {% else %}
+                            <span class="text-muted">Não definido</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <p class="text-muted mb-1">Vendedor Padrão</p>
+                    <p style="color: #e5e7eb;">
+                        {% if entidade.vendedor %}
+                            {{ entidade.vendedor.nome }}
+                        {% elif entidade.vendedor_id %}
+                            {{ entidade.vendedor_id }}
+                        {% else %}
+                            <span class="text-muted">Não definido</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Últimos Lançamentos -->
+<div class="ls-card p-4">
+    <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+        <i class="fas fa-history" style="color: var(--ls-accent);"></i> Últimos Lançamentos
+    </h5>
+    
+    {% if lancamentos %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+                    <tr>
+                        <th>Data</th>
+                        <th>Documento</th>
+                        <th>Conta</th>
+                        <th class="text-end">Valor</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lancamento in lancamentos %}
+                    <tr>
+                        <td>{{ lancamento.data_evento.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ lancamento.numero_documento or 'N/A' }}</td>
+                        <td>{{ lancamento.fluxo_conta.codigo if lancamento.fluxo_conta else 'N/A' }}</td>
+                        <td class="text-end">R$ {{ lancamento.valor_real|brl }}</td>
+                        <td>
+                            {% if lancamento.status == 'pago' %}
+                                <span class="badge bg-success">Pago</span>
+                            {% elif lancamento.status == 'vencido' %}
+                                <span class="badge bg-danger">Vencido</span>
+                            {% else %}
+                                <span class="badge bg-warning">Aberto</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted text-center py-4">Nenhum lançamento encontrado</p>
+    {% endif %}
+</div>
+
+<style>
+    table tbody tr:hover {
+        background-color: rgba(37, 99, 235, 0.1) !important;
+    }
+
+    table tbody td {
+        padding: 12px 8px;
+        border-color: rgba(148, 163, 184, 0.15) !important;
+    }
+</style>
+{% endblock %}

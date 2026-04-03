@@ -1,0 +1,12 @@
+Versão do programa registrada em 20/02/2026.
+
+Principais características:
+- Menu único para Fluxo Caixa
+- Relatório completo com filtros funcionais
+- Abas para Realizado, Previsto e Resumo Diário
+- Exportação para Excel
+- Layout e funcionalidades restaurados conforme solicitado
+
+Arquivo base: src/templates/relatorios/fluxo_caixa.html
+
+Se precisar restaurar ou consultar esta versão, utilize este arquivo como referência.

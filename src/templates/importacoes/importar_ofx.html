@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+
+{% block title %}Importar OFX{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">
+        <i class="fas fa-file-import"></i> Importação de Extratos Bancários (OFX)
+    </h2>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <div class="alert alert-info" role="alert">
+        <i class="fas fa-info-circle"></i>
+        <strong>Importar Extratos OFX para Conciliação:</strong>
+        <p class="mb-0 mt-2">
+            Faça upload de um arquivo OFX (.ofx ou .txt) contendo o extrato bancário.
+            O sistema criará uma sessão de conciliação bancária e tentará casar os itens com lançamentos já existentes.
+            Lançamentos novos não são criados automaticamente nesse processo.
+        </p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="row g-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="col-md-6">
+            <label for="conta_banco_id" class="form-label">Conta Bancária *</label>
+            <select class="form-select" id="conta_banco_id" name="conta_banco_id" required
+                style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                <option value="">-- Selecione uma conta --</option>
+                {% for conta in contas %}
+                    <option value="{{ conta.id }}">{{ conta.nome }} ({{ conta.numero_conta }})</option>
+                {% endfor %}
+            </select>
+            {% if not contas %}
+                <div class="alert alert-warning mt-2" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Nenhuma conta bancária configurada. 
+                    <a href="{{ url_for('contas_banco.index') }}" class="alert-link">Criar conta</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <label for="file" class="form-label">Selecione o arquivo OFX *</label>
+            <input class="form-control" type="file" id="file" name="file" 
+                accept=".ofx,.txt,.qfx" required
+                style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn ls-btn-primary" {% if not contas %}disabled{% endif %}>
+                <i class="fas fa-upload"></i> Importar para Conciliação
+            </button>
+            <a href="{{ url_for('importacoes.importar_nfse') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="ls-card p-4">
+    <h4 class="fw-bold mb-3"><i class="fas fa-file-csv"></i> Formato OFX Suportado</h4>
+    <p class="text-muted">
+        O sistema suporta formato OFX 1.x (SGML). Arquivos devem conter as transações em tags <code>&lt;STMTTRN&gt;</code>.
+        Exemplo de transação:
+    </p>
+    <pre style="background-color: rgba(30, 41, 59, 0.6); border-left: 3px solid #2563eb; padding: 15px; border-radius: 4px; overflow-x: auto;">
+&lt;STMTTRN&gt;
+&lt;TRNTYPE&gt;DEBIT&lt;/TRNTYPE&gt;
+&lt;DTPOSTED&gt;20260101&lt;/DTPOSTED&gt;
+&lt;TRNAMT&gt;-150.00&lt;/TRNAMT&gt;
+&lt;FITID&gt;1234567890&lt;/FITID&gt;
+&lt;NAME&gt;PAGAMENTO&lt;/NAME&gt;
+&lt;MEMO&gt;Descrição da transação&lt;/MEMO&gt;
+&lt;/STMTTRN&gt;
+    </pre>
+</div>
+
+{% endblock %}

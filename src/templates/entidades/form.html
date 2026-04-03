@@ -1,0 +1,261 @@
+{% extends "layout.html" %}
+
+{% block title %}{% if action == 'editar' %}Editar{% else %}Nova{% endif %} Entidade{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">
+        {% if action == 'editar' %}Editar Entidade{% else %}Nova Entidade{% endif %}
+    </h2>
+    <a href="{{ url_for('entidades.index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Empresa (informativo) -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Empresa (código)</label>
+                <input type="text" class="form-control" value="{{ current_user.empresa_id if current_user and current_user.empresa_id else 'N/A' }}" disabled style="background-color: rgba(30, 41, 59, 0.6); color: #cbd5e1;">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Empresa (nome)</label>
+                <input type="text" class="form-control" value="{{ current_user.empresa.nome if current_user and current_user.empresa else 'N/A' }}" disabled style="background-color: rgba(30, 41, 59, 0.6); color: #cbd5e1;">
+            </div>
+            <input type="hidden" name="empresa_id" value="{{ current_user.empresa_id if current_user and current_user.empresa_id else '' }}">
+        </div>
+        <div class="row">
+            <!-- Tipo -->
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Tipo *</label>
+                <select name="tipo" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <option value="">Selecione...</option>
+                    <option value="C" {% if entidade and entidade.tipo == 'C' %}selected{% endif %}>Cliente</option>
+                    <option value="F" {% if entidade and entidade.tipo == 'F' %}selected{% endif %}>Fornecedor</option>
+                    <option value="L" {% if entidade and entidade.tipo == 'L' %}selected{% endif %}>Colaborador</option>
+                    <option value="V" {% if entidade and entidade.tipo == 'V' %}selected{% endif %}>Vendedor</option>
+                </select>
+            </div>
+
+            <!-- CNPJ/CPF -->
+            <div class="col-md-3 mb-3">
+                <label class="form-label">CNPJ/CPF *</label>
+                <input type="text" name="cnpj_cpf" class="form-control" placeholder="00.000.000/0000-00" 
+                    value="{{ entidade.cnpj_cpf if entidade else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <!-- Inscrição Estadual -->
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Inscrição Estadual</label>
+                <input type="text" name="inscricao_estadual" class="form-control" 
+                    value="{{ entidade.inscricao_estadual if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <!-- Inscrição Municipal -->
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Inscrição Municipal</label>
+                <input type="text" name="inscricao_municipal" class="form-control" 
+                    value="{{ entidade.inscricao_municipal if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Nome -->
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Nome *</label>
+                <input type="text" name="nome" class="form-control" placeholder="Nome completo/razão social"
+                    value="{{ entidade.nome if entidade else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <!-- Nome Fantasia -->
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Nome Fantasia</label>
+                <input type="text" name="nome_fantasia" class="form-control"
+                    value="{{ entidade.nome_fantasia if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <!-- Endereço -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Rua</label>
+                <input type="text" name="endereco_rua" class="form-control"
+                    value="{{ entidade.endereco_rua if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Número</label>
+                <input type="text" name="endereco_numero" class="form-control"
+                    value="{{ entidade.endereco_numero if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Bairro</label>
+                <input type="text" name="endereco_bairro" class="form-control"
+                    value="{{ entidade.endereco_bairro if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Cidade</label>
+                <input type="text" name="endereco_cidade" class="form-control"
+                    value="{{ entidade.endereco_cidade if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label">UF</label>
+                <input type="text" name="endereco_uf" class="form-control" maxlength="2"
+                    value="{{ entidade.endereco_uf if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label">CEP</label>
+                <input type="text" name="endereco_cep" class="form-control" placeholder="00000-000"
+                    value="{{ entidade.endereco_cep if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <!-- Contato -->
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Telefone</label>
+                <input type="text" name="telefone" class="form-control" placeholder="(00) 00000-0000"
+                    value="{{ entidade.telefone if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-8 mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control"
+                    value="{{ entidade.email if entidade else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+        </div>
+
+        <!-- Contrato/Produto -->
+        <div class="row">
+            <div class="col-12 mb-3">
+                <label class="form-label">Contrato/Produto</label>
+                <textarea name="contrato_produto" class="form-control" rows="4" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">{{ entidade.contrato_produto if entidade else '' }}</textarea>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 mb-3">
+                <label class="form-label">Conta de Fluxo de Caixa Associada</label>
+                <select name="fluxo_conta_id" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <option value="">Nenhuma</option>
+                    {% for cf in contas_fluxo %}
+                    <option value="{{ cf.id }}" {% if entidade and entidade.fluxo_conta_id == cf.id %}selected{% endif %}>{{ cf.codigo }} - {{ cf.descricao }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">Opcional: selecione uma conta de fluxo para associação automática em lançamentos</small>
+            </div>
+        </div>
+
+        <!-- Seção de Comissão (apenas para CLIENTE) -->
+        <div id="comissao_section" style="display: {% if entidade and entidade.tipo == 'C' %}block{% else %}none{% endif %};">
+            <hr class="my-4">
+            <h5 class="mb-3">
+                <i class="fas fa-percent"></i> Configurações de Comissão
+            </h5>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Alíquota Específica de Comissão (%)</label>
+                    <input type="number" name="aliquota_comissao_especifica" class="form-control" 
+                        step="0.01" min="0" max="100"
+                        value="{{ entidade.aliquota_comissao_especifica if entidade and entidade.aliquota_comissao_especifica else '' }}" 
+                        placeholder="Deixar em branco para usar padrão"
+                        style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <small class="form-text text-muted">Deixe em branco para usar alíquota padrão do sistema</small>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Valor de Repasse ao Fornecedor (R$)</label>
+                    <input type="number" name="valor_repasse" class="form-control" 
+                        step="0.01" min="0"
+                        value="{{ entidade.valor_repasse if entidade else '' }}" 
+                        style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <small class="form-text text-muted">Valor fixo da nota destinado ao fornecedor</small>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Vendedor Padrão</label>
+                    <select name="vendedor_id" class="form-control" 
+                        style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                        <option value="">Selecione um vendedor...</option>
+                        {% if vendedores %}
+                        {% for vendedor in vendedores %}
+                        <option value="{{ vendedor.id }}" {% if entidade and entidade.vendedor_id == vendedor.id %}selected{% endif %}>
+                            {{ vendedor.nome }}
+                        </option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                    <small class="form-text text-muted">Vendedor associado a este cliente para comissões</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ativo -->
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ativo" name="ativo" 
+                        {% if not entidade or entidade.ativo %}checked{% endif %}>
+                    <label class="form-check-label" for="ativo">
+                        Entidade Ativa
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn ls-btn-primary">
+                <i class="fas fa-save"></i> Salvar
+            </button>
+            <a href="{{ url_for('entidades.index') }}" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25) !important;
+    }
+
+    .form-check-input {
+        border-color: rgba(148, 163, 184, 0.25);
+    }
+
+    .form-check-input:checked {
+        background-color: #2563eb;
+        border-color: #2563eb;
+    }
+</style>
+
+<script>
+    // Mostrar/ocultar seção de comissão baseado no tipo
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipoSelect = document.querySelector('select[name="tipo"]');
+        const comissaoSection = document.getElementById('comissao_section');
+        
+        function toggleComissaoSection() {
+            if (tipoSelect.value === 'C') {
+                comissaoSection.style.display = 'block';
+            } else {
+                comissaoSection.style.display = 'none';
+            }
+        }
+        
+        tipoSelect.addEventListener('change', toggleComissaoSection);
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "layout.html" %}
+
+{% block title %}{% if action == 'editar' %}Editar{% else %}Nova{% endif %} Conta de Fluxo{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">
+        {% if action == 'editar' %}Editar Conta{% else %}Nova Conta{% endif %}
+    </h2>
+    <a href="{{ url_for('fluxo.index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Código *</label>
+                <input type="text" name="codigo" class="form-control" placeholder="999 ou 9.99"
+                    value="{{ conta.codigo if conta else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Descrição *</label>
+                <input type="text" name="descricao" class="form-control"
+                    value="{{ conta.descricao if conta else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Tipo *</label>
+                <select name="tipo" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <option value="">Selecione...</option>
+                    <option value="P" {% if conta and conta.tipo == 'P' %}selected{% endif %}>Pagamento</option>
+                    <option value="R" {% if conta and conta.tipo == 'R' %}selected{% endif %}>Recebimento</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Máscara</label>
+                <input type="text" name="mascara" class="form-control" placeholder="999 ou 9.99"
+                    value="{{ conta.mascara if conta else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Nível Sintético</label>
+                <input type="number" name="nivel_sintetico" class="form-control"
+                    value="{{ conta.nivel_sintetico if conta else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Nível Analítico</label>
+                <input type="number" name="nivel_analitico" class="form-control"
+                    value="{{ conta.nivel_analitico if conta else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="form-check" style="margin-top: 8px;">
+                    <input class="form-check-input" type="checkbox" id="ativo" name="ativo"
+                        {% if not conta or conta.ativo %}checked{% endif %}>
+                    <label class="form-check-label" for="ativo">
+                        Ativo
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn ls-btn-primary">
+                <i class="fas fa-save"></i> Salvar
+            </button>
+            <a href="{{ url_for('fluxo.index') }}" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25) !important;
+    }
+
+    .form-check-input {
+        border-color: rgba(148, 163, 184, 0.25);
+    }
+
+    .form-check-input:checked {
+        background-color: #2563eb;
+        border-color: #2563eb;
+    }
+</style>
+{% endblock %}

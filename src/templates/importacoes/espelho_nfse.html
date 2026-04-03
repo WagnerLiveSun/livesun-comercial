@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+
+{% block title %}Espelho da NFSe{% endblock %}
+
+{% block content %}
+<div class="ls-card p-4 mb-4">
+    <h3 class="fw-bold mb-3"><i class="fas fa-file-invoice"></i> Espelho da Nota de Serviço (NFSe)</h3>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row mb-2">
+            <label class="col-sm-3 col-form-label">Número da Nota</label>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" name="numero_nota" value="{{ nfse.numero_nota }}" required>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label class="col-sm-3 col-form-label">Entidade Associada</label>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" name="entidade_nome" value="{{ nfse.entidade_nome }}" readonly>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label class="col-sm-3 col-form-label">Tipo da Entidade</label>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" name="entidade_tipo" value="{{ nfse.entidade_tipo }}" readonly>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label class="col-sm-3 col-form-label">Data de Emissão</label>
+            <div class="col-sm-9">
+                <input type="date" class="form-control" name="data_emissao" value="{{ nfse.data_emissao[:10] if nfse.data_emissao }}" required>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label class="col-sm-3 col-form-label">CNPJ Tomador</label>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" name="cnpj_tomador" value="{{ nfse.cnpj_tomador }}" required>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label class="col-sm-3 col-form-label">Valor Líquido</label>
+            <div class="col-sm-9">
+                <input type="number" step="0.01" class="form-control" name="valor_bruto" value="{{ nfse.valor_bruto }}" required>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label class="col-sm-3 col-form-label">Alíquota ISS (%)</label>
+            <div class="col-sm-9">
+                <input type="number" step="0.01" class="form-control" name="aliquota_iss" value="{{ nfse.aliquota_iss }}" readonly>
+                {% if nfse.origem_aliquota == 'padrao-6' %}
+                <div class="alert alert-warning mt-2 p-2">Alíquota padrão de 6% utilizada (não encontrada no XML).</div>
+                {% elif nfse.origem_aliquota == 'fallback-linha-servico' %}
+                <div class="alert alert-info mt-2 p-2">Alíquota extraída do texto da nota.</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label class="col-sm-3 col-form-label">Valor ISS (Imposto)</label>
+            <div class="col-sm-9">
+                <input type="number" step="0.01" class="form-control" name="valor_iss" value="{{ nfse.valor_iss }}" readonly>
+            </div>
+        </div>
+        <input type="hidden" name="valor_imposto" value="{{ nfse.valor_iss }}">
+        <div class="row mb-2">
+            <label class="col-sm-3 col-form-label">Descrição do Serviço</label>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" name="descricao_servico" value="{{ nfse.descricao_servico }}">
+            </div>
+        </div>
+        <div class="row mb-2">
+            <label class="col-sm-3 col-form-label">Chave/ID</label>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" name="chave_nota" value="{{ nfse.chave_nota }}" required>
+            </div>
+        </div>
+        <input type="hidden" name="confirmar" value="1">
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-check"></i> Confirmar Importação
+        </button>
+        <a href="{{ url_for('importacoes.importar_nfse') }}" class="btn btn-secondary ms-2">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

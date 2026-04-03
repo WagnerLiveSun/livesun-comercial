@@ -1,0 +1,139 @@
+{% extends "layout.html" %}
+
+{% block title %}Contas a Receber{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">Contas a Receber</h2>
+</div>
+
+<!-- Filters -->
+<div class="ls-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label">Intervalo</label>
+            <select name="intervalo" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                <option value="vencimento" {% if intervalo == 'vencimento' %}selected{% endif %}>Vencimento</option>
+                <option value="recebimento" {% if intervalo == 'recebimento' %}selected{% endif %}>Recebimento</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">De</label>
+            <input type="date" name="data_inicio" class="form-control"
+                value="{{ data_inicio }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Até</label>
+            <input type="date" name="data_fim" class="form-control"
+                value="{{ data_fim }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Conta Fluxo</label>
+            <select name="conta_fluxo_id" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                <option value="">Todas</option>
+                {% for cf in contas_fluxo %}
+                <option value="{{ cf.id }}" {% if conta_fluxo_id == cf.id %}selected{% endif %}>{{ cf.codigo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Conta Banco</label>
+            <select name="conta_banco_id" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                <option value="">Todas</option>
+                {% for cb in contas_banco %}
+                <option value="{{ cb.id }}" {% if conta_banco_id == cb.id %}selected{% endif %}>{{ cb.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
+            <button type="submit" class="btn ls-btn-primary w-100">
+                <i class="fas fa-search"></i> Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Summary -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="ls-card p-4">
+            <p class="text-muted mb-2">Total Previsto</p>
+            <h2 class="fw-bold" style="color: #fbbf24; font-size: 28px;">R$ {{ total_real|brl }}</h2>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="ls-card p-4">
+            <p class="text-muted mb-2">Total Recebido</p>
+            <h2 class="fw-bold" style="color: #22c55e; font-size: 28px;">R$ {{ total_recebido|brl }}</h2>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+                <tr>
+                    <th>Data Lançamento</th>
+                    <th>Data Vencimento</th>
+                    <th>Data Recebimento</th>
+                    <th>Cliente</th>
+                    <th>Conta Banco</th>
+                    <th>Conta Fluxo</th>
+                    <th class="text-end">Valor Real</th>
+                    <th class="text-end">Valor Pago/Recebido</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in lancamentos %}
+                <tr>
+                    <td>{{ l.data_evento.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ l.data_vencimento.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ l.data_pagamento.strftime('%d/%m/%Y') if l.data_pagamento else '-' }}</td>
+                    <td>{{ l.entidade.nome if l.entidade else 'N/A' }}</td>
+                    <td>{{ l.conta_banco.nome if l.conta_banco else 'N/A' }}</td>
+                    <td>{{ l.fluxo_conta.codigo if l.fluxo_conta else 'N/A' }}</td>
+                    <td class="text-end">R$ {{ l.valor_real|brl }}</td>
+                    <td class="text-end">R$ {{ l.valor_pago|brl }}</td>
+                    <td>
+                        {% if l.status == 'pago' %}
+                            <span class="badge bg-success">Recebido</span>
+                        {% elif l.status == 'vencido' %}
+                            <span class="badge bg-danger">Vencido</span>
+                        {% else %}
+                            <span class="badge bg-warning">Aberto</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                        Nenhum lançamento encontrado
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    table tbody tr:hover {
+        background-color: rgba(37, 99, 235, 0.1) !important;
+    }
+
+    table tbody td {
+        padding: 12px 8px;
+        border-color: rgba(148, 163, 184, 0.15) !important;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "layout.html" %}
+
+{% block title %}Fluxo de Caixa{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold" style="color: #f9fafb;">Plano de Fluxo de Caixa</h2>
+    <a href="{{ url_for('fluxo.criar') }}" class="btn ls-btn-primary">
+        <i class="fas fa-plus"></i> Nova Conta
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="ls-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Tipo</label>
+            <select name="tipo" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                <option value="">Todos</option>
+                <option value="P" {% if tipo == 'P' %}selected{% endif %}>Pagamento</option>
+                <option value="R" {% if tipo == 'R' %}selected{% endif %}>Recebimento</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Conta (código inicial)</label>
+            <input type="text" name="conta_ini" value="{{ conta_ini or '' }}" class="form-control" placeholder="Ex: 1.1">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Conta (código final)</label>
+            <input type="text" name="conta_fim" value="{{ conta_fim or '' }}" class="form-control" placeholder="Ex: 1.2.5">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Entidade</label>
+            <select name="entidade_id" class="form-control">
+                <option value="">Todas</option>
+                {% for entidade in entidades %}
+                <option value="{{ entidade.id }}" {% if entidade_id and entidade_id|string == entidade.id|string %}selected{% endif %}>{{ entidade.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-12 d-flex align-items-end">
+            <button type="submit" class="btn ls-btn-primary w-100">
+                <i class="fas fa-search"></i> Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+                <tr>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Tipo</th>
+                    <th>Máscara</th>
+                    <th>Nivel Sintético</th>
+                    <th>Nível Analítico</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conta in contas %}
+                <tr>
+                    <td><code style="color: #93c5fd;">{{ conta.codigo }}</code></td>
+                    <td>{{ conta.descricao }}</td>
+                    <td>
+                        {% if conta.tipo == 'P' %}
+                            <span class="badge bg-danger">Pagamento</span>
+                        {% else %}
+                            <span class="badge bg-success">Recebimento</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ conta.mascara or 'N/A' }}</td>
+                    <td>{{ conta.nivel_sintetico or 'N/A' }}</td>
+                    <td>{{ conta.nivel_analitico or 'N/A' }}</td>
+                    <td>
+                        {% if conta.ativo %}
+                            <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{{ url_for('fluxo.editar', id=conta.id) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('fluxo.deletar', id=conta.id) }}" style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Tem certeza?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                        Nenhuma conta encontrada
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('fluxo.index', page=pagination.prev_num, tipo=tipo) }}">Anterior</a>
+        </li>
+        {% endif %}
+
+        {% for page_num in pagination.iter_pages() %}
+            {% if page_num %}
+            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('fluxo.index', page=page_num, tipo=tipo) }}">{{ page_num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('fluxo.index', page=pagination.next_num, tipo=tipo) }}">Próximo</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<style>
+    table tbody tr:hover {
+        background-color: rgba(37, 99, 235, 0.1) !important;
+    }
+
+    table tbody td {
+        padding: 12px 8px;
+        border-color: rgba(148, 163, 184, 0.15) !important;
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}

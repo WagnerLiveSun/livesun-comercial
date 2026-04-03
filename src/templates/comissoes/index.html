@@ -1,0 +1,167 @@
+{% extends "layout.html" %}
+
+{% block title %}Comissões{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="h3">
+                <i class="fas fa-percent"></i> Comissões
+            </h1>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('comissoes.apurar') }}" class="btn btn-primary">
+                <i class="fas fa-calculator"></i> Apurar
+            </a>
+            <a href="{{ url_for('comissoes.relatorio') }}" class="btn btn-info">
+                <i class="fas fa-chart-bar"></i> Relatório
+            </a>
+            <a href="{{ url_for('comissoes.parametros') }}" class="btn btn-secondary">
+                <i class="fas fa-cog"></i> Parâmetros
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">Data Início</label>
+                    <input type="date" class="form-control" name="data_inicio" value="{{ data_inicio }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data Fim</label>
+                    <input type="date" class="form-control" name="data_fim" value="{{ data_fim }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Vendedor</label>
+                    <select class="form-select" name="vendedor_id">
+                        <option value="">Todos</option>
+                        {% for vendedor in vendedores %}
+                        <option value="{{ vendedor.id }}" {% if vendedor.id == vendedor_id %}selected{% endif %}>
+                            {{ vendedor.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Cliente</label>
+                    <select class="form-select" name="cliente_id">
+                        <option value="">Todos</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}" {% if cliente.id == cliente_id %}selected{% endif %}>
+                            {{ cliente.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resumo -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total de Notas</h6>
+                    <h3>R$ {{ total_notas | brl }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total Repasse</h6>
+                    <h3>R$ {{ total_repasse | brl }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total Líquido</h6>
+                    <h3>R$ {{ total_liquido | brl }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Comissões</h6>
+                    <h3>R$ {{ total_comissoes | brl }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Comissões -->
+    <div class="card">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> Comissões ({{ quantidade }} registros)
+            </h5>
+            <a href="{{ url_for('comissoes.exportar_csv', data_inicio=data_inicio, data_fim=data_fim, vendedor_id=vendedor_id, cliente_id=cliente_id) }}" 
+               class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-download"></i> Exportar CSV
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Apuração</th>
+                        <th>Data Pagamento</th>
+                        <th>Cliente</th>
+                        <th>Vendedor</th>
+                        <th class="text-end">Valor Nota</th>
+                        <th class="text-end">Imposto</th>
+                        <th class="text-end">Outros Custos</th>
+                        <th class="text-end">Repasse</th>
+                        <th class="text-end">Valor Líquido</th>
+                        <th class="text-end">Alíquota</th>
+                        <th class="text-end">Comissão</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if comissoes %}
+                        {% for comissao in comissoes %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-info">{{ comissao.id_apuracao }}</span>
+                            </td>
+                            <td>{{ comissao.dt_pagamento_recebimento.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ comissao.lancamento.entidade.nome }}</td>
+                            <td>
+                                {% set vendedor = vendedores | selectattr('id', 'equalto', comissao.entidade_vendedor_id) | first %}
+                                {{ vendedor.nome if vendedor else '' }}
+                            </td>
+                            <td class="text-end">R$ {{ comissao.vl_nota | brl }}</td>
+                            <td class="text-end">R$ {{ comissao.vl_imposto | brl }}</td>
+                            <td class="text-end">R$ {{ comissao.vl_outros_custos | brl }}</td>
+                            <td class="text-end">R$ {{ comissao.vl_repasse | brl }}</td>
+                            <td class="text-end">R$ {{ comissao.vl_liquido | brl }}</td>
+                            <td class="text-end">{{ comissao.aliquota_aplicada | round(2) }}%</td>
+                            <td class="text-end fw-bold text-success">R$ {{ comissao.vl_comissao | brl }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="11" class="text-center text-muted py-4">
+                            Nenhuma comissão encontrada no período
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

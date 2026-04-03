@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+
+{% block title %}Detalhe da Conciliação{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold" style="color: #f9fafb;">Conciliação #{{ conciliacao.id }}</h1>
+        <p class="text-muted mb-0">{{ conciliacao.periodo_inicio }} a {{ conciliacao.periodo_fim }} | {{ conciliacao.status }}</p>
+    </div>
+    <form method="POST" action="{{ url_for('conciliacao.reconciliar', conciliacao_id=conciliacao.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn ls-btn-primary">Reconciliar novamente</button>
+    </form>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <p class="mb-1"><strong>Conta:</strong> {{ conciliacao.conta_banco.nome if conciliacao.conta_banco else '-' }}</p>
+    <p class="mb-1"><strong>Observações:</strong> {{ conciliacao.observacoes or '-' }}</p>
+</div>
+
+<div class="ls-card p-4">
+    <h4 class="mb-3">Itens</h4>
+    <p class="text-muted mb-3">Dica: dê duplo clique em uma linha pendente para abrir a busca de lançamento correspondente (débito/crédito).</p>
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th>Referência</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Lançamento</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in conciliacao.itens %}
+                {% set tipo_mov = 'P' if item.valor_extrato < 0 else 'R' %}
+                {% set busca_url = url_for('lancamentos.index', tipo=tipo_mov, conta_banco_id=conciliacao.conta_banco_id, data_evento=item.data_movimento, select_mode=1, conciliacao_id=conciliacao.id, item_id=item.id) %}
+                <tr {% if item.status == 'pendente' %}class="js-item-pendente" data-busca-url="{{ busca_url }}" style="cursor: pointer;"{% endif %}>
+                    <td>{{ item.data_movimento }}</td>
+                    <td>{{ item.descricao_extrato or '-' }}</td>
+                    <td>{{ item.referencia_banco or '-' }}</td>
+                    <td>{{ item.valor_extrato }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.lancamento.numero_documento if item.lancamento else '-' }}</td>
+                    <td>
+                        {% if item.status == 'pendente' %}
+                        <a href="{{ busca_url }}" class="btn btn-sm btn-outline-primary">Buscar par</a>
+                        {% elif item.status == 'conciliado' %}
+                        <form method="POST" action="{{ url_for('conciliacao.desvincular_item', conciliacao_id=conciliacao.id, item_id=item.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-warning">Ajustar</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted">Sem itens.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.js-item-pendente').forEach(function(row) {
+    row.addEventListener('dblclick', function() {
+        const target = row.getAttribute('data-busca-url');
+        if (target) {
+            window.location.href = target;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,378 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    .rel-lanc-title {
+        color: #f8fafc;
+    }
+
+    .rel-lanc-subtitle,
+    .rel-lanc-meta {
+        color: #e2e8f0;
+    }
+
+    .rel-lanc-filter-card {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+    }
+
+    .rel-lanc-filter-card .form-label {
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .rel-lanc-filter-card .form-control,
+    .rel-lanc-filter-card .form-select {
+        color: #0f172a;
+        border-color: #94a3b8;
+    }
+
+    .rel-lanc-total-card {
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+    }
+
+    .rel-lanc-total-label {
+        color: #334155;
+        font-weight: 600;
+    }
+
+    .rel-lanc-total-value {
+        color: #0f172a;
+        font-size: 1.2rem;
+    }
+
+    #tabela-relatorio-lancamentos thead th {
+        background: #f1f5f9;
+        color: #0f172a;
+        border-color: #cbd5e1;
+        border-bottom: 2px solid #94a3b8;
+        font-size: 0.86rem;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+    }
+
+    #tabela-relatorio-lancamentos tbody td {
+        color: #0f172a;
+        border-color: #e2e8f0;
+        background: #ffffff;
+        font-size: 0.84rem;
+        line-height: 1.2;
+    }
+
+    #tabela-relatorio-lancamentos .linha-lancamento:hover td {
+        background: #e2e8f0;
+    }
+
+    #tabela-relatorio-lancamentos {
+        font-size: 0.85rem;
+        table-layout: fixed;
+        width: 100%;
+        min-width: 1880px;
+    }
+
+    #tabela-relatorio-lancamentos th,
+    #tabela-relatorio-lancamentos td {
+        vertical-align: middle;
+        padding: 0.45rem 0.4rem;
+    }
+
+    #tabela-relatorio-lancamentos td.col-num,
+    #tabela-relatorio-lancamentos th.col-num {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    #tabela-relatorio-lancamentos td.col-date,
+    #tabela-relatorio-lancamentos th.col-date {
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    #tabela-relatorio-lancamentos td.col-center,
+    #tabela-relatorio-lancamentos th.col-center {
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    #tabela-relatorio-lancamentos thead th {
+        white-space: nowrap;
+        word-break: normal;
+        overflow-wrap: normal;
+    }
+
+    #tabela-relatorio-lancamentos td.col-empresa,
+    #tabela-relatorio-lancamentos td.col-entidade,
+    #tabela-relatorio-lancamentos td.col-fluxo,
+    #tabela-relatorio-lancamentos td.col-conta,
+    #tabela-relatorio-lancamentos td.col-doc {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #tabela-relatorio-lancamentos td.col-obs {
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.35;
+    }
+
+    #tabela-relatorio-lancamentos td.col-id,
+    #tabela-relatorio-lancamentos th.col-id {
+        width: 50px;
+    }
+
+    #tabela-relatorio-lancamentos td.col-status,
+    #tabela-relatorio-lancamentos th.col-status,
+    #tabela-relatorio-lancamentos td.col-tipo,
+    #tabela-relatorio-lancamentos th.col-tipo {
+        width: 84px;
+    }
+
+    #tabela-relatorio-lancamentos td.col-date,
+    #tabela-relatorio-lancamentos th.col-date {
+        width: 108px;
+    }
+
+    #tabela-relatorio-lancamentos td.col-empresa,
+    #tabela-relatorio-lancamentos th.col-empresa {
+        width: 180px;
+    }
+
+    #tabela-relatorio-lancamentos td.col-entidade,
+    #tabela-relatorio-lancamentos th.col-entidade {
+        width: 260px;
+    }
+
+    #tabela-relatorio-lancamentos td.col-fluxo,
+    #tabela-relatorio-lancamentos th.col-fluxo {
+        width: 290px;
+    }
+
+    #tabela-relatorio-lancamentos td.col-conta,
+    #tabela-relatorio-lancamentos th.col-conta {
+        width: 190px;
+    }
+
+    #tabela-relatorio-lancamentos td.col-doc,
+    #tabela-relatorio-lancamentos th.col-doc {
+        width: 130px;
+    }
+
+    #tabela-relatorio-lancamentos td.col-num,
+    #tabela-relatorio-lancamentos th.col-num {
+        width: 120px;
+    }
+
+    #tabela-relatorio-lancamentos td.col-obs,
+    #tabela-relatorio-lancamentos th.col-obs {
+        width: 420px;
+    }
+
+    .rel-lanc-hint {
+        color: #e2e8f0;
+    }
+
+    .rel-lanc-empty {
+        color: #334155 !important;
+        font-weight: 600;
+    }
+</style>
+<div class="container mt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 class="mb-0 rel-lanc-title">Relatório de Listagem de Lançamentos</h2>
+            <small class="rel-lanc-subtitle">Empresa: {{ empresa_nome }} {% if empresa_cnpj and empresa_cnpj != '-' %}| CNPJ: {{ empresa_cnpj }}{% endif %}</small>
+        </div>
+        <small class="rel-lanc-meta">Gerado em {{ gerado_em }}</small>
+    </div>
+
+    <form method="get" class="card card-body mb-3 rel-lanc-filter-card">
+        <div class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label">Lançamento de</label>
+                <input type="date" name="data_lanc_de" value="{{ data_lanc_de }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Lançamento até</label>
+                <input type="date" name="data_lanc_ate" value="{{ data_lanc_ate }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Vencimento de</label>
+                <input type="date" name="data_venc_de" value="{{ data_venc_de }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Vencimento até</label>
+                <input type="date" name="data_venc_ate" value="{{ data_venc_ate }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Processo</label>
+                <select name="tipo_movimento" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="P" {% if tipo_movimento == 'P' %}selected{% endif %}>Pagamentos (Saídas)</option>
+                    <option value="R" {% if tipo_movimento == 'R' %}selected{% endif %}>Recebimentos (Entradas)</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="aberto" {% if status == 'aberto' %}selected{% endif %}>Aberto</option>
+                    <option value="pago" {% if status == 'pago' %}selected{% endif %}>Pago</option>
+                    <option value="vencido" {% if status == 'vencido' %}selected{% endif %}>Vencido</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Conciliação</label>
+                <select name="conciliacao_status" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="conciliado" {% if conciliacao_status == 'conciliado' %}selected{% endif %}>Conciliado</option>
+                    <option value="nao_conciliado" {% if conciliacao_status == 'nao_conciliado' %}selected{% endif %}>Não conciliado</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Cliente/Fornecedor</label>
+                <select name="entidade_tipo" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="C" {% if entidade_tipo == 'C' %}selected{% endif %}>Cliente</option>
+                    <option value="F" {% if entidade_tipo == 'F' %}selected{% endif %}>Fornecedor</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Entidade específica</label>
+                <select name="entidade_id" class="form-select">
+                    <option value="">Todas</option>
+                    {% for entidade in entidades %}
+                    <option value="{{ entidade.id }}" {% if entidade_id == entidade.id %}selected{% endif %}>{{ entidade.nome }} ({{ entidade.get_tipo_descricao() }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Conta de fluxo de caixa</label>
+                <select name="conta_fluxo_id" class="form-select">
+                    <option value="">Todas</option>
+                    {% for conta in contas_fluxo %}
+                    <option value="{{ conta.id }}" {% if conta_fluxo_id == conta.id %}selected{% endif %}>{{ conta.codigo }} - {{ conta.descricao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                <a href="{{ url_for('relatorios.listagem_lancamentos') }}" class="btn btn-outline-secondary">Limpar</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="mb-3">
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Exportar
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.export_listagem_lancamentos', formato='xlsx', **request.args) }}">Excel (XLSX)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.export_listagem_lancamentos', formato='pdf', **request.args) }}">PDF</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+        {% if mostrar_pago %}
+        <div class="col-md-3">
+            <div class="rounded p-2 rel-lanc-total-card">
+                <small class="d-block rel-lanc-total-label">Total Pago</small>
+                <strong class="rel-lanc-total-value">R$ {{ total_pago|brl }}</strong>
+            </div>
+        </div>
+        {% endif %}
+        {% if mostrar_recebido %}
+        <div class="col-md-3">
+            <div class="rounded p-2 rel-lanc-total-card">
+                <small class="d-block rel-lanc-total-label">Total Recebido</small>
+                <strong class="rel-lanc-total-value">R$ {{ total_recebido|brl }}</strong>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive bg-white rounded border">
+        <table class="table table-sm table-hover mb-0 align-middle" id="tabela-relatorio-lancamentos">
+            <thead class="table-light">
+                <tr>
+                    <th class="col-center col-id">ID</th>
+                    <th class="col-empresa">Empresa</th>
+                    <th class="col-center col-status">Status</th>
+                    <th class="col-date">Dt. lançamento</th>
+                    <th class="col-date">Dt. vencimento</th>
+                    <th class="col-date">Dt. pagamento</th>
+                    <th class="col-entidade">Entidade</th>
+                    <th class="col-center col-tipo">Tipo</th>
+                    <th class="col-fluxo">Conta fluxo</th>
+                    <th class="col-conta">Conta banco</th>
+                    <th class="col-doc">Documento</th>
+                    <th class="col-num">Vlr. real</th>
+                    <th class="col-num">Vlr. pago/rec.</th>
+                    <th class="col-num">Impostos</th>
+                    <th class="col-num">Outros custos</th>
+                    <th class="col-center col-status">Conciliação</th>
+                    <th class="col-obs">Observações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lancamento in lancamentos %}
+                <tr class="linha-lancamento" data-url="{{ url_for('lancamentos.editar', id=lancamento.id) }}" title="Duplo clique para abrir manutenção">
+                    <td class="col-center col-id">{{ lancamento.id }}</td>
+                    <td class="col-empresa" title="{{ lancamento.empresa.nome if lancamento.empresa else '-' }}">{{ lancamento.empresa.nome if lancamento.empresa else '-' }}</td>
+                    <td class="col-center col-status">{{ lancamento.status|capitalize }}</td>
+                    <td class="col-date">{{ lancamento.data_evento.strftime('%d/%m/%Y') if lancamento.data_evento else '-' }}</td>
+                    <td class="col-date">{{ lancamento.data_vencimento.strftime('%d/%m/%Y') if lancamento.data_vencimento else '-' }}</td>
+                    <td class="col-date">{{ lancamento.data_pagamento.strftime('%d/%m/%Y') if lancamento.data_pagamento else '-' }}</td>
+                    <td class="col-entidade" title="{{ lancamento.entidade.nome if lancamento.entidade else '-' }}">{{ lancamento.entidade.nome if lancamento.entidade else '-' }}</td>
+                    <td class="col-center col-tipo">{{ lancamento.entidade.get_tipo_descricao() if lancamento.entidade else '-' }}</td>
+                    <td class="col-fluxo" title="{% if lancamento.fluxo_conta %}{{ lancamento.fluxo_conta.codigo }} - {{ lancamento.fluxo_conta.descricao }}{% else %}-{% endif %}">
+                        {% if lancamento.fluxo_conta %}
+                            {{ lancamento.fluxo_conta.codigo }} - {{ lancamento.fluxo_conta.descricao }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="col-conta" title="{{ lancamento.conta_banco.nome if lancamento.conta_banco else '-' }}">{{ lancamento.conta_banco.nome if lancamento.conta_banco else '-' }}</td>
+                    <td class="col-doc">{{ lancamento.numero_documento or '-' }}</td>
+                    <td class="col-num">R$ {{ lancamento.valor_real|brl }}</td>
+                       <td class="col-num">R$ {{ lancamento.valor_pago|brl }}</td>
+                    <td class="col-num">R$ {{ lancamento.valor_imposto|brl }}</td>
+                    <td class="col-num">R$ {{ lancamento.valor_outros_custos|brl }}</td>
+                    <td class="col-center col-status">
+                        {% if lancamento.conciliacao_status == 'conciliado' %}
+                            <span class="badge bg-success">Conciliado</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Não conciliado</span>
+                        {% endif %}
+                    </td>
+                    <td class="col-obs">{{ lancamento.observacoes or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="17" class="text-center py-4 rel-lanc-empty">Nenhum lançamento encontrado para os filtros informados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <small class="d-block mt-2 rel-lanc-hint">Dica: dê duplo clique em qualquer linha para abrir o lançamento e fazer manutenção.</small>
+</div>
+
+<script>
+(function () {
+    const rows = document.querySelectorAll('.linha-lancamento');
+    rows.forEach((row) => {
+        row.addEventListener('dblclick', () => {
+            const url = row.getAttribute('data-url');
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}
