@@ -206,9 +206,17 @@ INSERT INTO catalogo_planos_comercial (
     vigencia_inicio
 )
 SELECT * FROM (
-    SELECT 'basic', 'Basico', 1, 'mensal', 49.00, 'BRL', 2,
+    SELECT
+        'basic' AS codigo_plano,
+        'Basico' AS nome_exibicao,
+        1 AS versao_oferta,
+        'mensal' AS periodicidade,
+        49.00 AS preco,
+        'BRL' AS moeda,
+        2 AS limite_usuarios,
            '{"allow_advanced_cashflow_reports":false,"allow_imports":false,"allow_conciliation":false,"allow_commissions":false,"allow_governance":false}',
-           1, CURDATE()
+        1 AS ativo,
+        CURDATE() AS vigencia_inicio
     UNION ALL
     SELECT 'intermediate', 'Intermediario', 1, 'mensal', 129.00, 'BRL', 5,
            '{"allow_advanced_cashflow_reports":true,"allow_imports":true,"allow_conciliation":true,"allow_commissions":true,"allow_governance":false}',

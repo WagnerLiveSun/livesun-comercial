@@ -17,6 +17,15 @@ from config.config import config
 # Import models
 from src.models import db, User, Entidade, FluxoContaModel, ContaBanco, Lancamento, ConciliacaoBancaria, ConciliacaoItem
 from src.access_control import current_user_has_permission
+from src.services.planos import (
+    get_plan_config,
+    get_plan_label,
+    is_basic_plan,
+    is_intermediate_plan,
+    is_premium_plan,
+    plan_allows_endpoint,
+    normalize_plan,
+)
 
 # Setup logging
 import sys
@@ -33,27 +42,55 @@ logger = logging.getLogger(__name__)
 
 ENDPOINT_PERMISSION_MAP = {
     'dashboard.index': 'dashboard',
+
     'entidades.index': 'entidades',
+    'entidades.criar': 'entidades',
+    'entidades.editar': 'entidades',
+    'entidades.ver': 'entidades',
+    'entidades.deletar': 'entidades',
+    'entidades.api_search': 'entidades',
+
     'fluxo.index': 'fluxo',
+    'fluxo.criar': 'fluxo',
+    'fluxo.editar': 'fluxo',
+    'fluxo.deletar': 'fluxo',
+    'fluxo.api_search': 'fluxo',
+
     'contas_banco.index': 'contas_banco',
+    'contas_banco.criar': 'contas_banco',
+    'contas_banco.editar': 'contas_banco',
+    'contas_banco.ver': 'contas_banco',
+    'contas_banco.deletar': 'contas_banco',
+    'contas_banco.api_search': 'contas_banco',
+
     'lancamentos.index': 'lancamentos',
     'lancamentos.criar': 'lancamentos',
     'lancamentos.editar': 'lancamentos',
     'lancamentos.pagar': 'lancamentos',
     'lancamentos.deletar': 'lancamentos',
+
     'comissoes.listar': 'comissoes',
     'comissoes.apurar': 'comissoes',
     'comissoes.relatorio': 'comissoes',
     'comissoes.parametros': 'comissoes',
+    'comissoes.exportar_csv': 'comissoes',
+
     'relatorios.listagem_lancamentos': 'relatorios',
     'relatorios.export_listagem_lancamentos': 'relatorios',
     'relatorios.listagem_notas_nfse': 'relatorios',
     'relatorios.export_listagem_notas_nfse': 'relatorios',
     'relatorios.fluxo_caixa': 'relatorios',
     'relatorios.fluxo_caixa_csv': 'relatorios',
-    'relatorios.fluxo_caixa_export_xlsx': 'relatorios',
+    'relatorios.export_fluxo_caixa_csv': 'relatorios',
+    'relatorios.export_fluxo_caixa': 'relatorios',
+    'relatorios.fluxo_caixa_previsto': 'relatorios',
+    'relatorios.fluxo_caixa_realizado': 'relatorios',
+    'relatorio_fluxo.index': 'relatorios',
+    'relatorio_fluxo.exportar': 'relatorios',
+
     'importacoes.importar_nfse': 'importar_nfse',
     'importacoes.importar_ofx': 'importar_ofx',
+
     'conciliacao.index': 'conciliacao',
     'conciliacao.nova': 'conciliacao',
     'conciliacao.detalhe': 'conciliacao',
@@ -124,10 +161,12 @@ def create_app(config_name=None):
     from src.routes.fluxo import fluxo_bp
     from src.routes.contas_banco import contas_banco_bp
     from src.routes.lancamentos import lancamentos_bp
+    from src.routes.relatorio_fluxo import relatorio_fluxo_bp
     from src.routes.relatorios import relatorios_bp
     from src.routes.comissoes import comissoes_bp
     from src.routes.importacoes import importacoes_bp
     from src.routes.conciliacao import conciliacao_bp
+    from src.routes.comercial import comercial_webhook_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -135,10 +174,12 @@ def create_app(config_name=None):
     app.register_blueprint(fluxo_bp)
     app.register_blueprint(contas_banco_bp)
     app.register_blueprint(lancamentos_bp)
+    app.register_blueprint(relatorio_fluxo_bp)
     app.register_blueprint(relatorios_bp)
     app.register_blueprint(comissoes_bp)
     app.register_blueprint(importacoes_bp)
     app.register_blueprint(conciliacao_bp)
+    app.register_blueprint(comercial_webhook_bp)
 
     @app.route('/suporte')
     def suporte():
@@ -175,6 +216,13 @@ def create_app(config_name=None):
             'powered_by': 'LiveSun Controller',
             'safe_url_for': safe_url_for,
             'has_permission': current_user_has_permission,
+            'current_plan': normalize_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
+            'current_plan_label': get_plan_label(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
+            'current_plan_config': get_plan_config(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
+            'is_basic_plan': is_basic_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
+            'is_intermediate_plan': is_intermediate_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
+            'is_premium_plan': is_premium_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
+            'plan_allows_endpoint': lambda endpoint_name: plan_allows_endpoint(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium'), endpoint_name),
         }
 
     @app.before_request
@@ -187,12 +235,28 @@ def create_app(config_name=None):
         if not endpoint_name:
             return None
 
+        company_plan = normalize_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium'))
+        if not plan_allows_endpoint(company_plan, endpoint_name):
+            flash('Este recurso não está disponível no seu plano atual.', 'warning')
+            return redirect(url_for('dashboard.index'))
+
         permission_key = ENDPOINT_PERMISSION_MAP.get(endpoint_name)
         if not permission_key:
             return None
 
         if not current_user_has_permission(permission_key):
             flash('Acesso negado para este processo no seu papel atual.', 'danger')
+            return redirect(url_for('dashboard.index'))
+
+        # Viewer é estritamente leitura: bloqueia qualquer tentativa de escrita.
+        # Mantemos essa regra central para evitar lacunas em rotas individuais.
+        user_role = (getattr(current_user, 'role', 'viewer') or 'viewer').strip().lower()
+        if (
+            not getattr(current_user, 'is_admin', False)
+            and user_role == 'viewer'
+            and request.method in {'POST', 'PUT', 'PATCH', 'DELETE'}
+        ):
+            flash('Seu perfil Viewer possui acesso apenas para consulta (somente leitura).', 'warning')
             return redirect(url_for('dashboard.index'))
 
         return None
@@ -302,6 +366,13 @@ def _ensure_schema_compatibility():
             {
                 'dashboard_chart_days': 'dashboard_chart_days INTEGER DEFAULT 30',
                 'role': "role VARCHAR(20) DEFAULT 'viewer'"
+            }
+        )
+
+        _ensure_columns(
+            'empresas',
+            {
+                'plano': "plano VARCHAR(20) DEFAULT 'premium'"
             }
         )
 
