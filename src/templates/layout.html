@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LiveSun Controller - {% block title %}{% endblock %}</title>
 
+    <script>
+        (function () {
+            try {
+                var storedTheme = localStorage.getItem('ls-theme') || 'dark';
+                document.documentElement.setAttribute('data-theme', storedTheme);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
 
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3079088931491086"
@@ -26,9 +37,52 @@
             --ls-border-subtle: rgba(148, 163, 184, 0.25);
             --ls-text-main: #e5e7eb;
             --ls-text-muted: #9ca3af;
+            --ls-page-title: #f9fafb;
+            --ls-input-bg: rgba(15, 23, 42, 0.88);
+            --ls-input-border: rgba(148, 163, 184, 0.25);
+            --ls-input-disabled-bg: rgba(15, 23, 42, 0.58);
             --ls-primary: #2563eb;
             --ls-primary-soft: rgba(37, 99, 235, 0.2);
             --ls-accent: #22c55e;
+            --ls-topbar-bg: rgba(15, 23, 42, 0.98);
+            --ls-sidebar-bg: rgba(15, 23, 42, 0.98);
+            --ls-card-bg: rgba(15, 23, 42, 0.75);
+            --ls-text-strong: #f9fafb;
+            --ls-hover-bg: rgba(30, 64, 175, 0.55);
+            --ls-footer-bg: rgba(15, 23, 42, 0.98);
+            --ls-dropdown-bg: #0f172a;
+            --ls-dropdown-text: #e5e7eb;
+            --ls-alert-success-text: #86efac;
+            --ls-alert-danger-text: #fca5a5;
+            --ls-alert-warning-text: #fcd34d;
+            --ls-alert-info-text: #93c5fd;
+        }
+
+        :root[data-theme="light"] {
+            --ls-bg-main: #f3f6fb;
+            --ls-bg-elevated: #ffffff;
+            --ls-border-subtle: rgba(71, 85, 105, 0.22);
+            --ls-text-main: #0f172a;
+            --ls-text-muted: #475569;
+            --ls-page-title: #9fbfe8;
+            --ls-input-bg: rgba(255, 255, 255, 0.96);
+            --ls-input-border: rgba(100, 116, 139, 0.28);
+            --ls-input-disabled-bg: rgba(241, 245, 249, 0.96);
+            --ls-primary: #2563eb;
+            --ls-primary-soft: rgba(37, 99, 235, 0.16);
+            --ls-accent: #0ea5e9;
+            --ls-topbar-bg: rgba(255, 255, 255, 0.94);
+            --ls-sidebar-bg: rgba(255, 255, 255, 0.94);
+            --ls-card-bg: rgba(255, 255, 255, 0.9);
+            --ls-text-strong: #0f172a;
+            --ls-hover-bg: rgba(37, 99, 235, 0.12);
+            --ls-footer-bg: rgba(255, 255, 255, 0.94);
+            --ls-dropdown-bg: #ffffff;
+            --ls-dropdown-text: #0f172a;
+            --ls-alert-success-text: #166534;
+            --ls-alert-danger-text: #b91c1c;
+            --ls-alert-warning-text: #a16207;
+            --ls-alert-info-text: #1d4ed8;
         }
 
         body {
@@ -42,7 +96,151 @@
         }
 
         .text-muted {
-            color: #cbd5e1 !important;
+            color: var(--ls-text-muted) !important;
+        }
+
+        .ls-page-title {
+            color: var(--ls-page-title) !important;
+            letter-spacing: -0.03em;
+        }
+
+        /* Standardize internal page headings without bold weight */
+        .ls-content h1,
+        .ls-content h2,
+        .ls-content h3,
+        .ls-content h4,
+        .ls-content h5,
+        .ls-content h6 {
+            font-weight: 400 !important;
+        }
+
+        .form-control,
+        .form-select,
+        .form-check-input {
+            background-color: var(--ls-input-bg) !important;
+            border-color: var(--ls-input-border) !important;
+            color: var(--ls-text-main) !important;
+        }
+
+        .form-control::placeholder,
+        .form-select::placeholder {
+            color: var(--ls-text-muted) !important;
+            opacity: 1;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: var(--ls-input-bg) !important;
+            border-color: var(--ls-primary) !important;
+            color: var(--ls-text-main) !important;
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.2) !important;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly],
+        .form-select:disabled {
+            background-color: var(--ls-input-disabled-bg) !important;
+            color: var(--ls-text-muted) !important;
+        }
+
+        .ls-card .form-label,
+        .ls-card .col-form-label,
+        .ls-card .form-text {
+            color: var(--ls-text-muted);
+        }
+
+        .ls-theme-control {
+            background-color: var(--ls-input-bg) !important;
+            border-color: var(--ls-input-border) !important;
+            color: var(--ls-text-main) !important;
+        }
+
+        .ls-theme-control:focus {
+            background-color: var(--ls-input-bg) !important;
+            border-color: var(--ls-primary) !important;
+            color: var(--ls-text-main) !important;
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.2) !important;
+        }
+
+        .ls-theme-table {
+            color: var(--ls-text-main);
+            border-color: var(--ls-border-subtle);
+        }
+
+        .ls-theme-table th,
+        .ls-theme-table td {
+            border-color: var(--ls-border-subtle);
+            background-color: transparent;
+            color: var(--ls-text-main);
+        }
+
+        .ls-theme-table thead th {
+            color: var(--ls-text-strong);
+            font-weight: 600;
+        }
+
+        .ls-content .table thead th {
+            color: var(--ls-text-strong) !important;
+            font-weight: 600;
+        }
+
+        .ls-content .card-header h1,
+        .ls-content .card-header h2,
+        .ls-content .card-header h3,
+        .ls-content .card-header h4,
+        .ls-content .card-header h5,
+        .ls-content .card-header h6 {
+            color: var(--ls-text-strong);
+        }
+
+        .ls-theme-table.table-hover tbody tr:hover td {
+            background-color: var(--ls-primary-soft);
+        }
+
+        /* Normalize legacy Bootstrap classes to current theme */
+        .ls-content .table-dark,
+        .ls-content .table-dark th,
+        .ls-content .table-dark td {
+            background-color: transparent !important;
+            color: var(--ls-text-main) !important;
+            border-color: var(--ls-border-subtle) !important;
+        }
+
+        .ls-content .table-dark thead th {
+            color: var(--ls-text-strong) !important;
+        }
+
+        .ls-content .table-dark.table-hover tbody tr:hover td {
+            background-color: var(--ls-primary-soft) !important;
+        }
+
+        .ls-content .bg-light,
+        .ls-content .card.bg-light,
+        .ls-content .table-light,
+        .ls-content .table-light th,
+        .ls-content .table-light td,
+        .ls-content .card-header.bg-light {
+            background-color: rgba(148, 163, 184, 0.12) !important;
+            color: var(--ls-text-main) !important;
+            border-color: var(--ls-border-subtle) !important;
+        }
+
+        .ls-content .table-light thead th,
+        .ls-content .table-light th {
+            color: var(--ls-text-strong) !important;
+            font-weight: 600;
+        }
+
+        .ls-content .btn-outline-light {
+            color: var(--ls-text-main) !important;
+            border-color: var(--ls-border-subtle) !important;
+            background-color: transparent !important;
+        }
+
+        .ls-content .btn-outline-light:hover {
+            background-color: var(--ls-primary-soft) !important;
+            color: var(--ls-text-main) !important;
+            border-color: var(--ls-primary) !important;
         }
 
         .ls-shell {
@@ -53,7 +251,7 @@
 
         .ls-topbar {
             border-bottom: 1px solid var(--ls-border-subtle);
-            background-color: rgba(15, 23, 42, 0.98);
+            background-color: var(--ls-topbar-bg);
             backdrop-filter: blur(12px);
             z-index: 1030;
             padding: 1rem;
@@ -63,7 +261,7 @@
             font-weight: 600;
             letter-spacing: -0.03em;
             font-size: 18px;
-            color: #f9fafb;
+            color: var(--ls-text-strong);
         }
 
         .ls-topbar .nav-link {
@@ -73,7 +271,7 @@
 
         .ls-topbar .nav-link:hover,
         .ls-topbar .nav-link.active {
-            color: #f9fafb !important;
+            color: var(--ls-text-strong) !important;
         }
 
         .ls-layout {
@@ -85,7 +283,7 @@
         .ls-sidebar {
             width: 240px;
             border-right: 1px solid var(--ls-border-subtle);
-            background-color: rgba(15, 23, 42, 0.98);
+            background-color: var(--ls-sidebar-bg);
             padding: 16px 12px;
             overflow-y: auto;
             display: flex;
@@ -144,8 +342,8 @@
         }
 
         .ls-sidebar-link:hover {
-            background-color: rgba(30, 64, 175, 0.55);
-            color: #f9fafb;
+            background-color: var(--ls-hover-bg);
+            color: var(--ls-text-strong);
             transform: translateX(2px);
         }
 
@@ -171,11 +369,37 @@
         }
 
         .ls-card {
-            background-color: rgba(15, 23, 42, 0.75);
+            background-color: var(--ls-card-bg);
             border: 1px solid rgba(148, 163, 184, 0.35);
             border-radius: 12px;
             backdrop-filter: blur(8px);
             transition: all 0.2s ease;
+        }
+
+        .dropdown-menu {
+            background-color: var(--ls-dropdown-bg);
+            color: var(--ls-dropdown-text);
+            border: 1px solid var(--ls-border-subtle);
+        }
+
+        .dropdown-item {
+            color: var(--ls-dropdown-text);
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--ls-primary-soft);
+            color: var(--ls-dropdown-text);
+        }
+
+        .theme-toggle-btn {
+            border: 1px solid var(--ls-border-subtle);
+            color: var(--ls-text-main);
+            background: transparent;
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--ls-primary-soft);
+            color: var(--ls-text-main);
         }
 
         .ls-card:hover {
@@ -202,30 +426,30 @@
 
         .alert-success {
             background-color: rgba(34, 197, 94, 0.1);
-            color: #86efac;
+            color: var(--ls-alert-success-text);
             border: 1px solid rgba(34, 197, 94, 0.3);
         }
 
         .alert-danger {
             background-color: rgba(239, 68, 68, 0.1);
-            color: #fca5a5;
+            color: var(--ls-alert-danger-text);
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .alert-warning {
             background-color: rgba(245, 158, 11, 0.1);
-            color: #fcd34d;
+            color: var(--ls-alert-warning-text);
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
         .alert-info {
             background-color: rgba(59, 130, 246, 0.1);
-            color: #93c5fd;
+            color: var(--ls-alert-info-text);
             border: 1px solid rgba(59, 130, 246, 0.3);
         }
 
         .ls-footer {
-            background: rgba(15, 23, 42, 0.98);
+            background: var(--ls-footer-bg);
             border-top: 1px solid #334155;
             padding: 14px 0;
         }
@@ -257,14 +481,20 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item me-2">
+                            <button id="theme-toggle" class="btn btn-sm theme-toggle-btn" type="button" title="Alternar tema">
+                                <i class="fas fa-sun" id="theme-toggle-icon"></i>
+                                <span id="theme-toggle-label">Claro</span>
+                            </button>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-user-circle"></i> {{ current_user.full_name or current_user.username }}
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="userDropdown">
+                            <ul class="dropdown-menu" aria-labelledby="userDropdown">
                                 {% if current_user.is_admin %}
                                     <li><a class="dropdown-item" href="{{ safe_url_for('auth.perfil') or '#' }}">Perfil</a></li>
-                                    {% if has_permission('usuarios') %}
+                                    {% if has_permission('usuarios') and plan_allows_endpoint('auth.add_user') %}
                                         {% set add_user_url = safe_url_for('auth.add_user') %}
                                         <li><a class="dropdown-item" href="{{ add_user_url or '#' }}">Adicionar Usuário</a></li>
                                     {% endif %}
@@ -283,19 +513,45 @@
         <div class="ls-layout">
             <!-- Sidebar -->
             <aside class="ls-sidebar">
+                {% set show_dashboard = has_permission('dashboard') %}
+                {% set show_add_user = current_user.is_admin and has_permission('usuarios') and plan_allows_endpoint('auth.add_user') %}
+                {% set show_controle_acesso = current_user.is_admin and has_permission('controle_acesso') and plan_allows_endpoint('auth.controle_acesso') %}
+                {% set show_menu_principal = show_dashboard or show_add_user or show_controle_acesso %}
+
+                {% set show_entidades = has_permission('entidades') %}
+                {% set show_fluxo = has_permission('fluxo') and plan_allows_endpoint('fluxo.index') %}
+                {% set show_contas_banco = has_permission('contas_banco') %}
+                {% set show_cadastros = show_entidades or show_fluxo or show_contas_banco %}
+
+                {% set show_lancamentos = has_permission('lancamentos') %}
+
+                {% set show_comissoes = has_permission('comissoes') and plan_allows_endpoint('comissoes.listar') %}
+
+                {% set show_relatorios = has_permission('relatorios') and (
+                    plan_allows_endpoint('relatorios.fluxo_caixa') or
+                    plan_allows_endpoint('relatorios.fluxo_caixa_csv') or
+                    plan_allows_endpoint('relatorios.listagem_lancamentos') or
+                    plan_allows_endpoint('relatorios.listagem_notas_nfse')
+                ) %}
+
+                {% set show_import_nfse = has_permission('importar_nfse') and plan_allows_endpoint('importacoes.importar_nfse') %}
+                {% set show_import_ofx = has_permission('importar_ofx') and plan_allows_endpoint('importacoes.importar_ofx') %}
+                {% set show_conciliacao = has_permission('conciliacao') and plan_allows_endpoint('conciliacao.index') %}
+                {% set show_importacao = show_import_nfse or show_import_ofx or show_conciliacao %}
+
+                {% if show_menu_principal %}
                 <div class="ls-sidebar-section-label">
                     <i class="fas fa-home"></i> Menu Principal
                 </div>
                 <ul class="ls-sidebar-nav">
                     <li>
-                        {% if has_permission('dashboard') %}
+                        {% if show_dashboard %}
                             <a class="ls-sidebar-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" href="{{ url_for('dashboard.index') }}">
                                 <i class="fas fa-chart-pie"></i> Dashboard
                             </a>
                         {% endif %}
                     </li>
-                    {% if current_user.is_admin %}
-                    {% if has_permission('usuarios') %}
+                    {% if show_add_user %}
                         {% set add_user_url = safe_url_for('auth.add_user') %}
                         <li>
                             <a class="ls-sidebar-link {% if request.endpoint == 'auth.add_user' %}active{% endif %}" href="{{ add_user_url or '#' }}">
@@ -303,7 +559,7 @@
                             </a>
                         </li>
                     {% endif %}
-                    {% if has_permission('controle_acesso') %}
+                    {% if show_controle_acesso %}
                         {% set controle_acesso_url = safe_url_for('auth.controle_acesso') %}
                         <li>
                             <a class="ls-sidebar-link {% if request.endpoint == 'auth.controle_acesso' %}active{% endif %}" href="{{ controle_acesso_url or '#' }}">
@@ -311,28 +567,29 @@
                             </a>
                         </li>
                     {% endif %}
-                    {% endif %}
                 </ul>
+                {% endif %}
 
+                {% if show_cadastros %}
                 <div class="ls-sidebar-section-label">
                     <i class="fas fa-database"></i> Cadastros
                 </div>
                 <ul class="ls-sidebar-nav">
-                    {% if has_permission('entidades') %}
+                    {% if show_entidades %}
                         <li>
                             <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('entidades') %}active{% endif %}" href="{{ url_for('entidades.index') }}">
                                 <i class="fas fa-users"></i> Entidades
                             </a>
                         </li>
                     {% endif %}
-                    {% if has_permission('fluxo') %}
+                    {% if show_fluxo %}
                         <li>
                             <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('fluxo') %}active{% endif %}" href="{{ url_for('fluxo.index') }}">
                                 <i class="fas fa-stream"></i> Fluxo Caixa
                             </a>
                         </li>
                     {% endif %}
-                    {% if has_permission('contas_banco') %}
+                    {% if show_contas_banco %}
                         <li>
                             <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('contas_banco') %}active{% endif %}" href="{{ url_for('contas_banco.index') }}">
                                 <i class="fas fa-university"></i> Contas Banco
@@ -340,12 +597,14 @@
                         </li>
                     {% endif %}
                 </ul>
+                {% endif %}
 
+                {% if show_lancamentos %}
                 <div class="ls-sidebar-section-label">
                     <i class="fas fa-exchange-alt"></i> Movimentação
                 </div>
                 <ul class="ls-sidebar-nav">
-                    {% if has_permission('lancamentos') %}
+                    {% if show_lancamentos %}
                         <li>
                             <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('lancamentos') %}active{% endif %}" href="{{ url_for('lancamentos.index') }}">
                                 <i class="fas fa-receipt"></i> Lançamentos
@@ -353,12 +612,14 @@
                         </li>
                     {% endif %}
                 </ul>
+                {% endif %}
 
+                {% if show_comissoes %}
                 <div class="ls-sidebar-section-label">
                     <i class="fas fa-percent"></i> Comissões
                 </div>
                 <ul class="ls-sidebar-nav">
-                    {% if has_permission('comissoes') %}
+                    {% if show_comissoes %}
                         <li>
                             <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comissoes') and request.endpoint != 'comissoes.apurar' and request.endpoint != 'comissoes.relatorio' and request.endpoint != 'comissoes.parametros' %}active{% endif %}" href="{{ url_for('comissoes.listar') }}">
                                 <i class="fas fa-list"></i> Comissões
@@ -381,54 +642,62 @@
                         </li>
                     {% endif %}
                 </ul>
+                {% endif %}
 
+                {% if show_relatorios %}
                 <div class="ls-sidebar-section-label">
                     <i class="fas fa-chart-bar"></i> Relatórios
                 </div>
                 <ul class="ls-sidebar-nav">
-                    {% if has_permission('relatorios') %}
+                    {% if show_relatorios %}
+                        {% if plan_allows_endpoint('relatorio_fluxo.index') %}
                         <li>
-                            <a class="ls-sidebar-link" href="{{ url_for('relatorios.fluxo_caixa') }}">
+                            <a class="ls-sidebar-link {% if request.endpoint == 'relatorio_fluxo.index' %}active{% endif %}" href="{{ url_for('relatorio_fluxo.index') }}">
                                 <i class="fas fa-stream"></i> Fluxo Caixa
                             </a>
                         </li>
+                        {% endif %}
+                        {% if plan_allows_endpoint('relatorios.fluxo_caixa_csv') %}
                         <li>
-                            <a class="ls-sidebar-link" href="{{ url_for('relatorios.fluxo_caixa_csv') }}">
+                            <a class="ls-sidebar-link {% if request.endpoint == 'relatorios.fluxo_caixa_csv' %}active{% endif %}" href="{{ url_for('relatorios.fluxo_caixa_csv') }}">
                                 <i class="fas fa-file-excel"></i> Listagem de Fluxo de Caixa
                             </a>
                         </li>
+                        {% endif %}
                         <li>
-                            <a class="ls-sidebar-link" href="{{ url_for('relatorios.listagem_lancamentos') }}">
+                            <a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_lancamentos' %}active{% endif %}" href="{{ url_for('relatorios.listagem_lancamentos') }}">
                                 <i class="fas fa-list"></i> Listagem de Lançamentos
                             </a>
                         </li>
                         <li>
-                            <a class="ls-sidebar-link" href="{{ url_for('relatorios.listagem_notas_nfse') }}">
+                            <a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_notas_nfse' %}active{% endif %}" href="{{ url_for('relatorios.listagem_notas_nfse') }}">
                                 <i class="fas fa-file-invoice"></i> Listagem de Notas NFSe
                             </a>
                         </li>
                     {% endif %}
-                    </ul>
+                </ul>
+                {% endif %}
 
+                {% if show_importacao %}
                     <div class="ls-sidebar-section-label">
                         <i class="fas fa-file-import"></i> Importação
                     </div>
                     <ul class="ls-sidebar-nav">
-                        {% if has_permission('importar_nfse') %}
+                        {% if show_import_nfse %}
                             <li>
                                 <a class="ls-sidebar-link {% if request.endpoint == 'importacoes.importar_nfse' %}active{% endif %}" href="{{ url_for('importacoes.importar_nfse') }}">
                                     <i class="fas fa-file-upload"></i> Importação de XML (NFSe)
                                 </a>
                             </li>
                         {% endif %}
-                        {% if has_permission('importar_ofx') %}
+                        {% if show_import_ofx %}
                             <li>
                                 <a class="ls-sidebar-link {% if request.endpoint == 'importacoes.importar_ofx' %}active{% endif %}" href="{{ url_for('importacoes.importar_ofx') }}">
                                     <i class="fas fa-file-invoice-dollar"></i> Importação OFX
                                 </a>
                             </li>
                         {% endif %}
-                        {% if has_permission('conciliacao') %}
+                        {% if show_conciliacao %}
                             <li>
                                 <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('conciliacao.') %}active{% endif %}" href="{{ url_for('conciliacao.index') }}">
                                     <i class="fas fa-link"></i> Conciliação Bancária
@@ -436,10 +705,11 @@
                             </li>
                         {% endif %}
                 </ul>
+                {% endif %}
 
                 <div class="ls-sidebar-footer">
                     {{ powered_by }}<br>
-                    v1.0.0
+                    v2.0.0
                 </div>
             </aside>
 
@@ -451,12 +721,7 @@
                         {% for category, message in messages %}
                             <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
                                 {{ message }}
-                    <li>
-                        <a class="ls-sidebar-link {% if request.endpoint == 'suporte' %}active{% endif %}" href="{{ url_for('suporte') }}">
-                            <i class="fas fa-headset"></i> Suporte
-                        </a>
-                    </li>
-                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
                             </div>
                         {% endfor %}
                     {% endif %}
@@ -493,6 +758,41 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        (function () {
+            const root = document.documentElement;
+            const button = document.getElementById('theme-toggle');
+            const icon = document.getElementById('theme-toggle-icon');
+            const label = document.getElementById('theme-toggle-label');
+
+            function syncThemeUi(theme) {
+                if (!icon || !label) return;
+                if (theme === 'light') {
+                    icon.className = 'fas fa-moon';
+                    label.textContent = 'Escuro';
+                } else {
+                    icon.className = 'fas fa-sun';
+                    label.textContent = 'Claro';
+                }
+            }
+
+            const initialTheme = root.getAttribute('data-theme') || 'dark';
+            syncThemeUi(initialTheme);
+
+            if (button) {
+                button.addEventListener('click', function () {
+                    const current = root.getAttribute('data-theme') || 'dark';
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    root.setAttribute('data-theme', next);
+                    try {
+                        localStorage.setItem('ls-theme', next);
+                    } catch (e) {
+                    }
+                    syncThemeUi(next);
+                });
+            }
+        })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
