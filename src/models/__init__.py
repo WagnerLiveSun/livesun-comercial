@@ -32,7 +32,7 @@ class Entidade(db.Model):
     ativo = db.Column(db.Boolean, default=True)
 
     def get_tipo_descricao(self):
-        """Retorna a descrição do tipo da entidade (C=Cliente, F=Fornecedor, V=Vendedor, L=Colaborador, etc)."""
+        """Retorna a descrição do tipo da entidade (C=Cliente, F=Fornecedor, V=Vendedor, L=Funcionário, etc)."""
         if self.tipo == 'C':
             return 'Cliente'
         elif self.tipo == 'F':
@@ -40,7 +40,7 @@ class Entidade(db.Model):
         elif self.tipo == 'V':
             return 'Vendedor'
         elif self.tipo == 'L':
-            return 'Colaborador'
+            return 'Funcionário'
         elif self.tipo:
             return self.tipo
         return 'Não definido'
@@ -129,11 +129,13 @@ class Empresa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(150), nullable=False, unique=True)
     cnpj = db.Column(db.String(18), unique=True)
+    plano = db.Column(db.String(20), nullable=False, default='premium')
     criado_em = db.Column(db.DateTime, default=_utcnow)
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
     def __repr__(self):
         return f'<Empresa {self.nome}>'
+
 
 class Comissao(db.Model):
     """Commission Records - Registro de Comissões"""
@@ -263,6 +265,19 @@ class FluxoContaModel(db.Model):
     
     # Relacionamentos
     lancamentos = db.relationship('Lancamento', backref='fluxo_conta', lazy='dynamic')
+
+    def is_pagamento(self):
+        return self.tipo == 'P'
+
+    def is_recebimento(self):
+        return self.tipo == 'R'
+
+    def get_tipo_descricao(self):
+        if self.tipo == 'P':
+            return 'Pagamento'
+        if self.tipo == 'R':
+            return 'Recebimento'
+        return self.tipo or 'Não definido'
     
     def __repr__(self):
         return f'<FluxoContaModel {self.codigo} - {self.descricao}>'
@@ -476,5 +491,211 @@ class ConciliacaoItem(db.Model):
 
     def __repr__(self):
         return f'<ConciliacaoItem {self.id} - {self.status}>'
+
+
+class CatalogoPlanoComercial(db.Model):
+    """Catalogo versionado de ofertas comerciais por plano e periodicidade."""
+    __tablename__ = 'catalogo_planos_comercial'
+
+    id = db.Column(db.Integer, primary_key=True)
+    codigo_plano = db.Column(db.String(30), nullable=False, index=True)  # basic, intermediate, premium
+    nome_exibicao = db.Column(db.String(80), nullable=False)
+    versao_oferta = db.Column(db.Integer, nullable=False, default=1, index=True)
+    periodicidade = db.Column(db.String(20), nullable=False, default='mensal', index=True)  # mensal, anual
+    preco = db.Column(db.Numeric(10, 2), nullable=False)
+    moeda = db.Column(db.String(10), nullable=False, default='BRL')
+    limite_usuarios = db.Column(db.Integer, nullable=True)
+    recursos_json = db.Column(db.Text, nullable=True)
+    ativo = db.Column(db.Boolean, nullable=False, default=True, index=True)
+    vigencia_inicio = db.Column(db.Date, nullable=True)
+    vigencia_fim = db.Column(db.Date, nullable=True)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('codigo_plano', 'periodicidade', 'versao_oferta', name='uq_catalogo_plano_periodo_versao'),
+    )
+
+    def __repr__(self):
+        return f'<CatalogoPlanoComercial {self.codigo_plano}/{self.periodicidade} v{self.versao_oferta}>'
+
+
+class AssinaturaEmpresa(db.Model):
+    """Estado comercial atual da assinatura por empresa."""
+    __tablename__ = 'assinatura_empresa'
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, unique=True, index=True)
+    empresa = db.relationship('Empresa', backref='assinatura_atual')
+
+    catalogo_plano_id = db.Column(db.Integer, db.ForeignKey('catalogo_planos_comercial.id'), nullable=True, index=True)
+    catalogo_plano = db.relationship('CatalogoPlanoComercial', foreign_keys=[catalogo_plano_id])
+
+    plano_codigo = db.Column(db.String(30), nullable=False, default='premium', index=True)
+    ciclo_cobranca = db.Column(db.String(20), nullable=False, default='mensal')
+    status = db.Column(db.String(20), nullable=False, default='trial', index=True)  # ativa, trial, suspensa, cancelada
+    gateway = db.Column(db.String(30), nullable=False, default='asaas', index=True)
+    gateway_customer_id = db.Column(db.String(120), nullable=True, index=True)
+    gateway_subscription_id = db.Column(db.String(120), nullable=True, index=True)
+
+    data_inicio = db.Column(db.Date, nullable=False)
+    data_vencimento = db.Column(db.Date, nullable=False, index=True)
+    data_renovacao = db.Column(db.Date, nullable=True, index=True)
+    data_fim_trial = db.Column(db.Date, nullable=True, index=True)
+    carencia_dias = db.Column(db.Integer, nullable=False, default=7)
+    data_limite_carencia = db.Column(db.Date, nullable=True, index=True)
+
+    bloqueio_nivel = db.Column(db.String(20), nullable=False, default='nenhum')  # nenhum, parcial, total
+    bloqueado_desde = db.Column(db.DateTime, nullable=True)
+    motivo_status = db.Column(db.String(255), nullable=True)
+
+    politica_efetivacao_dias = db.Column(db.Integer, nullable=False, default=30)
+    proximo_plano_codigo = db.Column(db.String(30), nullable=True)
+    mudanca_plano_solicitada_em = db.Column(db.DateTime, nullable=True)
+    mudanca_plano_efetivar_em = db.Column(db.DateTime, nullable=True, index=True)
+
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    def __repr__(self):
+        return f'<AssinaturaEmpresa empresa={self.empresa_id} status={self.status} plano={self.plano_codigo}>'
+
+
+class CobrancaRecorrente(db.Model):
+    """Cobrancas recorrentes geradas para uma assinatura."""
+    __tablename__ = 'cobranca_recorrente'
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    empresa = db.relationship('Empresa', backref='cobrancas_recorrentes')
+
+    assinatura_id = db.Column(db.Integer, db.ForeignKey('assinatura_empresa.id'), nullable=False, index=True)
+    assinatura = db.relationship('AssinaturaEmpresa', backref='cobrancas')
+
+    gateway = db.Column(db.String(30), nullable=False, default='asaas', index=True)
+    gateway_cobranca_id = db.Column(db.String(120), nullable=True, unique=True)
+    referencia_interna = db.Column(db.String(120), nullable=False, unique=True)
+
+    competencia_ano = db.Column(db.Integer, nullable=False, index=True)
+    competencia_mes = db.Column(db.Integer, nullable=False, index=True)
+    periodicidade = db.Column(db.String(20), nullable=False, default='mensal')
+
+    valor_previsto = db.Column(db.Numeric(10, 2), nullable=False)
+    valor_pago = db.Column(db.Numeric(10, 2), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='pendente', index=True)  # pendente, pago, vencido, falhou, cancelado, estornado
+
+    data_emissao = db.Column(db.Date, nullable=True)
+    data_vencimento = db.Column(db.Date, nullable=False, index=True)
+    data_pagamento = db.Column(db.DateTime, nullable=True)
+
+    tentativas_pagamento = db.Column(db.Integer, nullable=False, default=0)
+    ultimo_erro = db.Column(db.String(255), nullable=True)
+    payload_gateway = db.Column(db.Text, nullable=True)
+
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        db.Index('idx_cobranca_empresa_status_venc', 'empresa_id', 'status', 'data_vencimento'),
+    )
+
+    def __repr__(self):
+        return f'<CobrancaRecorrente {self.id} empresa={self.empresa_id} status={self.status}>'
+
+
+class EventoCobranca(db.Model):
+    """Eventos de webhook/auditoria de cobranca com idempotencia por event_id externo."""
+    __tablename__ = 'evento_cobranca'
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=True, index=True)
+    empresa = db.relationship('Empresa', backref='eventos_cobranca')
+
+    assinatura_id = db.Column(db.Integer, db.ForeignKey('assinatura_empresa.id'), nullable=True, index=True)
+    assinatura = db.relationship('AssinaturaEmpresa', foreign_keys=[assinatura_id])
+
+    cobranca_id = db.Column(db.Integer, db.ForeignKey('cobranca_recorrente.id'), nullable=True, index=True)
+    cobranca = db.relationship('CobrancaRecorrente', foreign_keys=[cobranca_id])
+
+    gateway = db.Column(db.String(30), nullable=False, default='asaas', index=True)
+    event_id_externo = db.Column(db.String(150), nullable=False)
+    tipo_evento = db.Column(db.String(80), nullable=False, index=True)
+    status_processamento = db.Column(db.String(20), nullable=False, default='recebido', index=True)  # recebido, processado, ignorado, erro
+
+    recebido_em = db.Column(db.DateTime, default=_utcnow, index=True)
+    processado_em = db.Column(db.DateTime, nullable=True)
+    payload = db.Column(db.Text, nullable=True)
+    mensagem_erro = db.Column(db.String(255), nullable=True)
+
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('gateway', 'event_id_externo', name='uq_evento_cobranca_gateway_evento'),
+    )
+
+    def __repr__(self):
+        return f'<EventoCobranca {self.gateway}:{self.event_id_externo} {self.status_processamento}>'
+
+
+class HistoricoMudancaPlano(db.Model):
+    """Historico de solicitacao e efetivacao de upgrade/downgrade."""
+    __tablename__ = 'historico_mudanca_plano'
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    empresa = db.relationship('Empresa', backref='historico_mudancas_plano')
+
+    assinatura_id = db.Column(db.Integer, db.ForeignKey('assinatura_empresa.id'), nullable=False, index=True)
+    assinatura = db.relationship('AssinaturaEmpresa', backref='historico_mudancas')
+
+    plano_origem = db.Column(db.String(30), nullable=False)
+    plano_destino = db.Column(db.String(30), nullable=False)
+    tipo_mudanca = db.Column(db.String(20), nullable=False, index=True)  # upgrade, downgrade, lateral, manual
+    regra_efetivacao = db.Column(db.String(30), nullable=False, default='apos_30_dias')
+
+    solicitado_em = db.Column(db.DateTime, default=_utcnow, index=True)
+    efetivado_em = db.Column(db.DateTime, nullable=True, index=True)
+
+    solicitado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    solicitado_por = db.relationship('User', foreign_keys=[solicitado_por_user_id])
+    executado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    executado_por = db.relationship('User', foreign_keys=[executado_por_user_id])
+
+    observacoes = db.Column(db.Text, nullable=True)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    def __repr__(self):
+        return f'<HistoricoMudancaPlano empresa={self.empresa_id} {self.plano_origem}->{self.plano_destino}>'
+
+
+class NotificacaoComercial(db.Model):
+    """Fila e historico de comunicacoes comerciais."""
+    __tablename__ = 'notificacao_comercial'
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    empresa = db.relationship('Empresa', backref='notificacoes_comerciais')
+
+    assinatura_id = db.Column(db.Integer, db.ForeignKey('assinatura_empresa.id'), nullable=True, index=True)
+    assinatura = db.relationship('AssinaturaEmpresa', foreign_keys=[assinatura_id])
+
+    tipo = db.Column(db.String(50), nullable=False, index=True)  # pre_vencimento, falha_pagamento, reativacao, bloqueio
+    canal = db.Column(db.String(20), nullable=False, default='email')  # email, sistema
+    destinatario = db.Column(db.String(150), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='pendente', index=True)  # pendente, enviada, falha, cancelada
+
+    agendada_para = db.Column(db.DateTime, nullable=True, index=True)
+    enviada_em = db.Column(db.DateTime, nullable=True)
+    tentativas = db.Column(db.Integer, nullable=False, default=0)
+    erro = db.Column(db.String(255), nullable=True)
+    payload = db.Column(db.Text, nullable=True)
+
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    def __repr__(self):
+        return f'<NotificacaoComercial empresa={self.empresa_id} tipo={self.tipo} status={self.status}>'
 
 
