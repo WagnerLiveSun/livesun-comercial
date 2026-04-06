@@ -3,6 +3,7 @@
 
 from src.app import create_app
 from src.models import db, Empresa, FluxoContaModel
+from src.services.categorias_lancamento import garantir_categorias_padrao, tipo_por_codigo_fluxo
 from sqlalchemy.exc import IntegrityError
 
 # Estrutura do plano de contas padrão (baseado no CSV fornecido)
@@ -52,12 +53,15 @@ def inserir_plano_padrao_para_todas_empresas():
     with app.app_context():
         empresas = Empresa.query.all()
         for empresa in empresas:
+            categorias = garantir_categorias_padrao(empresa.id)
             for codigo, descricao, tipo, mascara, nivel_sintetico, nivel_analitico in PLANO_PADRAO:
                 # Evita duplicidade
                 existe = FluxoContaModel.query.filter_by(empresa_id=empresa.id, codigo=codigo).first()
                 if not existe:
+                    categoria = categorias.get(tipo_por_codigo_fluxo(codigo) or tipo)
                     conta = FluxoContaModel(
                         empresa_id=empresa.id,
+                        categoria_id=categoria.id if categoria else None,
                         codigo=codigo,
                         descricao=descricao,
                         tipo=tipo,

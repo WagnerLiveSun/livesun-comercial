@@ -51,6 +51,12 @@ class SimpleRateLimiter:
                 if not current_app.config.get('RATELIMIT_ENABLED', True):
                     return view_func(*args, **kwargs)
 
+                # Evita loop de redirect com flash em páginas de formulário.
+                # Para login/cadastro/ações administrativas, o limite deve atuar nas
+                # tentativas de escrita (POST/PUT/PATCH/DELETE), não no GET de tela.
+                if request.method in {'GET', 'HEAD', 'OPTIONS'}:
+                    return view_func(*args, **kwargs)
+
                 key = self._client_key(request.endpoint or view_func.__name__)
                 now = monotonic()
                 cutoff = now - window_seconds

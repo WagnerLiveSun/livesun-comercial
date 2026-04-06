@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold" style="color: #f9fafb;">{{ entidade.nome }}</h2>
+    <h2 class="fw-bold ls-page-title">{{ entidade.nome }}</h2>
     <div>
         <a href="{{ url_for('entidades.editar', id=entidade.id) }}" class="btn btn-outline-primary">
             <i class="fas fa-edit"></i> Editar
@@ -19,7 +19,7 @@
     <!-- Informações Principal -->
     <div class="col-md-6 mb-4">
         <div class="ls-card p-4">
-            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+            <h5 class="ls-page-title" style="margin-bottom: 1.5rem;">
                 <i class="fas fa-info-circle" style="color: var(--ls-accent);"></i> Informações Principais
             </h5>
             
@@ -57,7 +57,7 @@
     <!-- Endereço -->
     <div class="col-md-6 mb-4">
         <div class="ls-card p-4">
-            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+            <h5 class="ls-page-title" style="margin-bottom: 1.5rem;">
                 <i class="fas fa-map-marker-alt" style="color: var(--ls-accent);"></i> Endereço
             </h5>
             
@@ -78,7 +78,7 @@
     <!-- Contato -->
     <div class="col-md-6 mb-4">
         <div class="ls-card p-4">
-            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+            <h5 class="ls-page-title" style="margin-bottom: 1.5rem;">
                 <i class="fas fa-phone" style="color: var(--ls-accent);"></i> Contato
             </h5>
             
@@ -103,7 +103,7 @@
     <!-- Contrato/Produto -->
     <div class="col-md-6 mb-4">
         <div class="ls-card p-4">
-            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+            <h5 class="ls-page-title" style="margin-bottom: 1.5rem;">
                 <i class="fas fa-file-contract" style="color: var(--ls-accent);"></i> Contrato/Produto
             </h5>
             <p style="color: #e5e7eb; white-space: pre-wrap;">{{ entidade.contrato_produto or 'Não informado' }}</p>
@@ -114,7 +114,7 @@
     {% if entidade.tipo == 'C' %}
     <div class="col-md-12 mb-4">
         <div class="ls-card p-4">
-            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+            <h5 class="ls-page-title" style="margin-bottom: 1.5rem;">
                 <i class="fas fa-percent" style="color: var(--ls-accent);"></i> Configurações de Comissão
             </h5>
             <div class="row">
@@ -158,7 +158,7 @@
 
 <!-- Últimos Lançamentos -->
 <div class="ls-card p-4">
-    <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+    <h5 class="ls-page-title" style="margin-bottom: 1.5rem;">
         <i class="fas fa-history" style="color: var(--ls-accent);"></i> Últimos Lançamentos
     </h5>
     

@@ -45,6 +45,19 @@ class Config:
     # Security
     SESSION_TIMEOUT = int(os.environ.get('SESSION_TIMEOUT', 3600))
 
+    # Asaas (Billing)
+    ASAAS_ENABLED = os.environ.get('ASAAS_ENABLED', 'false').lower() == 'true'
+    ASAAS_API_KEY = os.environ.get('ASAAS_API_KEY', '')
+    ASAAS_BASE_URL = os.environ.get('ASAAS_BASE_URL', 'https://sandbox.asaas.com/api/v3')
+    ASAAS_TIMEOUT_SECONDS = int(os.environ.get('ASAAS_TIMEOUT_SECONDS', 15))
+    ASAAS_BILLING_TYPE = os.environ.get('ASAAS_BILLING_TYPE', 'BOLETO').upper()
+    ASSINATURA_TRIAL_DIAS = int(os.environ.get('ASSINATURA_TRIAL_DIAS', 7))
+
+    # Backoffice comercial (modulo externo ao menu principal)
+    BACKOFFICE_ALLOWED_EMAILS = os.environ.get('BACKOFFICE_ALLOWED_EMAILS', '')
+    BACKOFFICE_ALLOWED_USERNAMES = os.environ.get('BACKOFFICE_ALLOWED_USERNAMES', '')
+    BACKOFFICE_ACCESS_KEY = os.environ.get('BACKOFFICE_ACCESS_KEY', '')
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True

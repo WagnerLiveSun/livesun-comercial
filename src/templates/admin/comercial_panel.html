@@ -1,0 +1,165 @@
+{% extends "layout.html" %}
+
+{% block title %}Backoffice Comercial{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="display-6 fw-bold ls-page-title">Backoffice Comercial</h1>
+            <p class="text-muted mb-0">Painel administrativo comercial (acesso por URL direta).</p>
+        </div>
+        <span class="badge bg-warning text-dark">Fora do menu</span>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-2">
+        <div class="ls-card p-3"><small class="text-muted d-block">Clientes ativos</small><strong>{{ resumo.clientes_ativos }}</strong></div>
+    </div>
+    <div class="col-md-2">
+        <div class="ls-card p-3"><small class="text-muted d-block">Suspensos</small><strong>{{ resumo.clientes_suspensos }}</strong></div>
+    </div>
+    <div class="col-md-2">
+        <div class="ls-card p-3"><small class="text-muted d-block">Cancelados</small><strong>{{ resumo.clientes_cancelados }}</strong></div>
+    </div>
+    <div class="col-md-2">
+        <div class="ls-card p-3"><small class="text-muted d-block">Inadimplentes</small><strong>{{ resumo.inadimplentes }}</strong></div>
+    </div>
+    <div class="col-md-4">
+        <div class="ls-card p-3"><small class="text-muted d-block">Valor em atraso</small><strong>R$ {{ to_brl(resumo.valor_em_atraso) }}</strong></div>
+    </div>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <h5 class="mb-3 ls-page-title">Clientes / Assinaturas</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle ls-theme-table mb-0">
+            <thead>
+                <tr>
+                    <th>Empresa</th>
+                    <th>Plano</th>
+                    <th>Status</th>
+                    <th>Vigência</th>
+                    <th>Mudança</th>
+                    <th>Usuários</th>
+                    <th>Volume</th>
+                    <th>Atraso</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td>
+                        <div>{{ r.empresa_nome }}</div>
+                        <small class="text-muted">ID {{ r.empresa_id }}</small>
+                    </td>
+                    <td>{{ r.plano }}</td>
+                    <td class="text-capitalize">{{ r.status }}</td>
+                    <td>{{ r.vigencia.strftime('%d/%m/%Y') if r.vigencia else '-' }}</td>
+                    <td>
+                        {% if r.proximo_plano_codigo %}
+                            <div class="fw-semibold">{{ r.proximo_plano_codigo }}</div>
+                            <small class="text-muted">até {{ r.mudanca_plano_efetivar_em.strftime('%d/%m/%Y') if r.mudanca_plano_efetivar_em else '-' }}</small>
+                        {% else %}
+                            <span class="text-muted">Sem mudança pendente</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ r.users_ativos }}/{{ r.users_total }}</td>
+                    <td>{{ r.volume_dados }}</td>
+                    <td>
+                        {{ r.atraso_qtd }}<br>
+                        <small class="text-muted">R$ {{ to_brl(r.atraso_valor) }}</small>
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin_comercial.atualizar_plano_assinatura', empresa_id=r.empresa_id) }}" class="d-flex flex-wrap gap-1 mb-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <select name="novo_plano" class="form-select form-select-sm" required>
+                                {% for codigo, label in planos_disponiveis %}
+                                <option value="{{ codigo }}" {% if codigo == r.plano_codigo %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-outline-info">Efetivar agora</button>
+                        </form>
+                        <small class="text-muted d-block mb-2">A troca de plano no backoffice é aplicada imediatamente.</small>
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            {% for action in ['ativar','suspender','cancelar','reativar'] %}
+                            <form method="POST" action="{{ url_for('admin_comercial.atualizar_status_assinatura', empresa_id=r.empresa_id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="acao" value="{{ action }}">
+                                <button type="submit" class="btn btn-sm btn-outline-light">{{ action }}</button>
+                            </form>
+                            {% endfor %}
+                        </div>
+                        <form method="POST" action="{{ url_for('admin_comercial.excluir_empresa', empresa_id=r.empresa_id) }}" class="d-flex gap-1">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="text" name="confirmacao" class="form-control form-control-sm" placeholder="EXCLUIR" required>
+                            <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-muted">Nenhuma assinatura encontrada.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="ls-card p-4 h-100">
+            <h5 class="mb-3 ls-page-title">Logs de Erro (Eventos)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle ls-theme-table mb-0">
+                    <thead><tr><th>Quando</th><th>Empresa</th><th>Evento</th><th>Erro</th></tr></thead>
+                    <tbody>
+                        {% for e in erro_eventos %}
+                        <tr>
+                            <td>{{ e.recebido_em.strftime('%d/%m %H:%M') if e.recebido_em else '-' }}</td>
+                            <td>{{ e.empresa_id or '-' }}</td>
+                            <td>{{ e.tipo_evento }}</td>
+                            <td>{{ e.mensagem_erro or '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-muted">Sem erros recentes.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="ls-card p-4 h-100">
+            <h5 class="mb-3 ls-page-title">Atualização de Valores (Catálogo)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle ls-theme-table mb-0">
+                    <thead><tr><th>Plano</th><th>Ciclo</th><th>Versão</th><th>Preço</th><th>Novo Preço</th></tr></thead>
+                    <tbody>
+                        {% for o in ofertas %}
+                        <tr>
+                            <td>{{ o.nome_exibicao }}</td>
+                            <td>{{ o.periodicidade }}</td>
+                            <td>v{{ o.versao_oferta }}</td>
+                            <td>R$ {{ '%.2f'|format(o.preco)|replace('.', ',') }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin_comercial.atualizar_preco_catalogo') }}" class="d-flex gap-1">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="oferta_id" value="{{ o.id }}">
+                                    <input type="text" name="novo_preco" class="form-control form-control-sm" placeholder="0,00" required>
+                                    <button type="submit" class="btn btn-sm btn-outline-light">Salvar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-muted">Sem ofertas ativas no catálogo.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

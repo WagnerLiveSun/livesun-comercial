@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold" style="color: #f9fafb;">Entidades</h2>
+    <h2 class="fw-bold ls-page-title">Entidades</h2>
     <a href="{{ url_for('entidades.criar') }}" class="btn ls-btn-primary">
         <i class="fas fa-plus"></i> Nova Entidade
     </a>
@@ -15,7 +15,7 @@
     <form method="GET" class="row g-3">
         <div class="col-md-3">
             <label class="form-label">Tipo</label>
-            <select name="tipo" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <select name="tipo" class="form-control ls-theme-control">
                 <option value="">Todos</option>
                 <option value="C" {% if tipo == 'C' %}selected{% endif %}>Cliente</option>
                 <option value="F" {% if tipo == 'F' %}selected{% endif %}>Fornecedor</option>
@@ -25,7 +25,7 @@
         </div>
         <div class="col-md-6">
             <label class="form-label">Buscar</label>
-            <input type="text" name="busca" class="form-control" placeholder="Nome, CPF/CNPJ, Email..." value="{{ busca }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <input type="text" name="busca" class="form-control ls-theme-control" placeholder="Nome, CPF/CNPJ, Email..." value="{{ busca }}">
         </div>
         <div class="col-md-3 d-flex align-items-end gap-2">
             <button type="submit" class="btn ls-btn-primary w-100">

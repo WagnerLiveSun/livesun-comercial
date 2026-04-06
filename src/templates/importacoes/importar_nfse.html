@@ -2,9 +2,21 @@
 
 {% block title %}Importar NFSe{% endblock %}
 
+{% block extra_css %}
+<style>
+    .nfse-title {
+        color: #a9c7eb !important;
+    }
+
+    .nfse-title i {
+        color: #7fb0e6;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold" style="color: #f9fafb;">
+    <h2 class="fw-bold nfse-title">
         <i class="fas fa-file-upload"></i> Importação de Notas de Serviço (NFSe)
     </h2>
 </div>
@@ -14,7 +26,7 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="col-md-6">
             <label for="file" class="form-label">Selecione o arquivo XML</label>
-            <input class="form-control" type="file" id="file" name="file" accept=".xml" required>
+            <input class="form-control ls-theme-control" type="file" id="file" name="file" accept=".xml" required>
         </div>
         <div class="col-md-3 d-flex align-items-end gap-2">
             <button type="submit" class="btn ls-btn-primary w-100">

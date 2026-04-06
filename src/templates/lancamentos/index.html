@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold" style="color: #f9fafb;">Lançamentos</h2>
+    <h2 class="fw-bold ls-page-title">Lançamentos</h2>
     {% if select_mode and conciliacao_id %}
     <a href="{{ url_for('conciliacao.detalhe', conciliacao_id=conciliacao_id) }}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-left"></i> Voltar para Conciliação
@@ -34,7 +34,7 @@
 
         <div class="col-md-3">
             <label class="form-label">Status</label>
-            <select name="status" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <select name="status" class="form-control ls-theme-control">
                 <option value="">Todos</option>
                 <option value="aberto" {% if status == 'aberto' %}selected{% endif %}>Aberto</option>
                 <option value="pago" {% if status == 'pago' %}selected{% endif %}>Pago</option>
@@ -44,7 +44,7 @@
 
         <div class="col-md-3">
             <label class="form-label">Tipo</label>
-            <select name="tipo" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <select name="tipo" class="form-control ls-theme-control">
                 <option value="">Todos</option>
                 <option value="P" {% if tipo == 'P' %}selected{% endif %}>Pagamento</option>
                 <option value="R" {% if tipo == 'R' %}selected{% endif %}>Recebimento</option>
@@ -53,7 +53,7 @@
 
         <div class="col-md-3">
             <label class="form-label">Conta Bancária</label>
-            <select name="conta_banco_id" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <select name="conta_banco_id" class="form-control ls-theme-control">
                 <option value="">Todas</option>
                 {% for conta in contas_banco %}
                 <option value="{{ conta.id }}" {% if conta_banco_id and conta.id == conta_banco_id %}selected{% endif %}>{{ conta.nome }}</option>
@@ -63,7 +63,7 @@
 
         <div class="col-md-3">
             <label class="form-label">Data Evento</label>
-            <input type="date" name="data_evento" value="{{ data_evento or '' }}" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <input type="date" name="data_evento" value="{{ data_evento or '' }}" class="form-control ls-theme-control">
         </div>
 
         <div class="col-md-12 d-flex align-items-end gap-2">
@@ -96,10 +96,9 @@
                 <tr>
                     <td><code style="color: #93c5fd;">{{ lancamento.numero_documento }}</code></td>
                     <td>{{ lancamento.entidade.nome if lancamento.entidade else '-' }}</td>
-                    <td>{{ lancamento.entidade.tipo if lancamento.entidade else '-' }}</td>
                     <td>{{ lancamento.data_evento.strftime('%d/%m/%Y') if lancamento.data_evento else 'N/A' }}</td>
                     <td>{{ lancamento.data_vencimento.strftime('%d/%m/%Y') if lancamento.data_vencimento else 'N/A' }}</td>
-                    <td>{{ lancamento.fluxo_conta.codigo if lancamento.fluxo_conta else 'N/A' }}</td>
+                    <td>{% if lancamento.fluxo_conta %}{{ lancamento.fluxo_conta.codigo }} - {{ lancamento.fluxo_conta.descricao }} ({{ lancamento.fluxo_conta.get_tipo_descricao() }}){% else %}N/A{% endif %}</td>
                     <td class="text-end fw-bold" style="color: #22c55e;">R$ {{ lancamento.valor_real|brl }}</td>
                     <td class="text-end fw-bold" style="color: #93c5fd;">R$ {{ lancamento.valor_pago|brl }}</td>
                     <td>

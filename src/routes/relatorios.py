@@ -18,6 +18,71 @@ except Exception:
 
 relatorios_bp = Blueprint('relatorios', __name__, url_prefix='/relatorios')
 
+
+def _descricao_lancamento_fluxo(lancamento: Lancamento) -> str:
+    """Retorna descrição amigável para relatórios de fluxo.
+
+    Prioridade:
+    1) Observações (importações NFSe já gravam descrição do serviço aqui)
+    2) Nome da entidade (para lançamentos manuais sem observação)
+    3) Placeholder
+    """
+    observacoes = (getattr(lancamento, 'observacoes', None) or '').strip()
+    if observacoes:
+        return observacoes
+
+    if getattr(lancamento, 'entidade', None) and lancamento.entidade.nome:
+        return lancamento.entidade.nome
+
+    return '-'
+
+
+def _build_consolidado_por_fluxo(lancamentos):
+    """Consolida lançamentos por conta de fluxo para visão gerencial."""
+    agrupado = {}
+
+    for lancamento in lancamentos:
+        fluxo = lancamento.fluxo_conta
+        fluxo_id = getattr(fluxo, 'id', 0) or 0
+        codigo = getattr(fluxo, 'codigo', None) or '-'
+        descricao = getattr(fluxo, 'descricao', None) or 'Sem conta de fluxo'
+        tipo = fluxo.get_tipo_descricao() if fluxo else '-'
+
+        if fluxo_id not in agrupado:
+            agrupado[fluxo_id] = {
+                'conta_fluxo': f"{codigo} - {descricao}" if codigo != '-' else descricao,
+                'tipo': tipo,
+                'qtd_lancamentos': 0,
+                'total_previsto_pagar': Decimal('0.00'),
+                'total_previsto_receber': Decimal('0.00'),
+                'total_realizado_pagar': Decimal('0.00'),
+                'total_realizado_receber': Decimal('0.00'),
+            }
+
+        row = agrupado[fluxo_id]
+        row['qtd_lancamentos'] += 1
+
+        valor_real = Decimal(str(lancamento.valor_real or 0))
+        valor_pago = Decimal(str(lancamento.valor_pago or 0))
+
+        if fluxo and fluxo.is_pagamento():
+            row['total_previsto_pagar'] += valor_real
+            row['total_realizado_pagar'] += valor_pago
+        else:
+            row['total_previsto_receber'] += valor_real
+            row['total_realizado_receber'] += valor_pago
+
+    rows = []
+    for row in agrupado.values():
+        row['saldo_previsto'] = row['total_previsto_receber'] - row['total_previsto_pagar']
+        row['saldo_realizado'] = row['total_realizado_receber'] - row['total_realizado_pagar']
+        row['total_previsto'] = row['total_previsto_receber'] + row['total_previsto_pagar']
+        row['total_realizado'] = row['total_realizado_receber'] + row['total_realizado_pagar']
+        rows.append(SimpleNamespace(**row))
+
+    rows.sort(key=lambda x: x.conta_fluxo)
+    return rows
+
 # --- LISTAGEM DE NOTAS EMITIDAS (NFSe) ---
 @relatorios_bp.route('/notas_nfse', methods=['GET'])
 @login_required
@@ -411,7 +476,7 @@ def export_listagem_lancamentos():
         ])
 
         for l in lancamentos:
-            processo = 'Pagamento (Saida)' if l.fluxo_conta and l.fluxo_conta.tipo == 'P' else 'Recebimento (Entrada)'
+            processo = l.fluxo_conta.get_tipo_descricao() if l.fluxo_conta else '-'
             tipo_entidade = l.entidade.get_tipo_descricao() if l.entidade else '-'
             conta_fluxo = f"{l.fluxo_conta.codigo} - {l.fluxo_conta.descricao}" if l.fluxo_conta else '-'
             ws.append([
@@ -429,8 +494,8 @@ def export_listagem_lancamentos():
                 l.conta_banco.nome if l.conta_banco else '-',
                 l.numero_documento or '-',
                 '',
-                float(l.valor_pago or 0) if l.fluxo_conta and l.fluxo_conta.tipo == 'P' else '',
-                float(l.valor_pago or 0) if l.fluxo_conta and l.fluxo_conta.tipo == 'R' else '',
+                float(l.valor_pago or 0) if l.fluxo_conta and l.fluxo_conta.is_pagamento() else '',
+                float(l.valor_pago or 0) if l.fluxo_conta and l.fluxo_conta.is_recebimento() else '',
                 float(l.valor_imposto or 0),
                 float(l.valor_outros_custos or 0),
                 l.observacoes or '-'
@@ -485,7 +550,7 @@ def export_listagem_lancamentos():
 
         pdf.set_font('Arial', '', 7)
         for l in lancamentos:
-            processo = 'Saida' if l.fluxo_conta and l.fluxo_conta.tipo == 'P' else 'Entrada'
+            processo = l.fluxo_conta.get_tipo_descricao() if l.fluxo_conta else '-'
             conta_fluxo = f"{l.fluxo_conta.codigo} - {l.fluxo_conta.descricao}" if l.fluxo_conta else '-'
             pdf.cell(10, 6, str(l.id), 1)
             pdf.cell(20, 6, processo, 1)
@@ -540,30 +605,7 @@ def fluxo_caixa_csv():
         func.coalesce(Lancamento.data_pagamento, Lancamento.data_vencimento).asc(),
         Lancamento.id.asc()
     ).all()
-    dados_csv = []
-    for l in lancamentos:
-        desc = getattr(l, 'descricao', None)
-        if not desc:
-            desc = l.observacoes or l.numero_documento or '-'
-        conta_fluxo = '-'
-        if l.fluxo_conta:
-            codigo = getattr(l.fluxo_conta, 'codigo', None)
-            descricao = getattr(l.fluxo_conta, 'descricao', None)
-            if codigo and descricao:
-                conta_fluxo = f"{codigo} - {descricao}"
-            elif descricao:
-                conta_fluxo = descricao
-            elif codigo:
-                conta_fluxo = codigo
-        data_display = l.data_pagamento or l.data_vencimento
-        dados_csv.append({
-            'data': data_display.strftime('%d/%m/%Y') if data_display else '-',
-            'descricao': desc,
-            'conta_fluxo': conta_fluxo,
-            'tipo': 'Receita' if l.fluxo_conta and l.fluxo_conta.tipo == 'R' else 'Despesa',
-            'valor_real': l.valor_real or 0,
-            'valor_pago': l.valor_pago or 0
-        })
+    dados_csv = _build_consolidado_por_fluxo(lancamentos)
     return render_template('relatorios/fluxo_caixa_csv.html', dados_csv=dados_csv, data_inicio=data_inicio, data_fim=data_fim)
 
 
@@ -593,23 +635,23 @@ def export_fluxo_caixa_csv():
     wb = Workbook()
     ws = wb.active
     ws.title = 'Fluxo de Caixa'
-    ws.append(['Data', 'Conta Fluxo', 'Descrição', 'Tipo', 'Valor Real (R$)', 'Valor Pago/Recebido (R$)'])
-    for l in lancamentos:
-        valor_real_brl = f'R$ {(l.valor_real or 0):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
-        valor_pago_brl = f'R$ {(l.valor_pago or 0):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
-        conta_fluxo = '-'
-        if l.fluxo_conta:
-            if l.fluxo_conta.codigo and l.fluxo_conta.descricao:
-                conta_fluxo = f"{l.fluxo_conta.codigo} - {l.fluxo_conta.descricao}"
-            else:
-                conta_fluxo = l.fluxo_conta.descricao or l.fluxo_conta.codigo or '-'
+    ws.append([
+        'Conta Fluxo', 'Tipo', 'Qtde Lançamentos',
+        'Previsto a Pagar (R$)', 'Previsto a Receber (R$)', 'Saldo Previsto (R$)',
+        'Realizado Pago (R$)', 'Realizado Recebido (R$)', 'Saldo Realizado (R$)'
+    ])
+
+    for row in _build_consolidado_por_fluxo(lancamentos):
         ws.append([
-            l.data_pagamento.strftime('%d/%m/%Y') if l.data_pagamento else '-',
-            conta_fluxo,
-            (getattr(l, 'descricao', None) or l.observacoes or l.numero_documento or '-'),
-            'Receita' if l.fluxo_conta and l.fluxo_conta.tipo == 'R' else 'Despesa',
-            valor_real_brl,
-            valor_pago_brl
+            row.conta_fluxo,
+            row.tipo,
+            row.qtd_lancamentos,
+            float(row.total_previsto_pagar),
+            float(row.total_previsto_receber),
+            float(row.saldo_previsto),
+            float(row.total_realizado_pagar),
+            float(row.total_realizado_receber),
+            float(row.saldo_realizado),
         ])
     output = io.BytesIO()
     wb.save(output)
@@ -629,7 +671,7 @@ def fluxo_caixa_realizado():
     return render_template('relatorios/fluxo_caixa_realizado.html')
 
 
-@relatorios_bp.route('/fluxo-caixa')
+@relatorios_bp.route('/fluxo-caixa-legacy')
 @login_required
 def fluxo_caixa():
     data_inicio = request.args.get('data_inicio', '')
@@ -658,7 +700,7 @@ def fluxo_caixa():
             saldo_anterior = saldo_atual_por_conta.get(conta_id, Decimal('0.00'))
             valor_base = lancamento.valor_real if use_valor_real else lancamento.valor_pago
             valor = Decimal(str(valor_base or 0))
-            if lancamento.fluxo_conta and lancamento.fluxo_conta.tipo == 'P':
+            if lancamento.fluxo_conta and lancamento.fluxo_conta.is_pagamento():
                 saldo_atual = saldo_anterior - valor
             else:
                 saldo_atual = saldo_anterior + valor
@@ -678,7 +720,7 @@ def fluxo_caixa():
                 continue
             valor_base = lancamento.valor_real if use_valor_real else lancamento.valor_pago
             valor = Decimal(str(valor_base or 0))
-            if lancamento.fluxo_conta and lancamento.fluxo_conta.tipo == 'P':
+            if lancamento.fluxo_conta and lancamento.fluxo_conta.is_pagamento():
                 totals[data_ref]['pagar'] += valor
             else:
                 totals[data_ref]['receber'] += valor
@@ -753,6 +795,9 @@ def fluxo_caixa():
         date_attr='data_vencimento'
     )
 
+    consolidado_realizado = _build_consolidado_por_fluxo(lancamentos_realizado)
+    consolidado_previsto = _build_consolidado_por_fluxo(lancamentos_previsto)
+
     contas_banco = ContaBanco.query.filter_by(empresa_id=current_user.empresa_id, ativo=True).all()
     contas_fluxo = FluxoContaModel.query.filter_by(empresa_id=current_user.empresa_id, ativo=True).all()
 
@@ -760,6 +805,8 @@ def fluxo_caixa():
         'relatorios/fluxo_caixa.html',
         lancamentos_realizado=build_fluxo_rows(lancamentos_realizado, saldo_inicial_por_conta, use_valor_real=False),
         lancamentos_previsto=build_fluxo_rows(lancamentos_previsto, saldo_inicial_por_conta, use_valor_real=True),
+        consolidado_realizado=consolidado_realizado,
+        consolidado_previsto=consolidado_previsto,
         resumo_diario_realizado=resumo_diario_realizado,
         resumo_diario_previsto=resumo_diario_previsto,
         contas_banco=contas_banco,
@@ -771,7 +818,7 @@ def fluxo_caixa():
     )
 
 
-@relatorios_bp.route('/fluxo-caixa/export')
+@relatorios_bp.route('/fluxo-caixa/export-legacy')
 @login_required
 def export_fluxo_caixa():
     data_inicio = request.args.get('data_inicio', '')
@@ -803,7 +850,7 @@ def export_fluxo_caixa():
                 continue
             valor_base = lancamento.valor_real if use_valor_real else lancamento.valor_pago
             valor = Decimal(str(valor_base or 0))
-            if lancamento.fluxo_conta and lancamento.fluxo_conta.tipo == 'P':
+            if lancamento.fluxo_conta and lancamento.fluxo_conta.is_pagamento():
                 totals[data_ref]['pagar'] += valor
             else:
                 totals[data_ref]['receber'] += valor

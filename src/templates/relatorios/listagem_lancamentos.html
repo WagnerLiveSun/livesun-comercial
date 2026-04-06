@@ -2,65 +2,65 @@
 {% block content %}
 <style>
     .rel-lanc-title {
-        color: #f8fafc;
+        color: var(--ls-page-title);
     }
 
     .rel-lanc-subtitle,
     .rel-lanc-meta {
-        color: #e2e8f0;
+        color: var(--ls-text-muted);
     }
 
     .rel-lanc-filter-card {
-        background: #ffffff;
-        border: 1px solid #cbd5e1;
+        background: var(--ls-card-bg);
+        border: 1px solid var(--ls-border-subtle);
     }
 
     .rel-lanc-filter-card .form-label {
-        color: #0f172a;
+        color: var(--ls-text-main);
         font-weight: 600;
     }
 
     .rel-lanc-filter-card .form-control,
     .rel-lanc-filter-card .form-select {
-        color: #0f172a;
-        border-color: #94a3b8;
+        color: var(--ls-text-main);
+        border-color: var(--ls-input-border);
     }
 
     .rel-lanc-total-card {
-        border: 1px solid #cbd5e1;
-        background: #ffffff;
+        border: 1px solid var(--ls-border-subtle);
+        background: var(--ls-card-bg);
     }
 
     .rel-lanc-total-label {
-        color: #334155;
+        color: var(--ls-text-muted);
         font-weight: 600;
     }
 
     .rel-lanc-total-value {
-        color: #0f172a;
+        color: var(--ls-text-main);
         font-size: 1.2rem;
     }
 
     #tabela-relatorio-lancamentos thead th {
-        background: #f1f5f9;
-        color: #0f172a;
-        border-color: #cbd5e1;
-        border-bottom: 2px solid #94a3b8;
+        background: rgba(148, 163, 184, 0.12);
+        color: var(--ls-text-strong);
+        border-color: var(--ls-border-subtle);
+        border-bottom: 2px solid var(--ls-border-subtle);
         font-size: 0.86rem;
         letter-spacing: 0.01em;
         white-space: nowrap;
     }
 
     #tabela-relatorio-lancamentos tbody td {
-        color: #0f172a;
-        border-color: #e2e8f0;
-        background: #ffffff;
+        color: var(--ls-text-main);
+        border-color: var(--ls-border-subtle);
+        background: transparent;
         font-size: 0.84rem;
         line-height: 1.2;
     }
 
     #tabela-relatorio-lancamentos .linha-lancamento:hover td {
-        background: #e2e8f0;
+        background: var(--ls-primary-soft);
     }
 
     #tabela-relatorio-lancamentos {
@@ -170,11 +170,11 @@
     }
 
     .rel-lanc-hint {
-        color: #e2e8f0;
+        color: var(--ls-text-muted);
     }
 
     .rel-lanc-empty {
-        color: #334155 !important;
+        color: var(--ls-text-muted) !important;
         font-weight: 600;
     }
 </style>
@@ -294,9 +294,9 @@
         {% endif %}
     </div>
 
-    <div class="table-responsive bg-white rounded border">
+    <div class="table-responsive rounded border" style="border-color: var(--ls-border-subtle) !important;">
         <table class="table table-sm table-hover mb-0 align-middle" id="tabela-relatorio-lancamentos">
-            <thead class="table-light">
+            <thead>
                 <tr>
                     <th class="col-center col-id">ID</th>
                     <th class="col-empresa">Empresa</th>

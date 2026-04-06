@@ -216,6 +216,15 @@
                         <input type="text" class="form-control" id="empresa_nome" name="empresa_nome" placeholder="Ex.: LiveSun Controller" required>
                     </div>
                     <div class="col-12">
+                        <label for="plano" class="form-label">Plano</label>
+                        <select class="form-control" id="plano" name="plano" required>
+                            {% for value, label in plan_choices %}
+                            <option value="{{ value }}" {% if value == 'basic' %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Básico reduz campos avançados. Intermediário e Premium mantêm o cadastro completo.</div>
+                    </div>
+                    <div class="col-12">
                         <label for="empresa_cnpj" class="form-label">CPF/CNPJ</label>
                         <input type="text" class="form-control" id="empresa_cnpj" name="empresa_cnpj" placeholder="Somente números ou formatado" required maxlength="18">
                     </div>

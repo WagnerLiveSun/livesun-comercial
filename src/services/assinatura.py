@@ -3,17 +3,27 @@ from __future__ import annotations
 from calendar import monthrange
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+import json
+import logging
+import re
 from typing import Any
 
+from flask import current_app
 from sqlalchemy.exc import IntegrityError
 
 from src.models import (
     AssinaturaEmpresa,
+    CatalogoPlanoComercial,
     CobrancaRecorrente,
     Empresa,
     EventoCobranca,
+    User,
     db,
 )
+from src.services.asaas_client import AsaasApiError, AsaasClient
+
+
+logger = logging.getLogger(__name__)
 
 
 def _today() -> date:
@@ -84,17 +94,275 @@ class ServicoAssinatura:
     ASAAS_STATUS_PAGO = {'RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH', 'DUNNING_RECEIVED'}
     ASAAS_STATUS_INADIMPLENTE = {'OVERDUE', 'DUNNING_REQUESTED'}
     ASAAS_STATUS_FALHA = {'REFUND_REQUESTED', 'CHARGEBACK_REQUESTED', 'CHARGEBACK_DISPUTE'}
+    ASAAS_STATUS_ABERTA = {'PENDING', 'OVERDUE'}
+
+    @staticmethod
+    def _trial_days() -> int:
+        value = int(current_app.config.get('ASSINATURA_TRIAL_DIAS') or 7)
+        return value if value > 0 else 7
+
+    @staticmethod
+    def _digits_only(value: str | None) -> str | None:
+        if not value:
+            return None
+        digits = re.sub(r'\D+', '', str(value))
+        return digits or None
+
+    @staticmethod
+    def _is_valid_cpf(document: str) -> bool:
+        if len(document) != 11 or document == document[0] * 11:
+            return False
+
+        def calc_digit(base: str, factor: int) -> int:
+            total = sum(int(num) * (factor - idx) for idx, num in enumerate(base))
+            rest = (total * 10) % 11
+            return 0 if rest == 10 else rest
+
+        d1 = calc_digit(document[:9], 10)
+        d2 = calc_digit(document[:10], 11)
+        return document[-2:] == f'{d1}{d2}'
+
+    @staticmethod
+    def _is_valid_cnpj(document: str) -> bool:
+        if len(document) != 14 or document == document[0] * 14:
+            return False
+
+        def calc_digit(base: str, weights: list[int]) -> int:
+            total = sum(int(num) * weight for num, weight in zip(base, weights))
+            rest = total % 11
+            return 0 if rest < 2 else 11 - rest
+
+        w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+        w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+        d1 = calc_digit(document[:12], w1)
+        d2 = calc_digit(document[:13], w2)
+        return document[-2:] == f'{d1}{d2}'
+
+    @staticmethod
+    def _valid_document_or_none(value: str | None) -> str | None:
+        digits = ServicoAssinatura._digits_only(value)
+        if not digits:
+            return None
+        if len(digits) == 11 and ServicoAssinatura._is_valid_cpf(digits):
+            return digits
+        if len(digits) == 14 and ServicoAssinatura._is_valid_cnpj(digits):
+            return digits
+        return None
+
+    @staticmethod
+    def _is_asaas_enabled() -> bool:
+        return bool(current_app.config.get('ASAAS_ENABLED')) and bool(current_app.config.get('ASAAS_API_KEY'))
+
+    @staticmethod
+    def _build_asaas_client() -> AsaasClient:
+        return AsaasClient(
+            api_key=str(current_app.config.get('ASAAS_API_KEY') or '').strip(),
+            base_url=str(current_app.config.get('ASAAS_BASE_URL') or 'https://sandbox.asaas.com/api/v3').strip(),
+            timeout_seconds=int(current_app.config.get('ASAAS_TIMEOUT_SECONDS') or 15),
+        )
+
+    @staticmethod
+    def _resolve_customer_email(empresa_id: int) -> str | None:
+        admin_user = User.query.filter_by(empresa_id=empresa_id, is_admin=True, is_active=True).first()
+        if admin_user and admin_user.email:
+            return admin_user.email.strip()
+
+        fallback_user = User.query.filter_by(empresa_id=empresa_id, is_active=True).first()
+        if fallback_user and fallback_user.email:
+            return fallback_user.email.strip()
+        return None
+
+    @staticmethod
+    def _resolve_preco_plano(assinatura: AssinaturaEmpresa) -> Decimal:
+        oferta = (
+            CatalogoPlanoComercial.query
+            .filter_by(
+                codigo_plano=(assinatura.plano_codigo or 'premium').strip().lower(),
+                periodicidade=(assinatura.ciclo_cobranca or 'mensal').strip().lower(),
+                ativo=True,
+            )
+            .order_by(CatalogoPlanoComercial.versao_oferta.desc(), CatalogoPlanoComercial.id.desc())
+            .first()
+        )
+        if oferta and oferta.preco is not None:
+            return Decimal(str(oferta.preco))
+
+        defaults = {
+            ('basic', 'mensal'): Decimal('49.00'),
+            ('intermediate', 'mensal'): Decimal('129.00'),
+            ('premium', 'mensal'): Decimal('249.00'),
+            ('basic', 'anual'): Decimal('490.00'),
+            ('intermediate', 'anual'): Decimal('1290.00'),
+            ('premium', 'anual'): Decimal('2490.00'),
+        }
+        return defaults.get(
+            (
+                (assinatura.plano_codigo or 'premium').strip().lower(),
+                (assinatura.ciclo_cobranca or 'mensal').strip().lower(),
+            ),
+            Decimal('249.00'),
+        )
+
+    @staticmethod
+    def _cycle_to_asaas(ciclo_cobranca: str) -> str:
+        return 'YEARLY' if (ciclo_cobranca or '').strip().lower() == 'anual' else 'MONTHLY'
+
+    @staticmethod
+    def _payment_links(payment_data: dict[str, Any]) -> dict[str, str | None]:
+        invoice_url = payment_data.get('invoiceUrl')
+        bank_slip_url = payment_data.get('bankSlipUrl')
+        return {
+            'invoice_url': str(invoice_url).strip() if invoice_url else None,
+            'bank_slip_url': str(bank_slip_url).strip() if bank_slip_url else None,
+        }
+
+    @staticmethod
+    def _dump_payload(payload: dict[str, Any]) -> str:
+        try:
+            return json.dumps(payload, ensure_ascii=False)
+        except Exception:
+            return str(payload)
+
+    @staticmethod
+    def provisionar_gateway_asaas(
+        assinatura: AssinaturaEmpresa,
+        billing_type_override: str | None = None,
+    ) -> None:
+        if not assinatura or assinatura.gateway != 'asaas':
+            return
+        if not ServicoAssinatura._is_asaas_enabled():
+            return
+
+        empresa = Empresa.query.filter_by(id=assinatura.empresa_id).first()
+        if not empresa:
+            return
+
+        external_reference = f'empresa:{assinatura.empresa_id}'
+
+        try:
+            client = ServicoAssinatura._build_asaas_client()
+            documento_validado = ServicoAssinatura._valid_document_or_none(empresa.cnpj)
+            if not documento_validado and ServicoAssinatura._digits_only(empresa.cnpj):
+                assinatura.motivo_status = 'Aviso: CPF/CNPJ da empresa inválido para o Asaas; cliente será criado sem documento.'
+
+            customer_id = assinatura.gateway_customer_id
+            if not customer_id:
+                existing_customer = client.find_customer_by_external_reference(external_reference)
+                if existing_customer and existing_customer.get('id'):
+                    customer_id = str(existing_customer['id'])
+                else:
+                    created_customer = client.create_customer(
+                        name=empresa.nome,
+                        cpf_cnpj=documento_validado,
+                        email=ServicoAssinatura._resolve_customer_email(empresa.id),
+                        external_reference=external_reference,
+                    )
+                    customer_id = str(created_customer.get('id') or '').strip() or None
+
+                if customer_id:
+                    assinatura.gateway_customer_id = customer_id
+
+            if assinatura.gateway_subscription_id or not customer_id:
+                db.session.flush()
+                return
+
+            existing_subscription = client.find_subscription_by_external_reference(external_reference)
+            if existing_subscription and existing_subscription.get('id'):
+                assinatura.gateway_subscription_id = str(existing_subscription['id'])
+                db.session.flush()
+                return
+
+            preco = ServicoAssinatura._resolve_preco_plano(assinatura)
+            billing_type = (billing_type_override or str(current_app.config.get('ASAAS_BILLING_TYPE') or 'BOLETO')).upper()
+            created_subscription = client.create_subscription(
+                customer_id=customer_id,
+                billing_type=billing_type,
+                value=float(preco),
+                next_due_date=(assinatura.data_vencimento or _today()).isoformat(),
+                cycle=ServicoAssinatura._cycle_to_asaas(assinatura.ciclo_cobranca),
+                external_reference=external_reference,
+                description=f'LiveSun Controller - plano {assinatura.plano_codigo}',
+            )
+            subscription_id = str(created_subscription.get('id') or '').strip()
+            if subscription_id:
+                assinatura.gateway_subscription_id = subscription_id
+
+            db.session.flush()
+        except AsaasApiError as exc:
+            assinatura.motivo_status = f'Erro Asaas: {str(exc)[:220]}'
+            db.session.flush()
+            logger.warning('Falha ao provisionar assinatura Asaas para empresa %s: %s', assinatura.empresa_id, exc)
+        except Exception as exc:
+            assinatura.motivo_status = f'Erro inesperado Asaas: {str(exc)[:200]}'
+            db.session.flush()
+            logger.exception('Erro inesperado ao provisionar Asaas para empresa %s: %s', assinatura.empresa_id, exc)
+
+    @staticmethod
+    def sincronizar_cobranca_pendente_asaas(assinatura: AssinaturaEmpresa) -> dict[str, Any] | None:
+        if not assinatura or assinatura.gateway != 'asaas':
+            return None
+        if not assinatura.gateway_subscription_id:
+            return None
+        if not ServicoAssinatura._is_asaas_enabled():
+            return None
+
+        client = ServicoAssinatura._build_asaas_client()
+        payments = client.list_subscription_payments(assinatura.gateway_subscription_id, limit=20)
+        if not payments:
+            return None
+
+        selected_payment = None
+        for payment in payments:
+            status = str(payment.get('status') or '').strip().upper()
+            if status in ServicoAssinatura.ASAAS_STATUS_ABERTA:
+                selected_payment = payment
+                break
+
+        if not selected_payment:
+            selected_payment = payments[0]
+
+        cobranca = ServicoAssinatura._find_or_create_cobranca(assinatura, selected_payment)
+        status = str(selected_payment.get('status') or '').strip().upper()
+        if status in ServicoAssinatura.ASAAS_STATUS_INADIMPLENTE:
+            cobranca.status = 'vencido'
+        elif status in ServicoAssinatura.ASAAS_STATUS_PAGO:
+            cobranca.status = 'pago'
+        else:
+            cobranca.status = 'pendente'
+        cobranca.payload_gateway = ServicoAssinatura._dump_payload(selected_payment)
+
+        links = ServicoAssinatura._payment_links(selected_payment)
+        return {
+            'gateway_cobranca_id': str(selected_payment.get('id') or '') or None,
+            'status': status,
+            'valor': Decimal(str(selected_payment.get('value') or 0)),
+            'vencimento': _parse_date(selected_payment.get('dueDate')),
+            'invoice_url': links['invoice_url'],
+            'bank_slip_url': links['bank_slip_url'],
+        }
 
     @staticmethod
     def obter_ou_criar_assinatura(empresa_id: int) -> AssinaturaEmpresa:
         assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
         if assinatura:
+            # Ajusta assinaturas em trial para refletir a regra vigente de duracao.
+            if assinatura.status == ServicoAssinatura.STATUS_TRIAL and assinatura.data_inicio:
+                trial_days = ServicoAssinatura._trial_days()
+                novo_fim_trial = assinatura.data_inicio + timedelta(days=trial_days)
+                if assinatura.data_fim_trial != novo_fim_trial:
+                    assinatura.data_fim_trial = novo_fim_trial
+                    assinatura.data_vencimento = novo_fim_trial
+                    assinatura.data_limite_carencia = novo_fim_trial + timedelta(days=int(assinatura.carencia_dias or 7))
+
+            if not assinatura.gateway_customer_id or not assinatura.gateway_subscription_id:
+                ServicoAssinatura.provisionar_gateway_asaas(assinatura)
             return assinatura
 
         empresa = Empresa.query.filter_by(id=empresa_id).first()
         plano_codigo = (empresa.plano if empresa and empresa.plano else 'premium').strip().lower()
 
         hoje = _today()
+        trial_days = ServicoAssinatura._trial_days()
         assinatura = AssinaturaEmpresa(
             empresa_id=empresa_id,
             plano_codigo=plano_codigo,
@@ -102,16 +370,18 @@ class ServicoAssinatura:
             status=ServicoAssinatura.STATUS_TRIAL,
             gateway='asaas',
             data_inicio=hoje,
-            data_fim_trial=hoje + timedelta(days=14),
-            data_vencimento=hoje + timedelta(days=14),
+            data_fim_trial=hoje + timedelta(days=trial_days),
+            data_vencimento=hoje + timedelta(days=trial_days),
             data_renovacao=None,
             carencia_dias=7,
-            data_limite_carencia=hoje + timedelta(days=21),
+            data_limite_carencia=hoje + timedelta(days=trial_days + 7),
             bloqueio_nivel=ServicoAssinatura.BLOQUEIO_NENHUM,
             politica_efetivacao_dias=30,
         )
         db.session.add(assinatura)
         db.session.flush()
+
+        ServicoAssinatura.provisionar_gateway_asaas(assinatura)
         return assinatura
 
     @staticmethod
@@ -166,7 +436,7 @@ class ServicoAssinatura:
         cobranca.status = 'pago'
         cobranca.data_pagamento = data_pagamento or datetime.utcnow()
         cobranca.valor_pago = valor_pago if valor_pago is not None else cobranca.valor_previsto
-        cobranca.payload_gateway = str(payload or {})
+        cobranca.payload_gateway = ServicoAssinatura._dump_payload(payload or {})
 
         due_base = cobranca.data_vencimento or assinatura.data_vencimento or _today()
         assinatura.status = ServicoAssinatura.STATUS_ATIVA
@@ -185,7 +455,7 @@ class ServicoAssinatura:
         payload: dict[str, Any] | None = None,
     ) -> None:
         cobranca.status = status_cobranca
-        cobranca.payload_gateway = str(payload or {})
+        cobranca.payload_gateway = ServicoAssinatura._dump_payload(payload or {})
         assinatura.motivo_status = f'Atualizacao de cobranca via webhook Asaas: {status_cobranca}.'
         ServicoAssinatura.recalcular_status_por_carencia(assinatura)
 
@@ -249,7 +519,7 @@ class ServicoAssinatura:
             data_vencimento=due_date,
             data_pagamento=None,
             tentativas_pagamento=0,
-            payload_gateway=str(payment_data),
+            payload_gateway=ServicoAssinatura._dump_payload(payment_data),
         )
         db.session.add(cobranca)
         db.session.flush()
@@ -331,7 +601,7 @@ class ServicoAssinatura:
                     payload=payload,
                 )
             else:
-                cobranca.payload_gateway = str(payload)
+                cobranca.payload_gateway = ServicoAssinatura._dump_payload(payload)
                 ServicoAssinatura.recalcular_status_por_carencia(assinatura)
 
             assinatura.gateway = 'asaas'

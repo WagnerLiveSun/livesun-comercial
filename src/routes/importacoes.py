@@ -195,21 +195,83 @@ def _configurar_logger_debug():
 _configurar_logger_debug()
 
 
+def _get_or_create_default_fluxo_conta_id(empresa_id: int, tipo_movimentacao: str = 'R') -> int | None:
+    """Obtém (ou cria) a conta de fluxo padrão por tipo para a empresa."""
+    codigo_padrao = '1' if tipo_movimentacao == 'R' else '2'
+    descricao_padrao = 'Entradas de Caixa' if tipo_movimentacao == 'R' else 'Saídas de Caixa'
+
+    conta = (
+        FluxoContaModel.query
+        .filter_by(empresa_id=empresa_id, tipo=tipo_movimentacao, codigo=codigo_padrao)
+        .order_by(FluxoContaModel.ativo.desc(), FluxoContaModel.id.asc())
+        .first()
+    )
+    if conta:
+        if not conta.ativo:
+            conta.ativo = True
+            db.session.flush()
+        return conta.id
+
+    # Compatibilidade com bases antigas que usavam outro código para padrão.
+    conta_legada = (
+        FluxoContaModel.query
+        .filter_by(empresa_id=empresa_id, tipo=tipo_movimentacao, codigo='1.1.1')
+        .order_by(FluxoContaModel.ativo.desc(), FluxoContaModel.id.asc())
+        .first()
+    )
+    if conta_legada:
+        if not conta_legada.ativo:
+            conta_legada.ativo = True
+            db.session.flush()
+        return conta_legada.id
+
+    conta = FluxoContaModel(
+        empresa_id=empresa_id,
+        codigo=codigo_padrao,
+        descricao=descricao_padrao,
+        tipo=tipo_movimentacao,
+        nivel_sintetico=1,
+        nivel_analitico=None,
+        ativo=True,
+    )
+    db.session.add(conta)
+    db.session.flush()
+    if conta.id:
+        return conta.id
+
+    fallback = (
+        FluxoContaModel.query
+        .filter_by(empresa_id=empresa_id, ativo=True, tipo=tipo_movimentacao)
+        .order_by(FluxoContaModel.codigo.asc(), FluxoContaModel.id.asc())
+        .first()
+    )
+    return fallback.id if fallback else None
+
+
 def obter_ou_criar_entidade(empresa_id: int, cnpj_tomador: str):
     """
     Busca Entidade por CNPJ; se não existir, cria uma nova como Cliente.
     """
     entidade = Entidade.query.filter_by(empresa_id=empresa_id, cnpj_cpf=cnpj_tomador).first()
     if entidade:
+        mudou = False
         if entidade.tipo != 'C':
             entidade.tipo = 'C'
+            mudou = True
+
+        if not entidade.fluxo_conta_id:
+            fluxo_conta_id = _get_or_create_default_fluxo_conta_id(empresa_id, 'R')
+            if fluxo_conta_id:
+                entidade.fluxo_conta_id = fluxo_conta_id
+                mudou = True
+
+        if mudou:
             db.session.add(entidade)
             db.session.commit()
         return entidade, None
 
     try:
-        fluxo_conta = FluxoContaModel.query.filter_by(empresa_id=empresa_id, codigo='1.1.1').first()
-        fluxo_conta_id = fluxo_conta.id if fluxo_conta else None
+        fluxo_conta_id = _get_or_create_default_fluxo_conta_id(empresa_id, 'R')
 
         entidade = Entidade(
             empresa_id=empresa_id,
@@ -232,6 +294,14 @@ def criar_lancamento_nfse(empresa_id: int, entidade: Entidade, dados: dict):
     Cria um lançamento financeiro a partir dos dados da NFSe.
     """
     try:
+        if not entidade.fluxo_conta_id:
+            fluxo_conta_id = _get_or_create_default_fluxo_conta_id(empresa_id, 'R')
+            if not fluxo_conta_id:
+                return False, 'Não foi possível identificar/criar conta de fluxo padrão de Recebimento para a empresa.'
+            entidade.fluxo_conta_id = fluxo_conta_id
+            db.session.add(entidade)
+            db.session.flush()
+
         data_emissao = dados.get('data_emissao', '')
         data_emissao_dt = None
         if data_emissao:
@@ -392,9 +462,16 @@ def importar_nfse():
             elif entidade.tipo != 'C':
                 erros.append('Entidade encontrada, mas não é do tipo Cliente (C).')
 
+            if entidade and not entidade.fluxo_conta_id:
+                fluxo_padrao_id = _get_or_create_default_fluxo_conta_id(empresa_id, 'R')
+                if fluxo_padrao_id:
+                    entidade.fluxo_conta_id = fluxo_padrao_id
+                    db.session.add(entidade)
+                    db.session.flush()
+
             fluxo_conta_id = entidade.fluxo_conta_id if entidade else None
             if not fluxo_conta_id:
-                erros.append('Entidade não possui conta de fluxo de caixa associada.')
+                erros.append('Entidade não possui conta de fluxo de caixa associada e não foi possível criar uma padrão de Recebimento.')
 
             # Conta bancária principal
             conta_principal = ContaBanco.query.filter_by(

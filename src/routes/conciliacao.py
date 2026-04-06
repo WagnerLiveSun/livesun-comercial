@@ -97,11 +97,11 @@ def vincular_item(conciliacao_id, item_id, lancamento_id):
         flash('O lançamento selecionado não pertence à mesma conta bancária da conciliação.', 'danger')
         return redirect(url_for('conciliacao.detalhe', conciliacao_id=conciliacao.id))
 
-    if item.valor_extrato < 0 and lancamento.fluxo_conta and lancamento.fluxo_conta.tipo != 'P':
+    if item.valor_extrato < 0 and lancamento.fluxo_conta and not lancamento.fluxo_conta.is_pagamento():
         flash('Para débito no extrato, selecione um lançamento de Pagamento (tipo P).', 'warning')
         return redirect(url_for('conciliacao.detalhe', conciliacao_id=conciliacao.id))
 
-    if item.valor_extrato > 0 and lancamento.fluxo_conta and lancamento.fluxo_conta.tipo != 'R':
+    if item.valor_extrato > 0 and lancamento.fluxo_conta and not lancamento.fluxo_conta.is_recebimento():
         flash('Para crédito no extrato, selecione um lançamento de Recebimento (tipo R).', 'warning')
         return redirect(url_for('conciliacao.detalhe', conciliacao_id=conciliacao.id))
 

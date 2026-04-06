@@ -10,6 +10,8 @@ fluxo_bp = Blueprint('fluxo', __name__, url_prefix='/fluxo')
 @login_required
 def index():
     """List all chart of accounts"""
+    plano_basico = getattr(getattr(current_user, 'empresa', None), 'plano', 'premium') == 'basic'
+    plano_basico = getattr(getattr(current_user, 'empresa', None), 'plano', 'premium') == 'basic'
     page = request.args.get('page', 1, type=int)
     tipo = request.args.get('tipo', '')
     conta_ini = request.args.get('conta_ini', '')
@@ -73,7 +75,8 @@ def index():
         conta_ini=conta_ini,
         conta_fim=conta_fim,
         entidade_id=entidade_id,
-        entidades=entidades
+        entidades=entidades,
+        plano_basico=plano_basico
     )
 
 
@@ -81,16 +84,20 @@ def index():
 @login_required
 def criar():
     """Create new chart of account"""
+    plano_basico = getattr(getattr(current_user, 'empresa', None), 'plano', 'premium') == 'basic'
     if request.method == 'POST':
         try:
+            mascara = request.form.get('mascara') if not plano_basico else None
+            nivel_sintetico = request.form.get('nivel_sintetico', type=int) if not plano_basico else None
+            nivel_analitico = request.form.get('nivel_analitico', type=int) if not plano_basico else None
             conta = FluxoContaModel(
                 empresa_id=tenant_id(),
                 codigo=request.form.get('codigo'),
                 descricao=request.form.get('descricao'),
                 tipo=request.form.get('tipo'),  # P ou R
-                mascara=request.form.get('mascara'),
-                nivel_sintetico=request.form.get('nivel_sintetico', type=int),
-                nivel_analitico=request.form.get('nivel_analitico', type=int),
+                mascara=mascara,
+                nivel_sintetico=nivel_sintetico,
+                nivel_analitico=nivel_analitico,
                 ativo=request.form.get('ativo') == 'on'
             )
             
@@ -106,7 +113,7 @@ def criar():
             logging.error('Erro ao criar conta: %s\n%s', e, traceback.format_exc())
             flash(f'Erro ao criar conta: {str(e)}', 'danger')
     
-    return render_template('fluxo/form.html', action='criar')
+    return render_template('fluxo/form.html', action='criar', plano_basico=plano_basico)
 
 
 @fluxo_bp.route('/<int:id>/editar', methods=['GET', 'POST'])
@@ -114,15 +121,17 @@ def criar():
 def editar(id):
     """Edit chart of account"""
     conta = scoped_get_or_404(FluxoContaModel, id)
+    plano_basico = getattr(getattr(current_user, 'empresa', None), 'plano', 'premium') == 'basic'
     
     if request.method == 'POST':
         try:
             conta.codigo = request.form.get('codigo')
             conta.descricao = request.form.get('descricao')
             conta.tipo = request.form.get('tipo')
-            conta.mascara = request.form.get('mascara')
-            conta.nivel_sintetico = request.form.get('nivel_sintetico', type=int)
-            conta.nivel_analitico = request.form.get('nivel_analitico', type=int)
+            if not plano_basico:
+                conta.mascara = request.form.get('mascara')
+                conta.nivel_sintetico = request.form.get('nivel_sintetico', type=int)
+                conta.nivel_analitico = request.form.get('nivel_analitico', type=int)
             conta.ativo = request.form.get('ativo') == 'on'
             
             db.session.commit()
@@ -136,7 +145,7 @@ def editar(id):
             logging.error('Erro ao atualizar conta: %s\n%s', e, traceback.format_exc())
             flash(f'Erro ao atualizar conta: {str(e)}', 'danger')
     
-    return render_template('fluxo/form.html', action='editar', conta=conta)
+    return render_template('fluxo/form.html', action='editar', conta=conta, plano_basico=plano_basico)
 
 
 @fluxo_bp.route('/<int:id>/deletar', methods=['POST'])

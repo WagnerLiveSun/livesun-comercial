@@ -5,8 +5,64 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
-        <h1 class="display-5 fw-bold" style="color: #f9fafb;">Dashboard</h1>
+        <h1 class="display-5 fw-bold ls-page-title">Dashboard</h1>
         <p class="text-muted">Bem-vindo ao seu sistema de gestão financeira</p>
+    </div>
+</div>
+
+<!-- Assinatura Comercial -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <h4 class="mb-2 ls-page-title">Assinatura Comercial</h4>
+                    {% if assinatura_resumo.disponivel %}
+                    <p class="text-muted mb-0">
+                        Plano {{ assinatura_resumo.plano_label }} | Status {{ assinatura_resumo.status }} | Ciclo {{ assinatura_resumo.ciclo }}
+                    </p>
+                    {% else %}
+                    <p class="text-muted mb-0">Assinatura ainda não configurada para esta empresa.</p>
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('auth.assinatura') }}" class="btn ls-btn-primary">
+                    <i class="fas fa-credit-card"></i> Gerenciar Assinatura
+                </a>
+            </div>
+
+            {% if assinatura_resumo.disponivel %}
+            <div class="row g-3 mt-1">
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Fim do Trial</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.fim_trial.strftime('%d/%m/%Y') if assinatura_resumo.fim_trial else '-' }}</span>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Próximo Vencimento</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.vencimento.strftime('%d/%m/%Y') if assinatura_resumo.vencimento else '-' }}</span>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Gateway</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.gateway }}</span>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Assinatura no Gateway</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.assinatura_gateway_id or 'Pendente' }}</span>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Próxima Cobrança</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.proxima_cobranca_vencimento.strftime('%d/%m/%Y') if assinatura_resumo.proxima_cobranca_vencimento else '-' }}</span>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Valor Previsto</small>
+                    <span class="fw-semibold">R$ {{ assinatura_resumo.proxima_cobranca_valor|brl }}</span>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Status da Cobrança</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.proxima_cobranca_status }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 
@@ -145,7 +201,7 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="ls-card p-4">
-            <h4 class="mb-3" style="color: #f9fafb;">Saldo Total</h4>
+            <h4 class="mb-3 ls-page-title">Saldo Total</h4>
             <h2 class="fw-bold" style="color: #22c55e; font-size: 36px;">
                 R$ {{ saldo_total|brl }}
             </h2>
@@ -158,7 +214,7 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="ls-card p-4">
-            <h4 class="mb-4" style="color: #f9fafb;">Fluxo de Caixa (Previsto x Realizado)</h4>
+            <h4 class="mb-4 ls-page-title">Fluxo de Caixa (Previsto x Realizado)</h4>
             <canvas id="fluxoCaixaChart" height="100"></canvas>
         </div>
     </div>
@@ -168,7 +224,7 @@
 <div class="row">
     <div class="col-12">
         <div class="ls-card p-4">
-            <h4 class="mb-4" style="color: #f9fafb;">Últimos Lançamentos</h4>
+            <h4 class="mb-4 ls-page-title">Últimos Lançamentos</h4>
             {% if ultimos_lancamentos %}
                 <div class="table-responsive">
                     <table class="table table-hover" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">

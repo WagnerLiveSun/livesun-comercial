@@ -1,0 +1,300 @@
+{% extends "layout.html" %}
+
+{% block title %}Assinatura Comercial{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-6 fw-bold ls-page-title">Assinatura Comercial</h1>
+        <p class="text-muted mb-0">Configure cobrança, ciclo e acompanhe seu período de teste.</p>
+    </div>
+</div>
+
+{% set gateway_msg = (assinatura.motivo_status or '') %}
+{% set has_error = gateway_msg.startswith('Erro') %}
+{% set linked_customer = assinatura.gateway_customer_id %}
+{% set linked_subscription = assinatura.gateway_subscription_id %}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="ls-card p-4">
+            <h5 class="mb-3 ls-page-title">Saúde da Integração Asaas</h5>
+
+            {% if has_error %}
+            <div class="alert alert-danger mb-3" role="alert">
+                <strong>Status:</strong> Erro de integração
+            </div>
+            {% elif linked_customer and linked_subscription %}
+            <div class="alert alert-success mb-3" role="alert">
+                <strong>Status:</strong> OK - cliente e assinatura vinculados no gateway
+            </div>
+            {% else %}
+            <div class="alert alert-warning mb-3" role="alert">
+                <strong>Status:</strong> Pendente - finalize o vínculo no gateway
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Cliente no gateway</small>
+                    <span class="fw-semibold">{{ linked_customer or 'Pendente' }}</span>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Assinatura no gateway</small>
+                    <span class="fw-semibold">{{ linked_subscription or 'Pendente' }}</span>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Último retorno</small>
+                    <span class="fw-semibold">{{ gateway_msg or 'Sem mensagens recentes' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="ls-card p-3">
+            <small class="text-muted">Plano Atual</small>
+            <div class="fs-5 fw-bold">{{ plano_label }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3">
+            <small class="text-muted">Status</small>
+            <div class="fs-5 fw-bold text-capitalize">{{ assinatura.status }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3">
+            <small class="text-muted">Fim do Trial</small>
+            <div class="fs-5 fw-bold">{{ assinatura.data_fim_trial.strftime('%d/%m/%Y') if assinatura.data_fim_trial else '-' }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3">
+            <small class="text-muted">Próximo Vencimento</small>
+            <div class="fs-5 fw-bold">{{ assinatura.data_vencimento.strftime('%d/%m/%Y') if assinatura.data_vencimento else '-' }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <h5 class="mb-3 ls-page-title">Preço do Plano {{ plano_label }}</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle ls-theme-table mb-0">
+            <thead>
+                <tr>
+                    <th>Ciclo</th>
+                    <th>Preço</th>
+                    <th>Meios aceitos</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Mensal</td>
+                    <td>R$ {{ precos.mensal }}</td>
+                    <td>Pix, boleto ou cartão</td>
+                </tr>
+                <tr>
+                    <td>Anual</td>
+                    <td>R$ {{ precos.anual }}</td>
+                    <td>Pix, boleto ou cartão</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <h5 class="mb-3 ls-page-title">Plano Vigente, Upgrade e Downgrade</h5>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <small class="text-muted d-block">Plano vigente</small>
+            <span class="fw-semibold">{{ plano_label }}</span>
+        </div>
+        <div class="col-md-4">
+            <small class="text-muted d-block">Mudança pendente</small>
+            <span class="fw-semibold">{{ assinatura.proximo_plano_codigo|default('-', true) }}</span>
+        </div>
+        <div class="col-md-4">
+            <small class="text-muted d-block">Efetivação prevista</small>
+            <span class="fw-semibold">{{ assinatura.mudanca_plano_efetivar_em.strftime('%d/%m/%Y') if assinatura.mudanca_plano_efetivar_em else '-' }}</span>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.assinatura') }}" class="row g-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="acao" value="solicitar_mudanca_plano">
+
+        <div class="col-md-8">
+            <label class="form-label">Selecionar novo plano</label>
+            <select name="novo_plano" class="form-control ls-theme-control" required>
+                {% for plano in planos_disponiveis %}
+                <option value="{{ plano.codigo }}" {% if plano.selecionado %}selected{% endif %}>{{ plano.label }}</option>
+                {% endfor %}
+            </select>
+            <div class="form-text">Política vigente: efetivação após 30 dias da solicitação.</div>
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-light w-100">
+                <i class="fas fa-level-up-alt"></i> Solicitar Alteração de Plano
+            </button>
+        </div>
+    </form>
+
+    <div class="table-responsive mt-4">
+        <table class="table table-hover align-middle ls-theme-table mb-0">
+            <thead>
+                <tr>
+                    <th>Solicitado em</th>
+                    <th>Origem</th>
+                    <th>Destino</th>
+                    <th>Tipo</th>
+                    <th>Efetivado em</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in historico_mudancas %}
+                <tr>
+                    <td>{{ item.solicitado_em.strftime('%d/%m/%Y %H:%M') if item.solicitado_em else '-' }}</td>
+                    <td>{{ item.plano_origem }}</td>
+                    <td>{{ item.plano_destino }}</td>
+                    <td class="text-capitalize">{{ item.tipo_mudanca }}</td>
+                    <td>{{ item.efetivado_em.strftime('%d/%m/%Y %H:%M') if item.efetivado_em else 'Pendente' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-muted">Nenhuma solicitação de mudança de plano registrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <h5 class="mb-3 ls-page-title">Add-ons</h5>
+    <p class="text-muted">Solicite add-ons para ampliar recursos sem trocar o plano imediatamente.</p>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle ls-theme-table mb-0">
+            <thead>
+                <tr>
+                    <th>Add-on</th>
+                    <th>Descrição</th>
+                    <th>Preço referência</th>
+                    <th>Status no plano</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for addon in addon_catalog %}
+                <tr>
+                    <td>{{ addon.nome }}</td>
+                    <td>{{ addon.descricao }}</td>
+                    <td>{{ addon.preco_referencia }}</td>
+                    <td>
+                        {% if addon.incluido_no_plano %}
+                        <span class="badge bg-success">Incluído</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">Não incluído</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if addon.incluido_no_plano %}
+                        <span class="text-muted">Sem ação necessária</span>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('auth.assinatura') }}" class="m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="acao" value="solicitar_addon">
+                            <input type="hidden" name="addon_codigo" value="{{ addon.codigo }}">
+                            <button type="submit" class="btn btn-sm btn-outline-light">Solicitar</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-muted">Nenhum add-on configurado no catálogo comercial.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="ls-card p-4">
+    <h5 class="mb-3 ls-page-title">Configurar Cobrança</h5>
+    <form method="POST" action="{{ url_for('auth.assinatura') }}" class="row g-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="acao" value="configurar_cobranca">
+
+        <div class="col-md-4">
+            <label class="form-label">Ciclo de cobrança</label>
+            <select name="ciclo_cobranca" class="form-control ls-theme-control" required>
+                <option value="mensal" {% if assinatura.ciclo_cobranca == 'mensal' %}selected{% endif %}>Mensal</option>
+                <option value="anual" {% if assinatura.ciclo_cobranca == 'anual' %}selected{% endif %}>Anual</option>
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Forma inicial de pagamento</label>
+            <select name="billing_type" class="form-control ls-theme-control" required>
+                {% for value, label in billing_choices %}
+                <option value="{{ value }}" {% if assinatura.motivo_status and value in assinatura.motivo_status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn ls-btn-primary w-100">
+                <i class="fas fa-credit-card"></i> Salvar e Vincular Cobrança
+            </button>
+        </div>
+    </form>
+
+    <hr class="my-4">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h6 class="mb-0">Cobrança Atual</h6>
+        <form method="POST" action="{{ url_for('auth.assinatura') }}" class="m-0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="acao" value="sincronizar_pagamento">
+            <button type="submit" class="btn btn-sm btn-outline-light">Sincronizar Pagamento</button>
+        </form>
+    </div>
+
+    <div class="row g-3 mb-2">
+        <div class="col-md-3">
+            <small class="text-muted d-block">Status</small>
+            <span class="fw-semibold text-capitalize">{{ pagamento.status or 'Sem cobrança aberta' }}</span>
+        </div>
+        <div class="col-md-3">
+            <small class="text-muted d-block">Valor</small>
+            <span class="fw-semibold">{% if pagamento.valor is not none %}R$ {{ '%.2f'|format(pagamento.valor)|replace('.', ',') }}{% else %}-{% endif %}</span>
+        </div>
+        <div class="col-md-3">
+            <small class="text-muted d-block">Vencimento</small>
+            <span class="fw-semibold">{{ pagamento.vencimento.strftime('%d/%m/%Y') if pagamento.vencimento else '-' }}</span>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            {% if pagamento.invoice_url %}
+            <a href="{{ pagamento.invoice_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100">Pagar Agora</a>
+            {% elif pagamento.bank_slip_url %}
+            <a href="{{ pagamento.bank_slip_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100">Abrir Boleto</a>
+            {% else %}
+            <button class="btn btn-outline-secondary w-100" type="button" disabled>Sem link disponível</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <p class="mb-1"><strong>Assinatura no gateway:</strong> {{ assinatura.gateway_subscription_id or 'Ainda não vinculada' }}</p>
+        <p class="mb-1"><strong>Cliente no gateway:</strong> {{ assinatura.gateway_customer_id or 'Ainda não vinculado' }}</p>
+        <p class="mb-0"><strong>Último retorno do gateway:</strong> {{ assinatura.motivo_status or 'Sem mensagens recentes' }}</p>
+    </div>
+</div>
+{% endblock %}

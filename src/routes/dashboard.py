@@ -1,10 +1,21 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from src.models import db, Lancamento, Entidade, ContaBanco, FluxoContaModel, FluxoCaixaPrevisto, FluxoCaixaRealizado
+from src.models import (
+    db,
+    Lancamento,
+    Entidade,
+    ContaBanco,
+    FluxoContaModel,
+    FluxoCaixaPrevisto,
+    FluxoCaixaRealizado,
+    AssinaturaEmpresa,
+    CobrancaRecorrente,
+)
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from decimal import Decimal
 from decimal import Decimal
+from src.services.planos import get_plan_label
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -40,7 +51,7 @@ def index():
         ).all()
         for lancamento in lancamentos_pagos:
             valor = Decimal(str(lancamento.valor_pago or 0))
-            if lancamento.fluxo_conta and lancamento.fluxo_conta.tipo == 'P':
+            if lancamento.fluxo_conta and lancamento.fluxo_conta.is_pagamento():
                 saldo_total -= valor
             else:
                 saldo_total += valor
@@ -132,6 +143,34 @@ def index():
         ).scalar() or 0
         total_pago_mes = Decimal(str(total_pago_mes))
         total_recebido_mes = Decimal(str(total_recebido_mes))
+
+        assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
+        proxima_cobranca = None
+        if assinatura:
+            proxima_cobranca = (
+                CobrancaRecorrente.query
+                .filter(
+                    CobrancaRecorrente.empresa_id == empresa_id,
+                    CobrancaRecorrente.status.in_(['pendente', 'vencido', 'falhou']),
+                )
+                .order_by(CobrancaRecorrente.data_vencimento.asc(), CobrancaRecorrente.id.asc())
+                .first()
+            )
+
+        assinatura_resumo = {
+            'disponivel': bool(assinatura),
+            'plano_label': get_plan_label(assinatura.plano_codigo) if assinatura else '-',
+            'status': (assinatura.status or '-').capitalize() if assinatura else '-',
+            'ciclo': (assinatura.ciclo_cobranca or '-').capitalize() if assinatura else '-',
+            'fim_trial': assinatura.data_fim_trial if assinatura else None,
+            'vencimento': assinatura.data_vencimento if assinatura else None,
+            'gateway': (assinatura.gateway or '-').upper() if assinatura else '-',
+            'assinatura_gateway_id': assinatura.gateway_subscription_id if assinatura else None,
+            'proxima_cobranca_status': (proxima_cobranca.status or '-').capitalize() if proxima_cobranca else '-',
+            'proxima_cobranca_vencimento': proxima_cobranca.data_vencimento if proxima_cobranca else None,
+            'proxima_cobranca_valor': Decimal(str(proxima_cobranca.valor_previsto or 0)) if proxima_cobranca else Decimal('0.00'),
+        }
+
         return render_template(
             'dashboard.html',
             contas_pagar_aberto=contas_pagar_aberto,
@@ -151,7 +190,8 @@ def index():
             previsto_a_receber=previsto_a_receber,
             previsto_a_pagar=previsto_a_pagar,
             total_pago_mes=total_pago_mes,
-            total_recebido_mes=total_recebido_mes
+            total_recebido_mes=total_recebido_mes,
+            assinatura_resumo=assinatura_resumo,
         )
     except Exception as e:
         logging.error('Erro no dashboard: %s\n%s', e, traceback.format_exc())

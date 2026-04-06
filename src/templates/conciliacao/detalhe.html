@@ -5,7 +5,7 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="display-6 fw-bold" style="color: #f9fafb;">Conciliação #{{ conciliacao.id }}</h1>
+        <h1 class="display-6 fw-bold ls-page-title">Conciliação #{{ conciliacao.id }}</h1>
         <p class="text-muted mb-0">{{ conciliacao.periodo_inicio }} a {{ conciliacao.periodo_fim }} | {{ conciliacao.status }}</p>
     </div>
     <form method="POST" action="{{ url_for('conciliacao.reconciliar', conciliacao_id=conciliacao.id) }}">
@@ -23,7 +23,7 @@
     <h4 class="mb-3">Itens</h4>
     <p class="text-muted mb-3">Dica: dê duplo clique em uma linha pendente para abrir a busca de lançamento correspondente (débito/crédito).</p>
     <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle">
+        <table class="table table-hover align-middle ls-theme-table">
             <thead>
                 <tr>
                     <th>Data</th>

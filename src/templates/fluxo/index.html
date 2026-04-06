@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold" style="color: #f9fafb;">Plano de Fluxo de Caixa</h2>
+    <h2 class="fw-bold ls-page-title">Plano de Fluxo de Caixa</h2>
     <a href="{{ url_for('fluxo.criar') }}" class="btn ls-btn-primary">
         <i class="fas fa-plus"></i> Nova Conta
     </a>
@@ -15,7 +15,7 @@
     <form method="GET" class="row g-3">
         <div class="col-md-3">
             <label class="form-label">Tipo</label>
-            <select name="tipo" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <select name="tipo" class="form-control ls-theme-control">
                 <option value="">Todos</option>
                 <option value="P" {% if tipo == 'P' %}selected{% endif %}>Pagamento</option>
                 <option value="R" {% if tipo == 'R' %}selected{% endif %}>Recebimento</option>
@@ -55,9 +55,11 @@
                     <th>Código</th>
                     <th>Descrição</th>
                     <th>Tipo</th>
+                    {% if not plano_basico %}
                     <th>Máscara</th>
                     <th>Nivel Sintético</th>
                     <th>Nível Analítico</th>
+                    {% endif %}
                     <th>Status</th>
                     <th>Ações</th>
                 </tr>
@@ -68,15 +70,13 @@
                     <td><code style="color: #93c5fd;">{{ conta.codigo }}</code></td>
                     <td>{{ conta.descricao }}</td>
                     <td>
-                        {% if conta.tipo == 'P' %}
-                            <span class="badge bg-danger">Pagamento</span>
-                        {% else %}
-                            <span class="badge bg-success">Recebimento</span>
-                        {% endif %}
+                        <span class="badge {{ 'bg-danger' if conta.tipo == 'P' else 'bg-success' }}">{{ conta.get_tipo_descricao() }}</span>
                     </td>
+                    {% if not plano_basico %}
                     <td>{{ conta.mascara or 'N/A' }}</td>
                     <td>{{ conta.nivel_sintetico or 'N/A' }}</td>
                     <td>{{ conta.nivel_analitico or 'N/A' }}</td>
+                    {% endif %}
                     <td>
                         {% if conta.ativo %}
                             <span class="badge bg-success">Ativo</span>
@@ -100,7 +100,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="8" class="text-center text-muted py-4">
+                    <td colspan="{{ 5 if plano_basico else 8 }}" class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                         Nenhuma conta encontrada
                     </td>

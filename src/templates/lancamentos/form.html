@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold" style="color: #f9fafb;">
+    <h2 class="fw-bold ls-page-title">
         {% if action == 'editar' %}Editar Lançamento{% else %}Novo Lançamento{% endif %}
     </h2>
     <a href="{{ url_for('lancamentos.index') }}" class="btn btn-outline-secondary">
@@ -61,15 +61,32 @@
                 <label class="form-label">Tipo da Entidade</label>
                 <input type="text" id="tipo_entidade" class="form-control" value="" readonly style="background-color: rgba(30, 41, 59, 0.6); color: #cbd5e1;">
             </div>
+            {% if plano_basico %}
+            <div class="col-md-3 mb-2">
+                <label class="form-label">Tipo da Movimentação *</label>
+                <select name="tipo_movimentacao" id="tipo_movimentacao" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); color: #e5e7eb; border-color: rgba(148, 163, 184, 0.25);">
+                    <option value="">Selecione...</option>
+                    <option value="R" {% if lancamento and lancamento.fluxo_conta and lancamento.fluxo_conta.tipo == 'R' %}selected{% endif %}>Recebimento</option>
+                    <option value="P" {% if lancamento and lancamento.fluxo_conta and lancamento.fluxo_conta.tipo == 'P' %}selected{% endif %}>Pagamento</option>
+                </select>
+                <small class="text-muted">No plano Básico, a conta de fluxo é definida automaticamente.</small>
+            </div>
+            {% else %}
             <div class="col-md-3 mb-2">
                 <label class="form-label">Conta de Fluxo *</label>
                 <select name="fluxo_conta_id" id="fluxo_conta_id" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); color: #e5e7eb; border-color: rgba(148, 163, 184, 0.25);">
                     <option value="">Selecione...</option>
                     {% for cf in contas_fluxo %}
-                    <option value="{{ cf.id }}" {% if lancamento and lancamento.fluxo_conta_id == cf.id %}selected{% endif %}>{{ cf.codigo }} - {{ cf.descricao }}</option>
+                    <option value="{{ cf.id }}" data-tipo-descricao="{{ cf.get_tipo_descricao() }}" {% if lancamento and lancamento.fluxo_conta_id == cf.id %}selected{% endif %}>{{ cf.codigo }} - {{ cf.descricao }}</option>
                     {% endfor %}
                 </select>
             </div>
+            <div class="col-md-4 mb-2">
+                <label class="form-label">Tipo do Fluxo</label>
+                <input type="text" id="tipo_fluxo_descricao" class="form-control" value="{{ lancamento.fluxo_conta.get_tipo_descricao() if lancamento and lancamento.fluxo_conta else '' }}" readonly style="background-color: rgba(30, 41, 59, 0.6); color: #cbd5e1;">
+                <small class="text-muted">Preenchido automaticamente pela conta de fluxo.</small>
+            </div>
+            {% endif %}
             <div class="col-md-4 mb-2">
                 <label class="form-label">Conta de Banco *</label>
                 <select name="conta_banco_id" id="conta_banco_id" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); color: #e5e7eb; border-color: rgba(148, 163, 184, 0.25);">
@@ -160,6 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const fluxoContaSelect = document.getElementById('fluxo_conta_id');
     const contaBancoSelect = document.getElementById('conta_banco_id');
     const tipoEntidadeInput = document.getElementById('tipo_entidade');
+    const tipoFluxoDescricaoInput = document.getElementById('tipo_fluxo_descricao');
 
     function preencherTipoFluxoBanco() {
         if (!entidadeSelect) return;
@@ -186,11 +204,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+
+        // Quando a entidade define a conta de fluxo automaticamente,
+        // sincroniza também o campo visual de tipo do fluxo.
+        preencherTipoFluxo();
+    }
+
+    function preencherTipoFluxo() {
+        if (!fluxoContaSelect) return;
+        const selectedOption = fluxoContaSelect.options[fluxoContaSelect.selectedIndex];
+        const tipoDescricao = selectedOption ? selectedOption.getAttribute('data-tipo-descricao') || '' : '';
+        if (tipoFluxoDescricaoInput) {
+            tipoFluxoDescricaoInput.value = tipoDescricao;
+        }
     }
 
     if (entidadeSelect) {
         entidadeSelect.addEventListener('change', preencherTipoFluxoBanco);
         preencherTipoFluxoBanco();
+    }
+
+    if (fluxoContaSelect) {
+        fluxoContaSelect.addEventListener('change', preencherTipoFluxo);
+        preencherTipoFluxo();
     }
 });
 </script>

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from src.models import db, Entidade
+from src.models import db, Entidade, Lancamento
 from datetime import datetime
 from src.tenant import scoped_query, scoped_get_or_404, tenant_id
 
@@ -170,7 +170,14 @@ def editar(id):
 def ver(id):
     """View entity details"""
     entidade = scoped_get_or_404(Entidade, id)
-    lancamentos = entidade.lancamentos.limit(10).all()
+    # Entidade.lancamentos é lista (não query); use scoped_query para limitar com segurança.
+    lancamentos = (
+        scoped_query(Lancamento)
+        .filter_by(entidade_id=entidade.id)
+        .order_by(Lancamento.data_evento.desc(), Lancamento.id.desc())
+        .limit(10)
+        .all()
+    )
     
     return render_template(
         'entidades/details.html',

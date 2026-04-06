@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
-{% block title %}Listagem de Fluxo de Caixa{% endblock %}
+{% block title %}Fluxo de Caixa Consolidado{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold" style="color: #f9fafb;">Listagem de Fluxo de Caixa</h2>
+    <h2 class="fw-bold ls-page-title">Fluxo de Caixa Consolidado por Conta</h2>
     <a class="btn btn-outline-success" href="{{ url_for('relatorios.export_fluxo_caixa_csv', data_inicio=data_inicio, data_fim=data_fim) }}">
         <i class="fas fa-file-excel"></i> Exportar para XLSX
     </a>
@@ -35,29 +35,33 @@
         <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
             <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
                 <tr>
-                    <th>Data</th>
                     <th>Conta Fluxo</th>
-                    <th>Descrição</th>
                     <th>Tipo</th>
-                    <th class="text-end">Valor Real (R$)</th>
-                    <th class="text-end">Valor Pago/Recebido (R$)</th>
+                    <th class="text-end">Qtd.</th>
+                    <th class="text-end" style="color: #ef4444;">Previsto a Pagar (R$)</th>
+                    <th class="text-end" style="color: #22c55e;">Previsto a Receber (R$)</th>
+                    <th class="text-end">Saldo Previsto (R$)</th>
+                    <th class="text-end" style="color: #ef4444;">Realizado Pago (R$)</th>
+                    <th class="text-end" style="color: #22c55e;">Realizado Recebido (R$)</th>
+                    <th class="text-end">Saldo Realizado (R$)</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in dados_csv %}
                 <tr>
-                    <td>{{ row.data|default('-') }}</td>
                     <td>{{ row.conta_fluxo|default('-') }}</td>
-                    <td>{{ row.descricao|default('-') }}</td>
                     <td>{{ row.tipo|default('-') }}</td>
-                    {% set vr = row.valor_real or 0 %}
-                    {% set vp = row.valor_pago or 0 %}
-                    <td class="text-end">{{ ('%.2f' % vr)|replace('.', ',') }}</td>
-                    <td class="text-end">{{ ('%.2f' % vp)|replace('.', ',') }}</td>
+                    <td class="text-end">{{ row.qtd_lancamentos }}</td>
+                    <td class="text-end">{{ row.total_previsto_pagar|brl }}</td>
+                    <td class="text-end">{{ row.total_previsto_receber|brl }}</td>
+                    <td class="text-end fw-bold">{{ row.saldo_previsto|brl }}</td>
+                    <td class="text-end">{{ row.total_realizado_pagar|brl }}</td>
+                    <td class="text-end">{{ row.total_realizado_receber|brl }}</td>
+                    <td class="text-end fw-bold">{{ row.saldo_realizado|brl }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-4">
+                    <td colspan="9" class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                         Nenhum dado encontrado para o período.
                     </td>

@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold" style="color: #f9fafb;">{{ conta.nome }}</h2>
+    <h2 class="fw-bold ls-page-title">{{ conta.nome }}</h2>
     <div>
         <a href="{{ url_for('contas_banco.editar', id=conta.id) }}" class="btn btn-outline-primary">
             <i class="fas fa-edit"></i> Editar
@@ -19,7 +19,7 @@
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="ls-card p-4">
-            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+            <h5 class="ls-page-title" style="margin-bottom: 1.5rem;">
                 <i class="fas fa-bank" style="color: var(--ls-accent);"></i> Informações da Conta
             </h5>
             
@@ -47,7 +47,7 @@
 
     <div class="col-md-6">
         <div class="ls-card p-4">
-            <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+            <h5 class="ls-page-title" style="margin-bottom: 1.5rem;">
                 <i class="fas fa-wallet" style="color: var(--ls-accent);"></i> Saldo
             </h5>
             
@@ -70,7 +70,7 @@
 
 <!-- Últimos Lançamentos -->
 <div class="ls-card p-4">
-    <h5 style="color: #f9fafb; margin-bottom: 1.5rem;">
+    <h5 class="ls-page-title" style="margin-bottom: 1.5rem;">
         <i class="fas fa-history" style="color: var(--ls-accent);"></i> Últimos Lançamentos
     </h5>
     

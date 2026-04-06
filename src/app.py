@@ -167,6 +167,7 @@ def create_app(config_name=None):
     from src.routes.importacoes import importacoes_bp
     from src.routes.conciliacao import conciliacao_bp
     from src.routes.comercial import comercial_webhook_bp
+    from src.routes.admin_comercial import admin_comercial_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -180,6 +181,7 @@ def create_app(config_name=None):
     app.register_blueprint(importacoes_bp)
     app.register_blueprint(conciliacao_bp)
     app.register_blueprint(comercial_webhook_bp)
+    app.register_blueprint(admin_comercial_bp)
 
     @app.route('/suporte')
     def suporte():

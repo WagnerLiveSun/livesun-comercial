@@ -65,6 +65,46 @@ Itens obrigatorios ao longo das etapas:
 - Plano Profissional: microempresas com demanda de controle ampliado.
 - Plano Corporativo: pequenas empresas em expansao.
 
+## Etapa Comercial para Implementacao (Registrada em 2026-04-06)
+
+### 1) Ciclo de assinatura
+- Status da assinatura: ativa, trial, suspensa, cancelada.
+- Data de vencimento e renovacao.
+- Periodo de trial.
+
+### 2) Cobranca recorrente
+- Integracao com gateway (Asaas, Stripe, Mercado Pago etc.).
+- Geracao de cobranca mensal/anual.
+- Webhook para atualizar status apos pagamento.
+
+### 3) Regra de inadimplencia
+- Bloqueio parcial/total quando vencer.
+- Janela de carencia (ex.: 3-7 dias).
+- Mensagens claras na UI sobre bloqueio e como regularizar.
+
+### 4) Upgrade/downgrade com efeito controlado
+- Definir quando muda: imediato ou proximo ciclo.
+- Tratar downgrade com excesso de usuarios e recursos ja usados.
+- Politica de proporcionalidade/pro-rata (se houver).
+
+### 5) Painel comercial/admin interno
+- Lista de empresas com plano/status/vencimento.
+- Trocar plano manualmente.
+- Liberar excecao temporaria (ex.: 15 dias).
+
+### 6) Contrato de oferta
+- Congelar catalogo de planos (nome, preco, limites).
+- Separar regra tecnica da regra comercial para facilitar mudanca de preco sem deploy.
+
+### 7) Auditoria e suporte
+- Log de alteracoes de plano/status por usuario/admin.
+- Historico de cobrancas e tentativas de pagamento.
+
+### 8) Comunicacao automatica
+- Aviso pre-vencimento.
+- Aviso de falha de pagamento.
+- Confirmacao de pagamento e reativacao.
+
 ## Cobranca e Upgrade
 - Integracao de assinatura recorrente (Stripe).
 - Upgrade por limite de usuarios por plano.

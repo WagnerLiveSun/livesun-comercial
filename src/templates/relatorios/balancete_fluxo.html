@@ -5,15 +5,15 @@
     <div class="row g-2 align-items-end">
         <div class="col-auto">
             <label class="form-label">Data Inicial</label>
-            <input type="date" name="data_inicio" class="form-control" value="{{ data_inicio }}">
+            <input type="date" name="data_inicio" class="form-control ls-theme-control" value="{{ data_inicio }}">
         </div>
         <div class="col-auto">
             <label class="form-label">Data Final</label>
-            <input type="date" name="data_fim" class="form-control" value="{{ data_fim }}">
+            <input type="date" name="data_fim" class="form-control ls-theme-control" value="{{ data_fim }}">
         </div>
         <div class="col-auto">
             <label class="form-label">Tipo de Relatório</label>
-            <select name="tipo_relatorio" class="form-select">
+            <select name="tipo_relatorio" class="form-select ls-theme-control">
                 <option value="sintetico" {% if tipo_relatorio == 'sintetico' %}selected{% endif %}>Sintético</option>
                 <option value="analitico" {% if tipo_relatorio == 'analitico' %}selected{% endif %}>Analítico</option>
                 <option value="comparativo" {% if tipo_relatorio == 'comparativo' %}selected{% endif %}>Comparativo</option>
@@ -21,7 +21,7 @@
         </div>
         <div class="col-auto">
             <label class="form-label">Origem dos Dados</label>
-            <select name="origem_dados" class="form-select">
+            <select name="origem_dados" class="form-select ls-theme-control">
                 <option value="realizado" {% if origem_dados == 'realizado' %}selected{% endif %}>Realizado</option>
                 <option value="previsto" {% if origem_dados == 'previsto' %}selected{% endif %}>Previsto</option>
                 <option value="comparativo" {% if origem_dados == 'comparativo' %}selected{% endif %}>Comparativo</option>

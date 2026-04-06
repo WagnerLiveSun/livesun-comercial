@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
-        <h1 class="display-6 fw-bold" style="color: #f9fafb;">Perfil do Administrador</h1>
+        <h1 class="display-6 fw-bold ls-page-title">Perfil do Administrador</h1>
         <p class="text-muted">Preferencias do dashboard</p>
     </div>
 </div>
@@ -19,6 +19,16 @@
                 value="{{ current_user.dashboard_chart_days or 30 }}"
                 style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
             <div class="form-text text-muted">Minimo 7 dias, maximo 365 dias.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Plano da Empresa</label>
+            <select name="plano" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                {% for value, label in plan_choices %}
+                <option value="{{ value }}" {% if current_user.empresa and current_user.empresa.plano == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <div class="form-text text-muted">O plano controla limites e disponibilidade de telas avançadas.</div>
         </div>
 
         <button type="submit" class="btn ls-btn-primary">
