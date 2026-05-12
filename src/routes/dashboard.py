@@ -8,14 +8,10 @@ from src.models import (
     FluxoContaModel,
     FluxoCaixaPrevisto,
     FluxoCaixaRealizado,
-    AssinaturaEmpresa,
-    CobrancaRecorrente,
 )
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from decimal import Decimal
-from decimal import Decimal
-from src.services.planos import get_plan_label
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -88,6 +84,52 @@ def index():
         periodo_grafico = min(max(periodo_grafico, 7), 365)
         grafico_inicio = hoje - timedelta(days=periodo_grafico - 1)
         dias = [grafico_inicio + timedelta(days=i) for i in range(periodo_grafico)]
+
+        # Dados para gráficos de fluxo de caixa (últimos 30 dias) - separados por tipo
+        grafico_labels = []
+        grafico_entradas_previsto = []
+        grafico_entradas_realizado = []
+        grafico_saidas_previsto = []
+        grafico_saidas_realizado = []
+
+        for i in range(periodo_grafico - 1, -1, -1):
+            data_ref = hoje - timedelta(days=i)
+            grafico_labels.append(data_ref.strftime('%d/%m'))
+
+            # ENTRADAS (R = Recebimentos)
+            entradas_previsto = db.session.query(func.coalesce(func.sum(Lancamento.valor_real), 0)).join(FluxoContaModel).filter(
+                Lancamento.empresa_id == empresa_id,
+                Lancamento.data_vencimento == data_ref,
+                FluxoContaModel.tipo == 'R',
+                Lancamento.status.in_(['aberto', 'vencido'])
+            ).scalar() or 0
+
+            entradas_realizado = db.session.query(func.coalesce(func.sum(Lancamento.valor_pago), 0)).join(FluxoContaModel).filter(
+                Lancamento.empresa_id == empresa_id,
+                Lancamento.data_pagamento == data_ref,
+                FluxoContaModel.tipo == 'R',
+                Lancamento.status == 'pago'
+            ).scalar() or 0
+
+            # SAÍDAS (P = Pagamentos)
+            saidas_previsto = db.session.query(func.coalesce(func.sum(Lancamento.valor_real), 0)).join(FluxoContaModel).filter(
+                Lancamento.empresa_id == empresa_id,
+                Lancamento.data_vencimento == data_ref,
+                FluxoContaModel.tipo == 'P',
+                Lancamento.status.in_(['aberto', 'vencido'])
+            ).scalar() or 0
+
+            saidas_realizado = db.session.query(func.coalesce(func.sum(Lancamento.valor_pago), 0)).join(FluxoContaModel).filter(
+                Lancamento.empresa_id == empresa_id,
+                Lancamento.data_pagamento == data_ref,
+                FluxoContaModel.tipo == 'P',
+                Lancamento.status == 'pago'
+            ).scalar() or 0
+
+            grafico_entradas_previsto.append(float(entradas_previsto))
+            grafico_entradas_realizado.append(float(entradas_realizado))
+            grafico_saidas_previsto.append(float(saidas_previsto))
+            grafico_saidas_realizado.append(float(saidas_realizado))
         previsto_rows = db.session.query(
             Lancamento.data_vencimento,
             func.sum(Lancamento.valor_real)
@@ -100,14 +142,9 @@ def index():
             func.sum(Lancamento.valor_pago)
         ).join(FluxoContaModel).filter(
             Lancamento.empresa_id == empresa_id,
-            Lancamento.data_pagamento >= grafico_inicio,
-            Lancamento.status == 'pago'
+            Lancamento.data_pagamento >= grafico_inicio
         ).group_by(Lancamento.data_pagamento).all()
-        previsto_por_dia = {row[0]: Decimal(str(row[1] or 0)) for row in previsto_rows}
-        realizado_por_dia = {row[0]: Decimal(str(row[1] or 0)) for row in realizado_rows}
-        grafico_labels = [d.strftime('%d/%m') for d in dias]
-        grafico_previsto = [float(previsto_por_dia.get(d, 0)) for d in dias]
-        grafico_realizado = [float(realizado_por_dia.get(d, 0)) for d in dias]
+
         previsto_inicio = hoje
         previsto_fim = hoje + timedelta(days=periodo_grafico - 1)
         previsto_a_receber = db.session.query(
@@ -144,33 +181,6 @@ def index():
         total_pago_mes = Decimal(str(total_pago_mes))
         total_recebido_mes = Decimal(str(total_recebido_mes))
 
-        assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
-        proxima_cobranca = None
-        if assinatura:
-            proxima_cobranca = (
-                CobrancaRecorrente.query
-                .filter(
-                    CobrancaRecorrente.empresa_id == empresa_id,
-                    CobrancaRecorrente.status.in_(['pendente', 'vencido', 'falhou']),
-                )
-                .order_by(CobrancaRecorrente.data_vencimento.asc(), CobrancaRecorrente.id.asc())
-                .first()
-            )
-
-        assinatura_resumo = {
-            'disponivel': bool(assinatura),
-            'plano_label': get_plan_label(assinatura.plano_codigo) if assinatura else '-',
-            'status': (assinatura.status or '-').capitalize() if assinatura else '-',
-            'ciclo': (assinatura.ciclo_cobranca or '-').capitalize() if assinatura else '-',
-            'fim_trial': assinatura.data_fim_trial if assinatura else None,
-            'vencimento': assinatura.data_vencimento if assinatura else None,
-            'gateway': (assinatura.gateway or '-').upper() if assinatura else '-',
-            'assinatura_gateway_id': assinatura.gateway_subscription_id if assinatura else None,
-            'proxima_cobranca_status': (proxima_cobranca.status or '-').capitalize() if proxima_cobranca else '-',
-            'proxima_cobranca_vencimento': proxima_cobranca.data_vencimento if proxima_cobranca else None,
-            'proxima_cobranca_valor': Decimal(str(proxima_cobranca.valor_previsto or 0)) if proxima_cobranca else Decimal('0.00'),
-        }
-
         return render_template(
             'dashboard.html',
             contas_pagar_aberto=contas_pagar_aberto,
@@ -181,17 +191,17 @@ def index():
             pagar_previsto_hoje=pagar_previsto_hoje,
             receber_previsto_hoje=receber_previsto_hoje,
             disponibilidade_hoje=disponibilidade_hoje,
-            necessidade_hoje=necessidade_hoje,
             grafico_labels=grafico_labels,
-            grafico_previsto=grafico_previsto,
-            grafico_realizado=grafico_realizado,
+            grafico_entradas_previsto=grafico_entradas_previsto,
+            grafico_entradas_realizado=grafico_entradas_realizado,
+            grafico_saidas_previsto=grafico_saidas_previsto,
+            grafico_saidas_realizado=grafico_saidas_realizado,
             ultimos_lancamentos=ultimos_lancamentos,
             resultado_por_dia=resultado_por_dia,
             previsto_a_receber=previsto_a_receber,
             previsto_a_pagar=previsto_a_pagar,
             total_pago_mes=total_pago_mes,
             total_recebido_mes=total_recebido_mes,
-            assinatura_resumo=assinatura_resumo,
         )
     except Exception as e:
         logging.error('Erro no dashboard: %s\n%s', e, traceback.format_exc())

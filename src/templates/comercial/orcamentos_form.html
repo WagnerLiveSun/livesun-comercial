@@ -1,0 +1,228 @@
+{% extends "layout.html" %}
+
+{% block title %}Novo Orcamento{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">Novo Orcamento</h1>
+        <p class="text-muted mb-0">Crie uma proposta comercial para o cliente.</p>
+    </div>
+    <a href="{{ url_for('comercial_operacional.orcamentos_index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="post" id="orcamentoForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label for="cliente_id" class="form-label">Cliente *</label>
+                <select class="form-control" id="cliente_id" name="cliente_id" required>
+                    <option value="">Selecione...</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}">{{ cliente.nome }} ({{ cliente.cnpj_cpf }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="vendedor_id" class="form-label">Vendedor</label>
+                <select class="form-control" id="vendedor_id" name="vendedor_id">
+                    <option value="">Selecione...</option>
+                    {% for vendedor in vendedores %}
+                    <option value="{{ vendedor.id }}">{{ vendedor.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="filial_id" class="form-label">Filial</label>
+                <select class="form-control" id="filial_id" name="filial_id">
+                    <option value="">Matriz</option>
+                    {% for filial in filiais %}
+                    <option value="{{ filial.id }}">{{ filial.codigo }} - {{ filial.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="data_emissao" class="form-label">Data Emissao *</label>
+                <input type="date" class="form-control" id="data_emissao" name="data_emissao" value="{{ today.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-4">
+                <label for="data_validade" class="form-label">Data Validade *</label>
+                <input type="date" class="form-control" id="data_validade" name="data_validade" value="{{ (today.replace(day=today.day+7)).strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-4">
+                <label for="tabela_preco_id" class="form-label">Tabela de Preco</label>
+                <select class="form-control" id="tabela_preco_id" name="tabela_preco_id">
+                    <option value="">Selecione...</option>
+                    {% for tabela in tabelas %}
+                    <option value="{{ tabela.id }}">{{ tabela.codigo }} - {{ tabela.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <h5 class="mb-3">Itens do Orcamento</h5>
+        <div class="table-responsive mb-3">
+            <table class="table table-hover ls-theme-table" id="itensTable">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Item</th>
+                        <th>Descricao</th>
+                        <th>Qtd</th>
+                        <th>Valor Unit.</th>
+                        <th>Desconto</th>
+                        <th>Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="itensBody">
+                    <!-- Linhas serao adicionadas via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-outline-primary" onclick="addItemRow('P')">
+                    <i class="fas fa-plus"></i> Adicionar Produto
+                </button>
+                <button type="button" class="btn btn-outline-info" onclick="addItemRow('S')">
+                    <i class="fas fa-plus"></i> Adicionar Servico
+                </button>
+            </div>
+            <div class="col-md-6 text-end">
+                <h4>Total: R$ <span id="totalOrcamento">0,00</span></h4>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label for="observacoes" class="form-label">Observacoes (visivel ao cliente)</label>
+                <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
+            </div>
+            <div class="col-md-6">
+                <label for="observacoes_internas" class="form-label">Observacoes Internas</label>
+                <textarea class="form-control" id="observacoes_internas" name="observacoes_internas" rows="3"></textarea>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn ls-btn-primary">
+                <i class="fas fa-save"></i> Salvar Orcamento
+            </button>
+            <a href="{{ url_for('comercial_operacional.orcamentos_index') }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+let itemCount = 0;
+const produtos = {{ produtos|tojson }};
+const servicos = {{ servicos|tojson }};
+
+function addItemRow(tipo) {
+    itemCount++;
+    const tbody = document.getElementById('itensBody');
+    const row = document.createElement('tr');
+    row.id = `item_${itemCount}`;
+
+    let selectOptions = '';
+    if (tipo === 'P') {
+        produtos.forEach(p => {
+            selectOptions += `<option value="${p.id}">${p.codigo_interno} - ${p.descricao_resumida}</option>`;
+        });
+    } else {
+        servicos.forEach(s => {
+            selectOptions += `<option value="${s.id}">${s.codigo_interno} - ${s.descricao}</option>`;
+        });
+    }
+
+    row.innerHTML = `
+        <td>
+            <input type="hidden" name="item_tipo" value="${tipo}">
+            <span class="badge bg-${tipo === 'P' ? 'primary' : 'info'}">${tipo === 'P' ? 'Produto' : 'Servico'}</span>
+        </td>
+        <td>
+            <select name="item_${tipo === 'P' ? 'produto' : 'servico'}_id" class="form-control form-control-sm" required onchange="updateDescricao(this, ${itemCount}, '${tipo}')">
+                <option value="">Selecione...</option>
+                ${selectOptions}
+            </select>
+        </td>
+        <td>
+            <input type="text" name="item_descricao" id="desc_${itemCount}" class="form-control form-control-sm" placeholder="Descricao do item">
+        </td>
+        <td>
+            <input type="number" name="item_quantidade" class="form-control form-control-sm item-qtd" value="1" min="0.001" step="0.001" required onchange="calcularTotal()">
+        </td>
+        <td>
+            <input type="number" name="item_valor_unitario" class="form-control form-control-sm item-valor" value="0.00" min="0" step="0.0001" required onchange="calcularTotal()">
+        </td>
+        <td>
+            <input type="number" name="item_desconto" class="form-control form-control-sm item-desconto" value="0.00" min="0" step="0.01" onchange="calcularTotal()">
+        </td>
+        <td class="item-total">0,00</td>
+        <td>
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeItemRow(${itemCount})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(row);
+}
+
+function removeItemRow(id) {
+    const row = document.getElementById(`item_${id}`);
+    if (row) {
+        row.remove();
+        calcularTotal();
+    }
+}
+
+function updateDescricao(select, id, tipo) {
+    const descInput = document.getElementById(`desc_${id}`);
+    const valorInput = select.closest('tr').querySelector('.item-valor');
+
+    let item;
+    if (tipo === 'P') {
+        item = produtos.find(p => p.id == select.value);
+    } else {
+        item = servicos.find(s => s.id == select.value);
+    }
+
+    if (item) {
+        descInput.value = tipo === 'P' ? item.descricao_resumida : item.descricao;
+        // Buscar preco da tabela selecionada
+        const tabelaId = document.getElementById('tabela_preco_id').value;
+        if (tabelaId) {
+            // Aqui poderia fazer uma requisicao AJAX para buscar o preco
+            // Por enquanto, deixa o usuario informar
+        }
+    }
+}
+
+function calcularTotal() {
+    let total = 0;
+    const rows = document.querySelectorAll('#itensBody tr');
+
+    rows.forEach(row => {
+        const qtd = parseFloat(row.querySelector('.item-qtd').value) || 0;
+        const valor = parseFloat(row.querySelector('.item-valor').value) || 0;
+        const desconto = parseFloat(row.querySelector('.item-desconto').value) || 0;
+        const itemTotal = (qtd * valor) - desconto;
+
+        row.querySelector('.item-total').textContent = itemTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        total += itemTotal;
+    });
+
+    document.getElementById('totalOrcamento').textContent = total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+// Adicionar primeira linha automaticamente
+addItemRow('P');
+</script>
+{% endblock %}

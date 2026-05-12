@@ -33,7 +33,7 @@ def test_mysql_connection(host, port, user, password):
 def main():
     clear_screen()
     print("=" * 70)
-    print("  LiveSun Controller - Configurador de Banco de Dados")
+    print("  LiveSun Comercial - Configurador de Banco de Dados")
     print("=" * 70)
     
     # Verificar se MySQL está instalado
@@ -68,7 +68,7 @@ def main():
     print(f"DB_PORT:     {env_vars.get('DB_PORT', '3306')}")
     print(f"DB_USER:     {env_vars.get('DB_USER', 'root')}")
     print(f"DB_PASSWORD: {'[VAZIO]' if not env_vars.get('DB_PASSWORD') else '***'}")
-    print(f"DB_NAME:     {env_vars.get('DB_NAME', 'livesun_financeiro')}")
+    print(f"DB_NAME:     {env_vars.get('DB_NAME', 'comercial')}")
     
     # Menu
     print("\n" + "=" * 70)
@@ -104,7 +104,7 @@ def main():
         port = input("DB_PORT (padrão: 3306): ").strip() or "3306"
         user = input("DB_USER (padrão: root): ").strip() or "root"
         password = input("DB_PASSWORD (deixe vazio para sem senha): ").strip()
-        db_name = input("DB_NAME (padrão: livesun_financeiro): ").strip() or "livesun_financeiro"
+        db_name = input("DB_NAME (padrão: comercial): ").strip() or "comercial"
         
         print(f"\n🔗 Testando conexão com {user}@{host}:{port}...")
         if test_mysql_connection(host, port, user, password):
@@ -157,7 +157,7 @@ def main():
         
         if input("\nDeseja continuar com SQLite? (s/n): ").lower() == 's':
             env_vars['DB_TYPE'] = 'sqlite'
-            env_vars['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///livesun_financeiro.db'
+            env_vars['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///livesun_comercial.db'
             
             with open(env_file, 'w') as f:
                 f.write("# Flask Configuration\n")
@@ -171,7 +171,7 @@ def main():
                 f.write("DB_PORT=\n")
                 f.write("DB_USER=\n")
                 f.write("DB_PASSWORD=\n")
-                f.write("DB_NAME=livesun_financeiro\n")
+                f.write("DB_NAME=comercial\n")
                 f.write("\n# Server Configuration\n")
                 f.write(f"SERVER_HOST={env_vars.get('SERVER_HOST', '0.0.0.0')}\n")
                 f.write(f"SERVER_PORT={env_vars.get('SERVER_PORT', '5000')}\n")

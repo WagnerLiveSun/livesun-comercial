@@ -128,18 +128,19 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="acao" value="solicitar_mudanca_plano">
 
-        <div class="col-md-8">
-            <label class="form-label">Selecionar novo plano</label>
+        <div class="col-md-5">
+            <label class="form-label text-muted" style="font-size: 0.875em;">Selecionar novo plano</label>
             <select name="novo_plano" class="form-control ls-theme-control" required>
                 {% for plano in planos_disponiveis %}
                 <option value="{{ plano.codigo }}" {% if plano.selecionado %}selected{% endif %}>{{ plano.label }}</option>
                 {% endfor %}
             </select>
-            <div class="form-text">Política vigente: efetivação após 30 dias da solicitação.</div>
+            <small class="form-text text-muted" style="font-size: 0.75em;">Política vigente: efetivação após 30 dias da solicitação.</small>
         </div>
 
-        <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn btn-outline-light w-100">
+        <div class="col-md-3">
+            <label class="form-label text-muted invisible" style="font-size: 0.875em;">&nbsp;</label>
+            <button type="submit" class="btn btn-primary w-100">
                 <i class="fas fa-level-up-alt"></i> Solicitar Alteração de Plano
             </button>
         </div>
@@ -211,7 +212,7 @@
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="acao" value="solicitar_addon">
                             <input type="hidden" name="addon_codigo" value="{{ addon.codigo }}">
-                            <button type="submit" class="btn btn-sm btn-outline-light">Solicitar</button>
+                            <button type="submit" class="btn btn-sm btn-primary">Solicitar</button>
                         </form>
                         {% endif %}
                     </td>
@@ -263,7 +264,7 @@
         <form method="POST" action="{{ url_for('auth.assinatura') }}" class="m-0">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="acao" value="sincronizar_pagamento">
-            <button type="submit" class="btn btn-sm btn-outline-light">Sincronizar Pagamento</button>
+            <button type="submit" class="btn btn-sm btn-primary">Sincronizar Pagamento</button>
         </form>
     </div>
 

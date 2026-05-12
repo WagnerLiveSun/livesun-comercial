@@ -276,6 +276,12 @@
     </div>
 
     <div class="row g-2 mb-3">
+        <div class="col-md-3">
+            <div class="rounded p-2 rel-lanc-total-card">
+                <small class="d-block rel-lanc-total-label">Total Valor Real</small>
+                <strong class="rel-lanc-total-value">R$ {{ total_valor_real|brl }}</strong>
+            </div>
+        </div>
         {% if mostrar_pago %}
         <div class="col-md-3">
             <div class="rounded p-2 rel-lanc-total-card">

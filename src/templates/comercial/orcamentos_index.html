@@ -1,0 +1,119 @@
+{% extends "layout.html" %}
+
+{% block title %}Orcamentos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">Orcamentos</h1>
+        <p class="text-muted mb-0">Propostas comerciais para clientes.</p>
+    </div>
+    <a href="{{ url_for('comercial_operacional.orcamentos_criar') }}" class="btn ls-btn-primary">
+        <i class="fas fa-plus"></i> Novo Orcamento
+    </a>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <select name="cliente_id" class="form-control">
+                <option value="">Todos os clientes</option>
+                {% for cliente in clientes %}
+                <option value="{{ cliente.id }}" {{ 'selected' if cliente_id == cliente.id else '' }}>{{ cliente.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-control">
+                <option value="">Todos os status</option>
+                <option value="emitido" {{ 'selected' if status == 'emitido' else '' }}>Emitido</option>
+                <option value="aprovado" {{ 'selected' if status == 'aprovado' else '' }}>Aprovado</option>
+                <option value="convertido" {{ 'selected' if status == 'convertido' else '' }}>Convertido</option>
+                <option value="cancelado" {{ 'selected' if status == 'cancelado' else '' }}>Cancelado</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-outline-primary w-100">
+                <i class="fas fa-search"></i> Filtrar
+            </button>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('comercial_operacional.orcamentos_index') }}" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-times"></i> Limpar Filtros
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="ls-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle ls-theme-table">
+            <thead>
+                <tr>
+                    <th>Numero</th>
+                    <th>Cliente</th>
+                    <th>Data Emissao</th>
+                    <th>Validade</th>
+                    <th>Valor Total</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for orc in orcamentos %}
+                <tr>
+                    <td><strong>{{ orc.numero }}</strong></td>
+                    <td>{{ orc.cliente.nome if orc.cliente else '-' }}</td>
+                    <td>{{ orc.data_emissao.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ orc.data_validade.strftime('%d/%m/%Y') }}</td>
+                    <td><strong>{{ orc.valor_total|brl }}</strong></td>
+                    <td>
+                        <span class="badge bg-{{
+                            'warning' if orc.status == 'emitido' else
+                            ('success' if orc.status == 'aprovado' else
+                            ('info' if orc.status == 'convertido' else
+                            ('danger' if orc.status == 'cancelado' else 'secondary')))
+                        }}">
+                            {{ orc.status|title }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('comercial_operacional.orcamentos_detalhe', orcamento_id=orc.id) }}" class="btn btn-outline-info btn-sm" title="Ver Detalhes">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if orc.status == 'emitido' %}
+                        <form method="post" action="{{ url_for('comercial_operacional.orcamentos_converter', orcamento_id=orc.id) }}" class="d-inline" onsubmit="return confirm('Converter este orcamento em pedido?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-success btn-sm" title="Converter em Pedido">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">Nenhum orcamento encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Paginacao" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {{ 'active' if page_num == pagination.page else '' }}">
+                        <a class="page-link" href="{{ url_for('comercial_operacional.orcamentos_index', page=page_num, cliente_id=cliente_id, status=status) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -5,6 +5,8 @@
 Data: 6 de Março de 2026
 Desenvolvedor: GitHub Copilot
 
+> Documento histórico de implementação do módulo de comissões no LiveSun Comercial.
+
 ---
 
 ## 📋 Escopo Implementado

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Script de inicialização do banco de dados - LiveSun Controller
+Script de inicialização do banco de dados - LiveSun Comercial
 Executa as migrações e insere dados iniciais
 
 Uso:
@@ -45,7 +45,7 @@ def setup_database(app, init_only=False):
     """Configura o banco de dados"""
     
     with app.app_context():
-        print_header("INICIALIZAR BANCO DE DADOS - LiveSun Controller")
+        print_header("INICIALIZAR BANCO DE DADOS - LiveSun Comercial")
         
         try:
             # 1. Criar todas as tabelas
@@ -58,7 +58,7 @@ def setup_database(app, init_only=False):
             empresa = Empresa.query.first()
             if not empresa:
                 empresa = Empresa(
-                    nome='LiveSun Controller',
+                    nome='LiveSun Comercial',
                     cnpj='00.000.000/0000-00'
                 )
                 db.session.add(empresa)
@@ -200,7 +200,7 @@ def setup_database(app, init_only=False):
 def main():
     """Função principal"""
     parser = argparse.ArgumentParser(
-        description='Inicializa o banco de dados do LiveSun Controller'
+        description='Inicializa o banco de dados do LiveSun Comercial'
     )
     parser.add_argument(
         '--init-only',

@@ -197,6 +197,11 @@ _configurar_logger_debug()
 
 def _get_or_create_default_fluxo_conta_id(empresa_id: int, tipo_movimentacao: str = 'R') -> int | None:
     """Obtém (ou cria) a conta de fluxo padrão por tipo para a empresa."""
+    # Validação de segurança: garantir que o empresa_id corresponde ao usuário logado
+    if empresa_id != getattr(current_user, 'empresa_id', None):
+        logger.warning(f"Tentativa de acesso a conta de fluxo de empresa {empresa_id} pelo usuário {getattr(current_user, 'id', 'unknown')}")
+        return None
+
     codigo_padrao = '1' if tipo_movimentacao == 'R' else '2'
     descricao_padrao = 'Entradas de Caixa' if tipo_movimentacao == 'R' else 'Saídas de Caixa'
 
@@ -248,10 +253,130 @@ def _get_or_create_default_fluxo_conta_id(empresa_id: int, tipo_movimentacao: st
     return fallback.id if fallback else None
 
 
+def _get_or_create_ofx_entidade_id(empresa_id: int, tipo_movimentacao: str) -> int:
+    """Obtém (ou cria) uma entidade padrão para lançamentos vindos do OFX."""
+    # Validação de segurança: garantir que o empresa_id corresponde ao usuário logado
+    if empresa_id != getattr(current_user, 'empresa_id', None):
+        logger.warning(f"Tentativa de acesso a entidade OFX de empresa {empresa_id} pelo usuário {getattr(current_user, 'id', 'unknown')}")
+        raise ValueError('Acesso negado: empresa não corresponde ao usuário logado')
+
+    cnpj_padrao = '00000000000000' if tipo_movimentacao == 'R' else '00000000000001'
+    nome_padrao = 'Importação OFX - Créditos' if tipo_movimentacao == 'R' else 'Importação OFX - Débitos'
+    tipo_entidade = 'C' if tipo_movimentacao == 'R' else 'F'
+
+    entidade = Entidade.query.filter_by(
+        empresa_id=empresa_id,
+        cnpj_cpf=cnpj_padrao,
+    ).first()
+
+    if entidade:
+        atualizou = False
+        if entidade.nome != nome_padrao:
+            entidade.nome = nome_padrao
+            atualizou = True
+        if entidade.tipo != tipo_entidade:
+            entidade.tipo = tipo_entidade
+            atualizou = True
+        if not entidade.ativo:
+            entidade.ativo = True
+            atualizou = True
+        if atualizou:
+            db.session.flush()
+        return entidade.id
+
+    entidade = Entidade(
+        empresa_id=empresa_id,
+        nome=nome_padrao,
+        cnpj_cpf=cnpj_padrao,
+        tipo=tipo_entidade,
+        ativo=True,
+    )
+    db.session.add(entidade)
+    db.session.flush()
+    return entidade.id
+
+
+def _importar_ofx_com_lancamentos_diretos(empresa_id: int, conta_banco_id: int, ofx_content: str):
+    """Cria lançamentos pagos diretamente a partir das transações do OFX, sem conciliação."""
+    parser = OFXParser(ofx_content)
+    if not parser.parse():
+        raise ValueError('; '.join(parser.get_errors()) or 'Não foi possível processar o OFX.')
+
+    transacoes = parser.get_transactions()
+    if not transacoes:
+        raise ValueError('Nenhuma transação encontrada no arquivo OFX.')
+
+    importados = 0
+    ignorados = 0
+
+    for transacao in transacoes:
+        referencia = (transacao.get('transaction_id') or transacao.get('referencia') or '').strip()
+        data_movimento = transacao.get('data')
+        valor = transacao.get('valor')
+
+        if not data_movimento or valor is None:
+            ignorados += 1
+            continue
+
+        if referencia:
+            existe = Lancamento.query.filter_by(
+                empresa_id=empresa_id,
+                conta_banco_id=conta_banco_id,
+                referencia_banco=referencia,
+            ).first()
+            if existe:
+                ignorados += 1
+                continue
+
+        tipo_movimentacao = 'R' if float(valor) >= 0 else 'P'
+        fluxo_conta_id = _get_or_create_default_fluxo_conta_id(empresa_id, tipo_movimentacao)
+        if not fluxo_conta_id:
+            raise ValueError(
+                f'Não foi possível localizar/criar conta de fluxo padrão para tipo {tipo_movimentacao}. '
+                'Cadastre uma conta de fluxo ativa e tente novamente.'
+            )
+
+        entidade_id = _get_or_create_ofx_entidade_id(empresa_id, tipo_movimentacao)
+        descricao = _truncate_text(transacao.get('descricao') or 'Importação OFX', 1000)
+
+        lancamento = Lancamento(
+            empresa_id=empresa_id,
+            data_evento=data_movimento,
+            data_vencimento=data_movimento,
+            data_pagamento=data_movimento,
+            status='pago',
+            entidade_id=entidade_id,
+            fluxo_conta_id=fluxo_conta_id,
+            conta_banco_id=conta_banco_id,
+            valor_real=abs(float(valor)),
+            valor_pago=abs(float(valor)),
+            valor_imposto=0,
+            valor_outros_custos=0,
+            numero_documento=_truncate_text(referencia or '', 50) or None,
+            observacoes=descricao,
+            referencia_banco=referencia or None,
+            fonte='ofx',
+        )
+        db.session.add(lancamento)
+        importados += 1
+
+    db.session.commit()
+    return {
+        'importados': importados,
+        'ignorados': ignorados,
+        'total': len(transacoes),
+    }
+
+
 def obter_ou_criar_entidade(empresa_id: int, cnpj_tomador: str):
     """
     Busca Entidade por CNPJ; se não existir, cria uma nova como Cliente.
     """
+    # Validação de segurança: garantir que o empresa_id corresponde ao usuário logado
+    if empresa_id != getattr(current_user, 'empresa_id', None):
+        logger.warning(f"Tentativa de acesso a entidade de empresa {empresa_id} pelo usuário {getattr(current_user, 'id', 'unknown')}")
+        return None, 'Acesso negado: empresa não corresponde ao usuário logado'
+
     entidade = Entidade.query.filter_by(empresa_id=empresa_id, cnpj_cpf=cnpj_tomador).first()
     if entidade:
         mudou = False
@@ -617,6 +742,7 @@ def importar_ofx():
     
     file = request.files['file']
     conta_banco_id = request.form.get('conta_banco_id')
+    modo_importacao = request.form.get('modo_importacao', 'conciliar').strip().lower()
     
     if not file or file.filename == '':
         flash('Arquivo inválido', 'danger')
@@ -624,6 +750,10 @@ def importar_ofx():
     
     if not conta_banco_id:
         flash('Selecione uma conta bancária', 'danger')
+        return redirect(url_for('importacoes.importar_ofx'))
+
+    if modo_importacao not in ('conciliar', 'lancamentos_diretos'):
+        flash('Modo de importação inválido', 'danger')
         return redirect(url_for('importacoes.importar_ofx'))
     
     # Validar que a conta pertence à empresa do usuário
@@ -639,25 +769,42 @@ def importar_ofx():
     try:
         content = file.read().decode('utf-8', errors='ignore')
 
-        conciliacao = criar_conciliacao_ofx(
+        if modo_importacao == 'conciliar':
+            conciliacao = criar_conciliacao_ofx(
+                empresa_id=current_user.empresa_id,
+                conta_banco_id=conta.id,
+                ofx_content=content,
+                criado_por_user_id=current_user.id,
+            )
+            resultado = reconciliar_conciliacao(conciliacao.id, current_user.empresa_id)
+
+            flash(
+                (
+                    f'OFX importado para conciliação: '
+                    f'{resultado["conciliados"]} conciliados, '
+                    f'{resultado["pendentes"]} pendentes, '
+                    f'{resultado["divergentes"]} divergentes. '
+                    f'Nenhum lançamento novo foi criado automaticamente.'
+                ),
+                'success' if resultado['conciliados'] else 'warning'
+            )
+            return redirect(url_for('conciliacao.detalhe', conciliacao_id=conciliacao.id))
+
+        resumo = _importar_ofx_com_lancamentos_diretos(
             empresa_id=current_user.empresa_id,
             conta_banco_id=conta.id,
             ofx_content=content,
-            criado_por_user_id=current_user.id,
         )
-        resultado = reconciliar_conciliacao(conciliacao.id, current_user.empresa_id)
-
         flash(
             (
-                f'OFX importado para conciliação: '
-                f'{resultado["conciliados"]} conciliados, '
-                f'{resultado["pendentes"]} pendentes, '
-                f'{resultado["divergentes"]} divergentes. '
-                f'Nenhum lançamento novo foi criado automaticamente.'
+                f'OFX importado com lançamentos diretos: '
+                f'{resumo["importados"]} criados, '
+                f'{resumo["ignorados"]} ignorados (já existentes ou inválidos), '
+                f'{resumo["total"]} transações no arquivo.'
             ),
-            'success' if resultado['conciliados'] else 'warning'
+            'success' if resumo['importados'] else 'warning'
         )
-        return redirect(url_for('conciliacao.detalhe', conciliacao_id=conciliacao.id))
+        return redirect(url_for('lancamentos.index', conta_banco_id=conta.id))
 
     except Exception as e:
         db.session.rollback()

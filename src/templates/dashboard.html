@@ -10,62 +10,6 @@
     </div>
 </div>
 
-<!-- Assinatura Comercial -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="ls-card p-4">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-                <div>
-                    <h4 class="mb-2 ls-page-title">Assinatura Comercial</h4>
-                    {% if assinatura_resumo.disponivel %}
-                    <p class="text-muted mb-0">
-                        Plano {{ assinatura_resumo.plano_label }} | Status {{ assinatura_resumo.status }} | Ciclo {{ assinatura_resumo.ciclo }}
-                    </p>
-                    {% else %}
-                    <p class="text-muted mb-0">Assinatura ainda não configurada para esta empresa.</p>
-                    {% endif %}
-                </div>
-                <a href="{{ url_for('auth.assinatura') }}" class="btn ls-btn-primary">
-                    <i class="fas fa-credit-card"></i> Gerenciar Assinatura
-                </a>
-            </div>
-
-            {% if assinatura_resumo.disponivel %}
-            <div class="row g-3 mt-1">
-                <div class="col-md-3">
-                    <small class="text-muted d-block">Fim do Trial</small>
-                    <span class="fw-semibold">{{ assinatura_resumo.fim_trial.strftime('%d/%m/%Y') if assinatura_resumo.fim_trial else '-' }}</span>
-                </div>
-                <div class="col-md-3">
-                    <small class="text-muted d-block">Próximo Vencimento</small>
-                    <span class="fw-semibold">{{ assinatura_resumo.vencimento.strftime('%d/%m/%Y') if assinatura_resumo.vencimento else '-' }}</span>
-                </div>
-                <div class="col-md-3">
-                    <small class="text-muted d-block">Gateway</small>
-                    <span class="fw-semibold">{{ assinatura_resumo.gateway }}</span>
-                </div>
-                <div class="col-md-3">
-                    <small class="text-muted d-block">Assinatura no Gateway</small>
-                    <span class="fw-semibold">{{ assinatura_resumo.assinatura_gateway_id or 'Pendente' }}</span>
-                </div>
-                <div class="col-md-4">
-                    <small class="text-muted d-block">Próxima Cobrança</small>
-                    <span class="fw-semibold">{{ assinatura_resumo.proxima_cobranca_vencimento.strftime('%d/%m/%Y') if assinatura_resumo.proxima_cobranca_vencimento else '-' }}</span>
-                </div>
-                <div class="col-md-4">
-                    <small class="text-muted d-block">Valor Previsto</small>
-                    <span class="fw-semibold">R$ {{ assinatura_resumo.proxima_cobranca_valor|brl }}</span>
-                </div>
-                <div class="col-md-4">
-                    <small class="text-muted d-block">Status da Cobrança</small>
-                    <span class="fw-semibold">{{ assinatura_resumo.proxima_cobranca_status }}</span>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
 <!-- KPIs Row 1 -->
 <div class="row mb-4">
     <div class="col-md-6 col-lg-3 mb-3">
@@ -212,10 +156,18 @@
 
 <!-- Grafico Fluxo de Caixa -->
 <div class="row mb-4">
-    <div class="col-12">
+    <!-- KPI Entradas (Recebimentos) -->
+    <div class="col-md-6">
         <div class="ls-card p-4">
-            <h4 class="mb-4 ls-page-title">Fluxo de Caixa (Previsto x Realizado)</h4>
-            <canvas id="fluxoCaixaChart" height="100"></canvas>
+            <h4 class="mb-4 ls-page-title"><i class="fas fa-arrow-down text-success me-2"></i>Entradas - Recebimentos (Previsto x Realizado)</h4>
+            <canvas id="entradasChart" height="120"></canvas>
+        </div>
+    </div>
+    <!-- KPI Saídas (Pagamentos) -->
+    <div class="col-md-6">
+        <div class="ls-card p-4">
+            <h4 class="mb-4 ls-page-title"><i class="fas fa-arrow-up text-danger me-2"></i>Saídas - Pagamentos (Previsto x Realizado)</h4>
+            <canvas id="saidasChart" height="120"></canvas>
         </div>
     </div>
 </div>
@@ -293,19 +245,26 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
     const fluxoLabels = {{ grafico_labels|tojson }};
-    const fluxoPrevisto = {{ grafico_previsto|tojson }};
-    const fluxoRealizado = {{ grafico_realizado|tojson }};
 
-    const ctxFluxo = document.getElementById('fluxoCaixaChart');
-    if (ctxFluxo) {
-        new Chart(ctxFluxo, {
+    // Dados Entradas (Recebimentos)
+    const entradasPrevisto = {{ grafico_entradas_previsto|tojson }};
+    const entradasRealizado = {{ grafico_entradas_realizado|tojson }};
+
+    // Dados Saídas (Pagamentos)
+    const saidasPrevisto = {{ grafico_saidas_previsto|tojson }};
+    const saidasRealizado = {{ grafico_saidas_realizado|tojson }};
+
+    // Gráfico Entradas
+    const ctxEntradas = document.getElementById('entradasChart');
+    if (ctxEntradas) {
+        new Chart(ctxEntradas, {
             type: 'line',
             data: {
                 labels: fluxoLabels,
                 datasets: [
                     {
                         label: 'Previsto',
-                        data: fluxoPrevisto,
+                        data: entradasPrevisto,
                         borderColor: '#fbbf24',
                         backgroundColor: 'rgba(251, 191, 36, 0.15)',
                         tension: 0.35,
@@ -313,9 +272,50 @@
                     },
                     {
                         label: 'Realizado',
-                        data: fluxoRealizado,
+                        data: entradasRealizado,
                         borderColor: '#22c55e',
                         backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                        tension: 0.35,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: { color: '#e5e7eb' }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148, 163, 184, 0.15)' } },
+                    y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148, 163, 184, 0.15)' } }
+                }
+            }
+        });
+    }
+
+    // Gráfico Saídas
+    const ctxSaidas = document.getElementById('saidasChart');
+    if (ctxSaidas) {
+        new Chart(ctxSaidas, {
+            type: 'line',
+            data: {
+                labels: fluxoLabels,
+                datasets: [
+                    {
+                        label: 'Previsto',
+                        data: saidasPrevisto,
+                        borderColor: '#fbbf24',
+                        backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                        tension: 0.35,
+                        fill: true
+                    },
+                    {
+                        label: 'Realizado',
+                        data: saidasRealizado,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.15)',
                         tension: 0.35,
                         fill: true
                     }

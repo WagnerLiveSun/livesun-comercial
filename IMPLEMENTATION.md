@@ -1,4 +1,6 @@
-# 📊 LiveSun Financeiro - Sumário de Implementação
+# 📊 LiveSun Comercial - Sumário de Implementação
+
+> Documento histórico do primeiro corte do projeto; use README.md e DOCUMENTACAO.md como referência atual.
 
 ## ✅ Projeto Implementado com Sucesso!
 

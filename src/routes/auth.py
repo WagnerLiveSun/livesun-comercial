@@ -2,11 +2,13 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import func
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 from src.models import (
     db,
     User,
     Empresa,
+    AssinaturaEmpresa,
     CobrancaRecorrente,
     CatalogoPlanoComercial,
     HistoricoMudancaPlano,
@@ -115,24 +117,92 @@ def add_user():
             flash('Email já registrado', 'danger')
             return redirect(url_for('auth.add_user'))
 
-        user = User(
-            username=username,
-            email=email,
-            full_name=full_name,
-            is_active=True,
-            is_admin=False,
-            role='operator',
-            empresa_id=current_user.empresa_id
-        )
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
+        # Salvar dados temporariamente na session
+        from flask import session
+        session['new_user_data'] = {
+            'username': username,
+            'email': email,
+            'password': password,
+            'full_name': full_name,
+        }
 
-        flash('Usuário criado com sucesso.', 'success')
-        return redirect(url_for('dashboard.index'))
+        return redirect(url_for('auth.add_user_config'))
 
     # GET -> render form
     return render_template('auth/add_user.html')
+
+
+@auth_bp.route('/add_user_config', methods=['GET', 'POST'])
+@login_required
+@require_role('admin')
+def add_user_config():
+    """Configurar perfil e processos do novo usuário antes de criar."""
+    from flask import session
+
+    # Verificar se há dados temporários na session
+    user_data = session.get('new_user_data')
+    if not user_data:
+        flash('Sessão expirada. Por favor, inicie o cadastro novamente.', 'warning')
+        return redirect(url_for('auth.add_user'))
+
+    if request.method == 'POST':
+        role = (request.form.get('role') or '').strip().lower()
+        is_active = request.form.get('is_active') == 'on'
+
+        if role not in {'admin', 'operator', 'viewer'}:
+            flash('Papel inválido.', 'danger')
+            return redirect(url_for('auth.add_user_config'))
+
+        # Criar o usuário com as permissões definidas
+        user = User(
+            username=user_data['username'],
+            email=user_data['email'],
+            full_name=user_data['full_name'],
+            is_active=is_active,
+            is_admin=role == 'admin',
+            role=role,
+            empresa_id=current_user.empresa_id
+        )
+        user.set_password(user_data['password'])
+        db.session.add(user)
+        db.session.commit()
+
+        # Salvar permissões de processos se não for admin
+        if not user.is_admin:
+            save_user_overrides(current_user.empresa_id, user.id, request.form)
+            db.session.commit()
+
+        # Limpar dados da session
+        session.pop('new_user_data', None)
+
+        flash(f'Usuário {user.username} criado com sucesso com perfil {role}.', 'success')
+        return redirect(url_for('auth.controle_acesso'))
+
+    # GET -> render form de configuração
+    operator_permissions = build_operator_permissions(current_user.empresa_id)
+    viewer_defaults = {
+        item['key']: item['key'] in {
+            'dashboard',
+            'entidades',
+            'fluxo',
+            'contas_banco',
+            'lancamentos',
+            'comissoes',
+            'relatorios',
+            'importar_nfse',
+            'importar_ofx',
+            'conciliacao',
+        }
+        for item in PERMISSION_CATALOG
+    }
+
+    return render_template(
+        'auth/add_user_config.html',
+        user_data=user_data,
+        permission_catalog=PERMISSION_CATALOG,
+        operator_permissions=operator_permissions,
+        viewer_defaults=viewer_defaults,
+    )
 
 
 @auth_bp.route('/controle-acesso', methods=['GET', 'POST'])
@@ -250,31 +320,65 @@ def controle_usuario_permissoes(user_id):
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
-    
+
     if request.method == 'POST':
             try:
                 empresa_cnpj = _normalize_document(request.form.get('empresa_cnpj'))
                 username = (request.form.get('username') or '').strip()
                 password = request.form.get('password')
-                if not empresa_cnpj or not username or not password:
-                    flash('Preencha empresa, usuário e senha', 'danger')
+                if not username or not password:
+                    flash('Preencha usuário e senha', 'danger')
                     return redirect(url_for('auth.login'))
-                
-                empresa = _find_empresa_by_document(empresa_cnpj)
-                if empresa is None:
+
+                user = None
+                empresa = None
+
+                # Tenta login normal (com empresa)
+                if empresa_cnpj:
+                    empresa = _find_empresa_by_document(empresa_cnpj)
+                    if empresa:
+                        user = User.query.filter(
+                            User.empresa_id == empresa.id,
+                            func.lower(User.username) == username.lower(),
+                        ).first()
+
+                # Se não encontrou, tenta usuário LiveSun (sem empresa)
+                if user is None:
+                    user = User.query.filter(
+                        User.empresa_id.is_(None),
+                        func.lower(User.username) == username.lower(),
+                    ).first()
+                    import logging
+                    if user:
+                        logging.info(f'Login: usuário sem empresa encontrado: {user.username} (empresa_id={user.empresa_id})')
+
+                if user is None:
+                    import logging
+                    logging.warning(f'Login falhou: usuário não encontrado - username={username}, cnpj={empresa_cnpj}')
                     flash('Empresa, usuário ou senha inválidos', 'danger')
                     return redirect(url_for('auth.login'))
-                
-                user = User.query.filter(
-                    User.empresa_id == empresa.id,
-                    func.lower(User.username) == username.lower(),
-                ).first()
-                if user is None or not user.check_password(password):
+                    
+                if not user.check_password(password):
+                    import logging
+                    logging.warning(f'Login falhou: senha incorreta - username={username}')
                     flash('Empresa, usuário ou senha inválidos', 'danger')
                     return redirect(url_for('auth.login'))
+                    
                 if not user.is_active:
+                    import logging
+                    logging.warning(f'Login falhou: usuário inativo - username={username}')
                     flash('Empresa, usuário ou senha inválidos', 'danger')
                     return redirect(url_for('auth.login'))
+
+                import logging
+                logging.info(f'Login sucesso: username={username}, empresa_id={user.empresa_id}, role={user.role}')
+
+                # Usuário LiveSun (sem empresa) vai direto para backoffice
+                if user.empresa_id is None and user.role == 'admin':
+                    login_user(user, remember=request.form.get('remember'))
+                    logging.info(f'Redirecionando para backoffice: {user.username}')
+                    flash(f'Bem-vindo, {user.full_name or user.username}!', 'success')
+                    return redirect(url_for('admin_comercial.index'))
 
                 # Garante existencia da assinatura comercial e provisionamento no gateway quando habilitado.
                 assinatura = ServicoAssinatura.obter_ou_criar_assinatura(empresa.id)
@@ -464,7 +568,36 @@ def perfil():
             db.session.commit()
             flash('Preferencias atualizadas com sucesso.', 'success')
 
-    return render_template('auth/perfil.html', plan_choices=PLAN_CHOICES)
+    # Buscar dados da assinatura para exibir no perfil
+    empresa_id = current_user.empresa_id
+    assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
+    proxima_cobranca = None
+    if assinatura:
+        proxima_cobranca = (
+            CobrancaRecorrente.query
+            .filter(
+                CobrancaRecorrente.empresa_id == empresa_id,
+                CobrancaRecorrente.status.in_(['pendente', 'vencido', 'falhou']),
+            )
+            .order_by(CobrancaRecorrente.data_vencimento.asc(), CobrancaRecorrente.id.asc())
+            .first()
+        )
+
+    assinatura_resumo = {
+        'disponivel': bool(assinatura),
+        'plano_label': get_plan_label(assinatura.plano_codigo) if assinatura else '-',
+        'status': (assinatura.status or '-').capitalize() if assinatura else '-',
+        'ciclo': (assinatura.ciclo_cobranca or '-').capitalize() if assinatura else '-',
+        'fim_trial': assinatura.data_fim_trial if assinatura else None,
+        'vencimento': assinatura.data_vencimento if assinatura else None,
+        'gateway': (assinatura.gateway or '-').upper() if assinatura else '-',
+        'assinatura_gateway_id': assinatura.gateway_subscription_id if assinatura else None,
+        'proxima_cobranca_status': (proxima_cobranca.status or '-').capitalize() if proxima_cobranca else '-',
+        'proxima_cobranca_vencimento': proxima_cobranca.data_vencimento if proxima_cobranca else None,
+        'proxima_cobranca_valor': Decimal(str(proxima_cobranca.valor_previsto or 0)) if proxima_cobranca else Decimal('0.00'),
+    }
+
+    return render_template('auth/perfil.html', plan_choices=PLAN_CHOICES, assinatura_resumo=assinatura_resumo)
 
 
 @auth_bp.route('/assinatura', methods=['GET', 'POST'])

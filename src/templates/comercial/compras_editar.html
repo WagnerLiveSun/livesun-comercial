@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block title %}Editar Compra{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">Editar Compra NF</h2>
+    <a href="{{ url_for('comercial_operacional.compras_detalhe', compra_id=compra.id) }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST" id="compras-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="alert alert-info mb-3">
+            <i class="fas fa-info-circle"></i>
+            <strong>Atenção:</strong> Apenas dados básicos podem ser editados. Valores e itens não podem ser alterados para manter integridade do estoque e financeiro.
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Fornecedor *</label>
+                <select name="fornecedor_id" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    {% for fornecedor in fornecedores %}
+                    <option value="{{ fornecedor.id }}" {{ 'selected' if compra.fornecedor_id == fornecedor.id else '' }}>{{ fornecedor.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Numero *</label>
+                <input type="text" name="numero_documento" class="form-control" value="{{ compra.numero_documento }}" required>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Serie</label>
+                <input type="text" name="serie" class="form-control" value="{{ compra.serie or '' }}">
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Emissao *</label>
+                <input type="date" name="data_emissao" class="form-control" value="{{ compra.data_emissao.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Entrada *</label>
+                <input type="date" name="data_entrada" class="form-control" value="{{ compra.data_entrada.strftime('%Y-%m-%d') }}" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Filial</label>
+                <select name="filial_id" class="form-control">
+                    <option value="">Sem filial</option>
+                    {% for filial in filiais %}
+                    <option value="{{ filial.id }}" {{ 'selected' if compra.filial_id == filial.id else '' }}>{{ filial.codigo }} - {{ filial.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Observacoes</label>
+                <input type="text" name="observacoes" class="form-control" value="{{ compra.observacoes or '' }}">
+            </div>
+        </div>
+
+        <!-- Resumo (apenas visualização) -->
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="alert alert-secondary">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>Valor Total da NF:</strong> R$ {{ compra.valor_total|brl }}
+                            {% if compra.valor_outros_custos %}
+                            <br><small class="text-muted">Inclui R$ {{ compra.valor_outros_custos|brl }} em outros custos</small>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <strong>Itens:</strong> {{ compra.itens|length }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn ls-btn-primary"><i class="fas fa-save"></i> Salvar Alterações</button>
+            <a href="{{ url_for('comercial_operacional.compras_detalhe', compra_id=compra.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

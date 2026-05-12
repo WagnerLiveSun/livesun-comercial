@@ -1,4 +1,4 @@
-# Guia de Deploy - LiveSun Financeiro
+# Guia de Deploy - LiveSun Comercial
 
 Este documento descreve como publicar e fazer deploy da aplicação em diferentes plataformas.
 
@@ -18,8 +18,8 @@ Este documento descreve como publicar e fazer deploy da aplicação em diferente
 
 ```bash
 # Clonar o repositório (se ainda não tiver)
-git clone https://github.com/seu-usuario/Livesun_Financeiro.git
-cd Livesun_Financeiro
+git clone https://github.com/seu-usuario/Livesun_Comercial.git
+cd Livesun_Comercial
 
 # Ativar ambiente virtual
 .venv\Scripts\activate  # Windows
@@ -88,7 +88,7 @@ DB_TYPE=mysql
 DB_HOST=seu-db-railway.railway.internal
 DB_USER=sua-nome-usuario
 DB_PASSWORD=sua-senha-super-secreta
-DB_NAME=livesun_financeiro
+DB_NAME=comercial
 ```
 
 ### 4. Adicionar banco MySQL
@@ -117,7 +117,7 @@ Ou simplesmente faça um push para GitHub e Railway fará o deploy automaticamen
 
 Railway fornecerá uma URL como:
 ```
-https://livesun-financeiro-production.railway.app
+https://livesun-comercial-production.railway.app
 ```
 
 ---

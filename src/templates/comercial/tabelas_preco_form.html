@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ 'Editar' if action == 'editar' else 'Nova' }} Tabela de Preco{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">{{ 'Editar' if action == 'editar' else 'Nova' }} Tabela de Preco</h1>
+        <p class="text-muted mb-0">{{ 'Edite' if action == 'editar' else 'Crie' }} uma tabela de preco para produtos e servicos.</p>
+    </div>
+    <a href="{{ url_for('comercial_operacional.tabelas_preco_index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="codigo" class="form-label">Codigo *</label>
+                <input type="text" class="form-control" id="codigo" name="codigo" value="{{ tabela.codigo if tabela else '' }}" required maxlength="20">
+            </div>
+            <div class="col-md-5">
+                <label for="nome" class="form-label">Nome *</label>
+                <input type="text" class="form-control" id="nome" name="nome" value="{{ tabela.nome if tabela else '' }}" required maxlength="100">
+            </div>
+            <div class="col-md-4">
+                <label for="tipo" class="form-label">Tipo</label>
+                <select class="form-control" id="tipo" name="tipo">
+                    <option value="venda" {{ 'selected' if tabela and tabela.tipo == 'venda' else '' }}>Venda</option>
+                    <option value="custo" {{ 'selected' if tabela and tabela.tipo == 'custo' else '' }}>Custo</option>
+                    <option value="atacado" {{ 'selected' if tabela and tabela.tipo == 'atacado' else '' }}>Atacado</option>
+                    <option value="promocional" {{ 'selected' if tabela and tabela.tipo == 'promocional' else '' }}>Promocional</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="data_inicio" class="form-label">Data Inicio *</label>
+                <input type="date" class="form-control" id="data_inicio" name="data_inicio" value="{{ tabela.data_inicio.strftime('%Y-%m-%d') if tabela and tabela.data_inicio else today.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-6">
+                <label for="data_fim" class="form-label">Data Fim (opcional)</label>
+                <input type="date" class="form-control" id="data_fim" name="data_fim" value="{{ tabela.data_fim.strftime('%Y-%m-%d') if tabela and tabela.data_fim else '' }}">
+            </div>
+
+            <div class="col-md-4">
+                <label for="markup_padrao" class="form-label">Markup Padrao (%)</label>
+                <input type="number" step="0.01" class="form-control" id="markup_padrao" name="markup_padrao" value="{{ tabela.markup_padrao if tabela else '0.00' }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-center">
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="ativo" name="ativo" {{ 'checked' if not tabela or tabela.ativo else '' }}>
+                    <label class="form-check-label" for="ativo">Ativo</label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label for="descricao" class="form-label">Descricao</label>
+                <textarea class="form-control" id="descricao" name="descricao" rows="3">{{ tabela.descricao if tabela else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn ls-btn-primary">
+                <i class="fas fa-save"></i> {{ 'Salvar Alteracoes' if action == 'editar' else 'Criar Tabela' }}
+            </button>
+            <a href="{{ url_for('comercial_operacional.tabelas_preco_index') }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

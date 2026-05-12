@@ -1,0 +1,160 @@
+{% extends "layout.html" %}
+
+{% block title %}Orcamento {{ orcamento.numero }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">Orcamento {{ orcamento.numero }}</h1>
+        <p class="text-muted mb-0">Cliente: <strong>{{ orcamento.cliente.nome if orcamento.cliente else '-' }}</strong></p>
+    </div>
+    <div>
+        <a href="{{ url_for('comercial_operacional.orcamentos_index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        {% if orcamento.status == 'emitido' %}
+        <form method="post" action="{{ url_for('comercial_operacional.orcamentos_converter', orcamento_id=orcamento.id) }}" class="d-inline" onsubmit="return confirm('Converter este orcamento em pedido? Esta acao nao pode ser desfeita.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-check"></i> Converter em Pedido
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="ls-card p-4 mb-4">
+            <h5 class="mb-3">Itens do Orcamento</h5>
+            <div class="table-responsive">
+                <table class="table table-hover ls-theme-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tipo</th>
+                            <th>Descricao</th>
+                            <th>Qtd</th>
+                            <th>Valor Unit.</th>
+                            <th>Desconto</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in orcamento.itens %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if item.tipo_item == 'P' else 'info' }}">
+                                    {{ 'Produto' if item.tipo_item == 'P' else 'Servico' }}
+                                </span>
+                            </td>
+                            <td>{{ item.descricao }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.valor_unitario|brl }}</td>
+                            <td>{{ item.valor_desconto|brl }}</td>
+                            <td><strong>{{ item.valor_total|brl }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td class="text-end">Produtos:</td>
+                            <td>{{ orcamento.valor_produtos|brl }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td class="text-end">Servicos:</td>
+                            <td>{{ orcamento.valor_servicos|brl }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td class="text-end">Desconto:</td>
+                            <td>{{ orcamento.valor_desconto|brl }}</td>
+                        </tr>
+                        <tr class="table-active">
+                            <td colspan="5"></td>
+                            <td class="text-end"><strong>TOTAL:</strong></td>
+                            <td><strong>{{ orcamento.valor_total|brl }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        {% if orcamento.observacoes %}
+        <div class="ls-card p-4">
+            <h5 class="mb-2">Observacoes</h5>
+            <p class="text-muted">{{ orcamento.observacoes }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="ls-card p-4 mb-4">
+            <h5 class="mb-3">Informacoes do Orcamento</h5>
+            <table class="table table-borderless ls-theme-table">
+                <tr>
+                    <td>Status:</td>
+                    <td>
+                        <span class="badge bg-{{
+                            'warning' if orcamento.status == 'emitido' else
+                            ('success' if orcamento.status == 'aprovado' else
+                            ('info' if orcamento.status == 'convertido' else
+                            ('danger' if orcamento.status == 'cancelado' else 'secondary')))
+                        }}">
+                            {{ orcamento.status|title }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Data Emissao:</td>
+                    <td>{{ orcamento.data_emissao.strftime('%d/%m/%Y') }}</td>
+                </tr>
+                <tr>
+                    <td>Validade:</td>
+                    <td>{{ orcamento.data_validade.strftime('%d/%m/%Y') }}</td>
+                </tr>
+                <tr>
+                    <td>Cliente:</td>
+                    <td>{{ orcamento.cliente.nome if orcamento.cliente else '-' }}</td>
+                </tr>
+                <tr>
+                    <td>Vendedor:</td>
+                    <td>{{ orcamento.vendedor.nome if orcamento.vendedor else '-' }}</td>
+                </tr>
+                {% if orcamento.filial %}
+                <tr>
+                    <td>Filial:</td>
+                    <td>{{ orcamento.filial.nome }}</td>
+                </tr>
+                {% endif %}
+                {% if orcamento.tabela_preco %}
+                <tr>
+                    <td>Tabela de Preco:</td>
+                    <td>{{ orcamento.tabela_preco.nome }}</td>
+                </tr>
+                {% endif %}
+                {% if orcamento.pedido_id %}
+                <tr>
+                    <td>Pedido Gerado:</td>
+                    <td>
+                        <a href="{{ url_for('comercial_operacional.pedidos_detalhe', pedido_id=orcamento.pedido_id) }}">
+                            #{{ orcamento.pedido_id }}
+                        </a>
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+
+        {% if orcamento.observacoes_internas %}
+        <div class="ls-card p-4">
+            <h5 class="mb-2">Observacoes Internas</h5>
+            <p class="text-muted">{{ orcamento.observacoes_internas }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

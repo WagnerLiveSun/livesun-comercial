@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block title %}{% if action == 'editar' %}Editar{% else %}Novo{% endif %} Servico{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">{% if action == 'editar' %}Editar Servico{% else %}Novo Servico{% endif %}</h2>
+    <a href="{{ url_for('comercial_operacional.servicos_index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Filial</label>
+                <select name="filial_id" class="form-control">
+                    <option value="">Sem filial</option>
+                    {% for filial in filiais %}
+                    <option value="{{ filial.id }}" {% if servico and servico.filial_id == filial.id %}selected{% endif %}>{{ filial.codigo }} - {{ filial.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Codigo interno *</label>
+                <input type="text" name="codigo_interno" class="form-control" value="{{ servico.codigo_interno if servico else '' }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Descricao *</label>
+                <input type="text" name="descricao" class="form-control" value="{{ servico.descricao if servico else '' }}" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Codigo fiscal</label>
+                <input type="text" name="codigo_servico" class="form-control" value="{{ servico.codigo_servico if servico else '' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">NBS</label>
+                <input type="text" name="nbs" class="form-control" value="{{ servico.nbs if servico else '' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Natureza servico</label>
+                <input type="text" name="natureza_servico" class="form-control" value="{{ servico.natureza_servico if servico else '' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Indicador incidencia</label>
+                <input type="text" name="indicador_incidencia" class="form-control" value="{{ servico.indicador_incidencia if servico else '' }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ativo" name="ativo" {% if not servico or servico.ativo %}checked{% endif %}>
+                    <label class="form-check-label" for="ativo">Servico ativo</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn ls-btn-primary"><i class="fas fa-save"></i> Salvar</button>
+            <a href="{{ url_for('comercial_operacional.servicos_index') }}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

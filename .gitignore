@@ -39,6 +39,8 @@ venvold/
 .DS_Store
 .env
 .env.local
+chave API AsaaS.txt
+ngrok_recovery_codes.txt
 
 # Ignore Flask
 instance/

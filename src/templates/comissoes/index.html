@@ -109,12 +109,12 @@
                 <i class="fas fa-list"></i> Comissões ({{ quantidade }} registros)
             </h5>
             <a href="{{ url_for('comissoes.exportar_csv', data_inicio=data_inicio, data_fim=data_fim, vendedor_id=vendedor_id, cliente_id=cliente_id) }}" 
-               class="btn btn-sm btn-outline-secondary">
+               class="btn btn-sm btn-primary">
                 <i class="fas fa-download"></i> Exportar CSV
             </a>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover ls-theme-table mb-0">
+            <table class="table table-hover align-middle ls-theme-table mb-0">
                 <thead>
                     <tr>
                         <th>Apuração</th>
@@ -135,7 +135,7 @@
                         {% for comissao in comissoes %}
                         <tr>
                             <td>
-                                <span class="badge bg-info">{{ comissao.id_apuracao }}</span>
+                                <span class="badge bg-primary">{{ comissao.id_apuracao }}</span>
                             </td>
                             <td>{{ comissao.dt_pagamento_recebimento.strftime('%d/%m/%Y') }}</td>
                             <td>{{ comissao.lancamento.entidade.nome }}</td>

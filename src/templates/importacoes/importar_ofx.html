@@ -15,8 +15,8 @@
         <strong>Importar Extratos OFX para Conciliação:</strong>
         <p class="mb-0 mt-2">
             Faça upload de um arquivo OFX (.ofx ou .txt) contendo o extrato bancário.
-            O sistema criará uma sessão de conciliação bancária e tentará casar os itens com lançamentos já existentes.
-            Lançamentos novos não são criados automaticamente nesse processo.
+            Escolha o modo de processamento: conciliar com lançamentos já existentes
+            ou gerar lançamentos pagos diretamente a partir das transações do extrato.
         </p>
     </div>
 
@@ -48,9 +48,22 @@
                 style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
         </div>
 
+        <div class="col-md-12">
+            <label for="modo_importacao" class="form-label">Modo de importação *</label>
+            <select class="form-select" id="modo_importacao" name="modo_importacao" required
+                style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                <option value="conciliar" selected>Conciliar com lançamentos já efetuados</option>
+                <option value="lancamentos_diretos">Criar lançamentos diretos sem conciliar</option>
+            </select>
+            <small class="text-muted d-block mt-1">
+                Em conciliação, nenhum lançamento novo é criado automaticamente.
+                Em lançamentos diretos, o sistema cria lançamentos pagos com base no OFX.
+            </small>
+        </div>
+
         <div class="col-12">
             <button type="submit" class="btn ls-btn-primary" {% if not contas %}disabled{% endif %}>
-                <i class="fas fa-upload"></i> Importar para Conciliação
+                <i class="fas fa-upload"></i> Processar Importação OFX
             </button>
             <a href="{{ url_for('importacoes.importar_nfse') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Voltar

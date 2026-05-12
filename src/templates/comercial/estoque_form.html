@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+
+{% block title %}Novo Movimento de Estoque{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">Novo Movimento de Estoque</h2>
+    <a href="{{ url_for('comercial_operacional.estoque_index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST" id="estoque-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Produto *</label>
+                <select name="produto_id" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    {% for produto in produtos %}
+                    <option value="{{ produto.id }}">{{ produto.codigo_interno }} - {{ produto.descricao_resumida }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Filial</label>
+                <select name="filial_id" class="form-control">
+                    <option value="">Sem filial</option>
+                    {% for filial in filiais %}
+                    <option value="{{ filial.id }}">{{ filial.codigo }} - {{ filial.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Data *</label>
+                <input type="date" name="data_movimento" class="form-control" value="{{ today.strftime('%Y-%m-%d') if today else '' }}" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Tipo *</label>
+                <select name="tipo_movimento" id="tipo_movimento" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    <option value="entrada">Entrada</option>
+                    <option value="saida">Saida</option>
+                    <option value="ajuste">Ajuste</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3" id="ajuste_sinal_wrapper" style="display:none;">
+                <label class="form-label">Ajuste</label>
+                <select name="ajuste_sinal" class="form-control">
+                    <option value="entrada">Entrada</option>
+                    <option value="saida">Saida</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Quantidade *</label>
+                <input type="number" name="quantidade" class="form-control" step="0.001" min="0.001" required>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Valor unitario</label>
+                <input type="number" name="valor_unitario" class="form-control" step="0.01" min="0">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Origem</label>
+                <select name="origem" class="form-control">
+                    <option value="manual">Manual</option>
+                    <option value="compra">Compra</option>
+                    <option value="venda">Venda</option>
+                    <option value="ajuste">Ajuste</option>
+                </select>
+            </div>
+            <div class="col-md-8 mb-3">
+                <label class="form-label">Documento ref.</label>
+                <input type="text" name="documento_ref" class="form-control" placeholder="Nota, pedido, etc">
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn ls-btn-primary"><i class="fas fa-save"></i> Salvar</button>
+            <a href="{{ url_for('comercial_operacional.estoque_index') }}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    const tipo = document.getElementById('tipo_movimento');
+    const ajusteWrapper = document.getElementById('ajuste_sinal_wrapper');
+
+    function toggleAjuste() {
+        if (!tipo || !ajusteWrapper) return;
+        ajusteWrapper.style.display = (tipo.value === 'ajuste') ? 'block' : 'none';
+    }
+
+    if (tipo) {
+        tipo.addEventListener('change', toggleAjuste);
+        toggleAjuste();
+    }
+})();
+</script>
+{% endblock %}

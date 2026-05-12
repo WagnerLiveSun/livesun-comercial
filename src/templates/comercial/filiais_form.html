@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+
+{% block title %}{% if action == 'editar' %}Editar{% else %}Nova{% endif %} Filial{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">{% if action == 'editar' %}Editar Filial{% else %}Nova Filial{% endif %}</h2>
+    <a href="{{ url_for('comercial_operacional.filiais_index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Codigo *</label>
+                <input type="text" name="codigo" class="form-control" value="{{ filial.codigo if filial else '' }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Nome *</label>
+                <input type="text" name="nome" class="form-control" value="{{ filial.nome if filial else '' }}" required>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">CNPJ</label>
+                <input type="text" name="cnpj" class="form-control" value="{{ filial.cnpj if filial else '' }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Rua</label>
+                <input type="text" name="endereco_rua" class="form-control" value="{{ filial.endereco_rua if filial else '' }}">
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Numero</label>
+                <input type="text" name="endereco_numero" class="form-control" value="{{ filial.endereco_numero if filial else '' }}">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Bairro</label>
+                <input type="text" name="endereco_bairro" class="form-control" value="{{ filial.endereco_bairro if filial else '' }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Cidade</label>
+                <input type="text" name="endereco_cidade" class="form-control" value="{{ filial.endereco_cidade if filial else '' }}">
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">UF</label>
+                <input type="text" name="endereco_uf" class="form-control" maxlength="2" value="{{ filial.endereco_uf if filial else '' }}">
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">CEP</label>
+                <input type="text" name="endereco_cep" class="form-control" value="{{ filial.endereco_cep if filial else '' }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ativo" name="ativo" {% if not filial or filial.ativo %}checked{% endif %}>
+                    <label class="form-check-label" for="ativo">Filial ativa</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn ls-btn-primary">
+                <i class="fas fa-save"></i> Salvar
+            </button>
+            <a href="{{ url_for('comercial_operacional.filiais_index') }}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

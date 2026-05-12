@@ -394,16 +394,19 @@ def _build_listagem_lancamentos_context(args):
     total_recebido = Decimal('0.00')
     total_valor_imposto = Decimal('0.00')
     total_valor_outros_custos = Decimal('0.00')
+    total_valor_real = Decimal('0.00')
     for lancamento in lancamentos:
         tipo = lancamento.fluxo_conta.tipo if lancamento.fluxo_conta else None
         valor_pago = Decimal(str(lancamento.valor_pago or 0))
         valor_recebido = Decimal(str(lancamento.valor_pago or 0))
+        valor_real = Decimal(str(lancamento.valor_real or 0))
         if tipo == 'P':
             total_pago += valor_pago
         elif tipo == 'R':
             total_recebido += valor_recebido
         total_valor_imposto += Decimal(str(lancamento.valor_imposto or 0))
         total_valor_outros_custos += Decimal(str(lancamento.valor_outros_custos or 0))
+        total_valor_real += valor_real
 
     mostrar_pago = entidade_tipo != 'C'
     mostrar_recebido = entidade_tipo != 'F'
@@ -425,6 +428,7 @@ def _build_listagem_lancamentos_context(args):
         'total_recebido': total_recebido,
         'total_valor_imposto': total_valor_imposto,
         'total_valor_outros_custos': total_valor_outros_custos,
+        'total_valor_real': total_valor_real,
         'mostrar_pago': mostrar_pago,
         'mostrar_recebido': mostrar_recebido,
         'empresa_nome': (current_user.empresa.nome if current_user.empresa else '-'),
@@ -493,7 +497,7 @@ def export_listagem_lancamentos():
                 conta_fluxo,
                 l.conta_banco.nome if l.conta_banco else '-',
                 l.numero_documento or '-',
-                '',
+                float(l.valor_real or 0),
                 float(l.valor_pago or 0) if l.fluxo_conta and l.fluxo_conta.is_pagamento() else '',
                 float(l.valor_pago or 0) if l.fluxo_conta and l.fluxo_conta.is_recebimento() else '',
                 float(l.valor_imposto or 0),
@@ -502,9 +506,9 @@ def export_listagem_lancamentos():
             ])
 
         ws.append([])
-        ws.append(['TOTAL', '', '', '', '', '', '', '', '', '', '', '', '', '', float(context['total_pago']), float(context['total_recebido']), float(context['total_valor_imposto']), float(context['total_valor_outros_custos']), ''])
+        ws.append(['TOTAL', '', '', '', '', '', '', '', '', '', '', '', '', '', float(context['total_valor_real']), float(context['total_pago']), float(context['total_recebido']), float(context['total_valor_imposto']), float(context['total_valor_outros_custos']), ''])
 
-        for col in ['O', 'P', 'Q', 'R']:
+        for col in ['N', 'O', 'P', 'Q', 'R']:
             for cell in ws[col]:
                 cell.number_format = '#,##0.00'
 

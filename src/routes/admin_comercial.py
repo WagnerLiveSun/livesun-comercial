@@ -35,6 +35,14 @@ def _split_csv(value: str | None) -> list[str]:
 
 
 def _has_backoffice_identity_permission() -> bool:
+    # Admins da LiveSun (sem empresa vinculada) têm acesso automático ao backoffice
+    if getattr(current_user, 'empresa_id', None) is None and getattr(current_user, 'role', '') == 'admin':
+        return True
+
+    # Verifica se é admin antes de checar permissões de backoffice
+    if getattr(current_user, 'role', '') != 'admin':
+        return False
+
     allowed_emails = _split_csv(current_app.config.get('BACKOFFICE_ALLOWED_EMAILS'))
     allowed_usernames = _split_csv(current_app.config.get('BACKOFFICE_ALLOWED_USERNAMES'))
 

@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block title %}Filiais{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">Filiais</h2>
+    <a href="{{ url_for('comercial_operacional.filiais_criar') }}" class="btn ls-btn-primary">
+        <i class="fas fa-plus"></i> Nova Filial
+    </a>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-8">
+            <label class="form-label">Busca</label>
+            <input type="text" name="busca" class="form-control ls-theme-control" placeholder="Codigo, nome ou CNPJ" value="{{ busca }}">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn ls-btn-primary w-100">
+                <i class="fas fa-search"></i> Buscar
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+                <tr>
+                    <th>Codigo</th>
+                    <th>Nome</th>
+                    <th>CNPJ</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for filial in filiais %}
+                <tr>
+                    <td><code style="color: #93c5fd;">{{ filial.codigo }}</code></td>
+                    <td>{{ filial.nome }}</td>
+                    <td>{{ filial.cnpj or '-' }}</td>
+                    <td>
+                        {% if filial.ativo %}
+                            <span class="badge bg-success">Ativa</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inativa</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{{ url_for('comercial_operacional.filiais_editar', filial_id=filial.id) }}" class="btn btn-outline-primary" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('comercial_operacional.filiais_deletar', filial_id=filial.id) }}" style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Desativar" onclick="return confirm('Tem certeza?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                        Nenhuma filial encontrada
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if pagination.pages > 1 %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('comercial_operacional.filiais_index', page=pagination.prev_num, busca=busca) }}">Anterior</a>
+        </li>
+        {% endif %}
+        {% for page_num in pagination.iter_pages() %}
+            {% if page_num %}
+            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('comercial_operacional.filiais_index', page=page_num, busca=busca) }}">{{ page_num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('comercial_operacional.filiais_index', page=pagination.next_num, busca=busca) }}">Proximo</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

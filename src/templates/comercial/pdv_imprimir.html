@@ -1,0 +1,262 @@
+{% extends "layout.html" %}
+
+{% block title %}Comprovante de Venda {{ venda.numero }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.cupom-container {
+    max-width: 400px;
+    margin: 20px auto;
+    background: #fff;
+    border: 1px solid #000;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.3;
+}
+.cupom-header {
+    text-align: center;
+    padding: 10px;
+    border-bottom: 1px dashed #000;
+}
+.cupom-header h3 {
+    font-size: 14px;
+    font-weight: bold;
+    margin: 5px 0;
+}
+.cupom-header p {
+    font-size: 10px;
+    margin: 2px 0;
+}
+.cupom-info {
+    padding: 8px 10px;
+    border-bottom: 1px dashed #000;
+}
+.cupom-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 2px 0;
+    gap: 10px;
+}
+.cupom-itens {
+    padding: 8px 10px;
+    border-bottom: 1px dashed #000;
+}
+.cupom-item {
+    margin-bottom: 8px;
+}
+.cupom-item-desc {
+    font-weight: bold;
+}
+.cupom-item-qtd {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    gap: 10px;
+}
+.cupom-totais {
+    padding: 8px 10px;
+    border-bottom: 1px dashed #000;
+}
+.cupom-total-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 3px 0;
+    gap: 10px;
+}
+.cupom-total-final {
+    font-size: 14px;
+    font-weight: bold;
+    border-top: 1px solid #000;
+    padding-top: 5px;
+    margin-top: 5px;
+}
+.cupom-pagamento {
+    padding: 8px 10px;
+    border-bottom: 1px dashed #000;
+}
+.cupom-pagamento-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: center;
+}
+.cupom-footer {
+    text-align: center;
+    padding: 15px 10px;
+}
+.cupom-msg {
+    font-size: 10px;
+    margin: 10px 0;
+    padding: 5px;
+    border: 1px solid #000;
+}
+.cupom-naofiscal {
+    font-size: 11px;
+    font-weight: bold;
+    color: #c00;
+    border: 2px solid #c00;
+    padding: 5px;
+    margin: 10px 0;
+}
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+@media print {
+    body { background: #fff; }
+    .no-print { display: none !important; }
+    .cupom-container {
+        border: none;
+        max-width: 100%;
+        margin: 0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center gap-2 mb-3 no-print">
+    <button type="button" class="btn btn-primary" onclick="window.print()">
+        <i class="fas fa-print"></i> Imprimir
+    </button>
+    <a href="{{ url_for('comercial_operacional.pdv_vender', sessao_id=venda.sessao_id) }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar ao PDV
+    </a>
+</div>
+
+<div class="cupom-container">
+    <div class="cupom-header">
+        <h3>{{ current_user.empresa.nome if current_user.empresa else 'EMPRESA' }}</h3>
+        <p>CNPJ: {{ current_user.empresa.cnpj if current_user.empresa else '00.000.000/0000-00' }}</p>
+        <p>COMPROVANTE NÃO FISCAL DE VENDA</p>
+    </div>
+
+    <div class="cupom-info">
+        <div class="cupom-info-row">
+            <span>Nº Venda:</span>
+            <span>{{ venda.numero }}</span>
+        </div>
+        <div class="cupom-info-row">
+            <span>Data:</span>
+            <span>{{ venda.data_venda.strftime('%d/%m/%Y %H:%M:%S') if venda.data_venda else '-' }}</span>
+        </div>
+        <div class="cupom-info-row">
+            <span>Sessão:</span>
+            <span>{{ venda.sessao.numero if venda.sessao else '-' }}</span>
+        </div>
+        {% if venda.cliente %}
+        <div class="cupom-info-row">
+            <span>Cliente:</span>
+            <span>{{ venda.cliente.nome }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="cupom-itens">
+        <div class="text-center" style="font-weight: bold; margin-bottom: 8px;">ITENS</div>
+        {% for item in itens %}
+        <div class="cupom-item">
+            <div class="cupom-item-desc">{{ loop.index }}. {{ item.descricao }}</div>
+            <div class="cupom-item-qtd">
+                <span>
+                    {{ "{:,.3f}".format((item.quantidade or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+                    x
+                    {{ "{:,.2f}".format((item.valor_unitario or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+                </span>
+                <span>
+                    {{ "{:,.2f}".format((item.valor_total or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="cupom-totais">
+        <div class="cupom-total-row">
+            <span>Qtd. Total de Itens:</span>
+            <span>{{ venda.itens|length }}</span>
+        </div>
+        <div class="cupom-total-row">
+            <span>Subtotal:</span>
+            {{ "{:,.2f}".format((venda.subtotal or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+        </div>
+        {% if venda.valor_desconto %}
+        <div class="cupom-total-row">
+            <span>Desconto:</span>
+            {{ "{:,.2f}".format((venda.valor_desconto or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+        </div>
+        {% endif %}
+        <div class="cupom-total-row cupom-total-final">
+            <span>VALOR A PAGAR:</span>
+            {{ "{:,.2f}".format((venda.valor_total or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+        </div>
+    </div>
+
+    <div class="cupom-pagamento">
+        <div class="cupom-pagamento-title">FORMA DE PAGAMENTO</div>
+
+        {% set dinheiro = (venda.valor_dinheiro or 0)|float %}
+        {% set credito = (venda.valor_cartao_credito or 0)|float %}
+        {% set debito = (venda.valor_cartao_debito or 0)|float %}
+        {% set pix = (venda.valor_pix or 0)|float %}
+        {% set total_pago = dinheiro + credito + debito + pix %}
+
+        {% if dinheiro > 0 %}
+        <div class="cupom-total-row">
+            <span>Dinheiro:</span>
+            {{ "{:,.2f}".format((dinheiro or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+        </div>
+        {% endif %}
+
+        {% if credito > 0 %}
+        <div class="cupom-total-row">
+            <span>Cartão Crédito:</span>
+            {{ "{:,.2f}".format((credito or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+        </div>
+        {% endif %}
+
+        {% if debito > 0 %}
+        <div class="cupom-total-row">
+            <span>Cartão Débito:</span>
+            {{ "{:,.2f}".format((debito or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+        </div>
+        {% endif %}
+
+        {% if pix > 0 %}
+        <div class="cupom-total-row">
+            <span>PIX:</span>
+            {{ "{:,.2f}".format((pix or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+        </div>
+        {% endif %}
+
+        <div class="cupom-total-row" style="margin-top: 5px; border-top: 1px dashed #000; padding-top: 3px;">
+            <span>TOTAL PAGO:</span>
+            {{ "{:,.2f}".format((total_pago or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+        </div>
+
+        {% if (venda.valor_troco or 0)|float > 0 %}
+        <div class="cupom-total-row">
+            <span>TROCO:</span>
+            {{ "{:,.2f}".format((venda.valor_troco or 0)|float).replace(",", "_").replace(".", ",").replace("_", ".") }}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="cupom-msg text-center">
+        Este é um comprovante interno de venda.<br>
+        Não possui valor fiscal.
+    </div>
+
+    <div class="cupom-footer">
+        <div class="cupom-naofiscal">
+            DOCUMENTO NÃO FISCAL
+        </div>
+        <p style="font-size: 10px; margin-top: 10px;">
+            Obrigado pela preferência!<br>
+            Volte sempre
+        </p>
+    </div>
+</div>
+
+<div class="text-center mt-3 no-print">
+    <p class="text-muted">Clique no botão "Imprimir" acima para imprimir este comprovante.</p>
+</div>
+{% endblock %}

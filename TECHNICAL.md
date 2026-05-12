@@ -1,4 +1,4 @@
-# 📐 Documentação Técnica - LiveSun Financeiro
+# 📐 Documentação Técnica - LiveSun Comercial
 
 ## Arquitetura
 
@@ -34,7 +34,7 @@ Deployment:
 ## Estrutura de Diretórios
 
 ```
-Livesun_Financeiro/
+LiveSun_Comercial/
 │
 ├── src/
 │   ├── app.py                   # Factory Pattern Flask
@@ -403,12 +403,12 @@ def test_login(client):
 
 ### Backup
 ```bash
-mysqldump -u root -p livesun_financeiro > backup_$(date +%Y%m%d).sql
+mysqldump -u root -p comercial > backup_$(date +%Y%m%d).sql
 ```
 
 ### Restore
 ```bash
-mysql -u root -p livesun_financeiro < backup_20260220.sql
+mysql -u root -p comercial < backup_20260220.sql
 ```
 
 ### Update dependências

@@ -1,6 +1,8 @@
 # 🚀 PUBLICAR NO GIT, RAILWAY E HOSTINGER
 
-Este guia rápido mostra como publicar seu LiveSun Financeiro em diferentes plataformas.
+> Documento legado. Para o fluxo atual, use DEPLOY.md.
+
+Este guia rápido mostra como publicar seu LiveSun Comercial em diferentes plataformas.
 
 ## 📋 Sumário Rápido
 

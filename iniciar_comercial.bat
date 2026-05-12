@@ -21,7 +21,7 @@ if /I "%~1"=="run" goto executar
 :menu
 echo.
 echo ==============================================
-echo LiveSun Controller
+echo LiveSun Comercial
     echo ==============================================
 echo 1 - Iniciar programa
  echo 2 - Rodar validacoes
@@ -51,7 +51,7 @@ if errorlevel 1 (
     pause >nul
     exit /b %errorlevel%
 )
-"%PYTHON_EXE%" scripts\validar_controller.py
+"%PYTHON_EXE%" scripts\validar_comercial.py
 if errorlevel 1 (
     echo.
     echo Erro no validador. Pressione qualquer tecla para fechar...

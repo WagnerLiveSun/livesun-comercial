@@ -101,6 +101,50 @@ ENDPOINT_PERMISSION_MAP = {
     'auth.controle_acesso': 'controle_acesso',
     'auth.controle_processos': 'controle_acesso',
     'auth.controle_usuario_permissoes': 'controle_acesso',
+
+    'comercial_operacional.filiais_index': 'comercial_filiais',
+    'comercial_operacional.filiais_criar': 'comercial_filiais',
+    'comercial_operacional.filiais_editar': 'comercial_filiais',
+    'comercial_operacional.filiais_deletar': 'comercial_filiais',
+    'comercial_operacional.produtos_index': 'comercial_produtos',
+    'comercial_operacional.produtos_criar': 'comercial_produtos',
+    'comercial_operacional.produtos_editar': 'comercial_produtos',
+    'comercial_operacional.produtos_deletar': 'comercial_produtos',
+    'comercial_operacional.servicos_index': 'comercial_servicos',
+    'comercial_operacional.servicos_criar': 'comercial_servicos',
+    'comercial_operacional.servicos_editar': 'comercial_servicos',
+    'comercial_operacional.servicos_deletar': 'comercial_servicos',
+    'comercial_operacional.estoque_index': 'comercial_estoque',
+    'comercial_operacional.estoque_criar': 'comercial_estoque',
+    'comercial_operacional.compras_index': 'comercial_compras',
+    'comercial_operacional.compras_criar': 'comercial_compras',
+    'comercial_operacional.compras_detalhe': 'comercial_compras',
+    'comercial_operacional.documentos_index': 'comercial_documentos',
+    'comercial_operacional.documentos_criar': 'comercial_documentos',
+    'comercial_operacional.documentos_detalhe': 'comercial_documentos',
+
+    'comercial_operacional.tabelas_preco_index': 'comercial_tabelas_preco',
+    'comercial_operacional.tabelas_preco_criar': 'comercial_tabelas_preco',
+    'comercial_operacional.tabelas_preco_editar': 'comercial_tabelas_preco',
+    'comercial_operacional.tabelas_preco_itens': 'comercial_tabelas_preco',
+    'comercial_operacional.tabelas_preco_itens_adicionar': 'comercial_tabelas_preco',
+    'comercial_operacional.tabelas_preco_itens_remover': 'comercial_tabelas_preco',
+
+    'comercial_operacional.orcamentos_index': 'comercial_orcamentos',
+    'comercial_operacional.orcamentos_criar': 'comercial_orcamentos',
+    'comercial_operacional.orcamentos_detalhe': 'comercial_orcamentos',
+    'comercial_operacional.orcamentos_converter': 'comercial_orcamentos',
+
+    'comercial_operacional.pedidos_index': 'comercial_pedidos',
+    'comercial_operacional.pedidos_detalhe': 'comercial_pedidos',
+    'comercial_operacional.pedidos_faturar': 'comercial_pedidos',
+
+    'comercial_operacional.pdv_index': 'comercial_pdv',
+    'comercial_operacional.pdv_abrir': 'comercial_pdv',
+    'comercial_operacional.pdv_vender': 'comercial_pdv',
+    'comercial_operacional.pdv_venda_adicionar_item': 'comercial_pdv',
+    'comercial_operacional.pdv_venda_finalizar': 'comercial_pdv',
+    'comercial_operacional.pdv_fechar': 'comercial_pdv',
 }
 
 
@@ -168,6 +212,7 @@ def create_app(config_name=None):
     from src.routes.conciliacao import conciliacao_bp
     from src.routes.comercial import comercial_webhook_bp
     from src.routes.admin_comercial import admin_comercial_bp
+    from src.routes.comercial_operacional import comercial_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -182,6 +227,7 @@ def create_app(config_name=None):
     app.register_blueprint(conciliacao_bp)
     app.register_blueprint(comercial_webhook_bp)
     app.register_blueprint(admin_comercial_bp)
+    app.register_blueprint(comercial_bp)
 
     @app.route('/suporte')
     def suporte():
@@ -215,7 +261,7 @@ def create_app(config_name=None):
             'current_user': current_user,
             'year': datetime.now().year,
             'current_year': datetime.now().year,
-            'powered_by': 'LiveSun Controller',
+            'powered_by': 'LiveSun Comercial',
             'safe_url_for': safe_url_for,
             'has_permission': current_user_has_permission,
             'current_plan': normalize_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
@@ -268,7 +314,9 @@ def create_app(config_name=None):
         db.create_all()
         _ensure_schema_compatibility()
         _bootstrap_admin_user()
+        _bootstrap_livesun_admin()
         logger.info('Database tables created successfully')
+        # Cache cleared - function renamed from _bootstrap_backoffice_admin to _bootstrap_livesun_admin
     
     # Error handlers
     @app.errorhandler(404)
@@ -360,9 +408,78 @@ def _bootstrap_admin_user():
         db.session.rollback()
 
 
+def _bootstrap_livesun_admin():
+    """Cria usuário admin da LiveSun (sem empresa) para acesso ao backoffice.
+    
+    Configurável via variáveis de ambiente (.env):
+    - LIVESUN_ADMIN_USERNAME
+    - LIVESUN_ADMIN_PASSWORD
+    - LIVESUN_ADMIN_EMAIL
+    """
+    import os
+    
+    # Todas as credenciais devem vir do .env - sem valores padrão hardcoded
+    livesun_username = (os.getenv('LIVESUN_ADMIN_USERNAME') or '').strip()
+    livesun_password = (os.getenv('LIVESUN_ADMIN_PASSWORD') or '').strip()
+    livesun_email = (os.getenv('LIVESUN_ADMIN_EMAIL') or '').strip()
+    
+    logger.info(f'Lendo .env: USERNAME={livesun_username}, EMAIL={livesun_email}, PASSWORD={"***" if livesun_password else "vazio"}')
+    
+    # Só cria se todas as variáveis estiverem configuradas
+    if not livesun_username or not livesun_password or not livesun_email:
+        logger.warning('Bootstrap livesun admin: variáveis não configuradas no .env')
+        logger.warning(f'  - USERNAME: {"OK" if livesun_username else "FALTANDO"}')
+        logger.warning(f'  - PASSWORD: {"OK" if livesun_password else "FALTANDO"}')
+        logger.warning(f'  - EMAIL: {"OK" if livesun_email else "FALTANDO"}')
+        return
+    
+    if len(livesun_password) < 8:
+        logger.warning('Bootstrap livesun admin ignorado: senha deve ter ao menos 8 caracteres')
+        return
+
+    # Verifica se usuário já existe sem empresa
+    livesun_user = User.query.filter_by(username=livesun_username, empresa_id=None).first()
+    if livesun_user:
+        logger.info(f'Bootstrap livesun admin: usuário {livesun_username} já existe (sem empresa)')
+        return
+
+    # Verifica se username existe com empresa
+    user_with_empresa = User.query.filter_by(username=livesun_username).first()
+    if user_with_empresa:
+        logger.warning(f'Bootstrap livesun admin ignorado: username {livesun_username} já existe')
+        return
+
+    # Verifica se email já existe
+    existing_email = User.query.filter_by(email=livesun_email).first()
+    if existing_email:
+        logger.warning(f'Bootstrap livesun admin ignorado: email {livesun_email} já cadastrado')
+        return
+
+    admin = User(
+        username=livesun_username,
+        email=livesun_email,
+        full_name='LiveSun Administrador',
+        is_admin=True,
+        is_active=True,
+        role='admin',
+        empresa_id=None  # Sem empresa - acesso ao backoffice de todas
+    )
+    admin.set_password(livesun_password)
+    db.session.add(admin)
+    try:
+        db.session.commit()
+        logger.info(f'Usuário livesun admin criado com sucesso: {livesun_username}')
+    except IntegrityError as e:
+        logger.error(f'Bootstrap livesun admin erro: {e}')
+        db.session.rollback()
+
+
 def _ensure_schema_compatibility():
     """Ensure required columns exist in databases created before recent releases."""
     try:
+        # Altera empresa_id para permitir NULL (para admins LiveSun sem empresa)
+        _ensure_column_nullable('users', 'empresa_id', 'INTEGER')
+        
         _ensure_columns(
             'users',
             {
@@ -440,6 +557,37 @@ def _ensure_column_type(table_name, column_name, column_type):
         logger.info('Coluna convertida para %s.%s -> %s', table_name, column_name, column_type)
 
 
+def _ensure_column_nullable(table_name, column_name, column_type):
+    """Altera uma coluna para permitir NULL."""
+    inspector = inspect(db.engine)
+    existing_tables = set(inspector.get_table_names())
+    if table_name not in existing_tables:
+        return
+
+    columns_info = inspector.get_columns(table_name)
+    column_info = next((col for col in columns_info if col['name'] == column_name), None)
+    if not column_info:
+        return
+
+    # Se já é nullable, não faz nada
+    if column_info.get('nullable', True):
+        return
+
+    try:
+        dialect = db.engine.dialect.name
+        with db.engine.begin() as conn:
+            if dialect == 'mysql':
+                conn.execute(text(f'ALTER TABLE {table_name} MODIFY COLUMN {column_name} {column_type} NULL'))
+            elif dialect == 'postgresql':
+                conn.execute(text(f'ALTER TABLE {table_name} ALTER COLUMN {column_name} DROP NOT NULL'))
+            elif dialect == 'sqlite':
+                # SQLite não suporta ALTER COLUMN diretamente
+                logger.warning(f'SQLite: não é possível alterar coluna {column_name} para NULL automaticamente')
+                return
+        logger.info('Coluna %s.%s alterada para permitir NULL', table_name, column_name)
+    except Exception as e:
+        logger.error(f'Erro ao alterar coluna {table_name}.{column_name} para NULL: {e}')
+
 
 # Exporta o app para o Gunicorn
 app = create_app()
@@ -450,9 +598,9 @@ if __name__ == '__main__':
     port = int(os.getenv('SERVER_PORT', 5000))
     debug = os.getenv('FLASK_DEBUG', 'True') == 'True'
     
-    print(f'\n{"="*60} - app.py:190')
-    print(f'LiveSun Controller  Plataforma de Gestão Financeira - app.py:191')
-    print(f'Servidor rodando em: http://localhost:{port} - app.py:192')
-    print(f'{"="*60}\n - app.py:194')
+    print(f'\n{"="*60}')
+    print(f'LiveSun Comercial - Plataforma de Gestão Comercial e Financeira')
+    print(f'Servidor rodando em: http://localhost:{port}')
+    print(f'{"="*60}\n')
     
     app.run(host=host, port=port, debug=debug)

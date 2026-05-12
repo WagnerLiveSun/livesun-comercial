@@ -11,7 +11,6 @@ fluxo_bp = Blueprint('fluxo', __name__, url_prefix='/fluxo')
 def index():
     """List all chart of accounts"""
     plano_basico = getattr(getattr(current_user, 'empresa', None), 'plano', 'premium') == 'basic'
-    plano_basico = getattr(getattr(current_user, 'empresa', None), 'plano', 'premium') == 'basic'
     page = request.args.get('page', 1, type=int)
     tipo = request.args.get('tipo', '')
     conta_ini = request.args.get('conta_ini', '')

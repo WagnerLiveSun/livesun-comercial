@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Script de inicialização do banco de dados LiveSun Controller
+Script de inicialização do banco de dados LiveSun Comercial
 
 Cria o banco de dados e as tabelas automaticamente
 """
@@ -27,7 +27,7 @@ def create_database():
     db_port = int(os.getenv('DB_PORT', 3306))
     db_user = os.getenv('DB_USER', 'root')
     db_password = os.getenv('DB_PASSWORD', '')
-    db_name = os.getenv('DB_NAME', 'controller')
+    db_name = os.getenv('DB_NAME', 'comercial')
     
     try:
         # Connect without specifying database
@@ -57,7 +57,7 @@ def init_db():
     
     # First, create the database
     print("\n" + "="*70)
-    print("  LiveSun Controller - Inicialização do Banco de Dados")
+    print("  LiveSun Comercial - Inicialização do Banco de Dados")
     print("="*70 + "\n")
     
     print("📦 Criando banco de dados...")
@@ -106,7 +106,7 @@ def init_db():
             print("\nVerifique:")
             print("  1. MySQL está rodando?")
             print("  2. Arquivo .env está configurado corretamente?")
-            print("  3. Banco de dados 'controller' foi criado?\n")
+            print("  3. Banco de dados 'comercial' foi criado?\n")
             sys.exit(1)
 
 if __name__ == '__main__':

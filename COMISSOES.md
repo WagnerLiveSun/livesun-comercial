@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-O módulo de comissões do LiveSun Financeiro automatiza o cálculo, apuração e relatório de comissões sobre lançamentos financeiros, com suporte a alíquotas específicas por cliente e vendedor.
+O módulo de comissões do LiveSun Comercial automatiza o cálculo, apuração e relatório de comissões sobre lançamentos financeiros, com suporte a alíquotas específicas por cliente e vendedor.
 
 ## Índice
 

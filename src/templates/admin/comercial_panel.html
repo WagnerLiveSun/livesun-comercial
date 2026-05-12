@@ -88,7 +88,7 @@
                             <form method="POST" action="{{ url_for('admin_comercial.atualizar_status_assinatura', empresa_id=r.empresa_id) }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="acao" value="{{ action }}">
-                                <button type="submit" class="btn btn-sm btn-outline-light">{{ action }}</button>
+                                <button type="submit" class="btn btn-sm btn-primary">{{ action }}</button>
                             </form>
                             {% endfor %}
                         </div>
@@ -149,7 +149,7 @@
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="oferta_id" value="{{ o.id }}">
                                     <input type="text" name="novo_preco" class="form-control form-control-sm" placeholder="0,00" required>
-                                    <button type="submit" class="btn btn-sm btn-outline-light">Salvar</button>
+                                    <button type="submit" class="btn btn-sm btn-primary">Salvar</button>
                                 </form>
                             </td>
                         </tr>

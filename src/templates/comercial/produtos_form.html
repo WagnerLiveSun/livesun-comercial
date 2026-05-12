@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+
+{% block title %}{% if action == 'editar' %}Editar{% else %}Novo{% endif %} Produto{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">{% if action == 'editar' %}Editar Produto{% else %}Novo Produto{% endif %}</h2>
+    <a href="{{ url_for('comercial_operacional.produtos_index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Filial</label>
+                <select name="filial_id" class="form-control">
+                    <option value="">Sem filial</option>
+                    {% for filial in filiais %}
+                    <option value="{{ filial.id }}" {% if produto and produto.filial_id == filial.id %}selected{% endif %}>{{ filial.codigo }} - {{ filial.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Codigo interno *</label>
+                <input type="text" name="codigo_interno" class="form-control" value="{{ produto.codigo_interno if produto else '' }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Descricao resumida *</label>
+                <input type="text" name="descricao_resumida" class="form-control" value="{{ produto.descricao_resumida if produto else '' }}" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <label class="form-label">Descricao completa</label>
+                <textarea name="descricao_completa" class="form-control" rows="3">{{ produto.descricao_completa if produto else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Unidade</label>
+                <input type="text" name="unidade_medida" class="form-control" value="{{ produto.unidade_medida if produto else '' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Codigo barras</label>
+                <input type="text" name="codigo_barras" class="form-control" value="{{ produto.codigo_barras if produto else '' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">GTIN</label>
+                <input type="text" name="gtin" class="form-control" value="{{ produto.gtin if produto else '' }}">
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">NCM</label>
+                <input type="text" name="ncm" class="form-control" value="{{ produto.ncm if produto else '' }}">
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">EX TIPI</label>
+                <input type="text" name="ex_tipi" class="form-control" value="{{ produto.ex_tipi if produto else '' }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-2 mb-3">
+                <label class="form-label">CEST</label>
+                <input type="text" name="cest" class="form-control" value="{{ produto.cest if produto else '' }}">
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Classe IPI</label>
+                <input type="text" name="ipi_classe" class="form-control" value="{{ produto.ipi_classe if produto else '' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Origem mercadoria</label>
+                <input type="text" name="origem_mercadoria" class="form-control" value="{{ produto.origem_mercadoria if produto else '' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Tipo de item</label>
+                <input type="text" name="tipo_item" class="form-control" value="{{ produto.tipo_item if produto else '' }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Estoque minimo</label>
+                <input type="number" name="estoque_minimo" class="form-control" step="0.001" value="{{ produto.estoque_minimo if produto else '' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Estoque inicial</label>
+                <input type="number" name="estoque_inicial" class="form-control" step="0.001" value="{{ produto.estoque_atual if produto and action == 'criar' else '' }}" {% if action == 'editar' %}disabled{% endif %}>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Estoque atual</label>
+                <input type="text" class="form-control" value="{{ produto.estoque_atual if produto else '0.000' }}" disabled>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Controle de estoque</label>
+                <div class="form-check" style="margin-top: 8px;">
+                    <input class="form-check-input" type="checkbox" id="controla_estoque" name="controla_estoque" {% if produto and produto.controla_estoque %}checked{% endif %}>
+                    <label class="form-check-label" for="controla_estoque">Ativar</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Valor de Custo (R$)</label>
+                <input type="number" name="valor_custo" class="form-control" step="0.01" value="{{ produto.valor_custo if produto else '0.00' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Valor de Venda Padrão (R$)</label>
+                <input type="number" name="valor_venda_padrao" class="form-control" step="0.01" value="{{ produto.valor_venda_padrao if produto else '0.00' }}">
+                <small class="form-text text-muted">Usado quando não há tabela de preço</small>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ativo" name="ativo" {% if not produto or produto.ativo %}checked{% endif %}>
+                    <label class="form-check-label" for="ativo">Produto ativo</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn ls-btn-primary"><i class="fas fa-save"></i> Salvar</button>
+            <a href="{{ url_for('comercial_operacional.produtos_index') }}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

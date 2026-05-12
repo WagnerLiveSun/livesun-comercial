@@ -104,6 +104,20 @@ class ServicoComissoes:
         return comissao.quantize(Decimal('0.01'))
     
     @staticmethod
+    def _validar_lancamento_empresa(lancamento_id: int, empresa_id: int) -> bool:
+        """
+        Valida se um lançamento pertence à empresa especificada.
+        Segurança: previne acesso a lançamentos de outras empresas.
+        """
+        if not lancamento_id or not empresa_id:
+            return False
+        lancamento = Lancamento.query.filter_by(
+            id=lancamento_id,
+            empresa_id=empresa_id
+        ).first()
+        return lancamento is not None
+
+    @staticmethod
     def lancamento_ja_apurado(lancamento_id: int, cliente_id: int, vendedor_id: int, empresa_id: int) -> bool:
         """
         Verifica se um lançamento já foi apurado em comissão.
@@ -117,6 +131,11 @@ class ServicoComissoes:
         Returns:
             True se já foi apurado, False caso contrário
         """
+        # Validação de segurança: garantir que o lançamento pertence à empresa
+        if not ServicoComissoes._validar_lancamento_empresa(lancamento_id, empresa_id):
+            logger.warning(f"Tentativa de verificar apuração de lançamento {lancamento_id} não pertencente à empresa {empresa_id}")
+            return False
+
         comissao = Comissao.query.filter_by(
             empresa_id=empresa_id,
             lancamento_id=lancamento_id,

@@ -1,5 +1,5 @@
-# LiveSun Controller
-# Sistema de Gestão Financeira
+# LiveSun Comercial
+# Sistema de Gestão Comercial e Financeira
 
 import os
 import sys
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     debug = os.getenv('FLASK_DEBUG', 'True') == 'True'
     
     print(f'\n{"="*70}')
-    print(f'  LiveSun Controller - Sistema de Gestão Financeira')
+    print(f'  LiveSun Comercial - Sistema de Gestão Comercial e Financeira')
     print(f'  URL: http://localhost:{port}')
     print(f'  Login padrão: admin / admin123')
     print(f'{"="*70}\n')

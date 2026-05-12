@@ -33,7 +33,7 @@ class Config:
     DB_PORT = int(os.environ.get('DB_PORT', 3306))
     DB_USER = os.environ.get('DB_USER', 'root')
     DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
-    DB_NAME = os.environ.get('DB_NAME', 'livesun_controller')
+    DB_NAME = os.environ.get('DB_NAME', 'comercial')
     _DB_USER_ESCAPED = quote_plus(DB_USER)
     _DB_PASSWORD_ESCAPED = quote_plus(DB_PASSWORD)
     SQLALCHEMY_DATABASE_URI = f'{DB_TYPE}+pymysql://{_DB_USER_ESCAPED}:{_DB_PASSWORD_ESCAPED}@{DB_HOST}:{DB_PORT}/{DB_NAME}'

@@ -15,18 +15,18 @@
 
         <div class="col-md-6">
             <label for="username" class="form-label">Usuário</label>
-            <input type="text" class="form-control" id="username" name="username" required>
-            <div class="form-text">O usuário precisa ser único apenas dentro desta empresa.</div>
+            <input type="text" class="form-control" id="username" name="username" autocomplete="off" required>
+            <div class="form-text">ID do usuário</div>
         </div>
 
         <div class="col-md-6">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" required>
+            <input type="email" class="form-control" id="email" name="email" autocomplete="off" required>
         </div>
 
         <div class="col-md-6">
             <label for="password" class="form-label">Senha</label>
-            <input type="password" class="form-control" id="password" name="password" required>
+            <input type="password" class="form-control" id="password" name="password" autocomplete="new-password" required>
         </div>
 
         <div class="col-md-6">
@@ -35,8 +35,8 @@
         </div>
 
         <div class="col-12 d-flex gap-2">
-            <button type="submit" class="btn ls-btn-primary">Adicionar Usuário</button>
-            <a href="{{ url_for('auth.controle_acesso') }}" class="btn btn-outline-secondary">Controle de Acesso</a>
+            <button type="submit" class="btn ls-btn-primary">Avançar</button>
+            <a href="{{ url_for('auth.controle_acesso') }}" class="btn btn-outline-secondary">Cancelar</a>
         </div>
     </form>
 </div>

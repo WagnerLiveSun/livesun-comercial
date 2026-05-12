@@ -53,7 +53,7 @@ def main() -> int:
         db.drop_all()
         db.create_all()
 
-        empresa = Empresa(nome='Validacao Controller', cnpj='55555555000155')
+        empresa = Empresa(nome='Validacao Comercial', cnpj='55555555000155')
         db.session.add(empresa)
         db.session.flush()
 

@@ -6,7 +6,63 @@
 <div class="row mb-4">
     <div class="col-12">
         <h1 class="display-6 fw-bold ls-page-title">Perfil do Administrador</h1>
-        <p class="text-muted">Preferencias do dashboard</p>
+        <p class="text-muted">Preferências e assinatura</p>
+    </div>
+</div>
+
+<!-- Assinatura Comercial -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <h4 class="mb-2 ls-page-title">Assinatura Comercial</h4>
+                    {% if assinatura_resumo.disponivel %}
+                    <p class="text-muted mb-0">
+                        Plano {{ assinatura_resumo.plano_label }} | Status {{ assinatura_resumo.status }} | Ciclo {{ assinatura_resumo.ciclo }}
+                    </p>
+                    {% else %}
+                    <p class="text-muted mb-0">Assinatura ainda não configurada para esta empresa.</p>
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('auth.assinatura') }}" class="btn ls-btn-primary">
+                    <i class="fas fa-credit-card"></i> Gerenciar Assinatura
+                </a>
+            </div>
+
+            {% if assinatura_resumo.disponivel %}
+            <div class="row g-3 mt-1">
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Fim do Trial</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.fim_trial.strftime('%d/%m/%Y') if assinatura_resumo.fim_trial else '-' }}</span>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Próximo Vencimento</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.vencimento.strftime('%d/%m/%Y') if assinatura_resumo.vencimento else '-' }}</span>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Gateway</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.gateway }}</span>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Assinatura no Gateway</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.assinatura_gateway_id or 'Pendente' }}</span>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Próxima Cobrança</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.proxima_cobranca_vencimento.strftime('%d/%m/%Y') if assinatura_resumo.proxima_cobranca_vencimento else '-' }}</span>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Valor Previsto</small>
+                    <span class="fw-semibold">R$ {{ assinatura_resumo.proxima_cobranca_valor|brl }}</span>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Status da Cobrança</small>
+                    <span class="fw-semibold">{{ assinatura_resumo.proxima_cobranca_status }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 
@@ -14,11 +70,11 @@
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
-            <label class="form-label">Periodo do grafico (dias)</label>
+            <label class="form-label">Periodo do gráfico (dias)</label>
             <input type="number" name="dashboard_chart_days" class="form-control" min="7" max="365"
                 value="{{ current_user.dashboard_chart_days or 30 }}"
                 style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
-            <div class="form-text text-muted">Minimo 7 dias, maximo 365 dias.</div>
+            <div class="form-text text-muted">Mínimo 7 dias, máximo 365 dias.</div>
         </div>
 
         <div class="mb-3">
@@ -32,8 +88,9 @@
         </div>
 
         <button type="submit" class="btn ls-btn-primary">
-            <i class="fas fa-save"></i> Salvar Preferencias
+            <i class="fas fa-save"></i> Salvar Preferências
         </button>
     </form>
 </div>
+
 {% endblock %}

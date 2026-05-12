@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LiveSun Controller - {% block title %}{% endblock %}</title>
+    <title>LiveSun Comercial - {% block title %}{% endblock %}</title>
 
     <script>
         (function () {
@@ -59,30 +59,30 @@
         }
 
         :root[data-theme="light"] {
-            --ls-bg-main: #f3f6fb;
+            --ls-bg-main: #f8fafc;
             --ls-bg-elevated: #ffffff;
-            --ls-border-subtle: rgba(71, 85, 105, 0.22);
-            --ls-text-main: #0f172a;
-            --ls-text-muted: #475569;
-            --ls-page-title: #9fbfe8;
-            --ls-input-bg: rgba(255, 255, 255, 0.96);
-            --ls-input-border: rgba(100, 116, 139, 0.28);
-            --ls-input-disabled-bg: rgba(241, 245, 249, 0.96);
-            --ls-primary: #2563eb;
-            --ls-primary-soft: rgba(37, 99, 235, 0.16);
-            --ls-accent: #0ea5e9;
-            --ls-topbar-bg: rgba(255, 255, 255, 0.94);
-            --ls-sidebar-bg: rgba(255, 255, 255, 0.94);
-            --ls-card-bg: rgba(255, 255, 255, 0.9);
-            --ls-text-strong: #0f172a;
-            --ls-hover-bg: rgba(37, 99, 235, 0.12);
-            --ls-footer-bg: rgba(255, 255, 255, 0.94);
+            --ls-border-subtle: rgba(100, 116, 139, 0.25);
+            --ls-text-main: #1e293b;
+            --ls-text-muted: #64748b;
+            --ls-page-title: #1e40af;
+            --ls-input-bg: rgba(255, 255, 255, 0.95);
+            --ls-input-border: rgba(100, 116, 139, 0.3);
+            --ls-input-disabled-bg: rgba(248, 250, 252, 0.95);
+            --ls-primary: #1e40af;
+            --ls-primary-soft: rgba(30, 64, 175, 0.12);
+            --ls-accent: #0284c7;
+            --ls-topbar-bg: rgba(255, 255, 255, 0.95);
+            --ls-sidebar-bg: rgba(255, 255, 255, 0.95);
+            --ls-card-bg: rgba(255, 255, 255, 0.85);
+            --ls-text-strong: #1e293b;
+            --ls-hover-bg: rgba(30, 64, 175, 0.08);
+            --ls-footer-bg: rgba(255, 255, 255, 0.95);
             --ls-dropdown-bg: #ffffff;
-            --ls-dropdown-text: #0f172a;
-            --ls-alert-success-text: #166534;
-            --ls-alert-danger-text: #b91c1c;
-            --ls-alert-warning-text: #a16207;
-            --ls-alert-info-text: #1d4ed8;
+            --ls-dropdown-text: #1e293b;
+            --ls-alert-success-text: #15803d;
+            --ls-alert-danger-text: #dc2626;
+            --ls-alert-warning-text: #d97706;
+            --ls-alert-info-text: #1e40af;
         }
 
         body {
@@ -141,6 +141,104 @@
         .form-select:disabled {
             background-color: var(--ls-input-disabled-bg) !important;
             color: var(--ls-text-muted) !important;
+        }
+
+        /* Melhorias de contraste para tema escuro (padrão) */
+        :root:not([data-theme="light"]) .form-control,
+        :root:not([data-theme="light"]) .form-select {
+            background-color: #0f172a !important;
+            border-color: rgba(148, 163, 184, 0.4) !important;
+            color: #f1f5f9 !important;
+            font-weight: 400;
+        }
+
+        :root:not([data-theme="light"]) .form-control::placeholder,
+        :root:not([data-theme="light"]) .form-select::placeholder {
+            color: #64748b !important;
+            opacity: 1;
+        }
+
+        :root:not([data-theme="light"]) .form-control:focus,
+        :root:not([data-theme="light"]) .form-select:focus {
+            background-color: #0f172a !important;
+            border-color: #3b82f6 !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.35) !important;
+        }
+
+        :root:not([data-theme="light"]) .form-select option {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+
+        :root:not([data-theme="light"]) .form-label {
+            color: #94a3b8 !important;
+            font-weight: 500;
+        }
+
+        :root:not([data-theme="light"]) .table {
+            color: #e2e8f0 !important;
+        }
+
+        :root:not([data-theme="light"]) .table thead th {
+            color: #94a3b8 !important;
+            border-bottom-color: rgba(148, 163, 184, 0.3) !important;
+        }
+
+        /* Badges no modo claro - cores mais escuras e visíveis */
+        :root[data-theme="light"] .badge {
+            font-weight: 600;
+            text-shadow: none;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            padding: 0.35em 0.65em;
+        }
+
+        :root[data-theme="light"] .badge.bg-success {
+            background-color: #059669 !important;
+            color: #ffffff !important;
+            border-color: #047857 !important;
+        }
+
+        :root[data-theme="light"] .badge.bg-danger {
+            background-color: #dc2626 !important;
+            color: #ffffff !important;
+            border-color: #b91c1c !important;
+        }
+
+        :root[data-theme="light"] .badge.bg-warning {
+            background-color: #d97706 !important;
+            color: #ffffff !important;
+            border-color: #b45309 !important;
+        }
+
+        :root[data-theme="light"] .badge.bg-primary {
+            background-color: #1d4ed8 !important;
+            color: #ffffff !important;
+            border-color: #1e40af !important;
+        }
+
+        :root[data-theme="light"] .badge.bg-info {
+            background-color: #0891b2 !important;
+            color: #ffffff !important;
+            border-color: #0e7490 !important;
+        }
+
+        :root[data-theme="light"] .badge.bg-secondary {
+            background-color: #475569 !important;
+            color: #ffffff !important;
+            border-color: #334155 !important;
+        }
+
+        :root[data-theme="light"] .badge.bg-light {
+            background-color: #64748b !important;
+            color: #ffffff !important;
+            border-color: #475569 !important;
+        }
+
+        :root[data-theme="light"] .badge.bg-dark {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            border-color: #0f172a !important;
         }
 
         .ls-card .form-label,
@@ -241,6 +339,104 @@
             background-color: var(--ls-primary-soft) !important;
             color: var(--ls-text-main) !important;
             border-color: var(--ls-primary) !important;
+        }
+
+        /* Melhorias adicionais para modo claro */
+        :root[data-theme="light"] .ls-card {
+            border: 1px solid rgba(100, 116, 139, 0.15);
+        }
+
+        :root[data-theme="light"] .table {
+            color: #334155 !important;
+        }
+
+        :root[data-theme="light"] .table thead th {
+            color: #1e293b !important;
+            border-bottom-color: rgba(100, 116, 139, 0.3) !important;
+        }
+
+        :root[data-theme="light"] .form-control,
+        :root[data-theme="light"] .form-select {
+            background-color: #ffffff !important;
+            border-color: rgba(100, 116, 139, 0.35) !important;
+            color: #1e293b !important;
+        }
+
+        :root[data-theme="light"] .form-control:focus,
+        :root[data-theme="light"] .form-select:focus {
+            background-color: #ffffff !important;
+            border-color: #1e40af !important;
+            color: #1e293b !important;
+            box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.25) !important;
+        }
+
+        :root[data-theme="light"] .form-control::placeholder,
+        :root[data-theme="light"] .form-select::placeholder {
+            color: #64748b !important;
+        }
+
+        :root[data-theme="light"] .dropdown-menu {
+            background-color: #ffffff !important;
+            border: 1px solid rgba(100, 116, 139, 0.2) !important;
+        }
+
+        :root[data-theme="light"] .dropdown-item {
+            color: #334155 !important;
+        }
+
+        :root[data-theme="light"] .dropdown-item:hover {
+            background-color: rgba(30, 64, 175, 0.08) !important;
+            color: #1e293b !important;
+        }
+
+        /* Checkboxes e Flags no modo claro - fundo verde quando marcados */
+        :root[data-theme="light"] .form-check-input {
+            background-color: #ffffff !important;
+            border: 2px solid #64748b !important;
+            width: 1.2em;
+            height: 1.2em;
+        }
+
+        :root[data-theme="light"] .form-check-input:checked {
+            background-color: #059669 !important;
+            border-color: #047857 !important;
+        }
+
+        :root[data-theme="light"] .form-check-input:checked[type="checkbox"] {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e") !important;
+        }
+
+        :root[data-theme="light"] .form-check-input:focus {
+            border-color: #059669 !important;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(5, 150, 105, 0.25) !important;
+        }
+
+        :root[data-theme="light"] .form-check-label {
+            color: #1e293b !important;
+            font-weight: 500;
+        }
+
+        /* Switches/Toggles no modo claro */
+        :root[data-theme="light"] .form-switch .form-check-input {
+            background-color: #e2e8f0 !important;
+            border: 2px solid #64748b !important;
+        }
+
+        :root[data-theme="light"] .form-switch .form-check-input:checked {
+            background-color: #059669 !important;
+            border-color: #047857 !important;
+        }
+
+        /* Radio buttons no modo claro */
+        :root[data-theme="light"] .form-check-input[type="radio"] {
+            background-color: #ffffff !important;
+            border: 2px solid #64748b !important;
+        }
+
+        :root[data-theme="light"] .form-check-input[type="radio"]:checked {
+            background-color: #059669 !important;
+            border-color: #047857 !important;
         }
 
         .ls-shell {
@@ -474,7 +670,7 @@
             <div class="container-fluid">
                 <a class="navbar-brand" href="{{ url_for('dashboard.index') }}">
                     <i class="fas fa-chart-line" style="color: var(--ls-accent); margin-right: 8px;"></i>
-                    <span>LiveSun Controller</span>
+                    <span>LiveSun Comercial</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
@@ -494,6 +690,14 @@
                             <ul class="dropdown-menu" aria-labelledby="userDropdown">
                                 {% if current_user.is_admin %}
                                     <li><a class="dropdown-item" href="{{ safe_url_for('auth.perfil') or '#' }}">Perfil</a></li>
+                                    {% if plan_allows_endpoint('auth.assinatura') %}
+                                        {% set assinatura_url = safe_url_for('auth.assinatura') %}
+                                        <li><a class="dropdown-item" href="{{ assinatura_url or '#' }}">Assinatura</a></li>
+                                    {% endif %}
+                                    {% if has_permission('controle_acesso') %}
+                                        {% set controle_acesso_url = safe_url_for('auth.controle_acesso') %}
+                                        <li><a class="dropdown-item" href="{{ controle_acesso_url or '#' }}">Controle de Acesso</a></li>
+                                    {% endif %}
                                     {% if has_permission('usuarios') and plan_allows_endpoint('auth.add_user') %}
                                         {% set add_user_url = safe_url_for('auth.add_user') %}
                                         <li><a class="dropdown-item" href="{{ add_user_url or '#' }}">Adicionar Usuário</a></li>
@@ -522,6 +726,18 @@
                 {% set show_fluxo = has_permission('fluxo') and plan_allows_endpoint('fluxo.index') %}
                 {% set show_contas_banco = has_permission('contas_banco') %}
                 {% set show_cadastros = show_entidades or show_fluxo or show_contas_banco %}
+
+                {% set show_filiais = has_permission('comercial_filiais') and plan_allows_endpoint('comercial_operacional.filiais_index') %}
+                {% set show_produtos = has_permission('comercial_produtos') and plan_allows_endpoint('comercial_operacional.produtos_index') %}
+                {% set show_servicos = has_permission('comercial_servicos') and plan_allows_endpoint('comercial_operacional.servicos_index') %}
+                {% set show_estoque = has_permission('comercial_estoque') and plan_allows_endpoint('comercial_operacional.estoque_index') %}
+                {% set show_compras = has_permission('comercial_compras') and plan_allows_endpoint('comercial_operacional.compras_index') %}
+                {% set show_documentos = has_permission('comercial_documentos') and plan_allows_endpoint('comercial_operacional.documentos_index') %}
+                {% set show_tabelas_preco = has_permission('comercial_tabelas_preco') and plan_allows_endpoint('comercial_operacional.tabelas_preco_index') %}
+                {% set show_orcamentos = has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.orcamentos_index') %}
+                {% set show_pedidos = has_permission('comercial_pedidos') and plan_allows_endpoint('comercial_operacional.pedidos_index') %}
+                {% set show_pdv = has_permission('comercial_pdv') and plan_allows_endpoint('comercial_operacional.pdv_index') %}
+                {% set show_comercial = show_filiais or show_produtos or show_servicos or show_estoque or show_compras or show_documentos or show_tabelas_preco or show_orcamentos or show_pedidos or show_pdv %}
 
                 {% set show_lancamentos = has_permission('lancamentos') %}
 
@@ -593,6 +809,84 @@
                         <li>
                             <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('contas_banco') %}active{% endif %}" href="{{ url_for('contas_banco.index') }}">
                                 <i class="fas fa-university"></i> Contas Banco
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+                {% endif %}
+
+                {% if show_comercial %}
+                <div class="ls-sidebar-section-label">
+                    <i class="fas fa-briefcase"></i> Comercial
+                </div>
+                <ul class="ls-sidebar-nav">
+                    {% if show_filiais %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.filiais') %}active{% endif %}" href="{{ url_for('comercial_operacional.filiais_index') }}">
+                                <i class="fas fa-building"></i> Filiais
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if show_produtos %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.produtos') %}active{% endif %}" href="{{ url_for('comercial_operacional.produtos_index') }}">
+                                <i class="fas fa-box"></i> Produtos
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if show_servicos %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.servicos') %}active{% endif %}" href="{{ url_for('comercial_operacional.servicos_index') }}">
+                                <i class="fas fa-concierge-bell"></i> Servicos
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if show_estoque %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.estoque') %}active{% endif %}" href="{{ url_for('comercial_operacional.estoque_index') }}">
+                                <i class="fas fa-warehouse"></i> Estoque
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if show_compras %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.compras') %}active{% endif %}" href="{{ url_for('comercial_operacional.compras_index') }}">
+                                <i class="fas fa-file-invoice"></i> Compras (NF Manual)
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if show_documentos %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.documentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.documentos_index') }}">
+                                <i class="fas fa-receipt"></i> Documentos nao fiscais
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if show_tabelas_preco %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.tabelas_preco') %}active{% endif %}" href="{{ url_for('comercial_operacional.tabelas_preco_index') }}">
+                                <i class="fas fa-tags"></i> Tabelas de Preco
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if show_orcamentos %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.orcamentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.orcamentos_index') }}">
+                                <i class="fas fa-file-invoice-dollar"></i> Orcamentos
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if show_pedidos %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pedidos') %}active{% endif %}" href="{{ url_for('comercial_operacional.pedidos_index') }}">
+                                <i class="fas fa-clipboard-check"></i> Pedidos
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if show_pdv %}
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pdv') %}active{% endif %}" href="{{ url_for('comercial_operacional.pdv_index') }}">
+                                <i class="fas fa-cash-register"></i> PDV / Caixa
                             </a>
                         </li>
                     {% endif %}
@@ -733,7 +1027,7 @@
             <!-- Rodapé com AdSense -->
             <footer class="ls-footer text-muted">
                 <div class="container">
-                    <small class="d-block text-center">&copy; {{ current_year }} LiveSun Controller. Todos os direitos reservados.</small>
+                    <small class="d-block text-center">&copy; {{ current_year }} LiveSun Comercial. Todos os direitos reservados.</small>
                     <div class="my-3">
                         <!-- Google AdSense Rodapé -->
                         <ins class="adsbygoogle"

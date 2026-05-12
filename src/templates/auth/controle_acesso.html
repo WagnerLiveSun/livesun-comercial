@@ -1,13 +1,27 @@
 {% extends "layout.html" %}
 {% block title %}Controle de Acesso{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Garantir que o switch fique verde quando ativo */
+    .form-check-input:checked {
+        background-color: #198754 !important;
+        border-color: #198754 !important;
+    }
+    .form-check-input:not(:checked) {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h1 class="display-6 fw-bold ls-page-title">Controle de Acesso</h1>
         <p class="text-muted mb-0">Defina o papel e o status dos usuários da empresa.</p>
     </div>
-    <a href="{{ url_for('auth.controle_processos') }}" class="btn btn-outline-light">
+    <a href="{{ url_for('auth.controle_processos') }}" class="btn btn-primary">
         Processos de Operator/Viewer
     </a>
 </div>
@@ -15,7 +29,7 @@
 <div class="ls-card p-4">
     <h5 class="mb-3 ls-page-title">Usuários da empresa</h5>
     <div class="table-responsive">
-        <table class="table table-dark table-hover align-middle">
+        <table class="table table-hover align-middle ls-theme-table">
             <thead>
                 <tr>
                     <th>Usuário</th>
@@ -44,14 +58,12 @@
                     </td>
                     <td>
                             <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" name="is_active" {% if usuario.is_active %}checked{% endif %}>
+                                <input class="form-check-input" type="checkbox" name="is_active" role="switch" style="width: 2.5em; height: 1.25em;" {% if usuario.is_active %}checked{% endif %}>
                             </div>
                     </td>
                     <td>
                             <button type="submit" class="btn btn-sm ls-btn-primary">Salvar</button>
-                            {% if not usuario.is_admin %}
-                            <a href="{{ url_for('auth.controle_usuario_permissoes', user_id=usuario.id) }}" class="btn btn-sm btn-outline-light ms-1">Exceções</a>
-                            {% endif %}
+                            <a href="{{ url_for('auth.controle_usuario_permissoes', user_id=usuario.id) }}" class="btn btn-sm btn-primary ms-1">Exceções</a>
                         </form>
                     </td>
                 </tr>

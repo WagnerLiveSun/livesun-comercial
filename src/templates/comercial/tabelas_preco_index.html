@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+
+{% block title %}Tabelas de Preco{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">Tabelas de Preco</h1>
+        <p class="text-muted mb-0">Gerencie as tabelas de preco de produtos e servicos.</p>
+    </div>
+    <a href="{{ url_for('comercial_operacional.tabelas_preco_criar') }}" class="btn ls-btn-primary">
+        <i class="fas fa-plus"></i> Nova Tabela
+    </a>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-6">
+            <input type="text" name="busca" class="form-control" placeholder="Buscar por codigo ou nome..." value="{{ busca or '' }}">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-outline-primary w-100">
+                <i class="fas fa-search"></i> Buscar
+            </button>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('comercial_operacional.tabelas_preco_index') }}" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-times"></i> Limpar
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="ls-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle ls-theme-table">
+            <thead>
+                <tr>
+                    <th>Codigo</th>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Vigencia</th>
+                    <th>Markup Padrao</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tabela in tabelas %}
+                <tr>
+                    <td><strong>{{ tabela.codigo }}</strong></td>
+                    <td>{{ tabela.nome }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'primary' if tabela.tipo == 'venda' else ('info' if tabela.tipo == 'custo' else ('warning' if tabela.tipo == 'atacado' else 'success')) }}">
+                            {{ tabela.tipo|title }}
+                        </span>
+                    </td>
+                    <td>{{ tabela.data_inicio.strftime('%d/%m/%Y') }} ate {{ tabela.data_fim.strftime('%d/%m/%Y') if tabela.data_fim else 'Indeterminado' }}</td>
+                    <td>{{ tabela.markup_padrao }}%</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if tabela.ativo else 'secondary' }}">
+                            {{ 'Ativo' if tabela.ativo else 'Inativo' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('comercial_operacional.tabelas_preco_itens', tabela_id=tabela.id) }}" class="btn btn-outline-info btn-sm" title="Gerenciar Itens">
+                            <i class="fas fa-list"></i> Itens
+                        </a>
+                        <a href="{{ url_for('comercial_operacional.tabelas_preco_editar', tabela_id=tabela.id) }}" class="btn btn-outline-primary btn-sm" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">Nenhuma tabela de preco cadastrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Paginacao" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {{ 'active' if page_num == pagination.page else '' }}">
+                        <a class="page-link" href="{{ url_for('comercial_operacional.tabelas_preco_index', page=page_num, busca=busca) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

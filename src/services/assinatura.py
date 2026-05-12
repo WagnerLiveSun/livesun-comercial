@@ -281,7 +281,7 @@ class ServicoAssinatura:
                 next_due_date=(assinatura.data_vencimento or _today()).isoformat(),
                 cycle=ServicoAssinatura._cycle_to_asaas(assinatura.ciclo_cobranca),
                 external_reference=external_reference,
-                description=f'LiveSun Controller - plano {assinatura.plano_codigo}',
+                description=f'LiveSun Comercial - plano {assinatura.plano_codigo}',
             )
             subscription_id = str(created_subscription.get('id') or '').strip()
             if subscription_id:
