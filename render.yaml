@@ -2,6 +2,7 @@ services:
   - type: web
     name: livesun-comercial
     env: python
+    pythonVersion: 3.11.6
     plan: starter
     region: oregon
     buildCommand: pip install -r requirements.txt
