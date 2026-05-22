@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block title %}Tomadores NFS-e{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Tomadores</h2>
+        <p class="text-muted mb-0">Cadastro rápido de entidades do tipo cliente para emissão de NFS-e.</p>
+    </div>
+    <a href="{{ url_for('nfse_nacional.index') }}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-9">
+            <label class="form-label">Buscar</label>
+            <input type="text" name="busca" class="form-control ls-theme-control" value="{{ busca }}" placeholder="Nome ou CPF/CNPJ">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn ls-btn-primary w-100">Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="ls-card p-4">
+            <h5 class="ls-page-title mb-3">Novo tomador</h5>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label">Nome</label>
+                    <input type="text" name="nome" class="form-control ls-theme-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">CPF/CNPJ</label>
+                    <input type="text" name="cnpj_cpf" class="form-control ls-theme-control" required>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="ativo" checked>
+                    <label class="form-check-label">Ativo</label>
+                </div>
+                <button type="submit" class="btn ls-btn-primary w-100">Salvar</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="ls-card p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle ls-theme-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF/CNPJ</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tomador in tomadores %}
+                        <tr>
+                            <td>{{ tomador.nome }}</td>
+                            <td>{{ tomador.cnpj_cpf }}</td>
+                            <td>
+                                {% if tomador.ativo %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center text-muted py-4">Nenhum tomador encontrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

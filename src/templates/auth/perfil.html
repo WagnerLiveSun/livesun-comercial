@@ -7,6 +7,12 @@
     <div class="col-12">
         <h1 class="display-6 fw-bold ls-page-title">Perfil do Administrador</h1>
         <p class="text-muted">Preferências e assinatura</p>
+        {% if current_user.empresa %}
+        <div class="mt-2">
+            <small class="text-muted">Empresa:</small>
+            <div class="fw-semibold">{{ current_user.empresa.nome }} {% if current_user.empresa.cnpj %}- CNPJ: {{ current_user.empresa.cnpj }}{% endif %}</div>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -66,31 +72,122 @@
     </div>
 </div>
 
-<div class="ls-card p-4" style="max-width: 520px;">
-    <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="mb-3">
-            <label class="form-label">Periodo do gráfico (dias)</label>
-            <input type="number" name="dashboard_chart_days" class="form-control" min="7" max="365"
-                value="{{ current_user.dashboard_chart_days or 30 }}"
-                style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
-            <div class="form-text text-muted">Mínimo 7 dias, máximo 365 dias.</div>
+<div class="ls-card p-4 ls-card-centered">
+    <ul class="nav nav-tabs mb-4" id="perfilTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="perfil-preferencias-tab" data-bs-toggle="tab" data-bs-target="#perfil-preferencias-pane" type="button" role="tab" aria-controls="perfil-preferencias-pane" aria-selected="true">Preferências</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="perfil-fiscal-tab" data-bs-toggle="tab" data-bs-target="#perfil-fiscal-pane" type="button" role="tab" aria-controls="perfil-fiscal-pane" aria-selected="false">Fiscal</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="perfil-preferencias-pane" role="tabpanel" aria-labelledby="perfil-preferencias-tab">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label">Periodo do gráfico (dias)</label>
+                    <input type="number" name="dashboard_chart_days" class="form-control" min="7" max="365"
+                        value="{{ current_user.dashboard_chart_days or 30 }}"
+                        style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    <div class="form-text text-muted">Mínimo 7 dias, máximo 365 dias.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Plano da Empresa</label>
+                    <select name="plano" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                        {% for value, label in plan_choices %}
+                        <option value="{{ value }}" {% if current_user.empresa and current_user.empresa.plano == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text text-muted">O plano controla limites e disponibilidade de telas avançadas.</div>
+                </div>
+
+                <button type="submit" class="btn ls-btn-primary mt-3">
+                    <i class="fas fa-save"></i> Salvar Preferências
+                </button>
+            </form>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Plano da Empresa</label>
-            <select name="plano" class="form-control" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
-                {% for value, label in plan_choices %}
-                <option value="{{ value }}" {% if current_user.empresa and current_user.empresa.plano == value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-            <div class="form-text text-muted">O plano controla limites e disponibilidade de telas avançadas.</div>
-        </div>
+        <div class="tab-pane fade" id="perfil-fiscal-pane" role="tabpanel" aria-labelledby="perfil-fiscal-tab">
+            <div class="mb-4">
+                <form method="POST" class="row g-3 align-items-end">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="fiscal_action" value="add_item">
+                    <div class="col-md-3">
+                        <label class="form-label">Tipo</label>
+                        <select name="fiscal_tipo" class="form-select">
+                            {% for key, label in fiscal_tipo_labels.items() %}
+                            <option value="{{ key }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Valor</label>
+                        <input type="text" name="fiscal_valor" class="form-control" placeholder="Informe o código ou CNAE">
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check mt-4 pt-2">
+                            <input class="form-check-input" type="checkbox" name="fiscal_principal" id="fiscalPrincipalAdd">
+                            <label class="form-check-label" for="fiscalPrincipalAdd">Principal</label>
+                        </div>
+                    </div>
+                    <div class="col-md-1 d-grid">
+                        <button type="submit" class="btn btn-outline-light">Adicionar</button>
+                    </div>
+                </form>
+            </div>
 
-        <button type="submit" class="btn ls-btn-primary">
-            <i class="fas fa-save"></i> Salvar Preferências
-        </button>
-    </form>
+            <div class="table-responsive">
+                <table class="table table-dark table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Principal</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in empresa_fiscal_itens %}
+                        <tr>
+                            <td>{{ fiscal_tipo_labels.get(item.tipo, item.tipo) }}</td>
+                            <td>{{ item.valor }}</td>
+                            <td>
+                                {% if item.principal %}
+                                    <span class="badge bg-success">Principal</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Secundário</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if not item.principal %}
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="fiscal_action" value="set_primary">
+                                    <input type="hidden" name="fiscal_item_id" value="{{ item.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Definir principal</button>
+                                </form>
+                                {% endif %}
+                                <form method="POST" class="d-inline ms-1" onsubmit="return confirm('Remover este item fiscal?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="fiscal_action" value="delete_item">
+                                    <input type="hidden" name="fiscal_item_id" value="{{ item.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Nenhum item fiscal cadastrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}

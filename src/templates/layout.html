@@ -61,21 +61,22 @@
         :root[data-theme="light"] {
             --ls-bg-main: #f8fafc;
             --ls-bg-elevated: #ffffff;
-            --ls-border-subtle: rgba(100, 116, 139, 0.25);
+            --ls-border-subtle: rgba(100, 116, 139, 0.34);
+            --ls-border-strong: rgba(100, 116, 139, 0.48);
             --ls-text-main: #1e293b;
             --ls-text-muted: #64748b;
             --ls-page-title: #1e40af;
             --ls-input-bg: rgba(255, 255, 255, 0.95);
-            --ls-input-border: rgba(100, 116, 139, 0.3);
+            --ls-input-border: rgba(100, 116, 139, 0.42);
             --ls-input-disabled-bg: rgba(248, 250, 252, 0.95);
             --ls-primary: #1e40af;
-            --ls-primary-soft: rgba(30, 64, 175, 0.12);
+            --ls-primary-soft: rgba(37, 99, 235, 0.06);
             --ls-accent: #0284c7;
-            --ls-topbar-bg: rgba(255, 255, 255, 0.95);
-            --ls-sidebar-bg: rgba(255, 255, 255, 0.95);
-            --ls-card-bg: rgba(255, 255, 255, 0.85);
+            --ls-topbar-bg: rgba(255, 255, 255, 0.98);
+            --ls-sidebar-bg: rgba(255, 255, 255, 0.98);
+            --ls-card-bg: rgba(241, 249, 255, 0.9);
             --ls-text-strong: #1e293b;
-            --ls-hover-bg: rgba(30, 64, 175, 0.08);
+            --ls-hover-bg: rgba(30, 64, 175, 0.06);
             --ls-footer-bg: rgba(255, 255, 255, 0.95);
             --ls-dropdown-bg: #ffffff;
             --ls-dropdown-text: #1e293b;
@@ -83,6 +84,8 @@
             --ls-alert-danger-text: #dc2626;
             --ls-alert-warning-text: #d97706;
             --ls-alert-info-text: #1e40af;
+            --ls-header-bg: rgba(37, 99, 235, 0.06);
+            --ls-header-border: rgba(37, 99, 235, 0.18);
         }
 
         body {
@@ -102,6 +105,9 @@
         .ls-page-title {
             color: var(--ls-page-title) !important;
             letter-spacing: -0.03em;
+            font-size: 2rem;
+            font-weight: 500;
+            text-shadow: 0 6px 18px rgba(0,0,0,0.28);
         }
 
         /* Standardize internal page headings without bold weight */
@@ -343,11 +349,51 @@
 
         /* Melhorias adicionais para modo claro */
         :root[data-theme="light"] .ls-card {
-            border: 1px solid rgba(100, 116, 139, 0.15);
+            border: 1px solid var(--ls-border-subtle);
+            background-color: var(--ls-card-bg);
         }
 
         :root[data-theme="light"] .table {
             color: #334155 !important;
+        }
+
+        :root[data-theme="light"] .ls-card .table {
+            color: #1f2937 !important;
+        }
+
+        :root[data-theme="light"] .ls-card .table thead th {
+            background: var(--ls-header-bg) !important;
+            color: #0f172a !important;
+            border-bottom: 1px solid var(--ls-border-strong) !important;
+            padding: 16px 12px;
+        }
+
+        :root[data-theme="light"] .ls-card .table tbody td {
+            background: transparent !important;
+            border-top: 1px solid var(--ls-border-subtle) !important;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.08) !important;
+            padding: 14px 12px;
+        }
+
+        /* Ensure generic .table-light/.bg-light don't force white blocks */
+        :root[data-theme="light"] .ls-content .table-light,
+        :root[data-theme="light"] .ls-content .bg-light,
+        :root[data-theme="light"] .ls-content .card.bg-light {
+            background-color: transparent !important;
+            border-color: var(--ls-border-subtle) !important;
+            color: var(--ls-text-main) !important;
+        }
+
+        /* Make header tone consistent blue/green subtle and less gray */
+        :root[data-theme="light"] .ls-content .table thead th {
+            background: var(--ls-header-bg) !important;
+            color: var(--ls-text-strong) !important;
+            border-bottom: 1px solid var(--ls-header-border) !important;
+            padding: 14px 12px;
+        }
+
+        :root[data-theme="light"] .ls-card .table-hover tbody tr:hover td {
+            background-color: rgba(219, 234, 254, 0.75) !important;
         }
 
         :root[data-theme="light"] .table thead th {
@@ -560,8 +606,38 @@
 
         .ls-content {
             flex: 1;
-            padding: 32px;
+            padding: 24px;
             overflow-y: auto;
+        }
+
+        /* Centralizar conteúdo, limitar largura e evitar overflow de elementos grandes */
+        .ls-content .inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        /* Proteger contra elementos que extrapolam a largura (imagens, tabelas, préformatted) */
+        .ls-content img,
+        .ls-content video,
+        .ls-content iframe {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .ls-content table {
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .ls-content pre,
+        .ls-content code {
+            max-width: 100%;
+            overflow-x: auto;
+            display: block;
+            word-break: break-word;
         }
 
         .ls-card {
@@ -571,6 +647,84 @@
             backdrop-filter: blur(8px);
             transition: all 0.2s ease;
         }
+
+        /* Make cards use available width and provide a centered variant for internal pages */
+        .ls-card {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .ls-card-centered {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Ensure tables inside cards use full width */
+        .ls-card table {
+            width: 100%;
+            table-layout: auto;
+        }
+
+        /* Force table visuals to follow the dark theme inside cards (no white backgrounds) */
+        .ls-card .table,
+        .ls-card .table thead,
+        .ls-card .table thead th,
+        .ls-card .table tbody,
+        .ls-card .table tbody tr,
+        .ls-card .table tbody td {
+            background: transparent !important;
+            color: var(--ls-text-main) !important;
+            border-color: rgba(148,163,184,0.12) !important;
+        }
+
+        .ls-card .table thead th {
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+            color: var(--ls-text-strong) !important;
+        }
+
+        .ls-card .table tbody td {
+            background: transparent !important;
+        }
+
+        /* Make inline code match theme (avoid default white background) */
+        .ls-card code,
+        .ls-card .badge,
+        .ls-card .btn {
+            background: transparent !important;
+        }
+
+        /* Hover for rows: subtle lightening */
+        .ls-card .table-hover tbody tr:hover td {
+            background-color: rgba(255,255,255,0.02) !important;
+        }
+
+        /* Center the information table inside a card and limit its max width
+           so it appears balanced and not glued to the left edge. */
+        .ls-card .table {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Table header contrast and spacing */
+        .ls-card thead th {
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+            color: var(--ls-text-strong) !important;
+            font-weight: 600;
+            padding: 14px 12px;
+            border-bottom: 1px solid rgba(148,163,184,0.12) !important;
+        }
+
+        .ls-card tbody td {
+            padding: 12px 12px;
+            vertical-align: middle;
+        }
+
+        /* Minimum widths to help columns distribute space */
+        .ls-card thead th:first-child { min-width: 120px; }
+        .ls-card thead th:nth-child(2) { min-width: 240px; }
+        .ls-card thead th:nth-child(3) { min-width: 140px; }
+        .ls-card thead th:nth-child(4) { min-width: 120px; }
+        .ls-card thead th:nth-child(5) { min-width: 120px; }
 
         .dropdown-menu {
             background-color: var(--ls-dropdown-bg);
@@ -615,6 +769,34 @@
             background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(56, 189, 248, 1));
         }
 
+        /* Make primary buttons more visible in light theme (subtle border and gentle gradient) */
+        :root[data-theme="light"] .ls-btn-primary {
+            border: 1px solid var(--ls-border-strong) !important;
+            background: linear-gradient(135deg, rgba(37,99,235,0.12), rgba(34,197,94,0.06)) !important;
+            color: var(--ls-text-strong) !important;
+            box-shadow: 0 2px 8px rgba(16,24,40,0.04);
+        }
+
+        :root[data-theme="light"] .ls-btn-primary:hover {
+            box-shadow: 0 6px 18px rgba(37,99,235,0.08) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        /* Modo escuro: manter o fundo original do botão e adicionar apenas uma borda sutil */
+        :root:not([data-theme="light"]) .ls-btn-primary {
+            border: 1px solid rgba(255,255,255,0.04) !important;
+        }
+
+        /* Garantir texto legível no botão no modo escuro */
+        :root:not([data-theme="light"]) .ls-btn-primary,
+        :root:not([data-theme="light"]) .ls-btn-primary * {
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            text-shadow: none !important;
+        }
+
+        /* Dark theme uses the base .ls-btn-primary styles (original look) */
+
         .alert {
             border: none;
             border-radius: 10px;
@@ -656,7 +838,11 @@
             }
 
             .ls-content {
-                padding: 16px;
+                padding: 12px;
+            }
+
+            .ls-content .inner {
+                padding: 0 8px;
             }
 
         }
@@ -690,6 +876,7 @@
                             <ul class="dropdown-menu" aria-labelledby="userDropdown">
                                 {% if current_user.is_admin %}
                                     <li><a class="dropdown-item" href="{{ safe_url_for('auth.perfil') or '#' }}">Perfil</a></li>
+                                        <li><a class="dropdown-item" href="{{ safe_url_for('auth.editar_empresa') or '#' }}">Editar Empresa</a></li>
                                     {% if plan_allows_endpoint('auth.assinatura') %}
                                         {% set assinatura_url = safe_url_for('auth.assinatura') %}
                                         <li><a class="dropdown-item" href="{{ assinatura_url or '#' }}">Assinatura</a></li>
@@ -754,6 +941,8 @@
                 {% set show_import_ofx = has_permission('importar_ofx') and plan_allows_endpoint('importacoes.importar_ofx') %}
                 {% set show_conciliacao = has_permission('conciliacao') and plan_allows_endpoint('conciliacao.index') %}
                 {% set show_importacao = show_import_nfse or show_import_ofx or show_conciliacao %}
+
+                {% set show_nfse_nacional = has_permission('nfse_nacional') and plan_allows_endpoint('nfse_nacional.index') %}
 
                 {% if show_menu_principal %}
                 <div class="ls-sidebar-section-label">
@@ -1001,6 +1190,19 @@
                 </ul>
                 {% endif %}
 
+                {% if show_nfse_nacional %}
+                    <div class="ls-sidebar-section-label">
+                        <i class="fas fa-file-invoice"></i> Fiscal
+                    </div>
+                    <ul class="ls-sidebar-nav">
+                        <li>
+                            <a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('nfse_nacional.') %}active{% endif %}" href="{{ url_for('nfse_nacional.index') }}">
+                                <i class="fas fa-receipt"></i> NFS-e Nacional
+                            </a>
+                        </li>
+                    </ul>
+                {% endif %}
+
                 <div class="ls-sidebar-footer">
                     {{ powered_by }}<br>
                     v2.0.0
@@ -1022,7 +1224,9 @@
                 {% endwith %}
 
                 <!-- Page Content -->
-                {% block content %}{% endblock %}
+                <div class="inner">
+                    {% block content %}{% endblock %}
+                </div>
 
             <!-- Rodapé com AdSense -->
             <footer class="ls-footer text-muted">

@@ -139,6 +139,15 @@ PLAN_ENDPOINT_MIN_LEVEL = {
     'relatorios.listagem_notas_nfse': 1,
     'relatorios.export_listagem_notas_nfse': 1,
 
+    # NFS-e Nacional (intermediate+)
+    'nfse_nacional.index': 2,
+    'nfse_nacional.configuracoes': 2,
+    'nfse_nacional.tomadores': 2,
+    'nfse_nacional.servicos': 2,
+    'nfse_nacional.emissoes': 2,
+    'nfse_nacional.emissao_detalhe': 2,
+    'nfse_nacional.emissao_cancelar': 2,
+
     # Relatorios avancados (intermediate+)
     'relatorios.fluxo_caixa': 2,
     'relatorios.fluxo_caixa_csv': 2,

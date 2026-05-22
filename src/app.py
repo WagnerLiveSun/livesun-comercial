@@ -76,6 +76,14 @@ ENDPOINT_PERMISSION_MAP = {
     'comissoes.parametros': 'comissoes',
     'comissoes.exportar_csv': 'comissoes',
 
+    'nfse_nacional.index': 'nfse_nacional',
+    'nfse_nacional.configuracoes': 'nfse_nacional',
+    'nfse_nacional.tomadores': 'nfse_nacional',
+    'nfse_nacional.servicos': 'nfse_nacional',
+    'nfse_nacional.emissoes': 'nfse_nacional',
+    'nfse_nacional.emissao_detalhe': 'nfse_nacional',
+    'nfse_nacional.emissao_cancelar': 'nfse_nacional',
+
     'relatorios.listagem_lancamentos': 'relatorios',
     'relatorios.export_listagem_lancamentos': 'relatorios',
     'relatorios.listagem_notas_nfse': 'relatorios',
@@ -214,6 +222,7 @@ def create_app(config_name=None):
     from src.routes.relatorios import relatorios_bp
     from src.routes.comissoes import comissoes_bp
     from src.routes.importacoes import importacoes_bp
+    from src.routes.nfse_nacional import nfse_nacional_bp
     from src.routes.conciliacao import conciliacao_bp
     from src.routes.comercial import comercial_webhook_bp
     from src.routes.admin_comercial import admin_comercial_bp
@@ -229,6 +238,7 @@ def create_app(config_name=None):
     app.register_blueprint(relatorios_bp)
     app.register_blueprint(comissoes_bp)
     app.register_blueprint(importacoes_bp)
+    app.register_blueprint(nfse_nacional_bp)
     app.register_blueprint(conciliacao_bp)
     app.register_blueprint(comercial_webhook_bp)
     app.register_blueprint(admin_comercial_bp)
@@ -496,7 +506,8 @@ def _ensure_schema_compatibility():
         _ensure_columns(
             'empresas',
             {
-                'plano': "plano VARCHAR(20) DEFAULT 'premium'"
+                'plano': "plano VARCHAR(20) DEFAULT 'premium'",
+                'nome_fantasia': "nome_fantasia VARCHAR(150)",
             }
         )
 

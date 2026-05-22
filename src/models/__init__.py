@@ -132,13 +132,64 @@ class Empresa(db.Model):
     __tablename__ = 'empresas'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(150), nullable=False, unique=True)
+    nome_fantasia = db.Column(db.String(150))
     cnpj = db.Column(db.String(18), unique=True)
     plano = db.Column(db.String(20), nullable=False, default='premium')
     criado_em = db.Column(db.DateTime, default=_utcnow)
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
+    # Endereço
+    endereco_rua = db.Column(db.String(150))
+    endereco_numero = db.Column(db.String(10))
+    endereco_bairro = db.Column(db.String(100))
+    endereco_cidade = db.Column(db.String(100))
+    endereco_uf = db.Column(db.String(2))
+    endereco_cep = db.Column(db.String(8))
+
+    # Inscrições fiscais / contato
+    inscricao_municipal = db.Column(db.String(50))
+    inscricao_estadual = db.Column(db.String(50))
+    telefone = db.Column(db.String(20))
+    email = db.Column(db.String(120))
+
+    def fiscal_itens_por_tipo(self, tipo: str):
+        itens = [item for item in getattr(self, 'fiscal_itens', []) if item.tipo == tipo]
+        return sorted(itens, key=lambda item: (not item.principal, (item.valor or '').lower()))
+
+    def fiscal_principal_valor(self, tipo: str) -> str:
+        itens = self.fiscal_itens_por_tipo(tipo)
+        return itens[0].valor if itens else ''
+
+    def fiscal_valores_por_tipo(self, tipo: str):
+        valores = []
+        for item in self.fiscal_itens_por_tipo(tipo):
+            if item.valor and item.valor not in valores:
+                valores.append(item.valor)
+        return valores
+
     def __repr__(self):
         return f'<Empresa {self.nome}>'
+
+
+class EmpresaFiscalItem(db.Model):
+    __tablename__ = 'empresa_fiscal_itens'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'tipo', 'valor', name='uq_empresa_fiscal_tipo_valor'),
+        db.Index('idx_empresa_fiscal_empresa_tipo', 'empresa_id', 'tipo'),
+        db.Index('idx_empresa_fiscal_empresa_principal', 'empresa_id', 'tipo', 'principal'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    empresa = db.relationship('Empresa', backref=db.backref('fiscal_itens', cascade='all, delete-orphan'))
+    tipo = db.Column(db.String(32), nullable=False, index=True)
+    valor = db.Column(db.String(120), nullable=False)
+    principal = db.Column(db.Boolean, nullable=False, default=False)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    def __repr__(self):
+        return f'<EmpresaFiscalItem empresa={self.empresa_id} tipo={self.tipo} valor={self.valor} principal={self.principal}>'
 
 
 class Comissao(db.Model):
@@ -997,6 +1048,189 @@ class DocumentoVendaItem(db.Model):
 
     def __repr__(self):
         return f'<DocumentoVendaItem {self.id} doc={self.documento_id}>'
+
+
+class NfseNacionalConfiguracao(db.Model):
+    __tablename__ = 'nfse_nacional_configuracoes'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'ambiente', name='uq_nfse_config_empresa_ambiente'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    empresa = db.relationship('Empresa', backref='nfse_nacional_configuracoes')
+
+    ambiente = db.Column(db.String(20), nullable=False, default='homologacao', index=True)
+    inscricao_municipal = db.Column(db.String(30))
+    codigo_municipio = db.Column(db.String(10))
+    regime_tributario = db.Column(db.String(50))
+    serie = db.Column(db.String(20), default='1')
+    versao_layout = db.Column(db.String(30), default='1.0')
+    endpoint_base = db.Column(db.String(255))
+    emissor_ativo = db.Column(db.Boolean, default=True)
+    observacoes = db.Column(db.Text)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class NfseNacionalCertificado(db.Model):
+    __tablename__ = 'nfse_nacional_certificados'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'ambiente', 'arquivo_nome', name='uq_nfse_cert_empresa_ambiente_arquivo'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    empresa = db.relationship('Empresa', backref='nfse_nacional_certificados')
+
+    ambiente = db.Column(db.String(20), nullable=False, default='homologacao', index=True)
+    arquivo_nome = db.Column(db.String(255), nullable=False)
+    caminho_arquivo = db.Column(db.String(255), nullable=True)
+    validade_em = db.Column(db.Date, nullable=True, index=True)
+    # senha para uso do arquivo de certificado (armazenar com criptografia em produção)
+    senha = db.Column(db.String(512), nullable=True)
+    ativo = db.Column(db.Boolean, default=True)
+    observacoes = db.Column(db.Text)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class NfseNacionalIntegracaoOrigem(db.Model):
+    __tablename__ = 'nfse_nacional_integracoes_origem'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'origem_tipo', 'origem_id', 'canal_origem', name='uq_nfse_origem_empresa_tipo_id_canal'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    empresa = db.relationship('Empresa', backref='nfse_nacional_integracoes_origem')
+
+    origem_tipo = db.Column(db.String(40), nullable=False, index=True)
+    origem_id = db.Column(db.String(80), nullable=True, index=True)
+    origem_referencia = db.Column(db.String(120), nullable=True, index=True)
+    canal_origem = db.Column(db.String(40), nullable=False, default='manual', index=True)
+    payload_origem = db.Column(db.Text, nullable=True)
+    hash_idempotencia = db.Column(db.String(80), nullable=False, index=True)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class NfseNacionalEmissao(db.Model):
+    __tablename__ = 'nfse_nacional_emissoes'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'hash_idempotencia', name='uq_nfse_emissao_empresa_hash'),
+        db.UniqueConstraint('empresa_id', 'numero_interno', name='uq_nfse_emissao_empresa_numero_interno'),
+        db.Index('idx_nfse_emissao_empresa_status', 'empresa_id', 'status_processamento'),
+        db.Index('idx_nfse_emissao_empresa_nfse', 'empresa_id', 'numero_nfse'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    empresa = db.relationship('Empresa', backref='nfse_nacional_emissoes')
+
+    configuracao_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_configuracoes.id'), nullable=True, index=True)
+    configuracao = db.relationship('NfseNacionalConfiguracao', foreign_keys=[configuracao_id])
+    certificado_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_certificados.id'), nullable=True, index=True)
+    certificado = db.relationship('NfseNacionalCertificado', foreign_keys=[certificado_id])
+
+    tomador_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=False, index=True)
+    tomador = db.relationship('Entidade', foreign_keys=[tomador_id])
+    servico_id = db.Column(db.Integer, db.ForeignKey('servicos.id'), nullable=False, index=True)
+    servico = db.relationship('Servico', foreign_keys=[servico_id])
+
+    integracao_origem_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_integracoes_origem.id'), nullable=True, index=True)
+    integracao_origem = db.relationship('NfseNacionalIntegracaoOrigem', foreign_keys=[integracao_origem_id])
+
+    lancamento_id = db.Column(db.Integer, db.ForeignKey('lancamentos.id'), nullable=True, index=True)
+    lancamento = db.relationship('Lancamento', foreign_keys=[lancamento_id])
+
+    ambiente = db.Column(db.String(20), nullable=False, default='homologacao', index=True)
+    numero_interno = db.Column(db.String(50), nullable=False, index=True)
+    numero_nfse = db.Column(db.String(30), nullable=True, index=True)
+    chave_nfse = db.Column(db.String(120), nullable=True, index=True)
+    codigo_verificacao = db.Column(db.String(40), nullable=True)
+    protocolo = db.Column(db.String(80), nullable=True, index=True)
+
+    status_processamento = db.Column(db.String(30), nullable=False, default='RASCUNHO', index=True)
+    situacao_fiscal = db.Column(db.String(30), nullable=False, default='PENDENTE', index=True)
+
+    valor_servico = db.Column(db.Numeric(15, 2), nullable=False)
+    valor_deducoes = db.Column(db.Numeric(15, 2), default=0.00)
+    valor_iss = db.Column(db.Numeric(15, 2), default=0.00)
+
+    observacoes = db.Column(db.Text)
+    xml_dps = db.Column(db.Text)
+    xml_nfse = db.Column(db.Text)
+    payload_envio = db.Column(db.Text)
+    payload_retorno = db.Column(db.Text)
+    log_tecnico = db.Column(db.Text)
+    erro_retorno = db.Column(db.Text)
+
+    hash_idempotencia = db.Column(db.String(80), nullable=False, index=True)
+    versao_layout = db.Column(db.String(30), default='1.0')
+    versao_xsd = db.Column(db.String(30), default='1.0')
+    origem_tipo = db.Column(db.String(40), nullable=False, default='MANUAL', index=True)
+    origem_referencia = db.Column(db.String(120), nullable=True, index=True)
+    canal_origem = db.Column(db.String(40), nullable=False, default='manual', index=True)
+
+    criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
+
+    criado_em = db.Column(db.DateTime, default=_utcnow, index=True)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    def __repr__(self):
+        return f'<NfseNacionalEmissao {self.numero_interno} status={self.status_processamento}>'
+
+
+class NfseNacionalFila(db.Model):
+    __tablename__ = 'nfse_nacional_fila'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'emissao_id', name='uq_nfse_fila_empresa_emissao'),
+        db.Index('idx_nfse_fila_empresa_status', 'empresa_id', 'status_fila'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    empresa = db.relationship('Empresa', backref='nfse_nacional_fila')
+
+    emissao_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_emissoes.id', ondelete='CASCADE'), nullable=False, index=True)
+    emissao = db.relationship('NfseNacionalEmissao', foreign_keys=[emissao_id], backref=db.backref('fila', cascade='all, delete-orphan', passive_deletes=True))
+
+    status_fila = db.Column(db.String(30), nullable=False, default='PENDENTE', index=True)
+    tentativas = db.Column(db.Integer, nullable=False, default=0)
+    proxima_tentativa_em = db.Column(db.DateTime, nullable=True, index=True)
+    ultimo_erro = db.Column(db.Text, nullable=True)
+    payload = db.Column(db.Text, nullable=True)
+    processado_em = db.Column(db.DateTime, nullable=True)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class NfseNacionalEvento(db.Model):
+    __tablename__ = 'nfse_nacional_eventos'
+    __table_args__ = (
+        db.Index('idx_nfse_evento_empresa_tipo', 'empresa_id', 'tipo_evento'),
+        db.Index('idx_nfse_evento_emissao', 'emissao_id'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    empresa = db.relationship('Empresa', backref='nfse_nacional_eventos')
+
+    emissao_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_emissoes.id', ondelete='CASCADE'), nullable=False, index=True)
+    emissao = db.relationship('NfseNacionalEmissao', foreign_keys=[emissao_id], backref=db.backref('eventos', cascade='all, delete-orphan', passive_deletes=True))
+
+    tipo_evento = db.Column(db.String(40), nullable=False, index=True)
+    status_evento = db.Column(db.String(30), nullable=False, default='registrado', index=True)
+    protocolo = db.Column(db.String(80), nullable=True, index=True)
+    mensagem = db.Column(db.Text)
+    payload_envio = db.Column(db.Text)
+    payload_retorno = db.Column(db.Text)
+    criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 # =============================================================================

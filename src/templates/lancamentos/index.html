@@ -3,6 +3,85 @@
 {% block title %}Lançamentos{% endblock %}
 
 {% block content %}
+<style>
+    .lancamentos-table {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 1500px;
+        table-layout: fixed;
+    }
+
+    .lancamentos-table thead th {
+        white-space: nowrap;
+        background: rgba(148, 163, 184, 0.12);
+        color: var(--ls-text-strong);
+        border-color: var(--ls-border-subtle);
+        border-bottom: 2px solid var(--ls-border-subtle);
+        padding: 0.85rem 0.75rem;
+    }
+
+    .lancamentos-table tbody td {
+        color: var(--ls-text-main);
+        border-color: rgba(148, 163, 184, 0.15) !important;
+        vertical-align: middle;
+        padding: 0.85rem 0.75rem;
+        background: transparent !important;
+    }
+
+    .lancamentos-table tbody tr:hover td {
+        background-color: rgba(37, 99, 235, 0.08) !important;
+    }
+
+    .lancamentos-table td.col-doc,
+    .lancamentos-table th.col-doc {
+        width: 110px;
+        white-space: nowrap;
+    }
+
+    .lancamentos-table td.col-entidade,
+    .lancamentos-table th.col-entidade {
+        width: 240px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .lancamentos-table td.col-data,
+    .lancamentos-table th.col-data {
+        width: 120px;
+        white-space: nowrap;
+    }
+
+    .lancamentos-table td.col-fluxo,
+    .lancamentos-table th.col-fluxo {
+        width: 320px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .lancamentos-table td.col-money,
+    .lancamentos-table th.col-money {
+        width: 160px;
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .lancamentos-table td.col-status,
+    .lancamentos-table th.col-status {
+        width: 110px;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .lancamentos-table td.col-actions,
+    .lancamentos-table th.col-actions {
+        width: 145px;
+        white-space: nowrap;
+        text-align: center;
+    }
+</style>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold ls-page-title">Lançamentos</h2>
     {% if select_mode and conciliacao_id %}
@@ -77,31 +156,31 @@
 <!-- Table -->
 <div class="ls-card">
     <div class="table-responsive">
-        <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
-            <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+        <table class="table table-hover mb-0 lancamentos-table" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <thead>
                 <tr>
-                    <th>Documento</th>
-                    <th>Entidade</th>
-                    <th>Data Evento</th>
-                    <th>Data Vencimento</th>
-                    <th>Conta Fluxo</th>
-                    <th class="text-end">Valor Real</th>
-                    <th class="text-end">Valor Pago/Recebido</th>
-                    <th>Status</th>
-                    <th>Ações</th>
+                    <th class="col-doc">Documento</th>
+                    <th class="col-entidade">Entidade</th>
+                    <th class="col-data">Data Evento</th>
+                    <th class="col-data">Data Vencimento</th>
+                    <th class="col-fluxo">Conta Fluxo</th>
+                    <th class="col-money">Valor Real</th>
+                    <th class="col-money">Valor Pago/Recebido</th>
+                    <th class="col-status">Status</th>
+                    <th class="col-actions">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for lancamento in lancamentos %}
                 <tr>
-                    <td><code style="color: #93c5fd;">{{ lancamento.numero_documento }}</code></td>
-                    <td>{{ lancamento.entidade.nome if lancamento.entidade else '-' }}</td>
-                    <td>{{ lancamento.data_evento.strftime('%d/%m/%Y') if lancamento.data_evento else 'N/A' }}</td>
-                    <td>{{ lancamento.data_vencimento.strftime('%d/%m/%Y') if lancamento.data_vencimento else 'N/A' }}</td>
-                    <td>{% if lancamento.fluxo_conta %}{{ lancamento.fluxo_conta.codigo }} - {{ lancamento.fluxo_conta.descricao }} ({{ lancamento.fluxo_conta.get_tipo_descricao() }}){% else %}N/A{% endif %}</td>
-                    <td class="text-end fw-bold" style="color: #22c55e;">R$ {{ lancamento.valor_real|brl }}</td>
-                    <td class="text-end fw-bold" style="color: #93c5fd;">R$ {{ lancamento.valor_pago|brl }}</td>
-                    <td>
+                    <td class="col-doc"><code style="color: #93c5fd;">{{ lancamento.numero_documento }}</code></td>
+                    <td class="col-entidade" title="{{ lancamento.entidade.nome if lancamento.entidade else '-' }}">{{ lancamento.entidade.nome if lancamento.entidade else '-' }}</td>
+                    <td class="col-data">{{ lancamento.data_evento.strftime('%d/%m/%Y') if lancamento.data_evento else 'N/A' }}</td>
+                    <td class="col-data">{{ lancamento.data_vencimento.strftime('%d/%m/%Y') if lancamento.data_vencimento else 'N/A' }}</td>
+                    <td class="col-fluxo" title="{% if lancamento.fluxo_conta %}{{ lancamento.fluxo_conta.codigo }} - {{ lancamento.fluxo_conta.descricao }} ({{ lancamento.fluxo_conta.get_tipo_descricao() }}){% else %}N/A{% endif %}">{% if lancamento.fluxo_conta %}{{ lancamento.fluxo_conta.codigo }} - {{ lancamento.fluxo_conta.descricao }} ({{ lancamento.fluxo_conta.get_tipo_descricao() }}){% else %}N/A{% endif %}</td>
+                    <td class="col-money fw-bold" style="color: #22c55e;">R$ {{ lancamento.valor_real|brl }}</td>
+                    <td class="col-money fw-bold" style="color: #93c5fd;">R$ {{ lancamento.valor_pago|brl }}</td>
+                    <td class="col-status">
                         {% if lancamento.status == 'pago' %}
                             <span class="badge bg-success">Pago</span>
                         {% elif lancamento.status == 'vencido' %}
@@ -110,7 +189,7 @@
                             <span class="badge bg-warning">Aberto</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="col-actions">
                         {% if select_mode and conciliacao_id and item_id %}
                         <form method="POST" action="{{ url_for('conciliacao.vincular_item', conciliacao_id=conciliacao_id, item_id=item_id, lancamento_id=lancamento.id) }}" style="display: inline;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

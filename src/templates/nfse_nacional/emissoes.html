@@ -1,0 +1,239 @@
+{% extends "layout.html" %}
+
+{% block title %}Emissões NFS-e{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Emissões</h2>
+        <p class="text-muted mb-0">Emitir, consultar e reenfileirar documentos do módulo NFS-e Nacional.</p>
+    </div>
+    <a href="{{ url_for('nfse_nacional.index') }}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Buscar</label>
+            <input type="text" name="busca" class="form-control ls-theme-control" value="{{ filtro_busca }}" placeholder="Tomador, número interno ou NFS-e">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select ls-theme-control">
+                <option value="">Todos</option>
+                <option value="PENDENTE" {% if filtro_status == 'PENDENTE' %}selected{% endif %}>Pendente</option>
+                <option value="RASCUNHO" {% if filtro_status == 'RASCUNHO' %}selected{% endif %}>Rascunho</option>
+                <option value="AUTORIZADA" {% if filtro_status == 'AUTORIZADA' %}selected{% endif %}>Autorizada</option>
+                <option value="AUTORIZADA_LOCALMENTE" {% if filtro_status == 'AUTORIZADA_LOCALMENTE' %}selected{% endif %}>Autorizada localmente</option>
+                <option value="REJEITADA" {% if filtro_status == 'REJEITADA' %}selected{% endif %}>Rejeitada</option>
+                <option value="CANCELADA" {% if filtro_status == 'CANCELADA' %}selected{% endif %}>Cancelada</option>
+                <option value="ERRO_TRANSMISSAO" {% if filtro_status == 'ERRO_TRANSMISSAO' %}selected{% endif %}>Erro de transmissão</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn ls-btn-primary w-100">Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<style>
+/* Layout tweaks para tela de Emissões NFS-e: dividir espaço e truncar colunas longas */
+.nfse-split .table td:first-child,
+.nfse-split .table th:first-child {
+    max-width: 160px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.nfse-split .table td:nth-child(3),
+.nfse-split .table th:nth-child(3) {
+    max-width: 260px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+@media (min-width: 992px) {
+    .nfse-split .col-left { flex: 0 0 50%; max-width: 50%; }
+    .nfse-split .col-right { flex: 0 0 50%; max-width: 50%; }
+}
+</style>
+
+<div class="row g-4 mb-4 nfse-split">
+    <div class="col-lg-6 col-left">
+        <div class="ls-card p-4 h-100">
+            <h5 class="ls-page-title mb-3">Nova emissão</h5>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Ambiente</label>
+                        <select name="ambiente" class="form-select ls-theme-control">
+                            {% for configuracao in configuracoes %}
+                            <option value="{{ configuracao.ambiente }}">{{ configuracao.ambiente }}</option>
+                            {% endfor %}
+                            <option value="homologacao" {% if configuracoes|length == 0 %}selected{% endif %}>homologacao</option>
+                            <option value="producao">producao</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tomador existente</label>
+                        <select name="tomador_id" id="tomadorSelect" class="form-select ls-theme-control">
+                            <option value="">Criar/usar por dados abaixo</option>
+                            {% for tomador in tomadores %}
+                            <option
+                                value="{{ tomador.id }}"
+                                data-nome="{{ tomador.nome|e }}"
+                                data-documento="{{ tomador.cnpj_cpf|e }}">
+                                {{ tomador.nome }} - {{ tomador.cnpj_cpf }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Nome do tomador</label>
+                        <input type="text" name="tomador_nome" id="tomadorNome" class="form-control ls-theme-control" placeholder="Usado quando tomador_id estiver vazio">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Documento</label>
+                        <input type="text" name="tomador_documento" id="tomadorDocumento" class="form-control ls-theme-control" placeholder="CPF/CNPJ">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Serviço existente</label>
+                        <select name="servico_id" class="form-select ls-theme-control">
+                            <option value="">Criar/usar por dados abaixo</option>
+                            {% for servico in servicos %}
+                            <option value="{{ servico.id }}">{{ servico.codigo_interno }} - {{ servico.descricao }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Código interno do serviço</label>
+                        <input type="text" name="codigo_interno" class="form-control ls-theme-control" placeholder="SERV001">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Descrição do serviço</label>
+                        <input type="text" name="descricao" class="form-control ls-theme-control" placeholder="Serviço prestado">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Código nacional</label>
+                        <input type="text" name="codigo_servico" list="codigoServicoOptions" class="form-control ls-theme-control" value="{{ fiscal_defaults.codigo_servico }}">
+                        <datalist id="codigoServicoOptions">
+                            {% for valor in fiscal_defaults.codigo_servico_opcoes %}
+                            <option value="{{ valor }}"></option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">NBS</label>
+                        <input type="text" name="nbs" list="nbsOptions" class="form-control ls-theme-control" value="{{ fiscal_defaults.nbs }}">
+                        <datalist id="nbsOptions">
+                            {% for valor in fiscal_defaults.nbs_opcoes %}
+                            <option value="{{ valor }}"></option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Valor serviço</label>
+                        <input type="number" step="0.01" name="valor_servico" class="form-control ls-theme-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Deduções</label>
+                        <input type="number" step="0.01" name="valor_deducoes" class="form-control ls-theme-control" value="0.00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Alíquota ISS (%)</label>
+                        <input type="number" step="0.01" name="aliquota_iss" class="form-control ls-theme-control" value="0.00">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Data de emissão</label>
+                        <input type="date" name="data_emissao" class="form-control ls-theme-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Data de vencimento</label>
+                        <input type="date" name="data_vencimento" class="form-control ls-theme-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observações</label>
+                        <textarea name="observacoes" class="form-control ls-theme-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Origem tipo</label>
+                        <input type="text" name="origem_tipo" class="form-control ls-theme-control" value="MANUAL">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Origem ID</label>
+                        <input type="text" name="origem_id" class="form-control ls-theme-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Origem ref.</label>
+                        <input type="text" name="origem_referencia" class="form-control ls-theme-control">
+                    </div>
+                    <div class="col-12 d-grid">
+                        <button type="submit" class="btn ls-btn-primary">Emitir NFS-e</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-6 col-right">
+        <div class="ls-card p-4 h-100">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle ls-theme-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Interno</th>
+                            <th>Tomador</th>
+                            <th>Serviço</th>
+                            <th>Status</th>
+                            <th>Situação</th>
+                            <th>NFS-e</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emissao in emissoes %}
+                        <tr>
+                            <td>{{ emissao.numero_interno }}</td>
+                            <td>{{ emissao.tomador.nome if emissao.tomador else '-' }}</td>
+                            <td>{{ emissao.servico.descricao if emissao.servico else '-' }}</td>
+                            <td><span class="badge bg-{{ 'success' if emissao.status_processamento in ['AUTORIZADA', 'AUTORIZADA_LOCALMENTE'] else 'warning' if emissao.status_processamento in ['PENDENTE', 'RASCUNHO'] else 'danger' }}">{{ emissao.status_processamento }}</span></td>
+                            <td>{{ emissao.situacao_fiscal }}</td>
+                            <td>{{ emissao.numero_nfse or '-' }}</td>
+                            <td><a href="{{ url_for('nfse_nacional.emissao_detalhe', emissao_id=emissao.id) }}" class="btn btn-sm btn-outline-primary">Abrir</a></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">Nenhuma emissão encontrada.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    const tomadorSelect = document.getElementById('tomadorSelect');
+    const tomadorNome = document.getElementById('tomadorNome');
+    const tomadorDocumento = document.getElementById('tomadorDocumento');
+
+    function limparTomador() {
+        tomadorNome.value = '';
+        tomadorDocumento.value = '';
+    }
+
+    function preencherTomador() {
+        const option = tomadorSelect.options[tomadorSelect.selectedIndex];
+        if (!option || !option.value) {
+            limparTomador();
+            return;
+        }
+
+        tomadorNome.value = option.dataset.nome || '';
+        tomadorDocumento.value = option.dataset.documento || '';
+    }
+
+    tomadorSelect.addEventListener('change', preencherTomador);
+    preencherTomador();
+})();
+</script>
+{% endblock %}

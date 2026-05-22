@@ -8,6 +8,7 @@ from src.models import (
     db,
     User,
     Empresa,
+    EmpresaFiscalItem,
     AssinaturaEmpresa,
     CobrancaRecorrente,
     CatalogoPlanoComercial,
@@ -40,6 +41,19 @@ def _normalize_document(value):
     if not value:
         return ''
     return ''.join(ch for ch in value if ch.isdigit())
+
+
+def _normalize_cnae(value):
+    if not value:
+        return ''
+    return ''.join(ch for ch in value if ch.isdigit())
+
+
+FISCAL_TIPO_LABELS = {
+    'cnae': 'CNAE',
+    'codigo_servico': 'Código nacional',
+    'nbs': 'NBS',
+}
 
 
 def _find_empresa_by_document(document_value: str):
@@ -188,6 +202,7 @@ def add_user_config():
             'contas_banco',
             'lancamentos',
             'comissoes',
+            'nfse_nacional',
             'relatorios',
             'importar_nfse',
             'importar_ofx',
@@ -274,6 +289,7 @@ def controle_processos():
             'contas_banco',
             'lancamentos',
             'comissoes',
+            'nfse_nacional',
             'relatorios',
             'importar_nfse',
             'importar_ofx',
@@ -446,7 +462,22 @@ def register():
                 return redirect(url_for('auth.register'))
 
             # Cria empresa
-            empresa = Empresa(nome=empresa_nome, cnpj=empresa_cnpj, plano=empresa_plano)
+            empresa = Empresa(
+                nome=empresa_nome,
+                nome_fantasia=request.form.get('nome_fantasia'),
+                cnpj=empresa_cnpj,
+                plano=empresa_plano,
+                endereco_rua=request.form.get('endereco_rua'),
+                endereco_numero=request.form.get('endereco_numero'),
+                endereco_bairro=request.form.get('endereco_bairro'),
+                endereco_cidade=request.form.get('endereco_cidade'),
+                endereco_uf=request.form.get('endereco_uf'),
+                endereco_cep=request.form.get('endereco_cep'),
+                inscricao_municipal=request.form.get('inscricao_municipal'),
+                inscricao_estadual=request.form.get('inscricao_estadual'),
+                telefone=request.form.get('telefone'),
+                email=request.form.get('empresa_email'),
+            )
             db.session.add(empresa)
             db.session.flush()  # Para obter o id
 
@@ -527,6 +558,29 @@ def register():
             )
             user.set_password(password)
             db.session.add(user)
+            # Persistir também os itens fiscais enviados no cadastro (valores CSV separados por vírgula)
+            try:
+                fiscal_cnaes = (request.form.get('fiscal_cnaes') or '').strip()
+                fiscal_codigos = (request.form.get('fiscal_codigos') or '').strip()
+                fiscal_nbs = (request.form.get('fiscal_nbs') or '').strip()
+
+                def _split_vals(s):
+                    return [v.strip() for v in s.split(',') if v.strip()]
+
+                for idx, v in enumerate(_split_vals(fiscal_cnaes)):
+                    item = EmpresaFiscalItem(empresa_id=empresa.id, tipo='cnae', valor=v, principal=(idx == 0))
+                    db.session.add(item)
+                for idx, v in enumerate(_split_vals(fiscal_codigos)):
+                    item = EmpresaFiscalItem(empresa_id=empresa.id, tipo='codigo_servico', valor=v, principal=(idx == 0))
+                    db.session.add(item)
+                for idx, v in enumerate(_split_vals(fiscal_nbs)):
+                    item = EmpresaFiscalItem(empresa_id=empresa.id, tipo='nbs', valor=v, principal=(idx == 0))
+                    db.session.add(item)
+            except Exception:
+                # Não bloquear o registro por falha na criação de itens fiscais; gravar rollback parcial se necessário
+                db.session.rollback()
+                flash('Erro ao salvar itens fiscais iniciais. Cadastro criado, edite no perfil.', 'warning')
+
             db.session.commit()
 
             # Cria assinatura inicial para garantir visibilidade imediata de trial/cobranca no onboarding.
@@ -557,16 +611,92 @@ def perfil():
         except ValueError:
             dias_grafico = 30
 
+        fiscal_action = (request.form.get('fiscal_action') or '').strip().lower()
         plano = normalize_plan(request.form.get('plano', current_user.empresa.plano if current_user.empresa else 'premium'))
+        empresa = current_user.empresa
 
-        if dias_grafico < 7 or dias_grafico > 365:
-            flash('Informe um periodo entre 7 e 365 dias.', 'warning')
+        if fiscal_action:
+            if not empresa:
+                flash('Empresa não encontrada para salvar itens fiscais.', 'danger')
+            else:
+                try:
+                    if fiscal_action == 'add_item':
+                        tipo = (request.form.get('fiscal_tipo') or '').strip().lower()
+                        valor = (request.form.get('fiscal_valor') or '').strip()
+                        principal = request.form.get('fiscal_principal') == 'on'
+                        if tipo not in FISCAL_TIPO_LABELS:
+                            raise ValueError('Tipo fiscal inválido.')
+                        if not valor:
+                            raise ValueError('Informe o valor do item fiscal.')
+
+                        item = EmpresaFiscalItem.query.filter_by(empresa_id=empresa.id, tipo=tipo, valor=valor).first()
+                        if not item:
+                            item = EmpresaFiscalItem(empresa_id=empresa.id, tipo=tipo, valor=valor, principal=principal)
+                            db.session.add(item)
+                        else:
+                            item.principal = principal or item.principal
+
+                        if principal:
+                            EmpresaFiscalItem.query.filter(
+                                EmpresaFiscalItem.empresa_id == empresa.id,
+                                EmpresaFiscalItem.tipo == tipo,
+                                EmpresaFiscalItem.valor != valor,
+                            ).update({'principal': False})
+                            item.principal = True
+
+                        db.session.commit()
+                        flash('Item fiscal adicionado com sucesso.', 'success')
+                        return redirect(url_for('auth.perfil', _anchor='perfil-fiscal-pane'))
+
+                    if fiscal_action == 'set_primary':
+                        item_id = request.form.get('fiscal_item_id', type=int)
+                        item = EmpresaFiscalItem.query.filter_by(id=item_id, empresa_id=empresa.id).first()
+                        if not item:
+                            raise ValueError('Item fiscal não encontrado.')
+                        EmpresaFiscalItem.query.filter(
+                            EmpresaFiscalItem.empresa_id == empresa.id,
+                            EmpresaFiscalItem.tipo == item.tipo,
+                        ).update({'principal': False})
+                        item.principal = True
+                        db.session.commit()
+                        flash('Item fiscal marcado como principal.', 'success')
+                        return redirect(url_for('auth.perfil', _anchor='perfil-fiscal-pane'))
+
+                    if fiscal_action == 'delete_item':
+                        item_id = request.form.get('fiscal_item_id', type=int)
+                        item = EmpresaFiscalItem.query.filter_by(id=item_id, empresa_id=empresa.id).first()
+                        if not item:
+                            raise ValueError('Item fiscal não encontrado.')
+                        tipo = item.tipo
+                        era_principal = bool(item.principal)
+                        db.session.delete(item)
+                        db.session.flush()
+                        if era_principal:
+                            proximo = (
+                                EmpresaFiscalItem.query
+                                .filter_by(empresa_id=empresa.id, tipo=tipo)
+                                .order_by(EmpresaFiscalItem.principal.desc(), EmpresaFiscalItem.id.asc())
+                                .first()
+                            )
+                            if proximo:
+                                proximo.principal = True
+                        db.session.commit()
+                        flash('Item fiscal removido com sucesso.', 'success')
+                        return redirect(url_for('auth.perfil', _anchor='perfil-fiscal-pane'))
+
+                    flash('Ação fiscal inválida.', 'warning')
+                except Exception as exc:
+                    db.session.rollback()
+                    flash(f'Erro ao salvar item fiscal: {exc}', 'danger')
         else:
-            current_user.dashboard_chart_days = dias_grafico
-            if current_user.empresa:
-                current_user.empresa.plano = plano
-            db.session.commit()
-            flash('Preferencias atualizadas com sucesso.', 'success')
+            if dias_grafico < 7 or dias_grafico > 365:
+                flash('Informe um periodo entre 7 e 365 dias.', 'warning')
+            else:
+                current_user.dashboard_chart_days = dias_grafico
+                if current_user.empresa:
+                    current_user.empresa.plano = plano
+                db.session.commit()
+                flash('Preferencias atualizadas com sucesso.', 'success')
 
     # Buscar dados da assinatura para exibir no perfil
     empresa_id = current_user.empresa_id
@@ -597,7 +727,22 @@ def perfil():
         'proxima_cobranca_valor': Decimal(str(proxima_cobranca.valor_previsto or 0)) if proxima_cobranca else Decimal('0.00'),
     }
 
-    return render_template('auth/perfil.html', plan_choices=PLAN_CHOICES, assinatura_resumo=assinatura_resumo)
+    empresa_fiscal_itens = []
+    if current_user.empresa:
+        empresa_fiscal_itens = (
+            EmpresaFiscalItem.query
+            .filter_by(empresa_id=current_user.empresa.id)
+            .order_by(EmpresaFiscalItem.tipo.asc(), EmpresaFiscalItem.principal.desc(), EmpresaFiscalItem.valor.asc())
+            .all()
+        )
+
+    return render_template(
+        'auth/perfil.html',
+        plan_choices=PLAN_CHOICES,
+        assinatura_resumo=assinatura_resumo,
+        empresa_fiscal_itens=empresa_fiscal_itens,
+        fiscal_tipo_labels=FISCAL_TIPO_LABELS,
+    )
 
 
 @auth_bp.route('/assinatura', methods=['GET', 'POST'])
@@ -753,6 +898,9 @@ def assinatura():
         flash('Ação comercial inválida.', 'warning')
         return redirect(url_for('auth.assinatura'))
 
+
+
+
     precos = _precos_plano(assinatura_atual.plano_codigo)
     historico = (
         HistoricoMudancaPlano.query
@@ -810,3 +958,33 @@ def assinatura():
         addon_catalog=addon_catalog,
         pagamento=pagamento,
     )
+
+
+@auth_bp.route('/empresa/editar', methods=['GET', 'POST'])
+@login_required
+@require_role('admin')
+def editar_empresa():
+    """Tela simples de manutenção/edição dos dados da empresa (admin)."""
+    empresa = current_user.empresa
+    if not empresa:
+        flash('Empresa não encontrada para edição.', 'danger')
+        return redirect(url_for('dashboard.index'))
+
+    if request.method == 'POST':
+        empresa.endereco_rua = request.form.get('endereco_rua')
+        empresa.endereco_numero = request.form.get('endereco_numero')
+        empresa.endereco_bairro = request.form.get('endereco_bairro')
+        empresa.endereco_cidade = request.form.get('endereco_cidade')
+        empresa.endereco_uf = request.form.get('endereco_uf')
+        empresa.endereco_cep = request.form.get('endereco_cep')
+        empresa.inscricao_municipal = request.form.get('inscricao_municipal')
+        empresa.inscricao_estadual = request.form.get('inscricao_estadual')
+        empresa.nome_fantasia = request.form.get('nome_fantasia')
+        empresa.telefone = request.form.get('telefone')
+        empresa.email = request.form.get('empresa_email')
+
+        db.session.commit()
+        flash('Dados da empresa atualizados com sucesso.', 'success')
+        return redirect(url_for('auth.perfil', _anchor='perfil-fiscal-pane'))
+
+    return render_template('auth/empresa_edit.html', empresa=empresa)

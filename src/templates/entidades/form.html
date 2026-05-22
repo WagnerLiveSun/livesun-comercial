@@ -27,6 +27,7 @@
             </div>
             <input type="hidden" name="empresa_id" value="{{ current_user.empresa_id if current_user and current_user.empresa_id else '' }}">
         </div>
+        
         <div class="row">
             <!-- Tipo -->
             <div class="col-md-3 mb-3">
@@ -45,6 +46,7 @@
                 <label class="form-label">CNPJ/CPF *</label>
                 <input type="text" name="cnpj_cpf" class="form-control" placeholder="00.000.000/0000-00" 
                     value="{{ entidade.cnpj_cpf if entidade else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            </div>
             </div>
 
             <!-- Inscrição Estadual -->

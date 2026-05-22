@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+
+{% block title %}Configurações NFS-e Nacional{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Configurações NFS-e Nacional</h2>
+        <p class="text-muted mb-0">Dados fiscais, ambiente, endpoint e certificado por ambiente.</p>
+    </div>
+    <a href="{{ url_for('nfse_nacional.index') }}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="ls-card p-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Ambiente</label>
+                        <select name="ambiente" class="form-select ls-theme-control">
+                            <option value="homologacao" {% if ambiente == 'homologacao' %}selected{% endif %}>Homologação</option>
+                            <option value="producao" {% if ambiente == 'producao' %}selected{% endif %}>Produção</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Inscrição Municipal</label>
+                        <input type="text" name="inscricao_municipal" class="form-control ls-theme-control" value="{{ configuracao.inscricao_municipal if configuracao else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Código Município</label>
+                        <input type="text" name="codigo_municipio" class="form-control ls-theme-control" value="{{ configuracao.codigo_municipio if configuracao else '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Regime Tributário</label>
+                        <input type="text" name="regime_tributario" class="form-control ls-theme-control" value="{{ configuracao.regime_tributario if configuracao else '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Série</label>
+                        <input type="text" name="serie" class="form-control ls-theme-control" value="{{ configuracao.serie if configuracao else '1' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Versão Layout</label>
+                        <input type="text" name="versao_layout" class="form-control ls-theme-control" value="{{ configuracao.versao_layout if configuracao else '1.0' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Endpoint Base</label>
+                        <input type="url" name="endpoint_base" class="form-control ls-theme-control" placeholder="https://..." value="{{ configuracao.endpoint_base if configuracao else '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observações</label>
+                        <textarea name="observacoes" rows="4" class="form-control ls-theme-control">{{ configuracao.observacoes if configuracao else '' }}</textarea>
+                    </div>
+                    <div class="col-12 form-check form-switch ps-3">
+                        <input class="form-check-input" type="checkbox" name="emissor_ativo" {% if configuracao is none or configuracao.emissor_ativo %}checked{% endif %}>
+                        <label class="form-check-label">Emissor ativo</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="ls-card p-4 mb-4">
+                <h5 class="ls-page-title mb-3">Certificado</h5>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Arquivo</label>
+                        <input type="text" name="arquivo_nome" class="form-control ls-theme-control" value="{{ certificado.arquivo_nome if certificado else '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Caminho / Referência</label>
+                        <input type="text" name="caminho_arquivo" class="form-control ls-theme-control" value="{{ certificado.caminho_arquivo if certificado else '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Senha do Certificado</label>
+                        <input type="password" name="certificado_senha" class="form-control ls-theme-control" placeholder="(não exibido)">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Validade</label>
+                        <input type="date" name="validade_em" class="form-control ls-theme-control" value="{{ certificado.validade_em.strftime('%Y-%m-%d') if certificado and certificado.validade_em else '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observações do Certificado</label>
+                        <textarea name="certificado_observacoes" rows="3" class="form-control ls-theme-control">{{ certificado.observacoes if certificado else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="ls-card p-4">
+                <button type="submit" class="btn ls-btn-primary w-100">Salvar Configuração</button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

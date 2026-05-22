@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+
+{% block title %}Detalhe da Emissão{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Detalhe da emissão</h2>
+        <p class="text-muted mb-0">{{ emissao.numero_interno }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('nfse_nacional.emissoes') }}" class="btn btn-outline-secondary">Voltar</a>
+        {% if emissao.situacao_fiscal != 'CANCELADA' %}
+        <form method="post" action="{{ url_for('nfse_nacional.emissao_cancelar', emissao_id=emissao.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="motivo" value="Cancelamento solicitado pelo usuário.">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Cancelar esta emissão?')">Cancelar</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="ls-card p-4 h-100">
+            <h5 class="ls-page-title mb-3">Resumo</h5>
+            <dl class="row mb-0">
+                <dt class="col-5">Status</dt><dd class="col-7">{{ emissao.status_processamento }}</dd>
+                <dt class="col-5">Situação</dt><dd class="col-7">{{ emissao.situacao_fiscal }}</dd>
+                <dt class="col-5">Ambiente</dt><dd class="col-7">{{ emissao.ambiente }}</dd>
+                <dt class="col-5">Protocolo</dt><dd class="col-7">{{ emissao.protocolo or '-' }}</dd>
+                <dt class="col-5">NFS-e</dt><dd class="col-7">{{ emissao.numero_nfse or '-' }}</dd>
+                <dt class="col-5">Verificação</dt><dd class="col-7">{{ emissao.codigo_verificacao or '-' }}</dd>
+                <dt class="col-5">Valor serviço</dt><dd class="col-7">R$ {{ '%.2f'|format(emissao.valor_servico or 0) }}</dd>
+                <dt class="col-5">ISS</dt><dd class="col-7">R$ {{ '%.2f'|format(emissao.valor_iss or 0) }}</dd>
+            </dl>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="ls-card p-4 h-100">
+            <h5 class="ls-page-title mb-3">Tomador e serviço</h5>
+            <div class="row g-3">
+                <div class="col-md-6"><strong>Tomador:</strong> {{ emissao.tomador.nome if emissao.tomador else '-' }}</div>
+                <div class="col-md-6"><strong>Documento:</strong> {{ emissao.tomador.cnpj_cpf if emissao.tomador else '-' }}</div>
+                <div class="col-md-6"><strong>Serviço:</strong> {{ emissao.servico.descricao if emissao.servico else '-' }}</div>
+                <div class="col-md-6"><strong>Código:</strong> {{ emissao.servico.codigo_interno if emissao.servico else '-' }}</div>
+                <div class="col-12"><strong>Observações:</strong> {{ emissao.observacoes or '-' }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="ls-card p-4 h-100">
+            <h5 class="ls-page-title mb-3">XML DPS</h5>
+            <pre class="mb-0" style="white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow: auto;">{{ emissao.xml_dps or '-' }}</pre>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="ls-card p-4 h-100">
+            <h5 class="ls-page-title mb-3">XML NFS-e / Retorno</h5>
+            <pre class="mb-0" style="white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow: auto;">{{ emissao.xml_nfse or emissao.payload_retorno or '-' }}</pre>
+        </div>
+    </div>
+</div>
+
+<div class="ls-card p-4">
+    <h5 class="ls-page-title mb-3">Eventos</h5>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle ls-theme-table mb-0">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Status</th>
+                    <th>Protocolo</th>
+                    <th>Mensagem</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for evento in emissao.eventos %}
+                <tr>
+                    <td>{{ evento.tipo_evento }}</td>
+                    <td>{{ evento.status_evento }}</td>
+                    <td>{{ evento.protocolo or '-' }}</td>
+                    <td>{{ evento.mensagem or '-' }}</td>
+                    <td>{{ evento.criado_em.strftime('%d/%m/%Y %H:%M') if evento.criado_em else '-' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Nenhum evento registrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

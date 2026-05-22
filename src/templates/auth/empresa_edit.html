@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+
+{% block title %}Editar Empresa{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+    <h1 class="display-6">Manutenção da Empresa</h1>
+        <p class="text-muted">Atualize endereço, inscrições e contato</p>
+    </div>
+</div>
+
+<div class="ls-card p-4 ls-card-centered">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row g-3">
+            {% if empresa and empresa.id %}
+            <div class="col-md-3">
+                <label class="form-label">ID</label>
+                <input type="text" class="form-control" value="{{ empresa.id }}" disabled>
+                <input type="hidden" name="id" value="{{ empresa.id }}">
+            </div>
+            <div class="col-9">
+                <label class="form-label">Razão Social</label>
+                <input type="text" class="form-control" value="{{ empresa.nome }}" disabled>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <label class="form-label">Razão Social</label>
+                <input type="text" class="form-control" name="nome" value="{{ empresa.nome if empresa else '' }}">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Nome Fantasia</label>
+                <input type="text" class="form-control" name="nome_fantasia" value="{{ empresa.nome_fantasia if empresa else '' }}">
+            </div>
+            {% endif %}
+            <div class="col-md-6">
+                <label class="form-label">CNPJ</label>
+                {% if empresa and empresa.cnpj %}
+                <input type="text" class="form-control" value="{{ empresa.cnpj or '' }}" disabled>
+                <input type="hidden" name="empresa_cnpj" value="{{ empresa.cnpj or '' }}">
+                {% else %}
+                <input type="text" class="form-control" name="empresa_cnpj" value="{{ empresa.cnpj or '' }}">
+                {% endif %}
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Inscrição Municipal</label>
+                <input type="text" name="inscricao_municipal" class="form-control" value="{{ empresa.inscricao_municipal or '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Inscrição Estadual</label>
+                <input type="text" name="inscricao_estadual" class="form-control" value="{{ empresa.inscricao_estadual or '' }}">
+            </div>
+
+            <div class="col-md-8">
+                <label class="form-label">Endereço (Rua)</label>
+                <input type="text" name="endereco_rua" class="form-control" value="{{ empresa.endereco_rua or '' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Número</label>
+                <input type="text" name="endereco_numero" class="form-control" value="{{ empresa.endereco_numero or '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Bairro</label>
+                <input type="text" name="endereco_bairro" class="form-control" value="{{ empresa.endereco_bairro or '' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Cidade</label>
+                <input type="text" name="endereco_cidade" class="form-control" value="{{ empresa.endereco_cidade or '' }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">UF</label>
+                <input type="text" name="endereco_uf" class="form-control" maxlength="2" value="{{ empresa.endereco_uf or '' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">CEP</label>
+                <input type="text" name="endereco_cep" class="form-control" value="{{ empresa.endereco_cep or '' }}">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Telefone</label>
+                <input type="text" name="telefone" class="form-control" value="{{ empresa.telefone or '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Email da Empresa</label>
+                <input type="email" name="empresa_email" class="form-control" value="{{ empresa.email or '' }}">
+            </div>
+
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" class="btn ls-btn-primary"><i class="fas fa-save"></i> Salvar</button>
+            <a href="{{ url_for('auth.perfil') }}" class="btn btn-secondary ms-2">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

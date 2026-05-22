@@ -1,0 +1,150 @@
+{% extends "layout.html" %}
+
+{% block title %}NFS-e Nacional{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">NFS-e Nacional</h2>
+        <p class="text-muted mb-0">Central de cadastros, emissão, consulta e cancelamento do módulo fiscal independente.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('nfse_nacional.emissoes') }}" class="btn ls-btn-primary"><i class="fas fa-plus"></i> Nova emissão</a>
+        <a href="{{ url_for('nfse_nacional.configuracoes') }}" class="btn btn-outline-secondary">Configurações</a>
+        <a href="{{ url_for('nfse_nacional.tomadores') }}" class="btn btn-outline-secondary">Tomadores</a>
+        <!-- Serviço gerenciado em Comercial -> Serviços (removido para evitar duplicação) -->
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="ls-card p-3 h-100">
+            <div class="text-muted small">Emissões</div>
+            <div class="display-6 fw-bold">{{ total_emissoes }}</div>
+            <div class="text-muted small">Total de registros do módulo</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ls-card p-3 h-100">
+            <div class="text-muted small">Autorizadas</div>
+            <div class="display-6 fw-bold text-success">{{ total_autorizadas }}</div>
+            <div class="text-muted small">Inclui emissões simuladas/localmente autorizadas</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ls-card p-3 h-100">
+            <div class="text-muted small">Rejeitadas</div>
+            <div class="display-6 fw-bold text-danger">{{ total_rejeitadas }}</div>
+            <div class="text-muted small">Erros técnicos ou retorno de validação</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="ls-card p-4 h-100">
+            <h5 class="ls-page-title mb-3">Configurações por ambiente</h5>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle ls-theme-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ambiente</th>
+                            <th>Status</th>
+                            <th>Endpoint</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for configuracao in configuracoes %}
+                        <tr>
+                            <td>{{ configuracao.ambiente }}</td>
+                            <td>
+                                {% if configuracao.emissor_ativo %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted">{{ configuracao.endpoint_base or '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-muted">Nenhuma configuração cadastrada.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="ls-card p-4 h-100">
+            <h5 class="ls-page-title mb-3">Certificados</h5>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle ls-theme-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Arquivo</th>
+                            <th>Validade</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for certificado in certificados %}
+                        <tr>
+                            <td>{{ certificado.arquivo_nome }}</td>
+                            <td>{{ certificado.validade_em.strftime('%d/%m/%Y') if certificado.validade_em else '-' }}</td>
+                            <td>
+                                {% if certificado.ativo %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-muted">Nenhum certificado cadastrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="ls-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="ls-page-title mb-0">Últimas emissões</h5>
+        <a href="{{ url_for('nfse_nacional.emissoes') }}" class="btn btn-sm btn-outline-secondary">Ver todas</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle ls-theme-table">
+            <thead>
+                <tr>
+                    <th>Interno</th>
+                    <th>Tomador</th>
+                    <th>Serviço</th>
+                    <th>Status</th>
+                    <th>Situação</th>
+                    <th>NFS-e</th>
+                    <th>Protocolo</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emissao in emissoes %}
+                <tr>
+                    <td>{{ emissao.numero_interno }}</td>
+                    <td>{{ emissao.tomador.nome if emissao.tomador else '-' }}</td>
+                    <td>{{ emissao.servico.descricao if emissao.servico else '-' }}</td>
+                    <td><span class="badge bg-{{ 'success' if emissao.status_processamento in ['AUTORIZADA', 'AUTORIZADA_LOCALMENTE'] else 'warning' if emissao.status_processamento in ['PENDENTE', 'RASCUNHO'] else 'danger' }}">{{ emissao.status_processamento }}</span></td>
+                    <td>{{ emissao.situacao_fiscal }}</td>
+                    <td>{{ emissao.numero_nfse or '-' }}</td>
+                    <td>{{ emissao.protocolo or '-' }}</td>
+                    <td><a href="{{ url_for('nfse_nacional.emissao_detalhe', emissao_id=emissao.id) }}" class="btn btn-sm btn-outline-primary">Abrir</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-4">Nenhuma emissão registrada ainda.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
