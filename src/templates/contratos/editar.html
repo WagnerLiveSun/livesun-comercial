@@ -1,0 +1,331 @@
+{% extends "layout.html" %}
+
+{% block title %}Editar Contrato {{ contrato.numero }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('contratos.index') }}">Contratos</a></li>
+<li class="breadcrumb-item active">{{ contrato.numero }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-file-contract me-2"></i>
+            Contrato: {{ contrato.numero }}
+            <span class="badge bg-secondary">{{ contrato.status|replace('_', ' ')|title }}</span>
+        </h2>
+    </div>
+</div>
+
+<!-- Botões de Ação -->
+<div class="d-flex gap-2 mb-4">
+    <a href="{{ url_for('contratos.visualizar', id=contrato.id) }}" class="btn btn-outline-primary">
+        <i class="fas fa-eye me-2"></i>Prévia
+    </a>
+    <form method="POST" action="{{ url_for('contratos.editar', id=contrato.id) }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="acao" value="enviar_assinatura">
+        <button type="submit" class="btn btn-success" onclick="return confirm('Enviar contrato para assinatura? Após isso, não será mais possível editar.')">
+            <i class="fas fa-signature me-2"></i>Enviar para Assinatura
+        </button>
+    </form>
+    <a href="{{ url_for('contratos.index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+</div>
+
+<!-- Dados do Contrato -->
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3">Dados do Contrato</h5>
+    <form method="POST" action="{{ url_for('contratos.editar', id=contrato.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="acao" value="salvar_dados">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Número</label>
+                <input type="text" class="form-control" value="{{ contrato.numero }}" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Título</label>
+                <input type="text" name="titulo" class="form-control" value="{{ contrato.titulo or '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Contratada</label>
+                <input type="text" class="form-control" value="{{ contrato.contratada.nome }}" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Contratante</label>
+                <input type="text" class="form-control" value="{{ contrato.contratante.nome }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Valor Total</label>
+                <input type="number" name="valor_total" class="form-control" value="{{ contrato.valor_total }}" step="0.01">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Valor Mensal</label>
+                <input type="number" name="valor_mensal" class="form-control" value="{{ contrato.valor_mensal or '' }}" step="0.01">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Forma de Pagamento</label>
+                <input type="text" name="forma_pagamento" class="form-control" value="{{ contrato.forma_pagamento or '' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Periodicidade</label>
+                <select name="periodicidade" class="form-select">
+                    <option value="">Selecione</option>
+                    <option value="mensal" {% if contrato.periodicidade == 'mensal' %}selected{% endif %}>Mensal</option>
+                    <option value="trimestral" {% if contrato.periodicidade == 'trimestral' %}selected{% endif %}>Trimestral</option>
+                    <option value="semestral" {% if contrato.periodicidade == 'semestral' %}selected{% endif %}>Semestral</option>
+                    <option value="anual" {% if contrato.periodicidade == 'anual' %}selected{% endif %}>Anual</option>
+                    <option value="unico" {% if contrato.periodicidade == 'unico' %}selected{% endif %}>Único</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Início Vigência</label>
+                <input type="date" name="data_inicio_vigencia" class="form-control"
+                       value="{{ contrato.data_inicio_vigencia.strftime('%Y-%m-%d') if contrato.data_inicio_vigencia else '' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fim Vigência</label>
+                <input type="date" name="data_fim_vigencia" class="form-control"
+                       value="{{ contrato.data_fim_vigencia.strftime('%Y-%m-%d') if contrato.data_fim_vigencia else '' }}">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Descrição dos Serviços</label>
+                <textarea name="descricao_servicos" class="form-control" rows="3">{{ contrato.descricao_servicos or '' }}</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Objeto do Contrato</label>
+                <textarea name="objeto_contrato" class="form-control" rows="3">{{ contrato.objeto_contrato or '' }}</textarea>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn ls-btn-primary">
+                    <i class="fas fa-save me-2"></i>Salvar Dados
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Placeholders do Contrato -->
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3">Placeholders (Variáveis do Contrato)</h5>
+    <p class="text-muted mb-3">
+        Estes valores serão substituídos nas cláusulas do contrato. Valores em cinza são preenchidos automaticamente.
+    </p>
+
+    <form method="POST" action="{{ url_for('contratos.editar', id=contrato.id) }}">
+        <input type="hidden" name="acao" value="salvar_placeholders">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row">
+            {% for parametro in parametros %}
+            <div class="col-md-4 mb-3">
+                <label class="form-label">{{ parametro.nome }}</label>
+                <input type="text"
+                       name="placeholder_{{ parametro.codigo }}"
+                       class="form-control {% if parametro.origem in ['empresa', 'cliente', 'orcamento', 'contrato'] %}bg-light{% endif %}"
+                       value="{{ contrato.parametros_valores_dict.get(parametro.codigo, '') }}"
+                       {% if parametro.origem in ['empresa', 'cliente', 'orcamento', 'contrato'] %}readonly{% endif %}>
+                <small class="text-muted">{{ parametro.descricao }}</small>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Salvar Placeholders
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="preencherAutomaticos()">
+                <i class="fas fa-magic me-2"></i>Preencher Automáticos
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Anexos do Contrato -->
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3">Anexos</h5>
+
+    <form method="POST" action="{{ url_for('contratos.editar', id=contrato.id) }}" enctype="multipart/form-data">
+        <input type="hidden" name="acao" value="adicionar_anexo">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row mb-3">
+            <div class="col-md-8">
+                <input type="file" name="arquivo" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-upload me-2"></i>Adicionar Anexo
+                </button>
+            </div>
+        </div>
+    </form>
+
+    {% if contrato.anexos %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Arquivo</th>
+                    <th>Data Upload</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for anexo in contrato.anexos %}
+                <tr>
+                    <td>{{ anexo.nome_arquivo }}</td>
+                    <td>{{ anexo.data_upload.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>
+                        <a href="{{ url_for('contratos.baixar_anexo', id=anexo.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('contratos.editar', id=contrato.id) }}" class="d-inline">
+                            <input type="hidden" name="acao" value="remover_anexo">
+                            <input type="hidden" name="anexo_id" value="{{ anexo.id }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remover este anexo?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">Nenhum anexo adicionado.</p>
+    {% endif %}
+</div>
+
+<!-- Cláusulas do Contrato -->
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3">Cláusulas do Contrato</h5>
+
+    <button type="button" class="btn btn-outline-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalAdicionarClausula">
+        <i class="fas fa-plus me-2"></i>Adicionar Cláusula da Biblioteca
+    </button>
+
+    <div id="clausulas-container">
+    {% for clausula in contrato.clausulas|sort(attribute='ordem') %}
+    <div class="card mb-3 clausula-item" data-clausula-id="{{ clausula.id }}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-grip-vertical me-2 text-muted cursor-move"></i>
+                <strong>{{ clausula.ordem }}. {{ clausula.titulo }}</strong>
+            </div>
+            <div>
+                {% if clausula.editavel %}
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="editarClausula('{{ clausula.id }}')">
+                    <i class="fas fa-edit"></i>
+                </button>
+                {% endif %}
+                {% if not clausula.obrigatoria %}
+                <form method="POST" action="{{ url_for('contratos.editar', id=contrato.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="acao" value="remover_clausula">
+                    <input type="hidden" name="clausula_id" value="{{ clausula.id }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remover esta cláusula?')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="clausula-texto" id="clausula-texto-{{ clausula.id }}">
+                {{ clausula.texto_com_placeholders|safe }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if not contrato.clausulas %}
+    <p class="text-muted">Nenhuma cláusula adicionada.</p>
+    {% endif %}
+    </div>
+</div>
+
+<!-- Modal Adicionar Cláusula -->
+<div class="modal fade" id="modalAdicionarClausula" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar Cláusula da Biblioteca</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('contratos.editar', id=contrato.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="acao" value="adicionar_clausula">
+                    <div class="mb-3">
+                        <label class="form-label">Selecione uma Cláusula</label>
+                        <select name="clausula_padrao_id" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            {% for clausula in clausulas_disponiveis %}
+                            <option value="{{ clausula.id }}">{{ clausula.titulo }} ({{ clausula.codigo }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn ls-btn-primary">Adicionar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editarClausula(clausulaId) {
+    const textoDiv = document.getElementById('clausula-texto-' + clausulaId);
+    const textoAtual = textoDiv.innerHTML;
+    const novoTexto = prompt('Edite o texto da cláusula:', textoAtual);
+    if (novoTexto !== null && novoTexto !== textoAtual) {
+        // Aqui você implementaria a chamada AJAX para salvar
+        alert('Funcionalidade de edição em desenvolvimento');
+    }
+}
+
+// Reordenação de cláusulas com SortableJS
+document.addEventListener('DOMContentLoaded', function() {
+    var clausulasContainer = document.getElementById('clausulas-container');
+    if (clausulasContainer) {
+        new Sortable(clausulasContainer, {
+            animation: 150,
+            handle: '.cursor-move',
+            onEnd: function(evt) {
+                var clausulaIds = [];
+                var items = clausulasContainer.querySelectorAll('.clausula-item');
+                items.forEach(function(item, index) {
+                    clausulaIds.push(item.getAttribute('data-clausula-id'));
+                });
+
+                fetch('{{ url_for("contratos.reordenar_clausulas", id=contrato.id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ clausula_ids: clausulaIds })
+                }).then(function(response) {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Erro ao reordenar cláusulas');
+                    }
+                });
+            }
+        });
+    }
+});
+</script>
+
+<!-- SortableJS -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+{% endblock %}

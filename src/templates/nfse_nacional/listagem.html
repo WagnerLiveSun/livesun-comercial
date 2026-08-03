@@ -1,0 +1,258 @@
+{% extends "layout.html" %}
+
+{% block title %}NFS-e Emitidas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">NFS-e Emitidas</h2>
+        <p class="text-muted mb-0">Listagem de todas as notas fiscais de serviços emitidas.</p>
+    </div>
+    <a href="{{ url_for('nfse_nacional.emissoes') }}" class="btn ls-btn-primary"><i class="fas fa-plus-circle me-2"></i>Nova Emissão</a>
+</div>
+
+<style>
+.nfse-listagem-card {
+    background: var(--ls-card-bg);
+    border: 1px solid var(--ls-border-subtle);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+.nfse-listagem-card .form-control,
+.nfse-listagem-card .form-select {
+    background-color: var(--ls-input-bg);
+    border-color: var(--ls-input-border);
+    color: var(--ls-text-main);
+}
+.nfse-listagem-card .form-control::placeholder {
+    color: var(--ls-text-muted);
+}
+.nfse-listagem-card .table {
+    color: var(--ls-text-main);
+}
+.nfse-listagem-card .table thead th {
+    background-color: var(--ls-header-bg);
+    border-color: var(--ls-header-border);
+    color: var(--ls-text-strong);
+}
+.nfse-listagem-card .table tbody tr {
+    border-color: var(--ls-border-subtle);
+}
+.nfse-listagem-card .table tbody tr:hover {
+    background-color: var(--ls-hover-bg);
+}
+.badge-autorizada {
+    background-color: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.badge-cancelada {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.badge-rejeitada {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #fcd34d;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.badge-pendente {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.action-btn {
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+</style>
+
+<div class="ls-card p-4 nfse-listagem-card mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+                <option value="">Todos</option>
+                <option value="AUTORIZADA" {% if status == 'AUTORIZADA' %}selected{% endif %}>Autorizada</option>
+                <option value="CANCELADA" {% if status == 'CANCELADA' %}selected{% endif %}>Cancelada</option>
+                <option value="REJEITADA" {% if status == 'REJEITADA' %}selected{% endif %}>Rejeitada</option>
+                <option value="RASCUNHO" {% if status == 'RASCUNHO' %}selected{% endif %}>Rascunho</option>
+                <option value="PROCESSANDO" {% if status == 'PROCESSANDO' %}selected{% endif %}>Processando</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Situação Fiscal</label>
+            <select name="situacao" class="form-select">
+                <option value="">Todas</option>
+                <option value="AUTORIZADA" {% if situacao == 'AUTORIZADA' %}selected{% endif %}>Autorizada</option>
+                <option value="CANCELADA" {% if situacao == 'CANCELADA' %}selected{% endif %}>Cancelada</option>
+                <option value="REJEITADA" {% if situacao == 'REJEITADA' %}selected{% endif %}>Rejeitada</option>
+                <option value="PENDENTE" {% if situacao == 'PENDENTE' %}selected{% endif %}>Pendente</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Buscar</label>
+            <input type="text" name="busca" class="form-control" placeholder="Número, chave ou tomador" value="{{ busca }}">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-secondary w-100"><i class="fas fa-search me-2"></i>Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<div class="ls-card p-4 nfse-listagem-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Número NFS-e</th>
+                    <th>Tomador</th>
+                    <th>Data Emissão</th>
+                    <th>Valor (R$)</th>
+                    <th>Status</th>
+                    <th>Situação Fiscal</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emissao in emissoes %}
+                <tr>
+                    <td>
+                        <strong>{{ emissao.numero_nfse or '-' }}</strong>
+                        {% if emissao.chave_nfse %}
+                        <br><small class="text-muted">{{ emissao.chave_nfse[:20] }}...</small>
+                        {% endif %}
+                    </td>
+                    <td>{{ emissao.tomador.nome if emissao.tomador else '-' }}</td>
+                    <td>{{ emissao.criado_em.strftime('%d/%m/%Y %H:%M') if emissao.criado_em else '-' }}</td>
+                    <td>{{ "{:,.2f}".format(emissao.valor_servico) }}</td>
+                    <td>
+                        {% if emissao.status_processamento == 'AUTORIZADA' %}
+                        <span class="badge badge-autorizada">Autorizada</span>
+                        {% elif emissao.status_processamento == 'CANCELADA' %}
+                        <span class="badge badge-cancelada">Cancelada</span>
+                        {% elif emissao.status_processamento == 'REJEITADA' %}
+                        <span class="badge badge-rejeitada">Rejeitada</span>
+                        {% elif emissao.status_processamento == 'RASCUNHO' %}
+                        <span class="badge badge-pendente">Rascunho</span>
+                        {% elif emissao.status_processamento == 'PROCESSANDO' %}
+                        <span class="badge badge-pendente">Processando</span>
+                        {% else %}
+                        <span class="badge badge-pendente">{{ emissao.status_processamento }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if emissao.situacao_fiscal == 'AUTORIZADA' %}
+                        <span class="badge badge-autorizada">Autorizada</span>
+                        {% elif emissao.situacao_fiscal == 'CANCELADA' %}
+                        <span class="badge badge-cancelada">Cancelada</span>
+                        {% elif emissao.situacao_fiscal == 'REJEITADA' %}
+                        <span class="badge badge-rejeitada">Rejeitada</span>
+                        {% elif emissao.situacao_fiscal == 'PENDENTE' %}
+                        <span class="badge badge-pendente">Pendente</span>
+                        {% else %}
+                        <span class="badge badge-pendente">{{ emissao.situacao_fiscal }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group">
+                            <a href="{{ url_for('nfse_nacional.visualizar', id=emissao.id) }}" class="btn btn-sm btn-outline-primary action-btn" title="Visualizar">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ url_for('nfse_nacional.emissao_imprimir_danfs', emissao_id=emissao.id) }}" class="btn btn-sm btn-outline-secondary action-btn" title="Imprimir DANFSe">
+                                <i class="fas fa-print"></i>
+                            </a>
+                            <a href="{{ url_for('nfse_nacional.emissao_download_nfse', emissao_id=emissao.id) }}" class="btn btn-sm btn-outline-secondary action-btn" title="Baixar XML">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            <button onclick="abrirModalEmail({{ emissao.id }})" class="btn btn-sm btn-outline-secondary action-btn" title="Enviar por Email">
+                                <i class="fas fa-envelope"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p>Nenhuma NFS-e encontrada.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('nfse_nacional.listagem', page=pagination.prev_num, status=status, situacao=situacao, busca=busca) }}">Anterior</a>
+            </li>
+            {% endif %}
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                    <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('nfse_nacional.listagem', page=page_num, status=status, situacao=situacao, busca=busca) }}">{{ page_num }}</a>
+                    </li>
+                    {% endif %}
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('nfse_nacional.listagem', page=pagination.next_num, status=status, situacao=situacao, busca=busca) }}">Próxima</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Modal de Envio de Email -->
+<div class="modal fade" id="modalEmail" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: var(--ls-card-bg); border: 1px solid var(--ls-border-subtle);">
+            <div class="modal-header">
+                <h5 class="modal-title">Enviar NFS-e por Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ url_for('nfse_nacional.enviar_email', id=0) }}" id="formEmail">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Email do Cliente</label>
+                        <input type="email" name="email_cliente" class="form-control" id="emailCliente" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mensagem (opcional)</label>
+                        <textarea name="mensagem" class="form-control" rows="3" placeholder="Adicione uma mensagem personalizada..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i>Enviar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function abrirModalEmail(id) {
+    document.getElementById('formEmail').action = "{{ url_for('nfse_nacional.enviar_email', id=0) }}".replace('0', id);
+    document.getElementById('emailCliente').value = '';
+    var modal = new bootstrap.Modal(document.getElementById('modalEmail'));
+    modal.show();
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends "layout.html" %}
+
+{% block title %}Fechar Caixa{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">Fechar Caixa</h1>
+        <p class="text-muted mb-0">Sessao: <strong>{{ sessao.numero }}</strong> ({{ sessao.pdv_nome }})</p>
+    </div>
+    <a href="{{ url_for('comercial_operacional.pdv_vender', sessao_id=sessao.id) }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar as Vendas
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="ls-card p-4 mb-4">
+            <h5 class="mb-3">Resumo das Vendas</h5>
+            <div class="table-responsive">
+                <table class="table table-hover ls-theme-table">
+                    <thead>
+                        <tr>
+                            <th>Venda</th>
+                            <th>Data</th>
+                            <th>Total</th>
+                            <th>Formas de Pagamento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for venda in vendas %}
+                        <tr>
+                            <td>{{ venda.numero }}</td>
+                            <td>{{ venda.data_venda.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td><strong>{{ venda.valor_total|brl }}</strong></td>
+                            <td>
+                                {% if venda.valor_dinheiro > 0 %}Din: {{ venda.valor_dinheiro|brl }}<br>{% endif %}
+                                {% if venda.valor_cartao_credito > 0 %}Cred: {{ venda.valor_cartao_credito|brl }}<br>{% endif %}
+                                {% if venda.valor_cartao_debito > 0 %}Deb: {{ venda.valor_cartao_debito|brl }}<br>{% endif %}
+                                {% if venda.valor_pix > 0 %}PIX: {{ venda.valor_pix|brl }}{% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Nenhuma venda realizada nesta sessao.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-active">
+                        <tr>
+                            <td colspan="2" class="text-end"><strong>TOTAIS:</strong></td>
+                            <td><strong>{{ total_vendas|brl }}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="ls-card p-4 mb-4">
+            <h5 class="mb-3">Resumo Financeiro</h5>
+            <table class="table table-borderless ls-theme-table">
+                <tr>
+                    <td>Valor Abertura:</td>
+                    <td class="text-end">{{ sessao.valor_abertura|brl }}</td>
+                </tr>
+                <tr>
+                    <td>Total Vendas:</td>
+                    <td class="text-end">{{ total_vendas|brl }}</td>
+                </tr>
+                <tr>
+                    <td>Sangrias:</td>
+                    <td class="text-end text-danger">- {{ sessao.valor_sangria|brl }}</td>
+                </tr>
+                <tr>
+                    <td>Suprimentos:</td>
+                    <td class="text-end text-success">+ {{ sessao.valor_suprimento|brl }}</td>
+                </tr>
+                <tr class="table-active">
+                    <td><strong>Saldo Esperado:</strong></td>
+                    <td class="text-end">
+                        <strong>
+                            {{ (sessao.valor_abertura + total_vendas - sessao.valor_sangria + sessao.valor_suprimento)|brl }}
+                        </strong>
+                    </td>
+                </tr>
+            </table>
+
+            <hr>
+
+            <h6 class="mb-2">Por Forma de Pagamento</h6>
+            <table class="table table-borderless ls-theme-table table-sm">
+                <tr>
+                    <td><i class="fas fa-money-bill-wave text-success"></i> Dinheiro:</td>
+                    <td class="text-end">{{ total_dinheiro|brl }}</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-credit-card text-primary"></i> Cartao Credito:</td>
+                    <td class="text-end">{{ (vendas|sum(attribute='valor_cartao_credito'))|brl }}</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-credit-card text-info"></i> Cartao Debito:</td>
+                    <td class="text-end">{{ (vendas|sum(attribute='valor_cartao_debito'))|brl }}</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-qrcode text-warning"></i> PIX:</td>
+                    <td class="text-end">{{ total_pix|brl }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="ls-card p-4">
+            <h5 class="mb-3">Confirmar Fechamento</h5>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label for="valor_fechamento" class="form-label">Valor de Fechamento (Dinheiro Contado) *</label>
+                    <input type="number" step="0.01" class="form-control" id="valor_fechamento" name="valor_fechamento" required>
+                    <div class="form-text">Informe o valor real em dinheiro no caixa.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="observacoes" class="form-label">Observacoes</label>
+                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3" placeholder="Diferencas, observacoes..."></textarea>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Atenção:</strong> Ao fechar o caixa, nao sera possivel realizar mais vendas nesta sessao.
+                </div>
+
+                <button type="submit" class="btn btn-danger w-100">
+                    <i class="fas fa-lock"></i> Confirmar Fechamento
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

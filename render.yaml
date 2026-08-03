@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: livesun-comercial
+    env: python
+    pythonVersion: 3.11.6
+    plan: starter
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 4 -b 0.0.0.0:$PORT "src.app:create_app()" --timeout 120
+    autoDeploy: true
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: src/app.py
+      - key: FLASK_DEBUG
+        value: "False"
+      - key: DB_TYPE
+        value: mysql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: SESSION_TIMEOUT
+        value: "3600"
+      - key: DB_POOL_RECYCLE
+        value: "1800"
+      # NFS-e Nacional Configuration
+      - key: NFS_XSD_DIR
+        value: /opt/render/project/src/NFS_XSD_DIR
+      - key: NFS_XML_OUT_DIR
+        value: /opt/render/project/dist/data/XML
+      - key: NFS_PFX_PASS
+        sync: false
+      - key: UPLOAD_FOLDER
+        value: /opt/render/project/uploads

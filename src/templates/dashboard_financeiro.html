@@ -1,0 +1,225 @@
+{% extends "layout.html" %}
+
+{% block title %}Painel Financeiro{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold ls-page-title">Painel Financeiro</h1>
+        <p class="text-muted">Indicadores do módulo financeiro</p>
+    </div>
+</div>
+
+<!-- KPIs Financeiros -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Contas a Pagar Vencidas</p>
+                    <h2 class="fw-bold" style="color: #ef4444;">{{ contas_pagar_aberto }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #ef4444; opacity: 0.6;">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Contas a Receber Vencidas</p>
+                    <h2 class="fw-bold" style="color: #22c55e;">{{ contas_receber_aberto }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #22c55e; opacity: 0.6;">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Saldo Total</p>
+                    <h2 class="fw-bold" style="color: #3b82f6;">{{ saldo_total|brl }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #3b82f6; opacity: 0.6;">
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Contas Banco</p>
+                    <h2 class="fw-bold" style="color: #6366f1;">{{ total_contas_banco }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #6366f1; opacity: 0.6;">
+                    <i class="fas fa-university"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Previsão Diária -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Pagar Previsto Hoje</p>
+                    <h2 class="fw-bold" style="color: #ef4444;">{{ pagar_previsto_hoje|brl }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #ef4444; opacity: 0.6;">
+                    <i class="fas fa-calendar-times"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Receber Previsto Hoje</p>
+                    <h2 class="fw-bold" style="color: #22c55e;">{{ receber_previsto_hoje|brl }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #22c55e; opacity: 0.6;">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Disponibilidade Hoje</p>
+                    <h2 class="fw-bold" style="color: #3b82f6;">{{ disponibilidade_hoje|brl }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #3b82f6; opacity: 0.6;">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfico de Fluxo de Caixa -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="ls-card p-4">
+            <h5 class="mb-3">Fluxo de Caixa</h5>
+            <canvas id="fluxoCaixaChart" height="100"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Últimos Lançamentos -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="ls-card p-4">
+            <h5 class="mb-3">Últimos Lançamentos</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lancamento in ultimos_lancamentos %}
+                        <tr>
+                            <td>{{ lancamento.data_evento.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ lancamento.descricao }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'danger' if lancamento.fluxo_conta and lancamento.fluxo_conta.is_pagamento() else 'success' }}">
+                                    {{ 'Pagamento' if lancamento.fluxo_conta and lancamento.fluxo_conta.is_pagamento() else 'Recebimento' }}
+                                </span>
+                            </td>
+                            <td><strong>{{ lancamento.valor_real|brl }}</strong></td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if lancamento.status == 'pago' else 'warning' }}">
+                                    {{ lancamento.status|title }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('fluxoCaixaChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ grafico_labels | tojson }},
+            datasets: [
+                {
+                    label: 'Entradas Previsto',
+                    data: {{ grafico_entradas_previsto | tojson }},
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Entradas Realizado',
+                    data: {{ grafico_entradas_realizado | tojson }},
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Saídas Previsto',
+                    data: {{ grafico_saidas_previsto | tojson }},
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Saídas Realizado',
+                    data: {{ grafico_saidas_realizado | tojson }},
+                    borderColor: '#dc2626',
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    fill: false,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

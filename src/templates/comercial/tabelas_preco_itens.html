@@ -1,0 +1,169 @@
+{% extends "layout.html" %}
+
+{% block title %}Itens da Tabela - {{ tabela.nome }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">Itens da Tabela</h1>
+        <p class="text-muted mb-0">Tabela: <strong>{{ tabela.codigo }} - {{ tabela.nome }}</strong></p>
+    </div>
+    <div>
+        <a href="{{ url_for('comercial_operacional.tabelas_preco_index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="ls-card p-3 mb-4">
+            <h5 class="mb-3">Adicionar Item</h5>
+            <form method="post" action="{{ url_for('comercial_operacional.tabelas_preco_itens_adicionar', tabela_id=tabela.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label class="form-label">Tipo de Item</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="tipo_item_radio" id="tipo_produto" value="P" checked onchange="toggleTipoItem('P')">
+                        <label class="form-check-label" for="tipo_produto">Produto</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="tipo_item_radio" id="tipo_servico" value="S" onchange="toggleTipoItem('S')">
+                        <label class="form-check-label" for="tipo_servico">Servico</label>
+                    </div>
+                </div>
+
+                <div class="mb-3" id="select_produto">
+                    <label for="produto_id" class="form-label">Produto</label>
+                    <select class="form-control" id="produto_id" name="produto_id">
+                        <option value="">Selecione...</option>
+                        {% for produto in produtos %}
+                        <option value="{{ produto.id }}">{{ produto.codigo_interno }} - {{ produto.descricao_resumida }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3" id="select_servico" style="display:none;">
+                    <label for="servico_id" class="form-label">Servico</label>
+                    <select class="form-control" id="servico_id" name="servico_id">
+                        <option value="">Selecione...</option>
+                        {% for servico in servicos %}
+                        <option value="{{ servico.id }}">{{ servico.codigo_interno }} - {{ servico.descricao }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label for="preco_custo" class="form-label">Preco Custo</label>
+                        <input type="number" step="0.0001" class="form-control" id="preco_custo" name="preco_custo" value="0.0000">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label for="preco_venda" class="form-label">Preco Venda *</label>
+                        <input type="number" step="0.0001" class="form-control" id="preco_venda" name="preco_venda" value="0.0000" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label for="markup" class="form-label">Markup (%)</label>
+                        <input type="number" step="0.01" class="form-control" id="markup" name="markup" value="0.00">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label for="desconto_maximo" class="form-label">Desc. Maximo (%)</label>
+                        <input type="number" step="0.01" class="form-control" id="desconto_maximo" name="desconto_maximo" value="0.00">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn ls-btn-primary w-100">
+                    <i class="fas fa-plus"></i> Adicionar Item
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="ls-card p-4">
+            <h5 class="mb-3">Itens Cadastrados</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle ls-theme-table">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Item</th>
+                            <th>Preco Custo</th>
+                            <th>Preco Venda</th>
+                            <th>Markup</th>
+                            <th>Acoes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if item.tipo_item == 'P' else 'info' }}">
+                                    {{ 'Produto' if item.produto_id else 'Servico' }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if item.produto_id %}
+                                    {{ item.produto.descricao_resumida if item.produto else '-' }}
+                                {% else %}
+                                    {{ item.servico.descricao if item.servico else '-' }}
+                                {% endif %}
+                            </td>
+                            <td>{{ item.preco_custo|brl }}</td>
+                            <td><strong>{{ item.preco_venda|brl }}</strong></td>
+                            <td>{{ item.markup }}%</td>
+                            <td>
+                                <form method="post" action="{{ url_for('comercial_operacional.tabelas_preco_itens_remover', item_id=item.id) }}" class="d-inline" onsubmit="return confirm('Remover este item?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">Nenhum item cadastrado nesta tabela.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if pagination.pages > 1 %}
+            <nav aria-label="Paginacao" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {{ 'active' if page_num == pagination.page else '' }}">
+                                <a class="page-link" href="{{ url_for('comercial_operacional.tabelas_preco_itens', tabela_id=tabela.id, page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleTipoItem(tipo) {
+    if (tipo === 'P') {
+        document.getElementById('select_produto').style.display = 'block';
+        document.getElementById('select_servico').style.display = 'none';
+        document.getElementById('servico_id').value = '';
+    } else {
+        document.getElementById('select_produto').style.display = 'none';
+        document.getElementById('select_servico').style.display = 'block';
+        document.getElementById('produto_id').value = '';
+    }
+}
+</script>
+{% endblock %}

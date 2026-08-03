@@ -1,0 +1,49 @@
+{% extends "locacao/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('locacao.orcamentos_lista') }}">Orçamentos</a></li>
+<li class="breadcrumb-item active">Novo Orçamento</li>
+{% endblock %}
+
+{% block locacao_content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <h2 class="mb-4"><i class="fas fa-file-invoice me-2"></i>Criar Novo Orçamento</h2>
+
+        <form method="POST" class="ls-card p-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <label class="form-label">Cliente *</label>
+                    <select name="cliente_id" class="form-select" required>
+                        <option value="">Selecione um cliente...</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Data de Retirada *</label>
+                    <input type="date" name="data_retirada" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Data de Devolução *</label>
+                    <input type="date" name="data_devolucao" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('locacao.orcamentos_lista') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn ls-btn-primary">
+                    <i class="fas fa-save me-2"></i>Criar Orçamento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

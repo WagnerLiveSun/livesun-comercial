@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+{% block title %}Configurar Acesso do Usuário{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">Configurar Acesso</h1>
+        <p class="text-muted mb-0">Usuário: {{ user_data.full_name }} ({{ user_data.username }})</p>
+    </div>
+    <a href="{{ url_for('auth.add_user') }}" class="btn btn-primary">Voltar</a>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <h5 class="mb-3 ls-page-title">Perfil do Usuário</h5>
+    <form method="POST" action="{{ url_for('auth.add_user_config') }}" id="userConfigForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Papel (Role)</label>
+                <select name="role" class="form-control ls-theme-control" id="roleSelect" required onchange="togglePermissions()">
+                    <option value="operator" selected>Operator</option>
+                    <option value="viewer">Viewer</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <div class="form-text text-muted">Admin tem acesso completo a todos os processos.</div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive" checked>
+                    <label class="form-check-label" for="isActive">Usuário Ativo</label>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="ls-card p-4" id="permissionsCard">
+    <h5 class="mb-3 ls-page-title">Permissões de Processos</h5>
+    <p class="text-muted mb-3">
+        Configure quais processos este usuário poderá acessar. Por padrão, segue as permissões do papel selecionado.
+        Use as exceções para liberar ou bloquear processos específicos.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle ls-theme-table">
+            <thead>
+                <tr>
+                    <th>Grupo</th>
+                    <th>Processo</th>
+                    <th class="text-center">Papel</th>
+                    <th class="text-center">Exceção</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in permission_catalog %}
+                {% set operator_allowed = operator_permissions.get(item.key, False) %}
+                {% set viewer_allowed = viewer_defaults.get(item.key, False) %}
+                <tr data-permission-key="{{ item.key }}" data-operator-allowed="{{ 'true' if operator_allowed else 'false' }}" data-viewer-allowed="{{ 'true' if viewer_allowed else 'false' }}">
+                    <td>{{ item.group }}</td>
+                    <td>{{ item.label }}</td>
+                    <td class="text-center role-status">
+                        <span class="role-icon" style="font-size: 1.2em;">
+                            <i class="fas fa-minus-circle text-muted"></i>
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <select name="userperm__{{ item.key }}" class="form-control form-select-sm" style="width: auto; display: inline-block;">
+                            <option value="inherit" selected>Seguir papel</option>
+                            <option value="allow">Liberar</option>
+                            <option value="deny">Bloquear</option>
+                        </select>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-end mt-3">
+        <button type="submit" form="userConfigForm" class="btn ls-btn-primary">Criar Usuário</button>
+    </div>
+</div>
+
+<script>
+function togglePermissions() {
+    const roleSelect = document.getElementById('roleSelect');
+    const permissionsCard = document.getElementById('permissionsCard');
+    const role = roleSelect.value;
+    
+    if (role === 'admin') {
+        permissionsCard.style.opacity = '0.5';
+        permissionsCard.style.pointerEvents = 'none';
+    } else {
+        permissionsCard.style.opacity = '1';
+        permissionsCard.style.pointerEvents = 'auto';
+        updatePermissionDefaults(role);
+    }
+}
+
+function updatePermissionDefaults(role) {
+    const rows = document.querySelectorAll('#permissionsCard tbody tr');
+    
+    rows.forEach(row => {
+        const operatorAllowed = row.dataset.operatorAllowed === 'true';
+        const viewerAllowed = row.dataset.viewerAllowed === 'true';
+        const roleIcon = row.querySelector('.role-icon');
+        const select = row.querySelector('select');
+        
+        let isAllowed = false;
+        if (role === 'operator') {
+            isAllowed = operatorAllowed;
+        } else if (role === 'viewer') {
+            isAllowed = viewerAllowed;
+        }
+        
+        // Atualizar o ícone do papel
+        if (isAllowed) {
+            roleIcon.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
+        } else {
+            roleIcon.innerHTML = '<i class="fas fa-times-circle text-danger"></i>';
+        }
+        
+        // Resetar select para "Seguir papel"
+        select.value = 'inherit';
+    });
+}
+
+// Inicializar estado
+togglePermissions();
+</script>
+{% endblock %}

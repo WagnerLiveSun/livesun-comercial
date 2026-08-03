@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+
+{% block title %}Documento {{ documento.numero_documento }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">Documento {{ documento.numero_documento }}</h2>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-light" onclick="window.print();">
+            <i class="fas fa-print"></i> Imprimir
+        </button>
+        <a href="{{ url_for('comercial_operacional.documentos_index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<div class="ls-card p-4 mb-4 danfe-header">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="danfe-title">Documento de Venda (Nao Fiscal)</div>
+            <div class="danfe-subtitle">LiveSun Comercial</div>
+            <div class="danfe-company">
+                {{ documento.empresa.nome if documento.empresa else '-' }}
+                {% if documento.empresa and documento.empresa.cnpj %}
+                    - CNPJ {{ documento.empresa.cnpj }}
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="danfe-number">No. {{ documento.numero_documento }}</div>
+            <div>Emissao: {{ documento.data_emissao.strftime('%d/%m/%Y') }}</div>
+            <div>Vencimento: {{ documento.data_vencimento.strftime('%d/%m/%Y') }}</div>
+            <div>Status: {{ documento.status }}</div>
+        </div>
+    </div>
+    <hr class="my-3">
+    <div class="row">
+        <div class="col-md-8"><strong>Cliente:</strong> {{ documento.cliente.nome if documento.cliente else '-' }}</div>
+        <div class="col-md-4 text-end"><strong>Total:</strong> {{ '%.2f'|format(documento.valor_total or 0) }}</div>
+    </div>
+    {% if documento.observacoes %}
+    <div class="mt-3"><strong>Observacoes:</strong> {{ documento.observacoes }}</div>
+    {% endif %}
+</div>
+
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qtd</th>
+                    <th>Valor unitario</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in documento.itens %}
+                <tr>
+                    <td>
+                        {% if item.tipo_item == 'P' and item.produto %}
+                            {{ item.produto.descricao_resumida }}
+                        {% elif item.tipo_item == 'S' and item.servico %}
+                            {{ item.servico.descricao }}
+                        {% else %}
+                            {{ item.descricao or '-' }}
+                        {% endif %}
+                    </td>
+                    <td>{{ '%.3f'|format(item.quantidade or 0) }}</td>
+                    <td>{{ '%.2f'|format(item.valor_unitario or 0) }}</td>
+                    <td>{{ '%.2f'|format(item.total_item or 0) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">Nenhum item registrado</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .danfe-header {
+        border: 1px dashed rgba(148, 163, 184, 0.5);
+    }
+    .danfe-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    .danfe-subtitle {
+        font-size: 0.85rem;
+        color: var(--ls-text-muted);
+    }
+    .danfe-company {
+        margin-top: 6px;
+        font-size: 0.95rem;
+    }
+    .danfe-number {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    @media print {
+        body {
+            background: #fff !important;
+            color: #111 !important;
+        }
+        .ls-topbar, .ls-sidebar, .btn, .ls-footer {
+            display: none !important;
+        }
+        .ls-content {
+            padding: 0 !important;
+        }
+        .ls-card {
+            border: 1px solid #ddd !important;
+            background: #fff !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+{% endblock %}

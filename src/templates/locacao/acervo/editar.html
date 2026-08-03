@@ -1,0 +1,137 @@
+{% extends "locacao/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('locacao.acervo_lista') }}">Acervo</a></li>
+<li class="breadcrumb-item active">Editar: {{ peca.codigo_interno }}</li>
+{% endblock %}
+
+{% block locacao_content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <h2 class="mb-4"><i class="fas fa-edit me-2"></i>Editar Peça: {{ peca.codigo_interno }}</h2>
+
+        <form method="POST" class="ls-card p-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Identificação -->
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-tag me-2"></i>Identificação</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Código Interno</label>
+                    <input type="text" class="form-control" value="{{ peca.codigo_interno }}" disabled>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Código de Barras</label>
+                    <input type="text" name="codigo_barras" class="form-control" value="{{ peca.codigo_barras or '' }}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Descrição *</label>
+                    <input type="text" name="descricao" class="form-control" value="{{ peca.descricao }}" required>
+                </div>
+            </div>
+
+            <!-- Classificação -->
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-folder me-2"></i>Classificação</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Categoria *</label>
+                    <select name="categoria" class="form-select" required>
+                        <option value="Vestido" {% if peca.categoria == 'Vestido' %}selected{% endif %}>Vestido</option>
+                        <option value="Fantasia" {% if peca.categoria == 'Fantasia' %}selected{% endif %}>Fantasia</option>
+                        <option value="Acessório" {% if peca.categoria == 'Acessório' %}selected{% endif %}>Acessório</option>
+                        <option value="Sapato" {% if peca.categoria == 'Sapato' %}selected{% endif %}>Sapato</option>
+                        <option value="Peruca" {% if peca.categoria == 'Peruca' %}selected{% endif %}>Peruca</option>
+                        <option value="Máscara" {% if peca.categoria == 'Máscara' %}selected{% endif %}>Máscara</option>
+                        <option value="Outro" {% if peca.categoria == 'Outro' %}selected{% endif %}>Outro</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tema</label>
+                    <input type="text" name="tema" class="form-control" value="{{ peca.tema or '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tamanho</label>
+                    <select name="tamanho" class="form-select">
+                        <option value="">Selecione...</option>
+                        <option value="P" {% if peca.tamanho == 'P' %}selected{% endif %}>P (Pequeno)</option>
+                        <option value="M" {% if peca.tamanho == 'M' %}selected{% endif %}>M (Médio)</option>
+                        <option value="G" {% if peca.tamanho == 'G' %}selected{% endif %}>G (Grande)</option>
+                        <option value="GG" {% if peca.tamanho == 'GG' %}selected{% endif %}>GG (Muito Grande)</option>
+                        <option value="Único" {% if peca.tamanho == 'Único' %}selected{% endif %}>Único</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Características Físicas -->
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-palette me-2"></i>Características Físicas</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Cor</label>
+                    <input type="text" name="cor" class="form-control" value="{{ peca.cor or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tecido</label>
+                    <input type="text" name="tecido" class="form-control" value="{{ peca.tecido or '' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Marca/Coleção</label>
+                    <input type="text" name="marca_colecao" class="form-control" value="{{ peca.marca_colecao or '' }}">
+                </div>
+            </div>
+
+            <!-- Valores -->
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-money-bill me-2"></i>Valores</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Valor de Aquisição *</label>
+                    <input type="number" name="valor_aquisicao" class="form-control" step="0.01" value="{{ peca.valor_aquisicao }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Valor de Reposição *</label>
+                    <input type="number" name="valor_reposicao" class="form-control" step="0.01" value="{{ peca.valor_reposicao }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Preço de Aluguel/Dia *</label>
+                    <input type="number" name="preco_aluguel_diario" class="form-control" step="0.01" value="{{ peca.preco_aluguel_diario }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Preço de Venda</label>
+                    <input type="number" name="preco_venda" class="form-control" step="0.01" value="{{ peca.preco_venda or '' }}">
+                </div>
+            </div>
+
+            <!-- Estado e Controle -->
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-cog me-2"></i>Estado e Controle</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Estado Físico *</label>
+                    <select name="estado_fisico" class="form-select" required>
+                        <option value="novo" {% if peca.estado_fisico == 'novo' %}selected{% endif %}>Novo</option>
+                        <option value="bom" {% if peca.estado_fisico == 'bom' %}selected{% endif %}>Bom</option>
+                        <option value="regular" {% if peca.estado_fisico == 'regular' %}selected{% endif %}>Regular</option>
+                        <option value="ruim" {% if peca.estado_fisico == 'ruim' %}selected{% endif %}>Ruim</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check mt-4">
+                        <input type="checkbox" name="ativo" id="ativo" class="form-check-input" {% if peca.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">
+                            Ativo
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('locacao.acervo_lista') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn ls-btn-primary">
+                    <i class="fas fa-save me-2"></i>Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

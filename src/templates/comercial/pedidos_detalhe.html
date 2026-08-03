@@ -1,0 +1,223 @@
+{% extends "layout.html" %}
+
+{% block title %}Pedido {{ pedido.numero }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">Pedido {{ pedido.numero }}</h1>
+        <p class="text-muted mb-0">Cliente: <strong>{{ pedido.cliente.nome if pedido.cliente else '-' }}</strong></p>
+    </div>
+    <div>
+        <a href="{{ url_for('comercial_operacional.pedidos_index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        {% if pedido.status in ['aprovado', 'em_producao', 'pronto'] %}
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#faturarModal">
+            <i class="fas fa-file-invoice-dollar"></i> Faturar
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="ls-card p-4 mb-4">
+            <h5 class="mb-3">Itens do Pedido</h5>
+            <div class="table-responsive">
+                <table class="table table-hover ls-theme-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tipo</th>
+                            <th>Descricao</th>
+                            <th>Qtd</th>
+                            <th>Atendida</th>
+                            <th>Valor Unit.</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in pedido.itens %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if item.tipo_item == 'P' else 'info' }}">
+                                    {{ 'Produto' if item.tipo_item == 'P' else 'Servico' }}
+                                </span>
+                            </td>
+                            <td>{{ item.descricao }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.quantidade_atendida }}</td>
+                            <td>{{ item.valor_unitario|brl }}</td>
+                            <td><strong>{{ item.valor_total|brl }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td class="text-end">Produtos:</td>
+                            <td>{{ pedido.valor_produtos|brl }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td class="text-end">Servicos:</td>
+                            <td>{{ pedido.valor_servicos|brl }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td class="text-end">Desconto:</td>
+                            <td>{{ pedido.valor_desconto|brl }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td class="text-end">Frete:</td>
+                            <td>{{ pedido.valor_frete|brl }}</td>
+                        </tr>
+                        <tr class="table-active">
+                            <td colspan="5"></td>
+                            <td class="text-end"><strong>TOTAL:</strong></td>
+                            <td><strong>{{ pedido.valor_total|brl }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        {% if pedido.observacoes %}
+        <div class="ls-card p-4">
+            <h5 class="mb-2">Observacoes</h5>
+            <p class="text-muted">{{ pedido.observacoes }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="ls-card p-4 mb-4">
+            <h5 class="mb-3">Informacoes do Pedido</h5>
+            <table class="table table-borderless ls-theme-table">
+                <tr>
+                    <td>Status:</td>
+                    <td>
+                        <span class="badge bg-{{
+                            'success' if pedido.status == 'aprovado' else
+                            ('info' if pedido.status == 'em_producao' else
+                            ('primary' if pedido.status == 'pronto' else
+                            ('secondary' if pedido.status == 'faturado' else
+                            ('dark' if pedido.status == 'entregue' else 'danger'))))
+                        }}">
+                            {{ pedido.status|replace('_', ' ')|title }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Data Emissao:</td>
+                    <td>{{ pedido.data_emissao.strftime('%d/%m/%Y') }}</td>
+                </tr>
+                <tr>
+                    <td>Data Entrega:</td>
+                    <td>{{ pedido.data_entrega.strftime('%d/%m/%Y') if pedido.data_entrega else 'Nao definida' }}</td>
+                </tr>
+                <tr>
+                    <td>Data Faturamento:</td>
+                    <td>{{ pedido.data_faturamento.strftime('%d/%m/%Y') if pedido.data_faturamento else '-' }}</td>
+                </tr>
+                <tr>
+                    <td>Cliente:</td>
+                    <td>{{ pedido.cliente.nome if pedido.cliente else '-' }}</td>
+                </tr>
+                <tr>
+                    <td>Vendedor:</td>
+                    <td>{{ pedido.vendedor.nome if pedido.vendedor else '-' }}</td>
+                </tr>
+                {% if pedido.filial %}
+                <tr>
+                    <td>Filial:</td>
+                    <td>{{ pedido.filial.nome }}</td>
+                </tr>
+                {% endif %}
+                {% if pedido.orcamento %}
+                <tr>
+                    <td>Orcamento:</td>
+                    <td>
+                        <a href="{{ url_for('comercial_operacional.orcamentos_detalhe', orcamento_id=pedido.orcamento_id) }}">
+                            {{ pedido.orcamento.numero }}
+                        </a>
+                    </td>
+                </tr>
+                {% endif %}
+                {% if pedido.documento_venda %}
+                <tr>
+                    <td>Documento:</td>
+                    <td>
+                        <a href="{{ url_for('comercial_operacional.documentos_detalhe', documento_id=pedido.documento_venda_id) }}">
+                            {{ pedido.documento_venda.numero_documento }}
+                        </a>
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+
+        {% if pedido.observacoes_faturamento %}
+        <div class="ls-card p-4">
+            <h5 class="mb-2">Observacoes de Faturamento</h5>
+            <p class="text-muted">{{ pedido.observacoes_faturamento }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Faturamento -->
+{% if pedido.status in ['aprovado', 'em_producao', 'pronto'] %}
+<div class="modal fade" id="faturarModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content ls-card">
+            <div class="modal-header">
+                <h5 class="modal-title">Faturar Pedido {{ pedido.numero }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" action="{{ url_for('comercial_operacional.pedidos_faturar', pedido_id=pedido.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="conta_banco_id" class="form-label">Conta Bancaria *</label>
+                        <select class="form-control" id="conta_banco_id" name="conta_banco_id" required>
+                            <option value="">Selecione...</option>
+                            {% for conta in contas_banco %}
+                            <option value="{{ conta.id }}">{{ conta.nome }} ({{ conta.banco_codigo }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fluxo_conta_id" class="form-label">Conta de Fluxo *</label>
+                        <select class="form-control" id="fluxo_conta_id" name="fluxo_conta_id" required>
+                            <option value="">Selecione...</option>
+                            {% for conta in contas_fluxo %}
+                            <option value="{{ conta.id }}">{{ conta.codigo }} - {{ conta.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="data_vencimento" class="form-label">Data Vencimento *</label>
+                        <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" value="{{ pedido.data_emissao.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="gerar_documento" name="gerar_documento" checked>
+                        <label class="form-check-label" for="gerar_documento">Gerar documento de venda</label>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>Valor a faturar:</strong> {{ pedido.valor_total|brl }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Faturamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

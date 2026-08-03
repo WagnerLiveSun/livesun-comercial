@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: livesun_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: livesun_financeiro
+      MYSQL_USER: gfinanceiro
+      MYSQL_PASSWORD: gfinanceiro123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+
+  # Flask Application
+  web:
+    build: .
+    container_name: livesun_app
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: development
+      FLASK_APP: src/app.py
+      FLASK_DEBUG: 'True'
+      DB_TYPE: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: gfinanceiro
+      DB_PASSWORD: gfinanceiro123
+      DB_NAME: livesun_financeiro
+      SECRET_KEY: dev-secret-key-change-in-production
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    command: >
+      bash -c "
+        pip install -r requirements.txt &&
+        python migrate_comissoes.py &&
+        python inicializar_db.py &&
+        flask run --host=0.0.0.0
+      "
+
+volumes:
+  mysql_data:
+
+networks:
+  default:
+    name: livesun_network

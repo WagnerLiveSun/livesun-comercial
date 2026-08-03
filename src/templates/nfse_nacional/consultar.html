@@ -1,0 +1,193 @@
+{% extends "layout.html" %}
+
+{% block title %}Consultar NFS-e{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Consultar NFS-e</h2>
+        <p class="text-muted mb-0">Consultar NFS-e pela chave de acesso no Sistema Nacional.</p>
+    </div>
+    <a href="{{ url_for('nfse_nacional.index') }}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+
+<style>
+.nfse-consulta-card {
+    background: var(--ls-card-bg);
+    border: 1px solid var(--ls-border-subtle);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+.nfse-consulta-card .form-label {
+    color: var(--ls-text-muted);
+    font-weight: 600;
+}
+.nfse-consulta-card .form-control,
+.nfse-consulta-card .form-select {
+    background-color: var(--ls-input-bg);
+    border-color: var(--ls-input-border);
+    color: var(--ls-text-main);
+}
+.nfse-consulta-card .form-control::placeholder {
+    color: var(--ls-text-muted);
+}
+.nfse-resultado-box {
+    background: var(--ls-bg-elevated);
+    border: 1px solid var(--ls-border-subtle);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+.nfse-resultado-item {
+    margin-bottom: 1rem;
+}
+.nfse-resultado-item small {
+    display: block;
+    color: var(--ls-text-muted);
+    margin-bottom: 0.25rem;
+}
+.nfse-resultado-item strong {
+    color: var(--ls-text-strong);
+}
+.xml-preview {
+    background: var(--ls-bg-elevated);
+    border: 1px solid var(--ls-border-subtle);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+</style>
+
+<div class="ls-card p-4 nfse-consulta-card mb-4">
+    <h5 class="ls-page-title mb-3">Consulta por Chave de Acesso</h5>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label">Chave de Acesso (50 dígitos)</label>
+                <input type="text" name="chave_acesso" class="form-control ls-theme-control" 
+                       value="{{ chave_acesso }}" placeholder="Digite a chave de acesso da NFS-e" maxlength="50">
+                <small class="text-muted">A chave de acesso deve conter 50 dígitos numéricos.</small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Ambiente</label>
+                <select name="ambiente" class="form-select ls-theme-control">
+                    <option value="homologacao" {% if request.form.get('ambiente') == 'homologacao' %}selected{% endif %}>Homologação</option>
+                    <option value="producao" {% if request.form.get('ambiente') == 'producao' %}selected{% endif %}>Produção</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Consultar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if resultado %}
+<div class="ls-card p-4 nfse-consulta-card">
+    <h5 class="ls-page-title mb-3">Resultado da Consulta</h5>
+    
+    {% if resultado.sucesso %}
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i>{{ resultado.mensagem }}
+    </div>
+    
+    <div class="nfse-resultado-box mb-3">
+        <div class="nfse-resultado-item">
+            <small>Status HTTP</small>
+            <strong>{{ resultado.httpstatus }}</strong>
+        </div>
+        <div class="nfse-resultado-item">
+            <small>Status da Consulta</small>
+            <strong>{{ resultado.status }}</strong>
+        </div>
+        
+        {% if resultado.xml_nfse %}
+        <div class="mt-3">
+            <button onclick="baixarXml()" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-download me-2"></i>Baixar XML
+            </button>
+            <button onclick="imprimirDanfse()" class="btn btn-primary">
+                <i class="fas fa-print me-2"></i>Imprimir DANFSe
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if resultado.xml_nfse %}
+    <div class="nfse-resultado-box">
+        <div class="nfse-resultado-item">
+            <small>XML da NFS-e</small>
+            <div class="xml-preview">{{ resultado.xml_nfse }}</div>
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle me-2"></i>{{ resultado.mensagem }}
+    </div>
+    
+    {% if resultado.httpstatus %}
+    <div class="nfse-resultado-box">
+        <div class="nfse-resultado-item">
+            <small>Status HTTP</small>
+            <strong>{{ resultado.httpstatus }}</strong>
+        </div>
+        <div class="nfse-resultado-item">
+            <small>Status da Consulta</small>
+            <strong>{{ resultado.status }}</strong>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+<script>
+function baixarXml() {
+    const xml = `{{ resultado.xml_nfse | safe }}`;
+    const blob = new Blob([xml], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nfse_{{ chave_acesso }}.xml';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function imprimirDanfse() {
+    const xml = `{{ resultado.xml_nfse | safe }}`;
+    const chave = '{{ chave_acesso }}';
+    
+    // Enviar para rota de impressão
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url_for("nfse_nacional.nfse_consultar_imprimir") }}';
+    
+    const xmlInput = document.createElement('input');
+    xmlInput.type = 'hidden';
+    xmlInput.name = 'xml_nfse';
+    xmlInput.value = xml;
+    
+    const chaveInput = document.createElement('input');
+    chaveInput.type = 'hidden';
+    chaveInput.name = 'chave_acesso';
+    chaveInput.value = chave;
+    
+    form.appendChild(xmlInput);
+    form.appendChild(chaveInput);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+</script>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "locacao/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('locacao.acervo_lista') }}">Acervo</a></li>
+<li class="breadcrumb-item active">Disponibilidade</li>
+{% endblock %}
+
+{% block locacao_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-6 mb-4"><i class="fas fa-calendar-check me-2"></i>Relatório de Disponibilidade</h1>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="ls-card p-3 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Data Inicial</label>
+            <input type="date" name="data_inicio" class="form-control" value="{{ data_inicio.strftime('%Y-%m-%d') }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Data Final</label>
+            <input type="date" name="data_fim" class="form-control" value="{{ data_fim.strftime('%Y-%m-%d') }}">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-primary w-100">
+                <i class="fas fa-search me-2"></i>Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Período -->
+<div class="ls-card p-3 mb-4">
+    <p class="mb-0">
+        <strong>Período:</strong> {{ data_inicio.strftime('%d/%m/%Y') }} a {{ data_fim.strftime('%d/%m/%Y') }}
+    </p>
+</div>
+
+<!-- Tabela de Disponibilidade -->
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Tamanho</th>
+                    <th>Status</th>
+                    <th>Motivo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for peca_id, info in disponibilidade.items() %}
+                <tr>
+                    <td><strong>{{ info.peca.codigo_interno }}</strong></td>
+                    <td>{{ info.peca.descricao }}</td>
+                    <td>{{ info.peca.categoria }}</td>
+                    <td>{{ info.peca.tamanho or '-' }}</td>
+                    <td>
+                        {% if info.disponivel %}
+                        <span class="badge bg-success">Disponível</span>
+                        {% else %}
+                        <span class="badge bg-danger">Indisponível</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ info.motivo }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

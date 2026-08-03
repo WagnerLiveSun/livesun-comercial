@@ -1,0 +1,112 @@
+{% extends "layout.html" %}
+
+{% block title %}Serviços NFS-e{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Serviços</h2>
+        <p class="text-muted mb-0">Catálogo fiscal de serviços usado na composição da DPS/NFS-e.</p>
+    </div>
+    <a href="{{ url_for('nfse_nacional.index') }}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-9">
+            <label class="form-label">Buscar</label>
+            <input type="text" name="busca" class="form-control ls-theme-control" value="{{ busca }}" placeholder="Código interno, descrição, código nacional ou NBS">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn ls-btn-primary w-100">Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="ls-card p-4">
+            <h5 class="ls-page-title mb-3">Novo serviço</h5>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label">Código interno</label>
+                    <input type="text" name="codigo_interno" class="form-control ls-theme-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Descrição</label>
+                    <input type="text" name="descricao" class="form-control ls-theme-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Código nacional</label>
+                    <input type="text" name="codigo_servico" list="codigoServicoOptions" class="form-control ls-theme-control" value="{{ fiscal_defaults.codigo_servico }}">
+                    <datalist id="codigoServicoOptions">
+                        {% for valor in fiscal_defaults.codigo_servico_opcoes %}
+                        <option value="{{ valor }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">NBS</label>
+                    <input type="text" name="nbs" list="nbsOptions" class="form-control ls-theme-control" value="{{ fiscal_defaults.nbs }}">
+                    <datalist id="nbsOptions">
+                        {% for valor in fiscal_defaults.nbs_opcoes %}
+                        <option value="{{ valor }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Natureza</label>
+                    <input type="text" name="natureza_servico" class="form-control ls-theme-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Incidência</label>
+                    <input type="text" name="indicador_incidencia" class="form-control ls-theme-control">
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="ativo" checked>
+                    <label class="form-check-label">Ativo</label>
+                </div>
+                <button type="submit" class="btn ls-btn-primary w-100">Salvar</button>
+            </form>
+            <div class="form-text text-muted mt-3">Os campos de código nacional e NBS já herdam os padrões fiscais cadastrados na empresa.</div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="ls-card p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle ls-theme-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Descrição</th>
+                            <th>Nacional</th>
+                            <th>NBS</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for servico in servicos %}
+                        <tr>
+                            <td>{{ servico.codigo_interno }}</td>
+                            <td>{{ servico.descricao }}</td>
+                            <td>{{ servico.codigo_servico or '-' }}</td>
+                            <td>{{ servico.nbs or '-' }}</td>
+                            <td>
+                                {% if servico.ativo %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">Nenhum serviço encontrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

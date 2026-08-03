@@ -1,0 +1,114 @@
+{% extends "locacao/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Orçamentos</li>
+{% endblock %}
+
+{% block locacao_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-6"><i class="fas fa-file-invoice me-2"></i>Orçamentos de Locação</h1>
+            <a href="{{ url_for('locacao.orcamentos_criar') }}" class="btn ls-btn-primary">
+                <i class="fas fa-plus me-2"></i>Novo Orçamento
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="ls-card p-3 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+                <option value="">Todos</option>
+                <option value="rascunho" {% if status_filtro == 'rascunho' %}selected{% endif %}>Rascunho</option>
+                <option value="enviado" {% if status_filtro == 'enviado' %}selected{% endif %}>Enviado</option>
+                <option value="aprovado" {% if status_filtro == 'aprovado' %}selected{% endif %}>Aprovado</option>
+                <option value="rejeitado" {% if status_filtro == 'rejeitado' %}selected{% endif %}>Rejeitado</option>
+                <option value="convertido" {% if status_filtro == 'convertido' %}selected{% endif %}>Convertido</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Cliente</label>
+            <select name="cliente_id" class="form-select">
+                <option value="">Todos</option>
+                {% for cliente in clientes %}
+                <option value="{{ cliente.id }}" {% if cliente_id_filtro|int == cliente.id %}selected{% endif %}>{{ cliente.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-primary w-100">
+                <i class="fas fa-search me-2"></i>Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Tabela de Orçamentos -->
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Número</th>
+                    <th>Cliente</th>
+                    <th>Data Emissão</th>
+                    <th>Período</th>
+                    <th>Valor Total</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if orcamentos %}
+                    {% for orcamento in orcamentos %}
+                    <tr>
+                        <td><strong>{{ orcamento.numero }}</strong></td>
+                        <td>{{ orcamento.cliente.nome }}</td>
+                        <td>{{ orcamento.data_emissao.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {{ orcamento.data_retirada_prevista.strftime('%d/%m') }} a 
+                            {{ orcamento.data_devolucao_prevista.strftime('%d/%m/%Y') }}
+                        </td>
+                        <td><strong>R$ {{ orcamento.valor_total|brl }}</strong></td>
+                        <td>
+                            <span class="badge 
+                                {% if orcamento.status == 'rascunho' %}bg-secondary
+                                {% elif orcamento.status == 'enviado' %}bg-info
+                                {% elif orcamento.status == 'aprovado' %}bg-success
+                                {% elif orcamento.status == 'rejeitado' %}bg-danger
+                                {% elif orcamento.status == 'convertido' %}bg-primary
+                                {% endif %}">
+                                {{ orcamento.status|upper }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('locacao.orcamentos_editar', orcamento_id=orcamento.id) }}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if orcamento.status == 'aprovado' %}
+                            <form method="POST" action="{{ url_for('locacao.orcamentos_converter_reserva', orcamento_id=orcamento.id) }}" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Converter em Reserva" onclick="return confirm('Converter este orçamento em reserva?');">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox me-2"></i>Nenhum orçamento encontrado
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

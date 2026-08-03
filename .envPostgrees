@@ -1,0 +1,31 @@
+# Configurações PostgreSQL
+# Para usar este arquivo, renomeie para .env ou copie as variáveis para o .env
+
+# Tipo de banco de dados
+DB_TYPE=postgresql
+
+# Configurações PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=livesun
+DB_NAME=comercial
+
+# Configurações Flask
+FLASK_APP=src/app.py
+FLASK_ENV=development
+SECRET_KEY=sua_chave_secreta_aqui
+
+# Configurações de Sessão
+SESSION_COOKIE_SECURE=false
+SESSION_COOKIE_HTTPONLY=true
+SESSION_COOKIE_SAMESITE=Lax
+PERMANENT_SESSION_LIFETIME=86400
+
+# Configurações do Flask-Mail (opcional)
+# MAIL_SERVER=smtp.gmail.com
+# MAIL_PORT=587
+# MAIL_USE_TLS=true
+# MAIL_USERNAME=seu_email@gmail.com
+# MAIL_PASSWORD=sua_senha_app
+# MAIL_DEFAULT_SENDER=seu_email@gmail.com

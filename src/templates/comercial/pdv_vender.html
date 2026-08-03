@@ -1,0 +1,614 @@
+{% extends "layout.html" %}
+
+{% block title %}PDV - Venda{% endblock %}
+
+{% block extra_css %}
+<style>
+.pdv-container {
+    min-height: calc(100vh - 200px);
+}
+.pdv-display {
+    font-size: 2.5rem;
+    font-weight: 600;
+    text-align: right;
+    padding: 20px;
+    background: var(--ls-input-bg);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-family: 'Courier New', monospace;
+}
+.item-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+.item-row {
+    padding: 10px;
+    border-bottom: 1px solid var(--ls-border-subtle);
+}
+.item-row:last-child {
+    border-bottom: none;
+}
+.tecla-produto {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.tecla-produto:hover {
+    transform: scale(1.05);
+}
+
+/* Melhorias para modo claro */
+:root[data-theme="light"] .pdv-display {
+    background: #ffffff !important;
+    border: 1px solid rgba(100, 116, 139, 0.3) !important;
+    color: #1e293b !important;
+}
+
+:root[data-theme="light"] .item-row {
+    border-bottom-color: rgba(100, 116, 139, 0.2) !important;
+}
+
+:root[data-theme="light"] .tecla-produto {
+    background: #ffffff !important;
+    border: 1px solid rgba(100, 116, 139, 0.2) !important;
+    color: #334155 !important;
+}
+
+:root[data-theme="light"] .tecla-produto:hover {
+    background: rgba(30, 64, 175, 0.05) !important;
+    border-color: rgba(30, 64, 175, 0.3) !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">
+            <i class="fas fa-cash-register"></i> PDV Venda
+        </h1>
+        <p class="text-muted mb-0">Sessao: <strong>{{ sessao.numero }}</strong> | Operador: {{ sessao.operador.full_name or sessao.operador.username }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('comercial_operacional.pdv_index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        <a href="{{ url_for('comercial_operacional.pdv_fechar', sessao_id=sessao.id) }}" class="btn btn-outline-danger">
+            <i class="fas fa-stop"></i> Fechar Caixa
+        </a>
+    </div>
+</div>
+
+<div class="pdv-container">
+    <div class="row g-3">
+        <!-- Painel de Venda -->
+        <div class="col-md-8">
+            <div class="ls-card p-3 mb-3">
+                <div class="row g-2 mb-3">
+                    <div class="col-4">
+                        <label class="form-label">Cliente (opcional)</label>
+                        <select id="cliente_id" class="form-control form-control-sm">
+                            <option value="">Consumidor</option>
+                            {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Tabela de Preço</label>
+                        <select id="tabela_preco_id" class="form-control form-control-sm" onchange="atualizarPrecosTabela()">
+                            <option value="">Padrão</option>
+                            {% for tabela in tabelas %}
+                            <option value="{{ tabela.id }}">{{ tabela.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Codigo de Barras</label>
+                        <input type="text" id="codigo_barras" class="form-control form-control-sm" placeholder="Leia ou digite o codigo" onkeypress="if(event.key==='Enter'){event.preventDefault();buscarProdutoCodigo();}">
+                    </div>
+                </div>
+
+                <!-- Campos de quantidade e valor -->
+                <div class="row g-2 mb-3">
+                    <div class="col-3">
+                        <label class="form-label">Quantidade</label>
+                        <input type="number" id="quantidade_input" class="form-control form-control-sm" value="1" min="0.001" step="0.001">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Valor Unit. (R$)</label>
+                        <input type="number" id="valor_unitario_input" class="form-control form-control-sm" value="0.00" step="0.01" min="0">
+                    </div>
+                    <div class="col-5">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="button" class="btn btn-primary btn-sm w-100" onclick="adicionarItemManual()">
+                            <i class="fas fa-plus"></i> Adicionar Item
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Display do Total -->
+                <div class="pdv-display text-success">
+                    R$ <span id="displayTotal">0,00</span>
+                </div>
+
+                <!-- Lista de Itens -->
+                <div class="item-list ls-card p-2 mb-3">
+                    <table class="table table-sm table-borderless ls-theme-table mb-0" id="itensTable">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th class="text-center">Qtd</th>
+                                <th class="text-end">Unit.</th>
+                                <th class="text-end">Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="itensBody">
+                            <!-- Itens serao adicionados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Botoes de Acao -->
+                <div class="row g-2">
+                    <div class="col-3">
+                        <button type="button" class="btn btn-outline-warning w-100" onclick="limparVenda()">
+                            <i class="fas fa-trash"></i> Cancelar
+                        </button>
+                    </div>
+                    <div class="col-3">
+                        <button type="button" class="btn btn-outline-info w-100" onclick="abrirDesconto()">
+                            <i class="fas fa-percent"></i> Desconto
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button type="button" class="btn btn-success w-100 btn-lg" onclick="finalizarVenda()">
+                            <i class="fas fa-check-circle"></i> FINALIZAR
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teclado de Produtos -->
+        <div class="col-md-4">
+            <div class="ls-card p-3">
+                <h6 class="mb-3">Produtos Rapidos</h6>
+                <div class="row g-2">
+                    {% for produto in produtos[:12] %}
+                    <div class="col-4">
+                        <div class="tecla-produto ls-card" onclick="adicionarProdutoRapido({{ produto.id }}, '{{ produto.descricao_resumida|replace("'", "\\'") }}', {{ produto.valor_venda_padrao or 0 }}, '{{ produto.codigo_barras or '' }}')">
+                            <i class="fas fa-box text-primary"></i>
+                            <small class="text-center mt-1" style="font-size: 10px; line-height: 1.2;">{{ produto.descricao_resumida[:20] }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <hr class="my-3">
+
+                <h6 class="mb-2">Buscar Produto</h6>
+                <select id="produto_select" class="form-control form-control-sm" onchange="preencherValorProduto()">
+                    <option value="" data-valor="0">Selecione um produto...</option>
+                    {% for produto in produtos %}
+                    <option value="{{ produto.id }}" data-nome="{{ produto.descricao_resumida }}" data-codigo="{{ produto.codigo_interno }}" data-valor="{{ produto.valor_venda_padrao or 0 }}" data-barras="{{ produto.codigo_barras or '' }}">{{ produto.codigo_interno }} - {{ produto.descricao_resumida }}</option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted">Selecione para preencher valor automaticamente</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Finalizar -->
+<div class="modal fade" id="finalizarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content ls-card">
+            <div class="modal-header">
+                <h5 class="modal-title">Finalizar Venda</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formFinalizar" method="post" action="{{ url_for('comercial_operacional.pdv_venda_finalizar', venda_id=0) }}" onsubmit="return false;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="pdv-display text-success mb-3">
+                        R$ <span id="modalTotal">0,00</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Formas de Pagamento</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="fas fa-money-bill-wave text-success"></i></span>
+                                    <input type="number" name="valor_dinheiro" id="pgDinheiro" class="form-control" value="0.00" step="0.01" onchange="calcularTroco()">
+                                </div>
+                                <small class="text-muted">Dinheiro</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="fas fa-credit-card text-primary"></i></span>
+                                    <input type="number" name="valor_cartao_credito" id="pgCredito" class="form-control" value="0.00" step="0.01">
+                                </div>
+                                <small class="text-muted">Cartao Credito</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="fas fa-credit-card text-info"></i></span>
+                                    <input type="number" name="valor_cartao_debito" id="pgDebito" class="form-control" value="0.00" step="0.01">
+                                </div>
+                                <small class="text-muted">Cartao Debito</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="fas fa-qrcode text-warning"></i></span>
+                                    <input type="number" name="valor_pix" id="pgPix" class="form-control" value="0.00" step="0.01">
+                                </div>
+                                <small class="text-muted">PIX</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="valor_recebido" class="form-label">Valor Recebido</label>
+                        <input type="number" name="valor_recebido" id="valorRecebido" class="form-control" value="0.00" step="0.01" onchange="calcularTroco()">
+                    </div>
+
+                    <div class="alert alert-info" id="trocoDisplay" style="display: none;">
+                        <strong>Troco:</strong> R$ <span id="valorTroco">0,00</span>
+                    </div>
+
+                    <input type="hidden" name="valor_desconto" id="descontoInput" value="0.00">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="confirmarFinalizacao()">Confirmar Venda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dados dos produtos com preços por tabela (passado do servidor)
+const produtosData = {{ produtos|tojson }};
+const tabelasPrecoData = {{ tabelas_preco_itens|tojson|default('{}') }};
+
+let itens = [];
+let vendaId = null;
+let desconto = 0;
+
+// Preços base dos produtos
+const precosBase = {};
+produtosData.forEach(p => {
+    precosBase[p.id] = p.valor_venda_padrao || 0;
+});
+
+function adicionarProdutoRapido(produtoId, nome, preco, codigoBarras = '') {
+    const qtd = parseFloat(document.getElementById('quantidade_input').value) || 1;
+    const valorUnit = preco || obterPrecoProduto(produtoId);
+    adicionarItem('P', produtoId, nome, qtd, valorUnit, codigoBarras);
+}
+
+function preencherValorProduto() {
+    const select = document.getElementById('produto_select');
+    const option = select.options[select.selectedIndex];
+    if (select.value) {
+        const produtoId = parseInt(select.value);
+        const preco = obterPrecoProduto(produtoId);
+        document.getElementById('valor_unitario_input').value = preco.toFixed(2);
+    }
+}
+
+function obterPrecoProduto(produtoId) {
+    const tabelaId = document.getElementById('tabela_preco_id').value;
+    if (tabelaId && tabelasPrecoData[tabelaId] && tabelasPrecoData[tabelaId][produtoId]) {
+        return tabelasPrecoData[tabelaId][produtoId];
+    }
+    return precosBase[produtoId] || 0;
+}
+
+function atualizarPrecosTabela() {
+    // Recalcular valores dos itens já adicionados se houver tabela selecionada
+    const tabelaId = document.getElementById('tabela_preco_id').value;
+    if (tabelaId && itens.length > 0) {
+        itens.forEach(item => {
+            if (item.tipo === 'P' && item.produto_id) {
+                const novoPreco = obterPrecoProduto(item.produto_id);
+                item.valor_unitario = novoPreco;
+                item.valor_total = item.quantidade * novoPreco;
+            }
+        });
+        renderItens();
+    }
+}
+
+function buscarProdutoCodigo() {
+    const codigo = document.getElementById('codigo_barras').value.trim();
+    if (!codigo) return;
+    
+    // Buscar produto por código interno ou código de barras
+    const produto = produtosData.find(p => p.codigo_interno === codigo || p.codigo_barras === codigo);
+    if (produto) {
+        const qtd = parseFloat(document.getElementById('quantidade_input').value) || 1;
+        const valorUnit = obterPrecoProduto(produto.id);
+        document.getElementById('valor_unitario_input').value = valorUnit.toFixed(2);
+        adicionarItem('P', produto.id, produto.descricao_resumida, qtd, valorUnit, produto.codigo_barras || codigo);
+        document.getElementById('codigo_barras').value = '';
+    } else {
+        alert('Produto não encontrado: ' + codigo);
+    }
+}
+
+function adicionarItemManual() {
+    const codigoBarras = document.getElementById('codigo_barras').value.trim();
+    const select = document.getElementById('produto_select');
+    
+    let produtoId, nome, valorUnit, codBarras = '';
+    const qtd = parseFloat(document.getElementById('quantidade_input').value) || 1;
+    const valorManual = parseFloat(document.getElementById('valor_unitario_input').value) || 0;
+    
+    // Prioridade 1: Código de barras digitado
+    if (codigoBarras) {
+        const produto = produtosData.find(p => p.codigo_interno === codigoBarras || p.codigo_barras === codigoBarras);
+        if (!produto) {
+            alert('Produto não encontrado: ' + codigoBarras);
+            return;
+        }
+        produtoId = produto.id;
+        nome = produto.descricao_resumida;
+        codBarras = produto.codigo_barras || codigoBarras;
+        // Usar valor manual se informado, senão buscar da tabela/padrão
+        valorUnit = valorManual > 0 ? valorManual : obterPrecoProduto(produto.id);
+        document.getElementById('codigo_barras').value = '';
+    }
+    // Prioridade 2: Produto selecionado no dropdown
+    else if (select.value) {
+        const option = select.options[select.selectedIndex];
+        produtoId = parseInt(select.value);
+        nome = option.dataset.nome;
+        codBarras = option.dataset.barras || '';
+        // Usar valor manual se informado, senão buscar da tabela/padrão
+        valorUnit = valorManual > 0 ? valorManual : obterPrecoProduto(produtoId);
+        select.value = '';
+    }
+    else {
+        alert('Informe o código de barras ou selecione um produto');
+        return;
+    }
+    
+    if (valorUnit <= 0) {
+        alert('Informe um valor unitário válido');
+        return;
+    }
+    
+    adicionarItem('P', produtoId, nome, qtd, valorUnit, codBarras);
+    
+    // Limpar campos
+    document.getElementById('quantidade_input').value = '1';
+    document.getElementById('valor_unitario_input').value = '0.00';
+    document.getElementById('codigo_barras').focus();
+}
+
+function adicionarItem(tipo, id, descricao, qtd, valorUnit, codigoBarras = '') {
+    const item = {
+        tipo: tipo,
+        produto_id: tipo === 'P' ? id : null,
+        servico_id: tipo === 'S' ? id : null,
+        descricao: descricao,
+        quantidade: qtd,
+        valor_unitario: valorUnit,
+        valor_total: qtd * valorUnit,
+        codigo_barras: codigoBarras
+    };
+    itens.push(item);
+    renderItens();
+}
+
+function renderItens() {
+    const tbody = document.getElementById('itensBody');
+    tbody.innerHTML = '';
+    let total = 0;
+
+    itens.forEach((item, index) => {
+        total += item.valor_total;
+        tbody.innerHTML += `
+            <tr>
+                <td>${item.descricao}</td>
+                <td class="text-center">
+                    <input type="number" class="form-control form-control-sm" style="width: 80px; display: inline-block; text-align: center;" 
+                           value="${item.quantidade}" step="0.001" min="0.001"
+                           onchange="atualizarQuantidade(${index}, this.value)">
+                </td>
+                <td class="text-end">
+                    <input type="number" class="form-control form-control-sm" style="width: 100px; display: inline-block; text-align: right;" 
+                           value="${item.valor_unitario.toFixed(2)}" step="0.01" min="0.01"
+                           onchange="atualizarValorUnitario(${index}, this.value)">
+                </td>
+                <td class="text-end"><strong>${item.valor_total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong></td>
+                <td>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removerItem(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    total -= desconto;
+    document.getElementById('displayTotal').textContent = total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function atualizarQuantidade(index, novaQtd) {
+    const qtd = parseFloat(novaQtd) || 1;
+    if (qtd <= 0) {
+        alert('Quantidade deve ser maior que zero');
+        renderItens();
+        return;
+    }
+    itens[index].quantidade = qtd;
+    itens[index].valor_total = qtd * itens[index].valor_unitario;
+    renderItens();
+}
+
+function atualizarValorUnitario(index, novoValor) {
+    const valor = parseFloat(novoValor) || 0;
+    if (valor <= 0) {
+        alert('Valor deve ser maior que zero');
+        renderItens();
+        return;
+    }
+    itens[index].valor_unitario = valor;
+    itens[index].valor_total = itens[index].quantidade * valor;
+    renderItens();
+}
+
+function removerItem(index) {
+    itens.splice(index, 1);
+    renderItens();
+}
+
+function limparVenda() {
+    if (confirm('Cancelar venda atual?')) {
+        itens = [];
+        desconto = 0;
+        vendaId = null;
+        renderItens();
+    }
+}
+
+function abrirDesconto() {
+    const valor = prompt('Valor do desconto (R$):', '0.00');
+    if (valor !== null) {
+        desconto = parseFloat(valor.replace(',', '.')) || 0;
+        renderItens();
+    }
+}
+
+function finalizarVenda() {
+    if (itens.length === 0) {
+        alert('Adicione pelo menos um item.');
+        return;
+    }
+
+    const total = itens.reduce((sum, item) => sum + item.valor_total, 0) - desconto;
+    document.getElementById('modalTotal').textContent = total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('descontoInput').value = desconto.toFixed(2);
+
+    // Distribuir valor total nas formas de pagamento
+    document.getElementById('pgDinheiro').value = total.toFixed(2);
+    document.getElementById('pgCredito').value = '0.00';
+    document.getElementById('pgDebito').value = '0.00';
+    document.getElementById('pgPix').value = '0.00';
+    document.getElementById('valorRecebido').value = total.toFixed(2);
+
+    calcularTroco();
+
+    new bootstrap.Modal(document.getElementById('finalizarModal')).show();
+}
+
+function calcularTroco() {
+    const total = itens.reduce((sum, item) => sum + item.valor_total, 0) - desconto;
+    const recebido = parseFloat(document.getElementById('valorRecebido').value) || 0;
+    const troco = recebido - total;
+
+    if (troco > 0) {
+        document.getElementById('trocoDisplay').style.display = 'block';
+        document.getElementById('valorTroco').textContent = troco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    } else {
+        document.getElementById('trocoDisplay').style.display = 'none';
+    }
+}
+
+// Função principal de finalização - chamada pelo botão Confirmar Venda
+async function confirmarFinalizacao() {
+    const btnSubmit = document.querySelector('#finalizarModal .btn-success');
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Processando...';
+
+    try {
+        if (itens.length === 0) {
+            throw new Error('Adicione pelo menos um item.');
+        }
+
+        let vid = vendaId;
+
+        for (const item of itens) {
+            const formData = new FormData();
+            formData.append('csrf_token', '{{ csrf_token() }}');
+            formData.append('tipo_item', item.tipo);
+            formData.append('produto_id', item.produto_id || '');
+            formData.append('servico_id', item.servico_id || '');
+            formData.append('codigo_barras', item.codigo_barras || '');
+            formData.append('quantidade', String(item.quantidade));
+            formData.append('valor_unitario', Number(item.valor_unitario).toFixed(2));
+
+            const response = await fetch('{{ url_for("comercial_operacional.pdv_venda_adicionar_item", sessao_id=sessao.id) }}', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || data.sucesso === false) {
+                throw new Error(data.mensagem || 'Erro ao adicionar item à venda.');
+            }
+
+            if (!vid && data.venda_id) {
+                vid = data.venda_id;
+            }
+        }
+
+        if (!vid || vid === 0) {
+            throw new Error('ID da venda inválido.');
+        }
+
+        vendaId = vid;
+
+        const finalForm = new FormData();
+        finalForm.append('csrf_token', '{{ csrf_token() }}');
+        finalForm.append('cliente_id', document.getElementById('cliente_id')?.value || '');
+        finalForm.append('valor_desconto', desconto.toFixed(2));
+        finalForm.append('valor_dinheiro', document.getElementById('pgDinheiro')?.value || '0');
+        finalForm.append('valor_cartao_credito', document.getElementById('pgCredito')?.value || '0');
+        finalForm.append('valor_cartao_debito', document.getElementById('pgDebito')?.value || '0');
+        finalForm.append('valor_pix', document.getElementById('pgPix')?.value || '0');
+        finalForm.append('valor_recebido', document.getElementById('valorRecebido')?.value || '0');
+
+        const responseFinalizar = await fetch('/comercial/pdv/venda/' + vid + '/finalizar', {
+            method: 'POST',
+            body: finalForm
+        });
+
+        if (!responseFinalizar.ok) {
+            throw new Error('Erro ao finalizar venda: ' + responseFinalizar.status);
+        }
+
+        window.location.href = '/comercial/pdv/venda/' + vid + '/imprimir';
+
+    } catch (err) {
+        console.error('Erro:', err);
+        alert('Erro: ' + err.message);
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Confirmar Venda';
+    }
+}
+
+// Atalhos de teclado
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F2') {
+        e.preventDefault();
+        finalizarVenda();
+    }
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        limparVenda();
+    }
+});
+</script>
+{% endblock %}

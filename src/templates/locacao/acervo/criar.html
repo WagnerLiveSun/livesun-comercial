@@ -1,0 +1,141 @@
+{% extends "locacao/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('locacao.acervo_lista') }}">Acervo</a></li>
+<li class="breadcrumb-item active">Nova Peça</li>
+{% endblock %}
+
+{% block locacao_content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <h2 class="mb-4"><i class="fas fa-plus-circle me-2"></i>Cadastrar Nova Peça</h2>
+
+        <form method="POST" class="ls-card p-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Identificação -->
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-tag me-2"></i>Identificação</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Código Interno *</label>
+                    <input type="text" name="codigo_interno" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Código de Barras</label>
+                    <input type="text" name="codigo_barras" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Descrição *</label>
+                    <input type="text" name="descricao" class="form-control" required>
+                </div>
+            </div>
+
+            <!-- Classificação -->
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-folder me-2"></i>Classificação</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Categoria *</label>
+                    <select name="categoria" class="form-select" required>
+                        <option value="">Selecione...</option>
+                        <option value="Vestido">Vestido</option>
+                        <option value="Fantasia">Fantasia</option>
+                        <option value="Acessório">Acessório</option>
+                        <option value="Sapato">Sapato</option>
+                        <option value="Peruca">Peruca</option>
+                        <option value="Máscara">Máscara</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tema</label>
+                    <input type="text" name="tema" class="form-control" placeholder="ex: Carnaval, Halloween">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tamanho</label>
+                    <select name="tamanho" class="form-select">
+                        <option value="">Selecione...</option>
+                        <option value="P">P (Pequeno)</option>
+                        <option value="M">M (Médio)</option>
+                        <option value="G">G (Grande)</option>
+                        <option value="GG">GG (Muito Grande)</option>
+                        <option value="Único">Único</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Características Físicas -->
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-palette me-2"></i>Características Físicas</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Cor</label>
+                    <input type="text" name="cor" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tecido</label>
+                    <input type="text" name="tecido" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Marca/Coleção</label>
+                    <input type="text" name="marca_colecao" class="form-control">
+                </div>
+            </div>
+
+            <!-- Valores -->
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-money-bill me-2"></i>Valores</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Valor de Aquisição *</label>
+                    <input type="number" name="valor_aquisicao" class="form-control" step="0.01" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Valor de Reposição *</label>
+                    <input type="number" name="valor_reposicao" class="form-control" step="0.01" required>
+                    <small class="text-muted">Valor cobrado se a peça for perdida/extraviada</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Preço de Aluguel/Dia *</label>
+                    <input type="number" name="preco_aluguel_diario" class="form-control" step="0.01" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Preço de Venda</label>
+                    <input type="number" name="preco_venda" class="form-control" step="0.01">
+                    <small class="text-muted">Se permitir venda da peça alugada</small>
+                </div>
+            </div>
+
+            <!-- Estado e Controle -->
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-cog me-2"></i>Estado e Controle</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Estado Físico *</label>
+                    <select name="estado_fisico" class="form-select" required>
+                        <option value="novo">Novo</option>
+                        <option value="bom">Bom</option>
+                        <option value="regular">Regular</option>
+                        <option value="ruim">Ruim</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check mt-4">
+                        <input type="checkbox" name="serializado" id="serializado" class="form-check-input" checked>
+                        <label class="form-check-label" for="serializado">
+                            Serializado (item único)
+                        </label>
+                        <small class="text-muted d-block">Desmarque se for por grade/quantidade</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('locacao.acervo_lista') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn ls-btn-primary">
+                    <i class="fas fa-save me-2"></i>Salvar Peça
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

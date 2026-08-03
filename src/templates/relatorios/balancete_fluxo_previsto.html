@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% block title %}Balancete de Fluxo de Caixa Previsto{% endblock %}
+{% block content %}
+<div class="ls-card p-4 mb-4">
+    <h2 class="fw-bold mb-3">Balancete Sintético (Previsto)</h2>
+    <table class="table table-hover mb-4">
+        <thead>
+            <tr>
+                <th>Conta Fluxo</th>
+                <th>Conta Banco</th>
+                <th>Saldo Anterior</th>
+                <th>Valor Previsto a Pagar</th>
+                <th>Valor Previsto a Receber</th>
+                <th>Saldo Previsto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in sinteticos %}
+            <tr>
+                <td>{{ (r.fluxo_conta.codigo ~ ' - ' ~ r.fluxo_conta.descricao) if r.fluxo_conta else 'N/A' }}</td>
+                <td>{{ r.conta_banco.nome if r.conta_banco else 'N/A' }}</td>
+                <td class="text-end">R$ {{ r.saldo_anterior|brl }}</td>
+                <td class="text-end" style="color: #ef4444;">R$ {{ r.valor_previsto_pago|brl }}</td>
+                <td class="text-end" style="color: #22c55e;">R$ {{ r.valor_previsto_recebido|brl }}</td>
+                <td class="text-end fw-bold">R$ {{ r.saldo_previsto|brl }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="ls-card p-4 mb-4">
+    <h2 class="fw-bold mb-3">Balancete Analítico (Previsto)</h2>
+    <table class="table table-hover mb-4">
+        <thead>
+            <tr>
+                <th>Conta Fluxo</th>
+                <th>Conta Banco</th>
+                <th>Saldo Anterior</th>
+                <th>Valor Previsto a Pagar</th>
+                <th>Valor Previsto a Receber</th>
+                <th>Saldo Previsto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in analiticos %}
+            <tr>
+                <td>{{ (r.fluxo_conta.codigo ~ ' - ' ~ r.fluxo_conta.descricao) if r.fluxo_conta else 'N/A' }}</td>
+                <td>{{ r.conta_banco.nome if r.conta_banco else 'N/A' }}</td>
+                <td class="text-end">R$ {{ r.saldo_anterior|brl }}</td>
+                <td class="text-end" style="color: #ef4444;">R$ {{ r.valor_previsto_pago|brl }}</td>
+                <td class="text-end" style="color: #22c55e;">R$ {{ r.valor_previsto_recebido|brl }}</td>
+                <td class="text-end fw-bold">R$ {{ r.saldo_previsto|brl }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

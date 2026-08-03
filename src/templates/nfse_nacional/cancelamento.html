@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+
+{% block title %}Cancelamento de NFS-e{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Cancelamento de NFS-e</h2>
+        <p class="text-muted mb-0">Cancelamento de NFS-e pela chave de acesso (evento e101101).</p>
+    </div>
+    <a href="{{ url_for('nfse_nacional.listagem') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Voltar</a>
+</div>
+
+<style>
+.cancelamento-card {
+    background: var(--ls-card-bg);
+    border: 1px solid var(--ls-border-subtle);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+.cancelamento-card .form-control,
+.cancelamento-card .form-select {
+    background-color: var(--ls-input-bg);
+    border-color: var(--ls-input-border);
+    color: var(--ls-text-main);
+}
+.cancelamento-card .form-control::placeholder {
+    color: var(--ls-text-muted);
+}
+</style>
+
+<div class="ls-card p-4 cancelamento-card mb-4">
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Chave de Acesso (50 dígitos)</label>
+                <input type="text" name="chave_acesso" class="form-control" 
+                       value="{{ chave_acesso }}" 
+                       placeholder="00000001000000000000154000000000311425120000026171" 
+                       maxlength="50" required>
+                <small class="text-muted">Informe os 50 dígitos numéricos da chave de acesso da NFS-e.</small>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Ambiente</label>
+                <select name="ambiente" class="form-select">
+                    <option value="homologacao">Homologação</option>
+                    <option value="producao">Produção</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Código do Motivo</label>
+                <select name="codigo_motivo" class="form-select">
+                    <option value="1">1 - Erro na emissão</option>
+                    <option value="2">2 - Serviço não prestado</option>
+                    <option value="3">3 - Erro de cálculo</option>
+                    <option value="4">4 - Divergência nos dados</option>
+                    <option value="5">5 - Outros</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Descrição do Motivo</label>
+                <textarea name="descricao_motivo" class="form-control" rows="2" 
+                          placeholder="Descreva o motivo do cancelamento...">Erro na emissão</textarea>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-times-circle me-2"></i>Cancelar NFS-e
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if resultado %}
+<div class="ls-card p-4 cancelamento-card">
+    <h5 class="ls-page-title mb-3">Resultado do Cancelamento</h5>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="info-label">Status</div>
+            <div class="info-value">
+                {% if resultado.sucesso %}
+                <span class="badge badge-autorizada">Sucesso</span>
+                {% else %}
+                <span class="badge badge-rejeitada">Erro</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if resultado.protocolo %}
+        <div class="col-md-6">
+            <div class="info-label">Protocolo</div>
+            <div class="info-value">{{ resultado.protocolo }}</div>
+        </div>
+        {% endif %}
+        <div class="col-12">
+            <div class="info-label">Mensagem</div>
+            <div class="info-value">{{ resultado.mensagem }}</div>
+        </div>
+        {% if resultado.httpstatus %}
+        <div class="col-md-6">
+            <div class="info-label">HTTP Status</div>
+            <div class="info-value">{{ resultado.httpstatus }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

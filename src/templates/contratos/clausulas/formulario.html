@@ -1,0 +1,176 @@
+{% extends "layout.html" %}
+
+{% block title %}{% if action == 'criar' %}Nova Cláusula{% else %}Editar Cláusula{% endif %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('contratos.index') }}">Contratos</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('contratos.clausulas_lista') }}">Cláusulas Padrão</a></li>
+<li class="breadcrumb-item active">{% if action == 'criar' %}Nova Cláusula{% else %}Editar Cláusula{% endif %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-file-alt me-2"></i>
+            {% if action == 'criar' %}Nova Cláusula Padrão{% else %}Editar Cláusula Padrão{% endif %}
+        </h2>
+    </div>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Código</label>
+                <input type="text" name="codigo" class="form-control" value="{{ clausula.codigo if clausula else '' }}" required maxlength="50">
+                <small class="text-muted">Ex: OBJ, EXEC, SIGILO</small>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Título</label>
+                <input type="text" name="titulo" class="form-control" value="{{ clausula.titulo if clausula else '' }}" required maxlength="200">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Tipo</label>
+                <select name="tipo" class="form-select" required>
+                    <option value="opcional" {% if clausula and clausula.tipo == 'opcional' %}selected{% endif %}>Opcional</option>
+                    <option value="obrigatoria" {% if clausula and clausula.tipo == 'obrigatoria' %}selected{% endif %}>Obrigatória</option>
+                    <option value="condicional" {% if clausula and clausula.tipo == 'condicional' %}selected{% endif %}>Condicional</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Categoria</label>
+                <select name="categoria" class="form-select">
+                    <option value="">Selecione</option>
+                    <option value="geral" {% if clausula and clausula.categoria == 'geral' %}selected{% endif %}>Geral</option>
+                    <option value="financeiro" {% if clausula and clausula.categoria == 'financeiro' %}selected{% endif %}>Financeiro</option>
+                    <option value="juridico" {% if clausula and clausula.categoria == 'juridico' %}selected{% endif %}>Jurídico</option>
+                    <option value="tecnico" {% if clausula and clausula.categoria == 'tecnico' %}selected{% endif %}>Técnico</option>
+                    <option value="trabalhista" {% if clausula and clausula.categoria == 'trabalhista' %}selected{% endif %}>Trabalhista</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Tipo de Contrato</label>
+                <select name="tipo_contrato" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="prestacao_servicos" {% if clausula and clausula.tipo_contrato == 'prestacao_servicos' %}selected{% endif %}>Prestação de Serviços</option>
+                    <option value="fornecimento" {% if clausula and clausula.tipo_contrato == 'fornecimento' %}selected{% endif %}>Fornecimento</option>
+                    <option value="parceria" {% if clausula and clausula.tipo_contrato == 'parceria' %}selected{% endif %}>Parceria</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Ordem Padrão</label>
+                <input type="number" name="ordem_padrao" class="form-control" value="{{ clausula.ordem_padrao if clausula else 0 }}" min="0">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Editável</label>
+                <div class="form-check mt-2">
+                    <input type="checkbox" name="editavel" class="form-check-input" {% if not clausula or clausula.editavel %}checked{% endif %}>
+                    <label class="form-check-label">Permite edição no contrato</label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Ativo</label>
+                <div class="form-check mt-2">
+                    <input type="checkbox" name="ativo" class="form-check-input" {% if not clausula or clausula.ativo %}checked{% endif %}>
+                    <label class="form-check-label">Cláusula ativa</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Descrição</label>
+                <textarea name="descricao" class="form-control" rows="2">{{ clausula.descricao if clausula else '' }}</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Texto Base</label>
+                <div id="editor-container" style="height: 300px;"></div>
+                <input type="hidden" name="texto_base" id="texto_base" value="{{ clausula.texto_base if clausula else '' }}">
+                <small class="text-muted">Use placeholders como {CONTRATO_VALOR_TOTAL}, {CONTRATADA_RAZAO_SOCIAL}, etc.</small>
+            </div>
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <strong>Placeholders disponíveis:</strong><br>
+                    {CONTRATADA_RAZAO_SOCIAL}, {CONTRATADA_CNPJ}, {CONTRATADA_ENDERECO}, {CONTRATADA_CIDADE}, {CONTRATADA_UF}<br>
+                    {CONTRATANTE_RAZAO_SOCIAL}, {CONTRATANTE_CNPJ_CPF}, {CONTRATANTE_ENDERECO}, {CONTRATANTE_CIDADE}, {CONTRATANTE_UF}<br>
+                    {CONTRATO_VALOR_TOTAL}, {CONTRATO_VALOR_MENSAL}, {CONTRATO_FORMA_PAGAMENTO}, {CONTRATO_PERIODICIDADE}<br>
+                    {CONTRATO_DATA_INICIO}, {CONTRATO_DATA_FIM}, {CONTRATO_DESCRICAO_SERVICOS}, {CONTRATO_NUMERO}, {CONTRATO_DATA_ASSINATURA}
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn ls-btn-primary">
+                        <i class="fas fa-save me-2"></i>Salvar
+                    </button>
+                    <a href="{{ url_for('contratos.clausulas_lista') }}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Quill Editor CSS -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+<!-- Quill Editor JS -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var quill = new Quill('#editor-container', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'indent': '-1'}, { 'indent': '+1' }],
+                ['link'],
+                ['clean']
+            ]
+        }
+    });
+
+    // Carregar conteúdo existente
+    var textoBase = document.getElementById('texto_base').value;
+    if (textoBase) {
+        quill.root.innerHTML = textoBase;
+    }
+
+    // Atualizar hidden field ao submeter
+    document.querySelector('form').addEventListener('submit', function() {
+        document.getElementById('texto_base').value = quill.root.innerHTML;
+
+        // Validar placeholders
+        var texto = quill.root.innerHTML;
+        var placeholdersValidos = [
+            'CONTRATADA_RAZAO_SOCIAL', 'CONTRATADA_CNPJ', 'CONTRATADA_ENDERECO',
+            'CONTRATADA_CIDADE', 'CONTRATADA_UF', 'CONTRATANTE_RAZAO_SOCIAL',
+            'CONTRATANTE_CNPJ_CPF', 'CONTRATANTE_ENDERECO', 'CONTRATANTE_CIDADE',
+            'CONTRATANTE_UF', 'CONTRATO_VALOR_TOTAL', 'CONTRATO_VALOR_MENSAL',
+            'CONTRATO_FORMA_PAGAMENTO', 'CONTRATO_PERIODICIDADE', 'CONTRATO_DATA_INICIO',
+            'CONTRATO_DATA_FIM', 'CONTRATO_DESCRICAO_SERVICOS', 'CONTRATO_NUMERO',
+            'CONTRATO_DATA_ASSINATURA'
+        ];
+
+        var regex = /\{([A-Z_]+)\}/g;
+        var match;
+        var placeholdersEncontrados = [];
+        while ((match = regex.exec(texto)) !== null) {
+            placeholdersEncontrados.push(match[1]);
+        }
+
+        var placeholdersInvalidos = placeholdersEncontrados.filter(function(p) {
+            return !placeholdersValidos.includes(p);
+        });
+
+        if (placeholdersInvalidos.length > 0) {
+            alert('Placeholders inválidos encontrados: ' + placeholdersInvalidos.join(', ') + '\n\nPlaceholders válidos: ' + placeholdersValidos.join(', '));
+            event.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

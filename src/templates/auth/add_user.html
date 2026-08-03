@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block title %}Adicionar Usuário{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">Adicionar Usuário</h1>
+        <p class="text-muted mb-0">Crie um novo usuário para operar a empresa.</p>
+    </div>
+</div>
+
+<div class="ls-card p-4 ls-card-centered">
+    <form method="POST" action="{{ url_for('auth.add_user') }}" class="row g-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="col-md-6">
+            <label for="username" class="form-label">Usuário</label>
+            <input type="text" class="form-control" id="username" name="username" autocomplete="off" required>
+            <div class="form-text">ID do usuário</div>
+        </div>
+
+        <div class="col-md-6">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" autocomplete="off" required>
+        </div>
+
+        <div class="col-md-6">
+            <label for="password" class="form-label">Senha</label>
+            <input type="password" class="form-control" id="password" name="password" autocomplete="new-password" required>
+        </div>
+
+        <div class="col-md-6">
+            <label for="full_name" class="form-label">Nome Completo</label>
+            <input type="text" class="form-control" id="full_name" name="full_name" required>
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn ls-btn-primary">Avançar</button>
+            <a href="{{ url_for('auth.controle_acesso') }}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

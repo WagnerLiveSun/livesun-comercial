@@ -1,0 +1,212 @@
+{% extends "layout.html" %}
+
+{% block title %}Visualizar NFS-e #{{ emissao.numero_nfse or emissao.numero_interno }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Visualizar NFS-e</h2>
+        <p class="text-muted mb-0">Detalhes da nota fiscal de serviços #{{ emissao.numero_nfse or emissao.numero_interno }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('nfse_nacional.listagem') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Voltar</a>
+    </div>
+</div>
+
+<style>
+.nfse-visualizar-card {
+    background: var(--ls-card-bg);
+    border: 1px solid var(--ls-border-subtle);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+.nfse-visualizar-card .info-label {
+    color: var(--ls-text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.nfse-visualizar-card .info-value {
+    color: var(--ls-text-main);
+    font-weight: 500;
+}
+.badge-autorizada {
+    background-color: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.badge-cancelada {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.badge-rejeitada {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #fcd34d;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.badge-pendente {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+</style>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="ls-card p-4 nfse-visualizar-card mb-4">
+            <h5 class="ls-page-title mb-4">Dados da NFS-e</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="info-label">Número NFS-e</div>
+                    <div class="info-value fs-5">{{ emissao.numero_nfse or '-' }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-label">Chave de Acesso</div>
+                    <div class="info-value">{{ emissao.chave_nfse or '-' }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-label">Data de Emissão</div>
+                    <div class="info-value">{{ emissao.criado_em.strftime('%d/%m/%Y %H:%M') if emissao.criado_em else '-' }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-label">Ambiente</div>
+                    <div class="info-value">{{ 'Produção' if emissao.ambiente == 'producao' else 'Homologação' }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-label">Status</div>
+                    <div class="info-value">
+                        {% if emissao.status_processamento == 'AUTORIZADA' %}
+                        <span class="badge badge-autorizada">Autorizada</span>
+                        {% elif emissao.status_processamento == 'CANCELADA' %}
+                        <span class="badge badge-cancelada">Cancelada</span>
+                        {% elif emissao.status_processamento == 'REJEITADA' %}
+                        <span class="badge badge-rejeitada">Rejeitada</span>
+                        {% elif emissao.status_processamento == 'RASCUNHO' %}
+                        <span class="badge badge-pendente">Rascunho</span>
+                        {% elif emissao.status_processamento == 'PROCESSANDO' %}
+                        <span class="badge badge-pendente">Processando</span>
+                        {% else %}
+                        <span class="badge badge-pendente">{{ emissao.status_processamento }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-label">Situação Fiscal</div>
+                    <div class="info-value">
+                        {% if emissao.situacao_fiscal == 'AUTORIZADA' %}
+                        <span class="badge badge-autorizada">Autorizada</span>
+                        {% elif emissao.situacao_fiscal == 'CANCELADA' %}
+                        <span class="badge badge-cancelada">Cancelada</span>
+                        {% elif emissao.situacao_fiscal == 'REJEITADA' %}
+                        <span class="badge badge-rejeitada">Rejeitada</span>
+                        {% elif emissao.situacao_fiscal == 'PENDENTE' %}
+                        <span class="badge badge-pendente">Pendente</span>
+                        {% else %}
+                        <span class="badge badge-pendente">{{ emissao.situacao_fiscal }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if emissao.protocolo %}
+                <div class="col-md-6">
+                    <div class="info-label">Protocolo</div>
+                    <div class="info-value">{{ emissao.protocolo }}</div>
+                </div>
+                {% endif %}
+                {% if emissao.cancelado_em %}
+                <div class="col-md-6">
+                    <div class="info-label">Cancelado em</div>
+                    <div class="info-value">{{ emissao.cancelado_em.strftime('%d/%m/%Y %H:%M') if emissao.cancelado_em else '-' }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ls-card p-4 nfse-visualizar-card mb-4">
+            <h5 class="ls-page-title mb-4">Valores</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="info-label">Valor do Serviço</div>
+                    <div class="info-value fs-5">R$ {{ "{:,.2f}".format(emissao.valor_servico) }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-label">Deduções</div>
+                    <div class="info-value">R$ {{ "{:,.2f}".format(emissao.valor_deducoes) }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-label">Valor ISS</div>
+                    <div class="info-value">R$ {{ "{:,.2f}".format(emissao.valor_iss) }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ls-card p-4 nfse-visualizar-card">
+            <h5 class="ls-page-title mb-4">Ações</h5>
+            <div class="d-flex flex-wrap gap-2">
+                {% if emissao.xml_nfse %}
+                <a href="{{ url_for('nfse_nacional.emissao_imprimir_danfs', emissao_id=emissao.id) }}" class="btn btn-outline-secondary" target="_blank">
+                    <i class="fas fa-print me-2"></i>Imprimir DANFSe
+                </a>
+                <a href="{{ url_for('nfse_nacional.emissao_download_nfse', emissao_id=emissao.id) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-download me-2"></i>Baixar XML
+                </a>
+                {% endif %}
+                {% if emissao.status_processamento == 'AUTORIZADA' and not emissao.cancelado_em %}
+                <a href="{{ url_for('nfse_nacional.nfse_cancelamento_substituicao') }}" class="btn btn-outline-warning">
+                    <i class="fas fa-exchange-alt me-2"></i>Cancelar por Substituição
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="ls-card p-4 nfse-visualizar-card mb-4">
+            <h5 class="ls-page-title mb-4">Tomador</h5>
+            <div class="mb-3">
+                <div class="info-label">Nome</div>
+                <div class="info-value">{{ emissao.tomador.nome if emissao.tomador else '-' }}</div>
+            </div>
+            <div class="mb-3">
+                <div class="info-label">CNPJ/CPF</div>
+                <div class="info-value">{{ emissao.tomador.cnpj_cpf if emissao.tomador else '-' }}</div>
+            </div>
+            {% if emissao.tomador_endereco %}
+            <div class="mb-3">
+                <div class="info-label">Endereço</div>
+                <div class="info-value">{{ emissao.tomador_endereco }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="ls-card p-4 nfse-visualizar-card mb-4">
+            <h5 class="ls-page-title mb-4">Enviar por Email</h5>
+            <form method="post" action="{{ url_for('nfse_nacional.enviar_email', id=emissao.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label">Email do Cliente</label>
+                    <input type="email" name="email_cliente" class="form-control" 
+                           value="{{ emissao.tomador.email if emissao.tomador and emissao.tomador.email else '' }}" 
+                           placeholder="email@exemplo.com" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mensagem (opcional)</label>
+                    <textarea name="mensagem" class="form-control" rows="3" 
+                              placeholder="Adicione uma mensagem personalizada..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-paper-plane me-2"></i>Enviar Email
+                </button>
+            </form>
+        </div>
+
+        {% if emissao.erro_retorno %}
+        <div class="ls-card p-4 nfse-visualizar-card">
+            <h5 class="ls-page-title mb-3 text-danger">Erro de Processamento</h5>
+            <div class="alert alert-danger">
+                {{ emissao.erro_retorno }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

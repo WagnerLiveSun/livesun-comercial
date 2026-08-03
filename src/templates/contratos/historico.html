@@ -1,0 +1,112 @@
+{% extends "layout.html" %}
+
+{% block title %}Histórico - Contrato {{ contrato.numero }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('contratos.index') }}">Contratos</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('contratos.visualizar', id=contrato.id) }}">{{ contrato.numero }}</a></li>
+<li class="breadcrumb-item active">Histórico</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-history me-2"></i>Histórico - Contrato {{ contrato.numero }}</h2>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mb-4">
+    <a href="{{ url_for('contratos.visualizar', id=contrato.id) }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar ao Contrato
+    </a>
+</div>
+
+<!-- Timeline de Histórico -->
+<div class="ls-card p-4">
+    {% if historico %}
+    <div class="timeline">
+        {% for item in historico %}
+        <div class="timeline-item mb-4">
+            <div class="timeline-marker">
+                <span class="badge
+                    {% if item.acao == 'criado' %}bg-primary
+                    {% elif item.acao == 'editado' %}bg-secondary
+                    {% elif item.acao == 'assinado' %}bg-success
+                    {% elif item.acao == 'cancelado' %}bg-danger
+                    {% elif item.acao == 'rescindido' %}bg-dark
+                    {% else %}bg-info
+                    {% endif %}">
+                    {{ item.acao|title }}
+                </span>
+            </div>
+            <div class="timeline-content">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="fw-bold mb-0">Versão {{ item.versao }} - {{ item.acao|title }}</h6>
+                    <small class="text-muted">{{ item.data_alteracao.strftime('%d/%m/%Y %H:%M') }}</small>
+                </div>
+                
+                {% if item.status_anterior and item.status_novo %}
+                <p class="mb-2">
+                    Status: 
+                    <span class="badge bg-secondary">{{ item.status_anterior|replace('_', ' ')|title }}</span>
+                    <i class="fas fa-arrow-right mx-2"></i>
+                    <span class="badge bg-success">{{ item.status_novo|replace('_', ' ')|title }}</span>
+                </p>
+                {% endif %}
+                
+                {% if item.descricao_alteracao %}
+                <p class="mb-2">{{ item.descricao_alteracao }}</p>
+                {% endif %}
+                
+                {% if item.campos_alterados %}
+                <div class="mb-2">
+                    <strong>Campos alterados:</strong>
+                    <ul class="mb-0">
+                        {% for campo, valor in item.campos_alterados.items() %}
+                        <li>{{ campo }}: {{ valor }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                {% if item.clausulas_alteradas %}
+                <div class="mb-2">
+                    <strong>Cláusulas alteradas:</strong>
+                    <ul class="mb-0">
+                        {% for clausula in item.clausulas_alteradas %}
+                        <li>{{ clausula }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <p class="text-muted mb-0">
+                    <small>Por: {{ item.alterado_por.nome if item.alterado_por else 'Sistema' }}</small>
+                </p>
+            </div>
+        </div>
+        <hr>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">Nenhum registro de histórico encontrado.</p>
+    {% endif %}
+</div>
+
+<style>
+.timeline-item {
+    position: relative;
+    padding-left: 40px;
+}
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+</style>
+{% endblock %}

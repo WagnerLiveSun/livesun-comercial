@@ -1,0 +1,286 @@
+{% extends "layout.html" %}
+
+{% block title %}Emissões NFS-e{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Emissões</h2>
+        <p class="text-muted mb-0">Emitir, consultar e reenfileirar documentos do módulo NFS-e Nacional.</p>
+    </div>
+    <a href="{{ url_for('nfse_nacional.index') }}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+
+<style>
+/* Tela de nova emissão em largura cheia, com contraste e leitura melhores */
+.nfse-emissao-card {
+    background: var(--ls-card-bg);
+    border: 1px solid var(--ls-border-subtle);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+.nfse-emissao-card .form-label {
+    color: var(--ls-text-muted);
+    font-weight: 600;
+}
+.nfse-emissao-card .form-control,
+.nfse-emissao-card .form-select,
+.nfse-emissao-card textarea {
+    background-color: var(--ls-input-bg);
+    border-color: var(--ls-input-border);
+    color: var(--ls-text-main);
+}
+.nfse-emissao-card .form-control::placeholder,
+.nfse-emissao-card textarea::placeholder {
+    color: var(--ls-text-muted);
+}
+.nfse-emissao-card .helper-box {
+    background: var(--ls-primary-soft);
+    border: 1px solid rgba(37, 99, 235, 0.22);
+    color: var(--ls-text-main);
+}
+.nfse-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+.nfse-summary-item {
+    background: var(--ls-bg-elevated);
+    border: 1px solid var(--ls-border-subtle);
+    border-radius: 0.75rem;
+    padding: 0.75rem 0.9rem;
+}
+.nfse-summary-item small {
+    display: block;
+    color: var(--ls-text-muted);
+    margin-bottom: 0.25rem;
+}
+.nfse-summary-item strong {
+    color: var(--ls-text-strong);
+}
+@media (max-width: 991.98px) {
+    .nfse-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="ls-card p-4 nfse-emissao-card mb-4">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+        <div>
+            <h5 class="ls-page-title mb-2">Nova emissão</h5>
+            <div class="helper-box rounded-3 px-3 py-2">
+                Antes de emitir, o tomador precisa estar completo em <a href="{{ url_for('entidades.index') }}">Entidades</a> com Tipo, CNPJ/CPF, Nome/Razão Social, Rua, Número, Bairro, Cidade, UF, CEP e E-mail.
+            </div>
+        </div>
+        <div class="text-end">
+            <small class="text-muted d-block mb-1">Padrão da empresa</small>
+            <div class="nfse-summary-grid">
+                <div class="nfse-summary-item">
+                    <small>Código nacional</small>
+                    <strong>{{ fiscal_defaults.codigo_servico or '-' }}</strong>
+                </div>
+                <div class="nfse-summary-item">
+                    <small>NBS</small>
+                    <strong>{{ fiscal_defaults.nbs or '-' }}</strong>
+                </div>
+                <div class="nfse-summary-item">
+                    <small>Ambiente padrão</small>
+                    <strong>{{ 'Homologação' if ambiente_selecionado == 'homologacao' else 'Produção' }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row g-3">
+            {# Ambiente mostrado no resumo da empresa; removido aqui para evitar redundância #}
+            <div class="col-md-4">
+                <label class="form-label">Tomador existente</label>
+                <select name="tomador_id" id="tomadorSelect" class="form-select ls-theme-control">
+                    <option value="">Criar/usar por dados abaixo</option>
+                    {% for tomador in tomadores %}
+                    <option
+                        value="{{ tomador.id }}"
+                        data-nome="{{ tomador.nome|e }}"
+                        data-documento="{{ tomador.cnpj_cpf|e }}">
+                        {{ tomador.nome }} - {{ tomador.cnpj_cpf }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Serviço existente</label>
+                <select name="servico_id" id="servicoSelect" class="form-select ls-theme-control">
+                    <option value="">Criar/usar por dados abaixo</option>
+                    {% for servico in servicos %}
+                    <option
+                        value="{{ servico.id }}"
+                        data-codigo-interno="{{ servico.codigo_interno|e }}"
+                        data-descricao="{{ servico.descricao|e }}"
+                        data-codigo-servico="{{ servico.codigo_servico|e }}"
+                        data-nbs="{{ servico.nbs|e }}">
+                        {{ servico.codigo_interno }} - {{ servico.descricao }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Nome do tomador</label>
+                <input type="text" name="tomador_nome" id="tomadorNome" class="form-control ls-theme-control" placeholder="Usado quando tomador_id estiver vazio">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Documento</label>
+                <input type="text" name="tomador_documento" id="tomadorDocumento" class="form-control ls-theme-control" placeholder="CPF/CNPJ">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Código interno do serviço</label>
+                <input type="text" name="codigo_interno" id="codigoInternoServico" class="form-control ls-theme-control" placeholder="SERV001" required>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Descrição do serviço</label>
+                <input type="text" name="descricao" id="descricaoServico" class="form-control ls-theme-control" placeholder="Serviço prestado" required>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Código nacional</label>
+                <input type="text" name="codigo_servico" id="codigoServico" list="codigoServicoOptions" class="form-control ls-theme-control" value="{{ fiscal_defaults.codigo_servico }}" required>
+                <datalist id="codigoServicoOptions">
+                    {% for valor in fiscal_defaults.codigo_servico_opcoes %}
+                    <option value="{{ valor }}"></option>
+                    {% endfor %}
+                </datalist>
+                <div class="form-text">Padrão da empresa carregado automaticamente.</div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">NBS</label>
+                <input type="text" name="nbs" id="nbsServico" list="nbsOptions" class="form-control ls-theme-control" value="{{ fiscal_defaults.nbs }}" required>
+                <datalist id="nbsOptions">
+                    {% for valor in fiscal_defaults.nbs_opcoes %}
+                    <option value="{{ valor }}"></option>
+                    {% endfor %}
+                </datalist>
+                <div class="form-text">Padrão da empresa carregado automaticamente.</div>
+            </div>
+            <!-- CAMPO CTRIBMUN ADICIONADO -->
+            <div class="col-md-4">
+                <label class="form-label">Cód. tributação municipal (cTribMun)</label>
+                <input type="text" name="cTribMun" id="cTribMun" class="form-control ls-theme-control" placeholder="Ex: 01.01.01">
+                <div class="form-text">Exigido para Rio de Janeiro e Belo Horizonte.</div>
+            </div>
+            <!-- FIM CAMPO CTRIBMUN -->
+            <div class="col-md-4">
+                <label class="form-label">Local da prestação</label>
+                <select name="servico_local_prestacao" class="form-select ls-theme-control">
+                    <option value="emitente" selected>Município do emitente</option>
+                    <option value="tomador">Município do tomador</option>
+                </select>
+                <div class="form-text">Padrão: município do emitente.</div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">ISS retido?</label>
+                <select name="tpRetISSQN" class="form-select ls-theme-control">
+                    <option value="1" selected>Não retido</option>
+                    <option value="2">Retido pelo tomador</option>
+                    <option value="3">Retido pelo intermediário</option>
+                </select>
+                <div class="form-text">Padrão: não retido.</div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Alíquota ISS (%)</label>
+                <input type="number" step="0.01" name="aliquota_iss" class="form-control ls-theme-control" value="0.00">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Valor serviço</label>
+                <input type="number" step="0.01" name="valor_servico" class="form-control ls-theme-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Deduções</label>
+                <input type="number" step="0.01" name="valor_deducoes" class="form-control ls-theme-control" value="0.00">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Data de emissão</label>
+                <input type="date" name="data_emissao" class="form-control ls-theme-control">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Data de vencimento</label>
+                <input type="date" name="data_vencimento" class="form-control ls-theme-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Origem tipo</label>
+                <input type="text" name="origem_tipo" class="form-control ls-theme-control" value="MANUAL">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Origem ID</label>
+                <input type="text" name="origem_id" class="form-control ls-theme-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Origem ref.</label>
+                <input type="text" name="origem_referencia" class="form-control ls-theme-control">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Observações</label>
+                <textarea name="observacoes" class="form-control ls-theme-control" rows="3"></textarea>
+            </div>
+
+            <div class="col-12 d-grid">
+                <button type="submit" class="btn ls-btn-primary">Emitir NFS-e</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    const tomadorSelect = document.getElementById('tomadorSelect');
+    const tomadorNome = document.getElementById('tomadorNome');
+    const tomadorDocumento = document.getElementById('tomadorDocumento');
+    const servicoSelect = document.getElementById('servicoSelect');
+    const codigoInternoServico = document.getElementById('codigoInternoServico');
+    const descricaoServico = document.getElementById('descricaoServico');
+    const codigoServico = document.getElementById('codigoServico');
+    const nbsServico = document.getElementById('nbsServico');
+
+    function limparTomador() {
+        tomadorNome.value = '';
+        tomadorDocumento.value = '';
+    }
+
+    function preencherServico() {
+        const option = servicoSelect.options[servicoSelect.selectedIndex];
+        if (!option || !option.value) {
+            return;
+        }
+
+        codigoInternoServico.value = option.dataset.codigoInterno || codigoInternoServico.value || '';
+        descricaoServico.value = option.dataset.descricao || descricaoServico.value || '';
+        if (option.dataset.codigoServico) {
+            codigoServico.value = option.dataset.codigoServico;
+        }
+        if (option.dataset.nbs) {
+            nbsServico.value = option.dataset.nbs;
+        }
+    }
+
+    function preencherTomador() {
+        const option = tomadorSelect.options[tomadorSelect.selectedIndex];
+        if (!option || !option.value) {
+            limparTomador();
+            return;
+        }
+
+        tomadorNome.value = option.dataset.nome || '';
+        tomadorDocumento.value = option.dataset.documento || '';
+    }
+
+    tomadorSelect.addEventListener('change', preencherTomador);
+    servicoSelect.addEventListener('change', preencherServico);
+    preencherTomador();
+    preencherServico();
+})();
+</script>
+{% endblock %}

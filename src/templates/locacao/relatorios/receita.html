@@ -1,0 +1,100 @@
+{% extends "locacao/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Relatório de Receita</li>
+{% endblock %}
+
+{% block locacao_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-6 mb-4"><i class="fas fa-chart-bar me-2"></i>Relatório de Receita</h1>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="ls-card p-3 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Data Inicial</label>
+            <input type="date" name="data_inicio" class="form-control" value="{{ data_inicio.strftime('%Y-%m-%d') }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Data Final</label>
+            <input type="date" name="data_fim" class="form-control" value="{{ data_fim.strftime('%Y-%m-%d') }}">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-primary w-100">
+                <i class="fas fa-search me-2"></i>Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Resumo Financeiro -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Aluguel</h6>
+            <h4 class="text-primary">R$ {{ total_aluguel|brl }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Multas</h6>
+            <h4 class="text-warning">R$ {{ total_multas|brl }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Avarias</h6>
+            <h4 class="text-danger">R$ {{ total_avarias|brl }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Total</h6>
+            <h4 class="text-success">R$ {{ total_geral|brl }}</h4>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Faturamentos -->
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Data</th>
+                    <th>Contrato</th>
+                    <th>Cliente</th>
+                    <th class="text-end">Aluguel</th>
+                    <th class="text-end">Multas</th>
+                    <th class="text-end">Avarias</th>
+                    <th class="text-end">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if faturamentos %}
+                    {% for fat in faturamentos %}
+                    <tr>
+                        <td>{{ fat.data_faturamento.strftime('%d/%m/%Y') }}</td>
+                        <td><strong>{{ fat.contrato.numero if fat.contrato else '-' }}</strong></td>
+                        <td>{{ fat.cliente.nome if fat.cliente else '-' }}</td>
+                        <td class="text-end">R$ {{ fat.valor_aluguel|brl }}</td>
+                        <td class="text-end">R$ {{ fat.valor_multa|brl }}</td>
+                        <td class="text-end">R$ {{ fat.valor_avaria|brl }}</td>
+                        <td class="text-end"><strong>R$ {{ fat.valor_total|brl }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox me-2"></i>Nenhum faturamento encontrado
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

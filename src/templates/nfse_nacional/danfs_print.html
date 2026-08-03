@@ -1,0 +1,331 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>DANFSe - {{ empresa.nome_fantasia or empresa.nome }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #222;
+            font-size: 11px;
+            margin: 0;
+            padding: 10px;
+        }
+        .danfs {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 2px solid #000;
+            padding: 0;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            background: #f8f8f8;
+        }
+        .header-logo {
+            height: 50px;
+            object-fit: contain;
+        }
+        .header-logo-nfse {
+            height: 50px;
+            object-fit: contain;
+        }
+        .header-info h2 {
+            margin: 0 0 3px 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .header-info p {
+            margin: 1px 0;
+            font-size: 10px;
+            color: #333;
+        }
+        .title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-transform: uppercase;
+            background: #e8e8e8;
+            padding: 8px;
+            border: 1px solid #000;
+        }
+        .nfse-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px;
+            background: #f0f0f0;
+            border: 1px solid #000;
+        }
+        .nfse-info div {
+            flex: 1;
+            font-size: 10px;
+        }
+        .nfse-info strong {
+            display: block;
+            margin-bottom: 2px;
+            font-size: 9px;
+            color: #555;
+        }
+        .section-title {
+            background: #333;
+            color: white;
+            padding: 4px 8px;
+            margin: 10px 0 8px 0;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 8px 0;
+        }
+        .info-grid div {
+            padding: 4px;
+            border: 1px solid #000;
+            background: #fff;
+            font-size: 10px;
+        }
+        .info-grid strong {
+            font-size: 9px;
+            color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 10px;
+        }
+        table th, table td {
+            border: 1px solid #000;
+            padding: 6px;
+            text-align: left;
+        }
+        table th {
+            background: #e0e0e0;
+            font-weight: bold;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+        table td.right {
+            text-align: right;
+        }
+        .totals {
+            margin-top: 8px;
+            padding: 8px;
+            background: #f5f5f5;
+            border: 1px solid #000;
+            font-size: 10px;
+        }
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+        .totals-row strong {
+            font-size: 12px;
+        }
+        .observacoes {
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #000;
+            background: #fff;
+            font-size: 10px;
+            min-height: 40px;
+        }
+        .footer {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 2px solid #000;
+            font-size: 9px;
+            color: #333;
+            text-align: center;
+        }
+        .codigo-verificacao {
+            background: #fff;
+            padding: 8px;
+            margin: 10px 0;
+            text-align: center;
+            border: 2px solid #000;
+            font-family: monospace;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .barcode {
+            text-align: center;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+        }
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 80px;
+            font-weight: bold;
+            color: rgba(255, 0, 0, 0.3);
+            z-index: 1000;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            border: 4px solid rgba(255, 0, 0, 0.3);
+            padding: 20px 40px;
+        }
+        @media print {
+            body { padding: 0; }
+            .danfs { border: 2px solid #000; }
+            .watermark {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-45deg);
+            }
+        }
+    </style>
+</head>
+<body>
+{% if emissao.situacao_fiscal == 'CANCELADA' %}
+<div class="watermark">NOTA CANCELADA</div>
+{% endif %}
+<div class="danfs">
+    <div class="header">
+        <img src="{{ get_empresa_logo(empresa) }}" alt="Logo Empresa" class="header-logo" />
+        <div class="header-info">
+            <h2>{{ empresa.nome_fantasia or empresa.nome }}</h2>
+            <p>{{ empresa.endereco_rua }}, {{ empresa.endereco_numero }} - {{ empresa.endereco_bairro }}</p>
+            <p>{{ empresa.endereco_cidade }} - {{ empresa.endereco_uf }} - CEP: {{ empresa.endereco_cep }}</p>
+            <p>CNPJ: {{ empresa.cnpj }} | Inscr. Municipal: {{ empresa.inscricao_municipal or '-' }}</p>
+        </div>
+        <img src="{{ url_for('static', filename='images/logo-nfs-e-vertical.png') }}" alt="Logo NFS-e" class="header-logo-nfse" style="margin-left: auto;" />
+    </div>
+
+    <div class="title">Documento Auxiliar da NFS-e (DANFSe V1.0)</div>
+
+    <div class="nfse-info">
+        <div>
+            <strong>Nº NFS-e:</strong> {{ emissao.numero_nfse or emissao.numero_interno or '-' }}
+        </div>
+        <div>
+            <strong>Data de Emissão:</strong> {{ emissao.criado_em.strftime('%d/%m/%Y %H:%M:%S') if emissao.criado_em else '-' }}
+        </div>
+        <div>
+            <strong>Protocolo:</strong> {{ emissao.protocolo or '-' }}
+        </div>
+        <div>
+            <strong>Situação:</strong> {{ emissao.situacao_fiscal or '-' }}
+        </div>
+    </div>
+
+    <div class="section-title">DADOS DO PRESTADOR</div>
+    <div class="info-grid">
+        <div><strong>Razão Social:</strong> {{ empresa.nome }}</div>
+        <div><strong>CNPJ:</strong> {{ empresa.cnpj }}</div>
+        <div><strong>Inscrição Municipal:</strong> {{ empresa.inscricao_municipal or '-' }}</div>
+        <div><strong>Município:</strong> {{ empresa.endereco_cidade }} - {{ empresa.endereco_uf }}</div>
+    </div>
+
+    <div class="section-title">DADOS DO TOMADOR</div>
+    <div class="info-grid">
+        <div><strong>Razão Social/Nome:</strong> {{ emissao.tomador.nome if emissao.tomador else '-' }}</div>
+        <div><strong>CNPJ/CPF:</strong> {{ emissao.tomador.cnpj_cpf if emissao.tomador else '-' }}</div>
+        <div><strong>Inscrição Municipal:</strong> {{ emissao.tomador.inscricao_municipal or '-' }}</div>
+        <div><strong>Município:</strong> {{ emissao.tomador.cidade if emissao.tomador else '-' }}</div>
+        <div><strong>Endereço:</strong> {{ emissao.tomador_endereco or '-' }}</div>
+    </div>
+
+    <div class="section-title">DISCRIMINAÇÃO DOS SERVIÇOS</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Cód. Nacional</th>
+                <th>Cód. Municipal</th>
+                <th>Descrição</th>
+                <th class="right">Valor (R$)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ emissao.codigo_tributacao_nacional or '-' }}</td>
+                <td>{{ emissao.codigo_tributacao_municipal or '-' }}</td>
+                <td>{{ emissao.servico.descricao if emissao.servico else '-' }}</td>
+                <td class="right">{{ '%.2f'|format(emissao.valor_servico or 0) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="section-title">VALORES</div>
+    <div class="totals">
+        <div class="totals-row">
+            <span>Valor do Serviço:</span>
+            <span>R$ {{ '%.2f'|format(emissao.valor_servico or 0) }}</span>
+        </div>
+        <div class="totals-row">
+            <span>Valor Deduções:</span>
+            <span>R$ {{ '%.2f'|format(emissao.valor_deducoes or 0) }}</span>
+        </div>
+        <div class="totals-row">
+            <span>Base de Cálculo:</span>
+            <span>R$ {{ '%.2f'|format((emissao.valor_servico or 0) - (emissao.valor_deducoes or 0)) }}</span>
+        </div>
+        <div class="totals-row">
+            <span>Valor ISS:</span>
+            <span>R$ {{ '%.2f'|format(emissao.valor_iss or 0) }}</span>
+        </div>
+        <div class="totals-row" style="border-top: 2px solid #000; padding-top: 5px; margin-top: 8px;">
+            <strong><span>Valor Total:</span></strong>
+            <strong><span>R$ {{ '%.2f'|format(emissao.valor_servico or 0) }}</span></strong>
+        </div>
+    </div>
+
+    <div class="section-title">DADOS COMPLEMENTARES</div>
+    <div class="info-grid">
+        <div><strong>Regime Tributação:</strong> {{ emissao.regime_tributacao or '-' }}</div>
+        <div><strong>Local de Prestação:</strong> {{ emissao.local_prestacao or '-' }}</div>
+    </div>
+    <div class="observacoes">
+        <strong>Observações:</strong><br>
+        {{ emissao.observacoes or 'Não informado.' }}
+    </div>
+
+    <div class="footer">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <div style="flex: 1;">
+                <p><strong>Chave de Acesso:</strong> {{ emissao.chave_nfse or '-' }}</p>
+                <p>Documento emitido por LiveSun em conformidade com o padrão NFS-e Nacional</p>
+            </div>
+            {% if qr_code_url %}
+            <div style="text-align: center;">
+                <img id="qrcode-img" src="" alt="QRCode" style="border: 1px solid #000;" />
+                <p style="font-size: 8px; margin-top: 5px;">QRCode para consulta</p>
+                <script>
+                    (function() {
+                        var url = "{{ qr_code_url }}";
+                        document.getElementById('qrcode-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(url);
+                    })();
+                </script>
+            </div>
+            {% else %}
+            <div style="text-align: center;">
+                <p style="font-size: 8px; color: red;">Chave não disponível</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+window.onload = function(){ window.print(); };
+</script>
+</body>
+</html>

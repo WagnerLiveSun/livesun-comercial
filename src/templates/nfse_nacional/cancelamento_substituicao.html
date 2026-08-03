@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+
+{% block title %}Cancelamento por Substituição{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Cancelamento por Substituição</h2>
+        <p class="text-muted mb-0">Cancelar NFS-e e substituir por outra NFS-e (e105102).</p>
+    </div>
+    <a href="{{ url_for('nfse_nacional.index') }}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+
+<style>
+.nfse-cancelamento-card {
+    background: var(--ls-card-bg);
+    border: 1px solid var(--ls-border-subtle);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+.nfse-cancelamento-card .form-label {
+    color: var(--ls-text-muted);
+    font-weight: 600;
+}
+.nfse-cancelamento-card .form-control,
+.nfse-cancelamento-card .form-select {
+    background-color: var(--ls-input-bg);
+    border-color: var(--ls-input-border);
+    color: var(--ls-text-main);
+}
+.nfse-cancelamento-card .form-control::placeholder {
+    color: var(--ls-text-muted);
+}
+</style>
+
+<div class="ls-card p-4 nfse-cancelamento-card mb-4">
+    <h5 class="ls-page-title mb-3">Dados do Cancelamento por Substituição</h5>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Chave de Acesso da NFS-e a Cancelar (50 dígitos)</label>
+                <input type="text" name="chave_nfse" class="form-control ls-theme-control" 
+                       value="{{ chave_nfse }}" placeholder="Digite a chave da NFS-e a ser cancelada" maxlength="50">
+                <small class="text-muted">Chave de acesso da NFS-e que será cancelada.</small>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Chave de Acesso da NFS-e Substituta (50 dígitos)</label>
+                <input type="text" name="chave_substituta" class="form-control ls-theme-control" 
+                       value="{{ chave_substituta }}" placeholder="Digite a chave da NFS-e substituta" maxlength="50">
+                <small class="text-muted">Chave de acesso da NFS-e que substituirá a cancelada.</small>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Código do Motivo</label>
+                <select name="codigo_motivo" class="form-select ls-theme-control">
+                    <option value="1" selected>1 - Erro na emissão</option>
+                    <option value="2">2 - Erro no cálculo</option>
+                    <option value="3">3 - Dados incorretos</option>
+                    <option value="9">9 - Outros</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Ambiente</label>
+                <select name="ambiente" class="form-select ls-theme-control">
+                    <option value="homologacao" selected>Homologação</option>
+                    <option value="producao">Produção</option>
+                </select>
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Descrição do Motivo</label>
+                <textarea name="descricao_motivo" class="form-control ls-theme-control" rows="3" 
+                          placeholder="Descreva o motivo do cancelamento">{{ descricao_motivo }}</textarea>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-times-circle me-2"></i>Cancelar por Substituição
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if resultado %}
+<div class="ls-card p-4 nfse-cancelamento-card">
+    <h5 class="ls-page-title mb-3">Resultado do Cancelamento</h5>
+    
+    {% if resultado.sucesso %}
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i>{{ resultado.mensagem }}
+    </div>
+    
+    <div class="nfse-resultado-box">
+        <div class="nfse-resultado-item">
+            <small>Status</small>
+            <strong>{{ resultado.status }}</strong>
+        </div>
+        <div class="nfse-resultado-item">
+            <small>Situação Fiscal</small>
+            <strong>{{ resultado.situacao_fiscal }}</strong>
+        </div>
+        {% if resultado.protocolo %}
+        <div class="nfse-resultado-item">
+            <small>Protocolo</small>
+            <strong>{{ resultado.protocolo }}</strong>
+        </div>
+        {% endif %}
+        <div class="nfse-resultado-item">
+            <small>Status HTTP</small>
+            <strong>{{ resultado.httpstatus }}</strong>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle me-2"></i>{{ resultado.mensagem }}
+    </div>
+    
+    <div class="nfse-resultado-box">
+        <div class="nfse-resultado-item">
+            <small>Status</small>
+            <strong>{{ resultado.status }}</strong>
+        </div>
+        <div class="nfse-resultado-item">
+            <small>Status HTTP</small>
+            <strong>{{ resultado.httpstatus }}</strong>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

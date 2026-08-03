@@ -1,0 +1,162 @@
+{% extends "locacao/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('locacao.operacao_agenda') }}">Agenda</a></li>
+<li class="breadcrumb-item active">Inspeção de Devolução</li>
+{% endblock %}
+
+{% block locacao_content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-magnifying-glass me-2"></i>Inspeção de Peças Devolvidas</h2>
+    </div>
+</div>
+
+<!-- Informações da Devolução -->
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3">Informações da Devolução</h5>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Número da Devolução</label>
+            <p class="mb-0"><strong>{{ devolucao.numero }}</strong></p>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Contrato</label>
+            <p class="mb-0"><strong>{{ devolucao.contrato.numero }}</strong></p>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Cliente</label>
+            <p class="mb-0"><strong>{{ devolucao.contrato.cliente.nome }}</strong></p>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Data da Devolução</label>
+            <p class="mb-0"><strong>{{ devolucao.data_devolucao.strftime('%d/%m/%Y %H:%M') }}</strong></p>
+        </div>
+    </div>
+</div>
+
+<!-- Peças Inspecionadas -->
+{% if inspecoes_realizadas %}
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-check-circle me-2"></i>Peças Já Inspecionadas</h5>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Peça</th>
+                    <th>Classificação</th>
+                    <th class="text-end">Valor Cobrança</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inspecao in inspecoes_realizadas %}
+                <tr>
+                    <td>{{ inspecao.peca.descricao if inspecao.peca else 'Item' }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if inspecao.classificacao == 'perfeito' %}bg-success
+                            {% elif inspecao.classificacao == 'sujo' %}bg-warning
+                            {% elif inspecao.classificacao == 'avariado' %}bg-danger
+                            {% elif inspecao.classificacao in ('faltante', 'perdido') %}bg-dark
+                            {% endif %}">
+                            {{ inspecao.classificacao|upper }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        {% if inspecao.valor_total_cobranca > 0 %}
+                        <strong class="text-danger">R$ {{ inspecao.valor_total_cobranca|brl }}</strong>
+                        {% else %}
+                        <span class="text-success">Sem cobrança</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Peças Pendentes de Inspeção -->
+{% if pecas_pendentes %}
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-hourglass-half me-2"></i>Peças Pendentes de Inspeção</h5>
+    
+    {% for peca in pecas_pendentes %}
+    <form method="POST" class="row g-3 mb-4 pb-4 border-bottom">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="peca_id" value="{{ peca.id }}">
+
+        <div class="col-md-6">
+            <label class="form-label">Peça</label>
+            <p class="mb-0"><strong>{{ peca.descricao }}</strong></p>
+            <small class="text-muted">Código: {{ peca.codigo_interno }}</small>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Classificação *</label>
+            <select name="classificacao" class="form-select" required>
+                <option value="">Selecione...</option>
+                <option value="perfeito">Perfeito</option>
+                <option value="sujo">Sujo (Limpeza)</option>
+                <option value="avariado">Avariado (Reparo)</option>
+                <option value="faltante">Faltante</option>
+                <option value="perdido">Perdido</option>
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Observações</label>
+            <textarea name="observacoes" class="form-control" rows="2"></textarea>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="fas fa-save me-2"></i>Registrar Inspeção
+            </button>
+        </div>
+    </form>
+    {% endfor %}
+{% else %}
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Inspeção Completa!</strong> Todas as peças foram inspecionadas.
+    </div>
+{% endif %}
+</div>
+
+<!-- Resumo de Cobranças -->
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-money-bill me-2"></i>Resumo de Cobranças</h5>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Multa por Atraso</label>
+            <p class="mb-0"><strong>R$ {{ devolucao.multa_atraso|brl }}</strong></p>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Cobranças por Inspeção</label>
+            <p class="mb-0">
+                <strong>R$ {{ inspecoes_realizadas|map(attribute='valor_total_cobranca')|sum|default(0)|brl }}</strong>
+            </p>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Total a Cobrar</label>
+            <p class="mb-0">
+                <strong class="text-danger">R$ {{ (devolucao.multa_atraso + (inspecoes_realizadas|map(attribute='valor_total_cobranca')|sum|default(0)))|brl }}</strong>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Botões de Ação -->
+<div class="d-grid gap-2 d-md-flex justify-content-md-end">
+    <a href="{{ url_for('locacao.operacao_agenda') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+    {% if not pecas_pendentes %}
+    <a href="{{ url_for('locacao.contratos_lista') }}" class="btn ls-btn-primary">
+        <i class="fas fa-check me-2"></i>Finalizar Devolução
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

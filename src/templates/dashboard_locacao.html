@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+
+{% block title %}Painel Locação{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold ls-page-title">Painel Locação</h1>
+        <p class="text-muted">Indicadores do módulo de locação</p>
+    </div>
+</div>
+
+<!-- KPIs de Acervo -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Total Peças</p>
+                    <h2 class="fw-bold" style="color: #3b82f6;">{{ total_pecas }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #3b82f6; opacity: 0.6;">
+                    <i class="fas fa-tags"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Disponíveis</p>
+                    <h2 class="fw-bold" style="color: #22c55e;">{{ pecas_disponiveis }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #22c55e; opacity: 0.6;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Em Manutenção</p>
+                    <h2 class="fw-bold" style="color: #f59e0b;">{{ pecas_manutencao }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #f59e0b; opacity: 0.6;">
+                    <i class="fas fa-tools"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Taxa de Ocupação</p>
+                    <h2 class="fw-bold" style="color: #8b5cf6;">{{ taxa_ocupacao }}%</h2>
+                </div>
+                <div style="font-size: 28px; color: #8b5cf6; opacity: 0.6;">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs de Contratos -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Contratos Ativos</p>
+                    <h2 class="fw-bold" style="color: #22c55e;">{{ contratos_ativos }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #22c55e; opacity: 0.6;">
+                    <i class="fas fa-file-contract"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs de Operações -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Orçamentos Pendentes</p>
+                    <h2 class="fw-bold" style="color: #f59e0b;">{{ orcamentos_pendentes }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #f59e0b; opacity: 0.6;">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Retiradas Pendentes</p>
+                    <h2 class="fw-bold" style="color: #ef4444;">{{ retiradas_pendentes }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #ef4444; opacity: 0.6;">
+                    <i class="fas fa-truck-loading"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Devoluções Pendentes</p>
+                    <h2 class="fw-bold" style="color: #6366f1;">{{ devolucoes_pendentes }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #6366f1; opacity: 0.6;">
+                    <i class="fas fa-undo"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

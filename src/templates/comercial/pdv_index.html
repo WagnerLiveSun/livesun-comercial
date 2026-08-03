@@ -1,0 +1,117 @@
+{% extends "layout.html" %}
+
+{% block title %}PDV / Caixa{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">PDV / Caixa</h1>
+        <p class="text-muted mb-0">Gerenciamento de sessoes de caixa.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('comercial_operacional.pdv_abrir') }}" class="btn ls-btn-primary">
+            <i class="fas fa-play"></i> Abrir Caixa
+        </a>
+    </div>
+</div>
+
+{% if sessao_aberta %}
+<div class="alert alert-info mb-4">
+    <i class="fas fa-info-circle"></i> Voce possui uma sessao de caixa aberta:
+    <strong>{{ sessao_aberta.numero }}</strong> ({{ sessao_aberta.pdv_nome }})
+    <a href="{{ url_for('comercial_operacional.pdv_vender', sessao_id=sessao_aberta.id) }}" class="btn btn-sm btn-primary ms-3">
+        <i class="fas fa-cash-register"></i> Continuar Vendas
+    </a>
+</div>
+{% endif %}
+
+<div class="ls-card p-4 mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <select name="status" class="form-control">
+                <option value="">Todos os status</option>
+                <option value="aberto" {{ 'selected' if status == 'aberto' else '' }}>Aberto</option>
+                <option value="fechado" {{ 'selected' if status == 'fechado' else '' }}>Fechado</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-outline-primary w-100">
+                <i class="fas fa-search"></i> Filtrar
+            </button>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('comercial_operacional.pdv_index') }}" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-times"></i> Limpar
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="ls-card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle ls-theme-table">
+            <thead>
+                <tr>
+                    <th>Numero</th>
+                    <th>PDV</th>
+                    <th>Operador</th>
+                    <th>Abertura</th>
+                    <th>Fechamento</th>
+                    <th>Valor Abertura</th>
+                    <th>Valor Vendas</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sessao in sessoes %}
+                <tr>
+                    <td><strong>{{ sessao.numero }}</strong></td>
+                    <td>{{ sessao.pdv_nome }}</td>
+                    <td>{{ sessao.operador.full_name or sessao.operador.username }}</td>
+                    <td>{{ sessao.data_abertura.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>{{ sessao.data_fechamento.strftime('%d/%m/%Y %H:%M') if sessao.data_fechamento else '-' }}</td>
+                    <td>{{ sessao.valor_abertura|brl }}</td>
+                    <td>{{ sessao.valor_vendas|brl }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if sessao.status == 'aberto' else 'secondary' }}">
+                            {{ sessao.status|title }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if sessao.status == 'aberto' %}
+                        <a href="{{ url_for('comercial_operacional.pdv_vender', sessao_id=sessao.id) }}" class="btn btn-outline-success btn-sm" title="Vender">
+                            <i class="fas fa-cash-register"></i> Vender
+                        </a>
+                        <a href="{{ url_for('comercial_operacional.pdv_fechar', sessao_id=sessao.id) }}" class="btn btn-outline-danger btn-sm" title="Fechar Caixa">
+                            <i class="fas fa-stop"></i> Fechar
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">Nenhuma sessao de caixa encontrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Paginacao" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {{ 'active' if page_num == pagination.page else '' }}">
+                        <a class="page-link" href="{{ url_for('comercial_operacional.pdv_index', page=page_num, status=status) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

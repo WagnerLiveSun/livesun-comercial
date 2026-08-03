@@ -1,0 +1,23 @@
+/* style.css básico para evitar erro 404 e permitir customização futura */
+body {
+    background-color: #0f172a;
+    color: #e5e7eb;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+.ls-card {
+    background: #1e293b;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #334155;
+}
+.table {
+    color: #e5e7eb;
+}
+.btn-primary {
+    background: #2563eb;
+    border: none;
+}
+.btn-success {
+    background: #22c55e;
+    border: none;
+}

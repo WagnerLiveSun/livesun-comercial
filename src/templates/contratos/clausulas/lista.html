@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+
+{% block title %}Cláusulas Padrão{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('contratos.index') }}">Contratos</a></li>
+<li class="breadcrumb-item active">Cláusulas Padrão</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-6 mb-4"><i class="fas fa-file-alt me-2"></i>Cláusulas Padrão</h1>
+    </div>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Tipo</label>
+            <select name="tipo" class="form-select">
+                <option value="">Todos</option>
+                <option value="obrigatoria" {% if tipo_filtro == 'obrigatoria' %}selected{% endif %}>Obrigatória</option>
+                <option value="opcional" {% if tipo_filtro == 'opcional' %}selected{% endif %}>Opcional</option>
+                <option value="condicional" {% if tipo_filtro == 'condicional' %}selected{% endif %}>Condicional</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Categoria</label>
+            <select name="categoria" class="form-select">
+                <option value="">Todas</option>
+                <option value="geral" {% if categoria_filtro == 'geral' %}selected{% endif %}>Geral</option>
+                <option value="financeiro" {% if categoria_filtro == 'financeiro' %}selected{% endif %}>Financeiro</option>
+                <option value="juridico" {% if categoria_filtro == 'juridico' %}selected{% endif %}>Jurídico</option>
+                <option value="tecnico" {% if categoria_filtro == 'tecnico' %}selected{% endif %}>Técnico</option>
+                <option value="trabalhista" {% if categoria_filtro == 'trabalhista' %}selected{% endif %}>Trabalhista</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Buscar</label>
+            <input type="text" name="busca" class="form-control" value="{{ busca }}" placeholder="Código ou título...">
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn ls-btn-primary w-100">
+                <i class="fas fa-filter me-2"></i>Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="mb-4">
+    <a href="{{ url_for('contratos.clausulas_criar') }}" class="btn ls-btn-primary">
+        <i class="fas fa-plus me-2"></i>Nova Cláusula
+    </a>
+</div>
+
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Código</th>
+                    <th>Título</th>
+                    <th>Tipo</th>
+                    <th>Categoria</th>
+                    <th>Editável</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if clausulas %}
+                    {% for clausula in clausulas %}
+                    <tr>
+                        <td><strong>{{ clausula.codigo }}</strong></td>
+                        <td>{{ clausula.titulo }}</td>
+                        <td>
+                            <span class="badge
+                                {% if clausula.tipo == 'obrigatoria' %}bg-danger
+                                {% elif clausula.tipo == 'opcional' %}bg-success
+                                {% elif clausula.tipo == 'condicional' %}bg-warning
+                                {% endif %}">
+                                {{ clausula.tipo|title }}
+                            </span>
+                        </td>
+                        <td>{{ clausula.categoria|capitalize if clausula.categoria else '-' }}</td>
+                        <td>
+                            {% if clausula.editavel %}
+                            <i class="fas fa-check text-success"></i>
+                            {% else %}
+                            <i class="fas fa-times text-danger"></i>
+                            {% endif %}
+                        </td>
+                        <td>{{ clausula.ordem_padrao }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('contratos.clausulas_editar', id=clausula.id) }}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <p class="text-muted mb-0">Nenhuma cláusula encontrada.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

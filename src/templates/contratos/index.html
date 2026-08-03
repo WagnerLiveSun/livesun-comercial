@@ -1,0 +1,138 @@
+{% extends "layout.html" %}
+
+{% block title %}Contratos de Prestação de Serviços{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Contratos</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-6 mb-4"><i class="fas fa-file-contract me-2"></i>Contratos de Prestação de Serviços</h1>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="ls-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+                <option value="">Todos</option>
+                <option value="rascunho" {% if status_filtro == 'rascunho' %}selected{% endif %}>Rascunho</option>
+                <option value="aguardando_assinatura" {% if status_filtro == 'aguardando_assinatura' %}selected{% endif %}>Aguardando Assinatura</option>
+                <option value="assinado" {% if status_filtro == 'assinado' %}selected{% endif %}>Assinado</option>
+                <option value="cancelado" {% if status_filtro == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                <option value="rescindido" {% if status_filtro == 'rescindido' %}selected{% endif %}>Rescindido</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Cliente</label>
+            <select name="cliente_id" class="form-select">
+                <option value="">Todos</option>
+                {% for cliente in clientes %}
+                <option value="{{ cliente.id }}" {% if cliente_id_filtro == cliente.id|string %}selected{% endif %}>{{ cliente.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn ls-btn-primary w-100">
+                <i class="fas fa-filter me-2"></i>Filtrar
+            </button>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <a href="{{ url_for('contratos.index') }}" class="btn btn-secondary w-100">
+                <i class="fas fa-times me-2"></i>Limpar
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabela de Contratos -->
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Número</th>
+                    <th>Título</th>
+                    <th>Cliente</th>
+                    <th>Status</th>
+                    <th>Vigência</th>
+                    <th>Valor Total</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if contratos %}
+                    {% for contrato in contratos %}
+                    <tr>
+                        <td><strong>{{ contrato.numero }}</strong></td>
+                        <td>{{ contrato.titulo or '-' }}</td>
+                        <td>{{ contrato.cliente.nome }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if contrato.status == 'rascunho' %}bg-secondary
+                                {% elif contrato.status == 'aguardando_assinatura' %}bg-warning
+                                {% elif contrato.status == 'assinado' %}bg-success
+                                {% elif contrato.status == 'cancelado' %}bg-danger
+                                {% elif contrato.status == 'rescindido' %}bg-dark
+                                {% endif %}">
+                                {{ contrato.status|replace('_', ' ')|title }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if contrato.data_inicio_vigencia %}
+                                {{ contrato.data_inicio_vigencia.strftime('%d/%m/%Y') }}
+                                {% if contrato.data_fim_vigencia %}
+                                a {{ contrato.data_fim_vigencia.strftime('%d/%m/%Y') }}
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>R$ {{ contrato.valor_total|brl }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('contratos.visualizar', id=contrato.id) }}" class="btn btn-sm btn-outline-primary" title="Visualizar">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if contrato.status == 'rascunho' %}
+                                <a href="{{ url_for('contratos.editar', id=contrato.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                {% if contrato.status == 'aguardando_assinatura' %}
+                                <form method="POST" action="{{ url_for('contratos.assinar', id=contrato.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Assinar" onclick="return confirm('Confirmar assinatura do contrato?')">
+                                        <i class="fas fa-signature"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if contrato.status in ['rascunho', 'aguardando_assinatura'] %}
+                                <form method="POST" action="{{ url_for('contratos.cancelar', id=contrato.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancelar" onclick="return confirm('Confirmar cancelamento do contrato?')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <a href="{{ url_for('contratos.historico', id=contrato.id) }}" class="btn btn-sm btn-outline-info" title="Histórico">
+                                    <i class="fas fa-history"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <p class="text-muted mb-0">Nenhum contrato encontrado.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

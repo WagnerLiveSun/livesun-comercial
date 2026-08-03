@@ -1,0 +1,1234 @@
+Codigo  	Descricao
+01      	Serviços de informática e congêneres.
+01.01   	Análise e desenvolvimento de sistemas.
+01.01.01	Análise de sistemas, 
+01.01.02	Desenvolvimento de sistemas
+01.01.04	Geração de programa de computador sob encomenda
+01.02   	Programação.
+01.02.01	Programação
+01.03   	Processamento, armazenamento ou hospedagem de dados, textos, imagens, vídeos, páginas eletrônicas, aplicativos e sistemas de informação, entre outros formatos, e congêneres.
+01.03.02	Provimento de acesso à internet
+01.03.03	Provimento de voz sobre internet
+01.03.04	Provimento de conteúdo para a internet
+01.03.05	Provimento de serviço de aplicação
+01.03.07	Serviços de data center, parque tecnológico ou congêneres
+01.03.08	Processamento de dados, textos, imagens, vídeos, páginas eletrônicas, aplicativos ou sistemas de informação, entre outros formatos, e congêneres
+01.03.09	Armazenamento ou hospedagem de dados, textos, imagens, vídeos, páginas eletrônicas, aplicativos ou sistemas de informação, entre outros formatos, e congêneres
+01.04   	Elaboração de programas de computadores, inclusive de jogos eletrônicos, independentemente da arquitetura construtiva da máquina em que o programa será executado, incluindo tablets, smartphones e congêneres.
+01.04.01	Elaboração de programa de computadores
+01.04.02	Elaboração de jogo eletrônico
+01.04.03	Elaboração de programa de computador sob encomenda, não derivado de software preexistente, cujo desenvolvimento se dê integralmente no Brasil e cujos direitos autorais permaneçam reservados ao contratante do serviço, desde que atendidos os demais requisitos previstos no art. 8º da Instrução Normativa SMF nº 16, de 02 de julho de 2012
+01.05   	Licenciamento ou cessão de direito de uso de programas de computação.
+01.05.01	Licenciamento de uso de programa de computação
+01.05.02	Cessão de direito de uso de programa de computação
+01.06   	Assessoria e consultoria em informática.
+01.06.01	Assessoria ou consultoria em informática
+01.07   	Suporte técnico em informática, inclusive instalação, configuração e manutenção de programas de computação e bancos de dados.
+01.07.01	Suporte técnico em informática
+01.07.02	Instalação e/ou configuração de programa de computação e/ou banco de dados
+01.07.03	Manutenção de programa de computação e/ou banco de dados
+01.07.04	Customização de programa de computador
+01.07.05	Atualização de software
+01.08   	Planejamento, confecção, manutenção e atualização de páginas eletrônicas.
+01.08.01	Projeto de páginas eletrônicas
+01.08.02	Confecção ou desenvolvimento de páginas eletrônicas
+01.08.03	Manutenção e/ou atualização de páginas eletrônicas
+01.09   	Disponibilização, sem cessão definitiva, de conteúdos de áudio, vídeo, imagem e texto por meio da internet, respeitada a imunidade de livros, jornais e periódicos (exceto a distribuição de conteúdos pelas prestadoras de Serviço de Acesso Condicionado, de que trata a Lei no 12.485, de 12 de setembro de 2011, sujeita ao ICMS).
+01.09.01	Disponibilização, sem cessão definitiva, de conteúdos de áudio, vídeo, imagem ou texto por meio da internet, para pessoas jurídicas
+01.09.02	Disponibilização, sem cessão definitiva, de conteúdos de áudio, vídeo, imagem ou texto por meio da internet, para pessoas naturais
+02      	Serviços de pesquisas e desenvolvimento de qualquer natureza.
+02.01   	Serviços de pesquisas e desenvolvimento de qualquer natureza.
+02.01.01	Pesquisa e desenvolvimento (P&D)
+02.01.02	Pesquisa de mercado ou de opinião pública
+02.01.03	Pesquisa de opinião pública
+02.01.04	Pesquisa de mercado
+02.01.05	Desenvolvimento de projetos de créditos de carbono
+03      	Serviços prestados mediante locação, cessão de direito de uso e congêneres.
+03.02   	Cessão de direito de uso de marcas e de sinais de propaganda.
+03.02.01	Cessão de direito de uso de sinais de propaganda
+03.02.02	Cessão de direito de uso de marca
+03.02.04	Serviços relativos à indústria cinematográfica, correspondentes a receitas de licenciamento para exibição da obra cinematográfica, exclusivamente vinculados a filme brasileiro, natural ou de enredo
+03.02.05	Serviços relativos à indústria cinematográfica, correspondentes a receitas de licenciamento para exibição da obra cinematográfica, vinculados a filme estrangeiro
+03.02.06	Serviços prestados mediante locação, cessão de direito de uso e congêneres, não especificados em outros códigos, exceto locação de bens móveis pura e simples, nos termos da Instrução Normativa SMF Nº 15, de 12/01/2012
+03.03   	Exploração de salões de festas, centro de convenções, escritórios virtuais, stands, quadras esportivas, estádios, ginásios, auditórios, casas de espetáculos, parques de diversões, canchas e congêneres, para realização de eventos ou negócios de qualquer natureza.
+03.03.01	Exploração de salão de festas
+03.03.02	Exploração de centro de convenções
+03.03.03	Exploração de escritório virtual
+03.03.04	Exploração de stand
+03.03.05	Exploração de quadra esportiva
+03.03.06	Exploração de estádio
+03.03.07	Exploração de ginásio
+03.03.08	Exploração de auditório
+03.03.09	Exploração de casa de espetáculos
+03.03.10	Exploração de parque de diversões
+03.03.11	Exploração de cancha, campo para prática esportiva, pista para corrida de animais e congêneres
+03.04   	Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de ferrovia, rodovia, postes, cabos, dutos e condutos de qualquer natureza
+03.04.01	Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de ferrovias
+03.04.02	Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de rodovias
+03.04.03	Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de postes
+03.04.04	Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de cabos
+03.04.05	Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de dutos ou condutos de qualquer natureza
+03.04.06	Locação, sublocação ou arrendamento de condutos em geral
+03.04.07	Cessão de direitos sobre ferrovia
+03.04.08	Cessão de direitos sobre rodovia
+03.04.09	Cessão de direitos sobre postes
+03.04.10	Cessão de direitos sobre cabos
+03.04.11	Cessão de direitos sobre dutos
+03.04.12	Cessão de direitos sobre condutos em geral
+03.05   	Cessão de andaimes, palcos, coberturas e outras estruturas de uso temporário.
+03.05.01	Cessão de andaimes
+03.05.02	Cessão de palco
+03.05.03	Cessão de estrutura de uso temporário
+04      	Serviços de saúde, assistência médica e congêneres.
+04.01   	Medicina e biomedicina.
+04.01.01	Medicina
+04.01.02	Biomedicina
+04.02   	Análises clínicas, patologia, eletricidade médica, radioterapia, quimioterapia, ultra-sonografia, ressonância magnética, radiologia, tomografia e congêneres.
+04.02.01	Análises clínicas, patologia ou congênere
+04.02.02	Eletricidade médica ou congênere
+04.02.03	Radioterapia ou congênere
+04.02.04	Quimioterapia ou congênere
+04.02.05	Ultra-sonografia, ressonância magnética, radiologia, tomografia ou congênere
+04.02.06	Hemoterapia
+04.02.07	Litotripsia
+04.02.08	Exames médicos e de saúde em geral
+04.03   	Hospitais, clínicas, laboratórios, sanatórios, manicômios, casas de saúde, prontos-socorros, ambulatórios e         congêneres.
+04.03.01	Serviços prestados por hospital
+04.03.02	Serviços de saúde ou de assistência médica prestados por hospital apto a efetuar internações
+04.03.03	Serviços prestados por clínica 
+04.03.04	Serviços de saúde ou de assistência médica prestados por clínica apta a efetuar internações
+04.03.05	Serviços de laboratório
+04.03.06	Serviços prestados por sanatório
+04.03.07	Serviços de saúde ou de assistência médica prestados por sanatório apto a efetuar internações
+04.03.08	Serviços prestados por manicômio
+04.03.09	Serviços de saúde ou de assistência médica prestados por manicômio apto a efetuar internações
+04.03.10	Serviços prestados por casa de saúde
+04.03.11	Serviços de saúde ou de assistência médica prestados por casa de saúde apta a efetuar internações
+04.03.12	Serviços prestados por pronto-socorro
+04.03.13	Serviços de saúde ou de assistência médica prestados por pronto-socorro apto a efetuar internações
+04.03.14	Serviços prestados por ambulatórios
+04.03.15	Serviços prestados por posto de vacinação
+04.04   	Instrumentação cirúrgica.
+04.04.01	Instrumentação cirúrgica
+04.05   	Acupuntura.
+04.05.01	Acupuntura
+04.06   	Enfermagem, inclusive serviços auxiliares.
+04.06.01	Enfermagem 
+04.06.02	Enfermagem - serviços auxiliares
+04.07   	Serviços farmacêuticos.
+04.07.01	Serviços farmacêuticos
+04.08   	Terapia ocupacional, fisioterapia e fonoaudiologia.
+04.08.01	Terapia ocupacional
+04.08.02	Fisioterapia
+04.08.03	Fonoaudiologia
+04.09   	Terapias de qualquer espécie destinadas ao tratamento físico, orgânico e mental.
+04.09.01	Terapias de qualquer espécie destinadas ao tratamento físico, orgânico ou mental
+04.10   	Nutrição.
+04.10.01	Nutrição
+04.11   	Obstetrícia.
+04.11.01	Obstetrícia
+04.12   	Odontologia.
+04.12.01	Odontologia
+04.13   	Ortóptica.
+04.13.01	Ortóptica
+04.14   	Próteses sob encomenda.
+04.14.01	Confecção de próteses
+04.15   	Psicanálise.
+04.15.01	Psicanálise
+04.16   	Psicologia.
+04.16.01	Psicologia
+04.17   	Casas de repouso e de recuperação, creches, asilos e congêneres
+04.17.01	Serviços de casa de repouso, de recuperação, asilo ou congênere
+04.17.02	Serviços de creches ou congênere
+04.18   	Inseminação artificial, fertilização in vitro e congêneres.
+04.18.01	Inseminação artificial, fertilização in vitro ou congênere
+04.18.02	Reprodução assistida
+04.19   	Bancos de sangue, leite, pele, olhos, óvulos, sêmen e congêneres.
+04.19.01	Serviços de banco de sangue ou congênere
+04.19.02	Serviços de banco de leite, cordões umbilicais, pele, olhos, demais órgãos ou tecidos ou congênere
+04.19.03	Serviços de banco de óvulos, sêmem ou congênere
+04.20   	Coleta de sangue, leite, tecidos, sêmen, órgãos e materiais biológicos de qualquer espécie.
+04.20.01	Coleta de sangue
+04.20.02	Coleta de leite, tecidos, sêmen, órgãos ou materiais biológicos de qualquer espécie
+04.21   	Unidade de atendimento, assistência ou tratamento móvel e congêneres.
+04.21.01	Serviços de unidade de atendimento, assistência ou tratamento móve, ou congênere
+04.22   	Planos de medicina de grupo ou individual e convênios para prestação de assistência médica, hospitalar, odontológica e congêneres. 
+04.22.01	Plano de medicina de grupo ou congênere
+04.22.02	Plano de medicina individual ou congênere
+04.22.03	Convênio para prestação de assistência médica, hospitalar, odontológica e congêneres
+04.23   	Outros planos de saúde que se cumpram através de serviços de terceiros contratados, credenciados, cooperados ou apenas pagos pelo operador do plano mediante indicação do beneficiário.
+04.23.01	Plano de saúde cumprido através de serviços de terceiros contratados, credenciados, cooperados ou apenas pagos pelo operador do plano mediante indicação do beneficiário
+05      	Serviços de medicina e assistência veterinária e congêneres.
+05.01   	Medicina veterinária e zootecnia.
+05.01.01	Medicina veterinária
+05.01.02	Zootecnia
+05.02   	Hospitais, clínicas, ambulatórios, prontos-socorros e congêneres, na área veterinária.
+05.02.01	Serviços prestados por hospital veterinário
+05.02.02	Serviços prestados por clínica veterinária
+05.02.03	Serviços prestados por ambulatório veterinário
+05.02.04	Serviços prestados por pronto-socorro veterinário
+05.02.05	Serviços prestados por unidade de atendimento não especificada, na área veterinária
+05.03   	Laboratórios de análise na área veterinária
+05.03.01	Serviços de laboratórios de análise, na área veterinária
+05.04   	Inseminação artificial, fertilização in vitro e congêneres.
+05.04.01	Inseminação artificial, fertilização in vitro ou congênere, na área veterinária
+05.04.02	Reprodução animal assistida
+05.05   	Bancos de sangue e de órgãos e congêneres.
+05.05.01	Serviços de banco de sangue animal ou congênere
+05.05.02	Serviços de banco de órgãos de animais ou congênere
+05.06   	Coleta de sangue, leite, tecidos, sêmen, órgãos e materiais biológicos de qualquer espécie.
+05.06.01	Coleta de sangue, leite, tecidos, sêmen, órgãos ou materiais biológicos de qualquer espécie, de animais
+05.06.02	Manejo de animais
+05.07   	Unidade de atendimento, assistência ou tratamento móvel e congêneres.
+05.07.01	Serviços de unidade de atendimento, assistência ou tratamento móvel, ou congênere, para animais
+05.08   	Guarda, tratamento, amestramento, embelezamento, alojamento e congêneres.
+05.08.01	Guarda,  alojamento ou serviço congênere, para animais
+05.08.02	Tratamento, embelezamento, tosquia ou serviço congênere, para animais
+05.08.03	Amestramento de animais
+05.09   	Planos de atendimento e assistência médico-veterinária.
+05.09.01	Plano de atendimento e assistência médico-veterinária
+06      	Serviços de cuidados pessoais, estética, atividades físicas e congêneres.
+06.01   	Barbearia, cabeleireiros, manicuros, pedicuros e congêneres
+06.01.01	Barbearia ou serviço congênere
+06.01.02	Serviços de cabeleireiro ou congênere
+06.01.03	Serviços de cabeleireiro, manicuro ou pedicuro
+06.01.04	Serviços típicos de salões de beleza - cortes de cabelo, maquiagem, serviços de manicuro, pedicuro e outros
+06.01.20	Salão-parceiro optante pelo Simples Nacional (LF nº 12.592/2012) - serviços de cabeleireiros, barbeiros, manicuros, pedicuros e maquiadores
+06.01.21	Profissional-parceiro - cabeleireiro (LF nº 12.592/2012)
+06.01.22	Profissional-parceiro - barbeiro (LF nº 12.592/2012)
+06.01.23	Profissional-parceiro -manicuro (LF nº 12.592/2012)
+06.01.24	Profissional-parceiro -pedicuro (LF nº 12.592/2012)
+06.01.25	 profissional-parceiro -maquiador (LF nº 12.592/2012)
+06.02   	Esteticistas, tratamento de pele, depilação e congêneres
+06.02.01	Serviços de esteticistas, tratamento de pele, depilação ou congênere
+06.02.20	Salão-parceiro optante pelo Simples Nacional (LF nº 12.592/2012) -serviços de esteticistas e depiladores
+06.02.21	 profissional-parceiro - esteticista (LF nº 12.592/2012)
+06.02.22	 profissional-parceiro - depilador (LF nº 12.592/2012)
+06.03   	Banhos, duchas, sauna, massagens e congêneres
+06.03.01	Banhos, duchas, sauna, massagens ou serviço congênere
+06.03.02	Exploração de sanitários
+06.04   	Ginástica, dança, esportes, natação, artes marciais e demais atividades físicas.
+06.04.01	Aulas de ginástica
+06.04.02	Aulas de dança
+06.04.03	Aulas de esportes
+06.04.04	Aulas de natação
+06.04.05	Aulas de artes marciais
+06.04.06	Serviços de academia de ginástica
+06.04.07	Serviços de academia de dança
+06.04.08	Serviços de academia de esportes
+06.04.09	Serviços de academia de natação
+06.04.10	Serviços de academia de artes marciais
+06.04.11	Serviços relativos à prática de atividades físicas
+06.05   	Centros de emagrecimento, spa e congêneres
+06.05.01	Serviços de centro de emagrecimento, spa ou congênere
+06.06   	Aplicação de tatuagens, piercings e congêneres.
+06.06.01	Aplicação de tatuagens, piercings e congêneres
+07      	Serviços relativos a engenharia, arquitetura, geologia, urbanismo, construção civil, manutenção, limpeza, meio ambiente, saneamento e congêneres.
+07.01   	Engenharia, agronomia, agrimensura, arquitetura, geologia, urbanismo, paisagismo e congêneres.
+07.01.01	Engenharia
+07.01.02	Agronomia
+07.01.03	Agrimensura ou congênere
+07.01.04	Arquitetura
+07.01.05	Geologia
+07.01.06	Urbanismo ou congênere
+07.01.07	Paisagismo ou congênere
+07.01.08	Acompanhamento e fiscalização da execução de serviços de engenharia, arquitetura ou urbanismo
+07.01.09	Engenharia consultiva - acompanhamento e  fiscalização da execução de serviços de engenharia, arquitetura e urbanismo (relacionados com obras de construção civil, hidráulicas, de escoramento  ou de contenção de encostas)
+07.02   	Execução, por administração, empreitada ou subempreitada, de obras de construção civil, hidráulica ou elétrica e de outras obras semelhantes, inclusive sondagem, perfuração de poços, escavação, drenagem e irrigação, terraplanagem, pavimentação, concretagem e a instalação e montagem de produtos, peças e equipamentos (exceto o fornecimento de mercadorias produzidas pelo prestador de serviços fora do local da prestação dos serviços, que fica sujeito ao ICMS).
+07.02.11	Execução, por empreitada ou subempreitada, de obras hidráulicas
+07.02.13	Execução, por administração, de obras hidráulicas
+07.02.15	Execução, por empreitada ou subempreitada, de obras elétricas
+07.02.17	Execução, por administração, de obras elétricas
+07.02.19	Obras assemelhadas a  obras de construção civil, hidráulicas ou elétricas
+07.02.21	Construção de empreendimentos habitacionais de interesse social e de arrendamento residencial assim entendidos aqueles expressamente reconhecidos pela Secretaria Municipal de Habitação como inseridos na política habitacional municipal, estadual e federal, destinados à população com renda de até dez salários mínimos, conforme a Lei nº 5.065, de 10 de julho de 2009
+07.02.22	Sondagem
+07.02.23	Perfuração de poços
+07.02.24	Escavação
+07.02.25	Drenagem
+07.02.26	Irrigação
+07.02.27	Terraplanagem
+07.02.28	Pavimentação
+07.02.29	Concretagem de fundações ou contenções
+07.02.30	Concretagem, exceto fundações ou contenções
+07.02.31	Instalação de equipamentos, incluindo elevadores ou congêneres
+07.02.32	Montagem de equipamentos, incluindo elevadores ou congêneres
+07.02.33	Instalação de peças
+07.02.34	Montagem de peças
+07.02.35	Montagem de fôrmas in loco de fundações ou contenções
+07.02.36	Montagem de fôrmas in loco, exceto fundações ou contenções
+07.02.37	Serviços de armação in loco de fundações ou contenções
+07.02.38	Serviços de armação in loco, exceto fundações ou contenções
+07.02.39	Confecção de fôrmas sob encomenda de fundações ou contenções
+07.02.40	Confecção de fôrmas sob encomenda, exceto fundações ou contenções
+07.02.41	Confecção de produtos de concreto sob encomenda
+07.02.42	Confecção de armações metálicas sob encomenda de fundações ou contenções
+07.02.43	Confecção de armações metálicas sob encomenda, exceto fundações ou contenções
+07.02.44	Instalação elétrica, incluindo redes de computadores ou congêneres
+07.02.45	Instalação hidráulica, incluindo louças, metais ou congêneres
+07.02.46	Instalação contra incêndio
+07.02.47	Confecção de armações metálicas sob encomenda
+07.02.48	Confecção de produtos de gesso sob encomenda
+07.02.49	Confecção de produtos de cimento sob encomenda
+07.02.50	Confecção de produtos de fibrocimento sob encomenda
+07.02.51	Assentamento de alvenaria
+07.02.52	Colocação ou instalação de assoalhos
+07.02.53	Colocação ou instalação de revestimentos em paredes
+07.02.54	Serviços de pintura ou congêneres
+07.02.55	Colocação ou instalação de vidros
+07.02.56	Colocação ou instalação de esquadrias metálicas
+07.02.57	Colocação ou instalação de esquadrias de madeira
+07.02.58	Colocação ou instalação de ferragens de portas ou congêneres
+07.02.59	Colocação ou instalação de divisórias
+07.02.60	Colocação ou instalação de placas de gesso
+07.02.61	Recuperação de pisos ou congêneres
+07.02.62	Raspagem de pisos ou congêneres
+07.02.63	Polimento de pisos ou congêneres
+07.02.64	Lustração de pisos ou congêneres
+07.02.65	Calafetação
+07.02.69	Impermeabillização - construção civil
+07.02.70	Execução de obra de construção civil, hidráulica, elétrica ou semelhante, vinculada a imóvel situado na área delimitada na Operação Urbana Consorciada da Região do Porto do Rio de Janeiro, nos termos da Lei Complementar nº 101, de 23 de novembro de 2009 ¿ isenção instituída pela Lei nº 5.128, de 16 de dezembro de 2009
+07.02.72	Execução de obra de construção civil por empreitada global
+07.02.73	Execução, por empreitada ou subempreitada, de obras hidráulicas, quando vinculada a obra de construção civil
+07.02.74	Execução, por administração, de obras hidráulicas, quando vinculada a obra de construção civil
+07.02.75	Execução, por empreitada ou subempreitada, de obras elétricas, quando vinculada a obra de construção civil
+07.02.76	Execução, por administração, de obras elétricas, quando vinculada a obra de construção civil
+07.02.77	Sondagem, perfuração de poços ou escavação, todos quando vinculados a obra de construção civil
+07.02.78	Drenagem ou irrigação, todos quando vinculados a obra de construção civil
+07.02.79	Terraplanagem, quando vinculada a obra de construção civil
+07.02.80	Pavimentação, quando vinculada a obra de construção civil
+07.02.81	Concretagem, quando vinculada a obra de construção civil
+07.02.82	Instalação ou montagem de peças ou equipamentos, incluindo elevadores ou congêneres, quando vinculada a obra de construção civil
+07.02.83	Montagem de fôrmas in loco, quando vinculada a obra de construção civil
+07.02.84	Serviços de armação in loco, quando vinculados a obra de construção civil
+07.02.85	Confecção de fôrmas sob encomenda, quando vinculada a obra de construção civil
+07.02.86	Confecção de produtos de PVC, gesso, concreto, cimento, fibrocimento e outros sob encomenda, quando vinculada a obra de construção civil
+07.02.87	Confecção de armações metálicas sob encomenda, quando vinculada a obra de construção civil
+07.02.88	Instalação elétrica, incluindo redes de computadores ou congêneres, quando vinculada a obra de construção civil
+07.02.89	Instalação hidráulica, incluindo louças, metais ou congêneres, quando vinculada a obra de construção civil
+07.02.90	Instalação contra incêndio, quando vinculada a obra de construção civil
+07.02.98	Execução, por empreitada ou subempreitada, de obras de construção civil, não enquadrável nos códigos anteriores
+07.02.99	Execução, por administração, de obras de construção civil, não enquadrável nos códigos anteriores
+07.03   	Elaboração de planos diretores, estudos de viabilidade, estudos organizacionais e outros, relacionados com obras e serviços de engenharia; elaboração de anteprojetos, projetos básicos e projetos executivos para trabalhos de engenharia.
+07.03.01	Elaboração de planos diretores relacionados com serviços de engenharia não relacionados a obras de construção civil
+07.03.02	Engenharia consultiva - elaboração de planos diretores relacionados com obras ou serviços de engenharia (relacionados com obras de construção civil, hidráulicas, de escoramento  ou de contenção de encostas)
+07.03.03	Elaboração de estudos de viabilidade relacionados com serviços de engenharia não relacionados com obras de construção civil
+07.03.04	Engenharia consultiva - elaboração de estudos de viabilidade, relacionados com obras ou serviços de engenharia (relacionados com obras de construção civil, hidráulicas, de escoramento  ou de contenção de encostas)
+07.03.05	Elaboração de estudos organizacionais e outros, relacionados com serviços de engenharia não relacionados com obras de construção civil
+07.03.06	Engenharia consultiva - elaboração de estudos diversos relacionados com obras ou serviços de engenharia (relacionados com obras de construção civil, hidráulicas, de escoramento  ou de contenção de encostas)
+07.03.07	Elaboração de anteprojetos para trabalhos de engenharia não relacionados com obras de construção civil
+07.03.08	Elaboração de projetos básicos para trabalhos de engenharia não relacionados com obras de construção civil
+07.03.09	Elaboração de projetos executivos para trabalhos de engenharia não relacionados com obras de construção civil
+07.03.10	Engenharia consultiva - elaboração de anteprojetos, projetos básicos e projetos executivos para trabalhos de engenharia (relacionados com obras de construção civil, hidráulicas, de escoramento  ou de contenção de encostas)
+07.03.11	Elaboração de planos diretores, estudos de viabilidade, estudos organizacionais e outros, anteprojetos, projetos básicos e projetos executivos, vinculada a construção ou reforma de imóvel situado na área delimitada na Operação Urbana Consorciada da Região do Porto do Rio de Janeiro, nos termos da Lei Complementar nº 101, de 23 de novembro de 2009 - isenção instituída pela Lei nº 5.128, de 16 de dezembro de 2009
+07.04   	Demolição
+07.04.01	Demolição
+07.04.02	Demolição vinculada a construção ou reforma de imóvel situado na área delimitada na Operação Urbana Consorciada da Região do Porto do Rio de Janeiro, nos termos da Lei Complementar nº 101, de 23 de novembro de 2009 - isenção instituída pela Lei nº 5.128, de 16 de dezembro de 2009
+07.04.03	Demolição, quando executada em obra de construção civil
+07.04.04	Demolição, quando executada em obra de reforma de imóvel
+07.05   	Reparação, conservação e reforma de edifícios, estradas, pontes, portos e congêneres (exceto o fornecimento de mercadorias produzidas pelo prestador dos serviços, fora do local da prestação dos serviços, que fica sujeito ao ICMS).
+07.05.01	Reparação de edifícios e congêneres
+07.05.02	Reparação de estradas e congêneres
+07.05.03	Reparação de pontes e congêneres
+07.05.04	Reparação de portos  e congêneres
+07.05.05	Reparação de imóveis em geral
+07.05.07	Conservação de edifícios e congêneres
+07.05.08	Conservação de estradas e congêneres
+07.05.09	Conservação de pontes e congêneres
+07.05.10	Conservação de portos e congêneres
+07.05.11	Conservação de imóveis em geral
+07.05.13	Reforma de edifícios e congêneres
+07.05.14	Reforma de estradas e congêneres
+07.05.15	Reforma de pontes e congêneres
+07.05.16	Reforma de portos e congêneres
+07.05.17	Reforma de imóveis em geral
+07.05.19	Reforma de imóveis para conversão em residências integrantes de empreendimentos habitacionais de interesse social e de arrendamento residencial assim entendidos aqueles aqueles expressamente reconhecidos pela Secretaria Municipal de Habitação como inseridos na política habitacional municipal, estadual e federal, destinados à população com renda de até dez salários mínimos, conforme a Lei nº 5.065, de 10 de julho de 2009.
+07.05.20	Assentamento de alvenaria
+07.05.21	Colocação ou instalação de assoalhos
+07.05.22	Colocação ou instalação de revestimentos em paredes
+07.05.23	Serviços de pintura ou congêneres
+07.05.24	Colocação ou instalação de vidros
+07.05.25	Colocação ou instalação de esquadrias metálicas
+07.05.26	Colocação ou instalação de esquadrias de madeira
+07.05.27	Colocação ou instalação de ferragens de portas ou congêneres
+07.05.28	Colocação ou instalação de divisórias
+07.05.29	Colocação ou instalação de placas de gesso
+07.05.30	Recuperação de pisos ou congêneres
+07.05.31	Raspagem de pisos ou congêneres
+07.05.32	Polimento de pisos ou congêneres
+07.05.33	Lustração de pisos ou congêneres
+07.05.34	Calafetação
+07.05.38	Impermeabilização - reparação ou reforma de edifícios, estradas, pontes, portos ou congêneres
+07.05.39	Impermeabilização - conservação de edifícios, estradas, pontes, portos ou congêneres
+07.05.40	Conservação ou reforma de edifício, estrada, ponte, porto ou congênere, vinculada a construção ou reforma de imóvel situado na área delimitada na Operação Urbana Consorciada da Região do Porto do Rio de Janeiro, nos termos da Lei Complementar nº 101, de 23 de novembro de 2009 ¿ isenção instituída pela Lei nº 5.128, de 16 de dezembro de 2009
+07.06   	Colocação e instalação de tapetes, carpetes, assoalhos, cortinas, revestimentos de parede, vidros, divisórias, placas de gesso e congêneres, com material fornecido pelo tomador do serviço.
+07.06.01	Colocação ou instalação de tapetes
+07.06.02	Colocação ou instalação de carpetes
+07.06.03	Colocação ou instalação de assoalhos
+07.06.04	Colocação ou instalação de cortinas
+07.06.05	Colocação ou instalação de revestimentos de parede
+07.06.06	Serviços de pintura ou congêneres
+07.06.07	Colocação ou instalação de vidros
+07.06.08	Colocação ou instalação de esquadrias metálicas
+07.06.09	Colocação ou instalação de esquadrias de madeira
+07.06.10	Colocação ou instalação de ferragens de portas ou congêneres
+07.06.11	Colocação ou instalação de divisórias
+07.06.12	Colocação ou instalação de placas de gesso
+07.06.13	Assentamento de alvenaria
+07.06.14	Colocação ou instalação de assoalhos
+07.06.15	Colocação ou instalação de revestimentos em paredes
+07.06.16	Serviços de pintura ou congêneres
+07.06.17	Colocação ou instalação de vidros
+07.06.18	Colocação ou instalação de esquadrias metálicas
+07.06.19	Colocação ou instalação de esquadrias de madeira
+07.06.20	Colocação ou instalação de ferragens de portas ou congêneres
+07.06.21	Colocação ou instalação de divisórias
+07.06.22	Colocação ou instalação de placas de gesso
+07.06.23	Recuperação de pisos ou congêneres
+07.06.24	Raspagem de pisos ou congêneres
+07.06.25	Polimento de pisos ou congêneres
+07.06.26	Lustração de pisos ou congêneres
+07.06.27	Calafetação
+07.07   	Recuperação, raspagem, polimento e lustração de pisos e congêneres.
+07.07.01	Recuperação de pisos ou congêneres
+07.07.02	Raspagem de pisos ou congêneres
+07.07.03	Polimento de pisos ou congêneres
+07.07.04	Lustração de pisos ou congêneres
+07.08   	Calafetação.
+07.08.01	Calafetação
+07.09   	Varrição, coleta, remoção, incineração, tratamento, reciclagem, separação e destinação final de lixo, rejeitos e outros resíduos quaisquer.
+07.09.01	Varrição de lixo, rejeitos ou outros resíduos quaisquer
+07.09.02	Coleta de resíduos lixo, rejeitos ou outros resíduos quaisquer
+07.09.03	Remoção de lixo, rejeitos ou outros resíduos quaisquer
+07.09.04	Incineração de lixo, rejeitos ou outros resíduos quaisquer
+07.09.05	Tratamento de lixo, rejeitos ou outros resíduos quaisquer
+07.09.06	Reciclagem de lixo, rejeitos ou outros resíduos quaisquer
+07.09.07	Separação de  lixo, rejeitos ou outros resíduos quaisquer
+07.09.08	Destinação final de  lixo, rejeitos ou outros resíduos quaisquer
+07.09.09	Lei nº 5.133/2009, art. 4º - varrição, coleta, remoção, incineração, tratamento, reciclagem, separação ou destinação final de lixo, rejeitos e outros resíduos quaisquer, vinculado(a) à operação de complexo siderúrgico na Zona Oeste do Município, conforme definição constante do inc. IV do art. 3º da Lei nº 4.372/2006.
+07.10   	Limpeza, manutenção e conservação de vias e logradouros públicos, imóveis, chaminés, piscinas, parques, jardins e congêneres.
+07.10.01	Manutenção ou conservação de vias ou logradouros públicos
+07.10.02	Manutenção ou conservação de imóveis
+07.10.03	Manutenção ou conservação de chaminés
+07.10.04	Manutenção ou conservação de piscinas
+07.10.05	Manutenção ou conservação de parques
+07.10.06	Manutenção ou conservação de jardins
+07.10.07	Limpeza de vias ou logradouros públicos
+07.10.08	Limpeza de imóveis
+07.10.09	Limpeza de chaminés
+07.10.10	Limpeza de piscinas
+07.10.11	Limpeza de parques
+07.10.12	Limpeza de jardins
+07.10.13	Impermeabilização - manutenção ou conservação
+07.11   	Decoração e jardinagem, inclusive corte e poda de árvores.
+07.11.01	Decoração
+07.11.02	Jardinagem
+07.11.03	Corte ou poda de árvores
+07.12   	Controle e tratamento de efluentes de qualquer natureza e de agentes físicos, químicos e biológicos
+07.12.01	Controle de efluentes de qualquer natureza
+07.12.02	Controle de agentes físicos e/ou químicos
+07.12.03	Controle de agentes biológicos
+07.12.04	Tratamento de efluentes de qualquer natureza
+07.12.05	Tratamento de agentes químicos
+07.12.06	Tratamento de agentes biológicos
+07.12.07	Lei nº 5.133/2009, art. 4º - controle e tratamento de efluentes de qualquer natureza e de agentes físicos, químicos e biológicos, vinculados à operação de complexo siderúrgico na Zona Oeste do Município, conforme definição constante do inc. IV do art. 3º da Lei nº 4.372/2006.
+07.13   	Dedetização, desinfecção, desinsetização, imunização, higienização, desratização, pulverização e congêneres.
+07.13.01	Dedetização, desinsetização ou congênere
+07.13.02	Desinfecção, imunização, higienização ou congênere
+07.13.03	Desratização ou congênere
+07.13.04	Pulverização ou congênere
+07.13.05	Controle de pragas
+07.16   	Florestamento, reflorestamento, semeadura, adubação, reparação de solo, plantio, silagem, colheita, corte e descascamento de árvores, silvicultura, exploração florestal e dos serviços congêneres indissociáveis da formação, manutenção e colheita de florestas, para quaisquer fins e por quaisquer meios.
+07.16.01	Florestamento,  reflorestamento ou congênere
+07.16.03	Semeadura, adubação, reparação de solo, plantio, silagem, colheita
+07.16.04	Corte e descascamento de árvores
+07.16.05	Silvicultura, exploração florestal e dos serviços congêneres indissociáveis da formação, manutenção e colheita de florestas, para quaisquer fins e por quaisquer meios
+07.17   	Escoramento, contenção de encostas e serviços congêneres
+07.17.01	Escoramento, contenção de encostas e serviços congêneres
+07.17.02	Escoramento, contenção de encostas e serviços congêneres, quando executados em uma obra de construção civil
+07.17.03	Escoramento, contenção de encostas e serviços congêneres, quando executados em uma obra de reforma ou reparação de imóvel
+07.18   	Limpeza e dragagem de rios, portos, canais, baías, lagos, lagoas, represas, açudes e congêneres.
+07.18.01	Limpeza e dragagem de rios
+07.18.02	Limpeza e dragagem de portos
+07.18.03	Limpeza e dragagem de canais
+07.18.04	Limpeza e dragagem de baías ou congêneres
+07.18.05	Limpeza e dragagem de lagos, lagoas, represas, açudes ou congêneres
+07.19   	Acompanhamento e fiscalização da execução de obras de engenharia, arquitetura e urbanismo
+07.19.01	Acompanhamento e fiscalização da execução de obras de engenharia, arquitetura ou urbanismo
+07.19.04	Engenharia consultiva - acompanhamento e  fiscalização da execução de obras de engenharia, arquitetura e urbanismo (relacionados com obras de construção civil, hidráulicas, de escoramento  ou de contenção de encostas)
+07.20   	Aerofotogrametria (inclusive interpretação), cartografia, mapeamento, levantamentos topográficos, batimétricos, geográficos, geodésicos, geológicos, geofísicos e congêneres.
+07.20.01	Aerofotogrametria
+07.20.02	Interpretação de aerofotogrametria
+07.20.03	Cartografia ou congênere
+07.20.04	Mapeamento ou congênere
+07.20.05	Levantamentos topográficos ou congêneres
+07.20.06	Levantamentos batimétricos ou congêneres
+07.20.07	Levantamentos geográficos ou congêneres
+07.20.08	Levantamentos geodésicos ou congêneres
+07.20.09	Levantamentos geológicos ou congêneres
+07.20.10	Levantamentos geofísicos ou congêneres
+07.20.11	Topografia e congêneres, quando prestados em uma obra de construção civil
+07.20.12	Topografia e congêneres, quando prestados em uma obra de reforma de imóvel
+07.21   	Pesquisa, perfuração, cimentação, mergulho, perfilagem, concretação, testemunhagem, pescaria, estimulação e outros serviços relacionados com a exploração e explotação de petróleo, gás natural e de outros recursos minerais.
+07.21.01	Pesquisa, perfuração, cimentação, mergulho, perfilagem, concretação, testemunhagem, pescaria, estimulação e outros serviços relacionados com a exploração e explotação de petróleo, gás natural e de outros recursos minerais
+07.21.03	Serviços de logística relacionados à exploração e à explotação de petróleo e gás natural
+07.21.04	Integração de serviços de implementação,  intervenção  e interligação de  poços  marítimos  relacionados à exploração  e  à explotação  de  petróleo  e  gás  natural,  desde  que  os  respectivos estabelecimentos prestadores sejam localizados nos bairros de Acari, Barros  Filho, Cordovil, Costa Barros, Jardim América, Parada  de Lucas, Parque Colúmbia, Pavuna e Vigário Geral
+07.21.05	Serviços prestados mediante cessão de direito de uso de dados sísmicos não exclusivos obtidos por Empresa de Aquisição de Dados - EAD, na forma da regulamentação da Agência Nacional de Petróleo, Gás Natural e Biocombustíveis - ANP ou agência reguladora que a substitua
+07.22   	Nucleação e bombardeamento de nuvens e congêneres.
+07.22.01	Nucleação e bombardeamento de nuvens ou congêneres
+08      	Serviços de educação, ensino, orientação pedagógica e educacional, instrução, treinamento e avaliação pessoal de qualquer grau ou natureza.
+08.01   	Ensino regular pré-escolar, fundamental, médio e superior.
+08.01.01	Ensino pré-escolar
+08.01.02	Ensino fundamental
+08.01.03	Ensino médio
+08.01.04	Ensino superior
+08.01.05	Ensino regular à distância
+08.02   	Instrução, treinamento, orientação pedagógica e educacional, avaliação de conhecimentos de qualquer natureza.
+08.02.01	Instrução
+08.02.02	Treinamento
+08.02.03	Orientação pedagógica
+08.02.04	Orientação educacional
+08.02.05	Avaliação de conhecimentos
+08.02.06	Ensino técnico
+08.02.07	Ensino tecnológico
+08.02.08	Ensino de música
+08.02.09	Ensino de artes
+08.02.10	Ensino de idiomas
+08.02.11	Formação de condutores
+08.02.12	Curso de pilotagem
+08.02.13	Curso de informática
+08.02.14	Cursos em geral
+08.02.15	Instrução e treinamento à distância
+08.02.16	Ensino à distância - cursos livres
+09      	Serviços relativos a hospedagem, turismo, viagens e congêneres.
+09.01   	Hospedagem de qualquer natureza em hotéis, apart-service condominiais, flat, apart-hotéis, hotéis residência, residence-service, suite service, hotelaria marítima, motéis, pensões e congêneres; ocupação por temporada com fornecimento de serviço (o valor da alimentação e gorjeta, quando incluído no preço da diária, fica sujeito ao Imposto Sobre Serviços).
+09.01.01	Hospedagem, de qualquer natureza, em hotéis
+09.01.02	Hospedagem, de qualquer natureza, em apart-service condominial, flat, apart-hotel, hotel residência, residence-service, suite service, condomínio hoteleiro, flat-hotel ou congênere
+09.01.03	Hospedagem de qualquer natureza - hotelaria marítima
+09.01.04	Hospedagem, de qualquer natureza, em pensões, hospedarias e congêneres
+09.01.05	Ocupação por temporada com fornecimento de serviço
+09.01.06	Hospedagem, de qualquer natureza, em motéis e congêneres
+09.02   	Agenciamento, organização, promoção, intermediação e execução de programas de turismo, passeios, viagens, excursões, hospedagens e congêneres.
+09.02.01	Agenciamento, organização, promoção e intermediação de programas de turismo, passeios, viagens, excursões, hospedagens e congêneres.
+09.02.02	Execução de programas de turismo, passeios, viagens, excursões, hospedagens e congêneres.
+09.02.03	Reservas
+09.03   	Guias de turismo.
+09.03.01	Guia de turismo
+10      	Serviços de intermediação e congêneres.
+10.01   	Agenciamento, corretagem ou intermediação de câmbio, de seguros, de cartões de crédito, de planos de saúde e de planos de previdência privada.
+10.01.01	Agenciamento, corretagem ou intermediação de câmbio
+10.01.03	Agenciamento, corretagem ou intermediação  de cartões de crédito
+10.01.04	Agenciamento, corretagem ou intermediação de planos de saúde
+10.01.05	Agenciamento, corretagem ou intermediação de planos de previdência privada
+10.01.06	Agenciamento, corretagem ou intermediação, quando relativos a seguros
+10.01.07	Agenciamento, corretagem ou intermediação, quando relativos a resseguros
+10.02   	Agenciamento, corretagem ou intermediação de títulos em geral, valores mobiliários e contratos quaisquer.
+10.02.01	Agenciamento, corretagem ou intermediação de títulos em geral ou valores mobiliários
+10.02.02	Serviços de agenciamento, corretagem ou intermediação de títulos em geral ou valores mobiliários, prestados por instituição autorizada a funcionar pelo Banco Central do Brasil
+10.02.03	Agenciamento, corretagem ou intermediação de contratos quaisquer 
+10.02.04	Serviços de agenciamento, corretagem ou intermediação de títulos em geral ou valores mobiliários realizados no âmbito de Bolsa de Mercadorias e Futuros
+10.02.05	Intermediação de serviços entre pessoas físicas, realizada exclusivamente pela internet
+10.03   	Agenciamento, corretagem ou intermediação de direitos de propriedade industrial, artística ou literária.
+10.03.01	Agenciamento, corretagem ou intermediação de direitos de propriedade industrial
+10.03.02	Agenciamento, corretagem ou intermediação de direitos de propriedade artística
+10.03.03	Agenciamento, corretagem ou intermediação de direitos de propriedade literária
+10.04   	Agenciamento, corretagem ou intermediação de contratos de arrendamento mercantil (leasing), de franquia (franchising) e de faturização (factoring).
+10.04.01	Agenciamento, corretagem ou intermediação de contratos de arrendamento mercantil (leasing)
+10.04.02	Agenciamentode contratos de franquia (franchising)
+10.04.03	Agenciamento, corretagem ou intermediação de contratos de faturização (factoring)
+10.05   	Agenciamento, corretagem ou intermediação de bens móveis ou imóveis, não abrangidos em outros itens ou subitens, inclusive aqueles realizados no âmbito de Bolsas de Mercadorias e Futuros, por quaisquer meios.
+10.05.01	Agenciamento, corretagem ou intermediação de contratos em mercado de mercadorias e futuros
+10.05.02	Agenciamento, corretagem ou intermediação de bens móveis
+10.05.03	Agenciamento, corretagem ou intermediação de bens imóveis
+10.05.04	Venda em consignação
+10.05.05	Agenciamento de cargas
+10.05.06	Intermediação na comercialização de produtos de informática
+10.05.07	Agenciamento de transportes
+10.05.08	Intermediação para licenciamento ou cessão do direito de uso de programa de computador
+10.06   	Agenciamento marítimo.
+10.06.01	Agenciamento marítimo
+10.07   	Agenciamento de notícias.
+10.07.01	Agenciamento de notícias
+10.08   	Agenciamento de publicidade e propaganda, inclusive o agenciamento de veiculação por quaisquer meios.
+10.08.01	Agenciamento de publicidade e propaganda
+10.08.02	Agenciamento de veiculação de publicidade e propaganda
+10.09   	Representação de qualquer natureza, inclusive comercial.
+10.09.01	Representação comercial
+10.09.02	Representação em geral
+10.09.04	Serviços de representação ativa ou passiva, realizada através de centrais de teleatendimento, prestados por estabelecimentos situados na Área de Planejamento 3 - AP-3 e na Área de Planejamento 5 - AP-5, conforme delimitadas no Plano Diretor da Cidade do Rio de Janeiro, Lei Complementar nº 111, de 1º de fevereiro de 2011, e na Área de Planejamento 2.2 - AP-2.2, que engloba a VIII e a IX Regiões Administrativas
+10.09.05	Serviços de representação, quando relativa a seguros
+10.09.06	Serviços de representação, quando relativa a resseguros
+10.10   	Distribuição de bens de terceiros.
+10.10.01	Distribuição de bens de terceiros
+10.10.02	Serviços relativos à indústria cinematográfica, correspondentes a receitas de distribuição de filmes, exclusivamente vinculados a filme brasileiro, natural ou de enredo, e havendo dedicação exclusiva do distribuidor a filmes brasileiros, naturais ou de enredo
+10.10.03	Serviços relativos à indústria cinematográfica, correspondentes a receitas de distribuição de filmes, vinculados a filme estrangeiro, ou não havendo dedicação exclusiva do distribuidor a filmes brasileiros
+11      	Serviços de guarda, estacionamento, armazenamento, vigilância e congêneres.
+11.01   	Guarda e estacionamento de veículos terrestres automotores, de aeronaves e de embarcações.
+11.01.01	Guarda e estacionamento de veículos terrestres automotores
+11.01.02	Guarda e estacionamento de aeronaves
+11.01.03	Guarda e estacionamento de embarcações
+11.02   	Vigilância, segurança ou monitoramento de bens, pessoas e semoventes.
+11.02.03	Vigilância, segurança ou monitoramento de bens, pessoas ou semoventes
+11.03   	Escolta, inclusive de veículos e cargas.
+11.03.01	Escolta
+11.04   	Armazenamento, depósito, carga, descarga, arrumação e guarda de bens de qualquer espécie.
+11.04.01	Armazenamento, guarda ou depósito de bens
+11.04.02	Carga e/ou descarga de bens
+11.04.03	Arrumação de bens
+11.05   	Serviços relacionados ao monitoramento e rastreamento a distância, em qualquer via ou local, de veículos, cargas, pessoas e semoventes em circulação ou movimento, realizados por meio de telefonia móvel, transmissão de satélites, rádio ou qualquer outro meio, inclusive pelas empresas de tecnologia da informação veicular, independentemente de o prestador de serviços ser proprietário ou não da infraestrutura de telecomunicações que utiliza
+11.05.01	Serviços relacionados ao monitoramento e rastreamento a distância, em qualquer via ou local, de veículos, cargas, pessoas e semoventes em circulação ou movimento, realizados por meio de telefonia móvel, transmissão de satélites, rádio ou qualquer outro meio, inclusive pelas empresas de tecnologia da informação veicular, independentemente de o prestador de serviços ser proprietário ou não da infraestrutura de telecomunicações que utiliza
+12      	Serviços de diversões, lazer, entretenimento e congêneres.
+12.01   	Espetáculos teatrais
+12.01.01	Espetáculos teatrais
+12.02   	Exibições cinematográficas
+12.02.01	Exibições cinematográficas
+12.03   	Espetáculos circenses
+12.03.01	Espetáculos circenses
+12.04   	Programas de auditório
+12.04.01	Programas de auditório
+12.05   	Parques de diversões, centros de lazer e congêneres.
+12.05.01	Parques de diversões e congêneres
+12.05.02	Centros de lazer  e congêneres
+12.06   	Boates, taxi-dancing e congêneres
+12.06.01	Taxi-dancing  e congêneres
+12.06.02	Boates  e congêneres
+12.06.03	Discotecas
+12.06.04	Danceterias
+12.07   	Shows, ballet, danças, desfiles, bailes, óperas, concertos, recitais, festivais e congêneres
+12.07.01	Realização de shows
+12.07.02	Realização de espetáculos de  ballet
+12.07.03	Realização de dança
+12.07.04	Realização de desfile
+12.07.05	Realização de baile
+12.07.06	Realização de espetáculos de ópera
+12.07.07	Realização de concerto
+12.07.08	Realização de recital
+12.07.09	Realização de festival
+12.08   	Feiras, exposições, congressos e congêneres
+12.08.01	 feira, exposição, congresso ou congênere
+12.09   	Bilhares, boliches e diversões eletrônicas ou não
+12.09.01	Jogos de bilhar
+12.09.02	Jogos de boliche
+12.09.03	Diversões eletrônicas ou não
+12.10   	Corridas e competições de animais
+12.10.01	Corridas e competições de animais
+12.11   	Competições esportivas ou de destreza física ou intelectual, com ou sem a participação do espectador.
+12.11.01	Competições esportivas ou de destreza física ou intelectual
+12.12   	Execução de música
+12.12.01	Execução de música
+12.13   	Produção, mediante ou sem encomenda prévia, de eventos, espetáculos, entrevistas, shows, ballet, danças, desfiles, bailes, teatros, óperas, concertos, recitais, festivais e congêneres.
+12.13.01	Produção de eventos
+12.13.02	Produção de espetáculos
+12.13.03	Produção de entrevistas
+12.13.04	Produção de shows
+12.13.05	Produção de desfiles
+12.13.06	Produção de danças
+12.13.07	Produção de bailes
+12.13.08	Produção de peças teatrais
+12.13.09	Produção de óperas
+12.13.10	Produção de concertos
+12.13.11	Produção de recitais
+12.13.12	Produção de festivais e congêneres
+12.14   	Fornecimento de música para ambientes fechados ou não, mediante transmissão por qualquer processo
+12.14.01	Fornecimento de música para ambientes fechados ou não, mediante transmissão por qualquer processo
+12.15   	Desfiles de blocos carnavalescos ou folclóricos, trios elétricos e congêneres.
+12.15.01	Desfiles de blocos carnavalescos ou folclóricos, ou congêneres
+12.15.02	Desfiles de trios elétricos ou conêneres
+12.16   	Exibição de filmes, entrevistas, musicais, espetáculos, shows, concertos, desfiles, óperas, competições esportivas, de destreza intelectual ou congêneres
+12.16.01	Exibição de filmes cinematográficos
+12.16.08	Exibição de entrevistas
+12.16.09	Exibição de musicais
+12.16.10	Exibição de espetáculos
+12.16.11	Exibição de shows
+12.16.12	Exibição de desfiles
+12.16.13	Exibição de concertos
+12.16.14	Óperas
+12.16.15	Exibição de competições esportivas, de destreza intelectual ou congêneres
+12.17   	Recreação e animação, inclusive em festas e eventos de qualquer natureza
+12.17.01	Recreação
+12.17.02	Animação de festas
+12.17.03	Animação em feiras
+12.17.04	Animação em eventos de qualquer natureza
+13      	Serviços relativos a fonografia, fotografia, cinematografia e reprografia.
+13.02   	Fonografia ou gravação de sons, inclusive trucagem, dublagem, mixagem e congêneres.
+13.02.01	Fonografia
+13.02.02	Gravação de sons
+13.02.03	Trucagem de som
+13.02.04	Dublagem
+13.02.05	Mixagem
+13.02.06	Reprodução de som
+13.02.07	Reprodução de vídeo
+13.02.08	Reprodução de software
+13.02.09	Edição de música
+13.03   	Fotografia e cinematografia, inclusive revelação, ampliação, cópia, reprodução, trucagem e congêneres.
+13.03.01	Fotografia
+13.03.02	Cinematografia
+13.03.03	Revelação fotográfica
+13.03.04	Ampliação fotográfica
+13.03.05	Cópia de imagem
+13.03.06	Reprodução de filme
+13.03.07	Trucagem de imagem
+13.03.08	Serviços relativos à indústria cinematográfica, diretamente concorrentes para a produção da obra audiovisual, vinculados a filme brasileiro, natural ou de enredo
+13.03.09	Serviços relativos à indústria cinematográfica, diretamente concorrentes para a produção da obra audiovisual, vinculados a filme estrangeiro
+13.03.10	Cinematografia - filmes publicitários
+13.04   	Reprografia, microfilmagem e digitalização.
+13.04.01	Reprografia
+13.04.02	Microfilmagem
+13.04.03	Digitalização
+13.04.04	Serviços típicos de papelarias e estabelecimentos congêneres, como reprografia (cópias), plastificação e outros
+13.05   	Composição gráfica, inclusive confecção de impressos gráficos, fotocomposição, clicheria, zincografia, litografia e fotolitografia, exceto se destinados a posterior operação de comercialização ou industrialização, ainda que incorporados, de qualquer forma, a outra mercadoria que deva ser objeto de posterior circulação, tais como bulas, rótulos, etiquetas, caixas, cartuchos, embalagens e manuais técnicos e de instrução, quando ficarão sujeitos ao ICMS.
+13.05.01	Composição gráfica
+13.05.02	Fotocomposição e outras matrizes gráficas
+13.05.03	Clicheria
+13.05.04	Zincografia
+13.05.05	Litografia
+13.05.06	Fotolitografia
+13.05.07	Impressão
+13.05.08	Pré-impressão
+13.05.09	Impressão em chapas metálicas
+13.05.10	Encadernação de livros e revistas
+13.05.11	Confecção de impressos personalizados
+13.05.12	Confecção de impressos de segurança
+13.05.13	Acabamento gráfico
+13.05.14	Confecção de impressos para o usuário final
+13.05.15	Serviços gráficos em geral
+14      	Serviços relativos a bens de terceiros.
+14.01   	Lubrificação, limpeza, lustração, revisão, carga e recarga, conserto, restauração, blindagem, manutenção e conservação de máquinas, veículos, aparelhos, equipamentos, motores, elevadores ou de qualquer objeto (exceto peças e partes empregadas, que ficam s
+14.01.01	Lubrificação de máquinas
+14.01.02	Limpeza ou lustração de máquinas
+14.01.03	Revisão de máquinas
+14.01.04	Carga e recarga de máquinas
+14.01.05	Conserto de máquinas
+14.01.06	Restauração de máquinas
+14.01.07	Manutenção de máquinas
+14.01.08	Conservação de máquinas
+14.01.09	Lubrificação de aparelhos
+14.01.10	Limpeza ou lustração de aparelhos
+14.01.11	Revisão de aparelhos
+14.01.12	Carga e recarga de aparelhos
+14.01.13	Conserto de aparelhos
+14.01.14	Restauração de aparelhos
+14.01.15	Manutenção de aparelhos
+14.01.16	Conservação de aparelhos
+14.01.17	Conservação de veículos
+14.01.18	Lubrificação de veículos
+14.01.19	Limpeza de veículos
+14.01.20	Revisão de veículos
+14.01.22	Conserto de veículos
+14.01.23	Restauração de veículos
+14.01.24	Manutenção de veículos
+14.01.25	Blindagem de veículos
+14.01.26	Lustração de veículos
+14.01.27	Lubrificação de equipamentos
+14.01.28	Limpeza de equipamentos
+14.01.29	Revisão de equipamentos
+14.01.30	Conserto de equipamentos
+14.01.31	Restauração de equipamentos
+14.01.32	Manutenção de equipamentos
+14.01.33	Conservação de equipamentos
+14.01.34	Lubrificação, limpeza, revisão,  conserto, restauração, manutenção ou conservação de elevadores
+14.01.35	Lubrificação de motores
+14.01.36	Limpeza de motores
+14.01.37	Revisão de motores
+14.01.38	Conserto de motores
+14.01.39	Restauração de motores
+14.01.40	Manutenção de motores
+14.01.41	Conservação de motores
+14.01.42	Recondicionamento de baterias
+14.01.43	Manutenção de estações elétricas
+14.01.44	Manutenção de redes elétricas
+14.01.45	Manutenção de estações de telecomunicações
+14.01.46	Manutenção de redes de telecomunicações
+14.01.47	Alinhamento para veículos
+14.01.48	Balanceamento para veículos
+14.01.49	Recarga de cartuchos
+14.01.50	Restauração de arte
+14.01.51	Manutenção de computadores
+14.01.52	Manutenção de eletrodomésticos
+14.01.53	Conserto de calçados
+14.01.54	Lubrificação de objetos em geral
+14.01.55	Limpeza de objetos em geral
+14.01.56	Lustração de objetos em geral
+14.01.57	Revisão em objetos em geral
+14.01.58	Carga e recarga de objetos em geral
+14.01.59	Conserto de objetos em geral
+14.01.60	Restauração de objetos em geral
+14.01.61	Blindagem de objetos em geral
+14.01.62	Manutenção de objetos em geral
+14.01.63	Conservação de objetos em geral
+14.01.64	Reparação de embarcações efetuada por industria da construção e de reparo naval
+14.01.65	Serviços relacionados a reparação de embarcações, efetuados por prestadores contratados pela industria da construção e de reparo naval
+14.01.66	Lei nº 5.133/2009, art. 4º - lubrificação, limpeza, lustração, revisão, carga e recarga, conserto, restauração, blindagem, manutenção ou conservação de máquinas, veículos, aparelhos, equipamentos, motores, elevadores ou de qualquer objeto, vinculado(a) à operação de complexo siderúrgico na Zona Oeste do Município, conforme definição constante do inc. IV do art. 3º da Lei nº 4.372/2006.
+14.02   	Assistência técnica.
+14.02.01	Assistência técnica
+14.02.02	Serviços de assistência técnica, manutenção, reparação e outros, relacionados ao fornecimento de gás
+14.03   	Recondicionamento de motores (exceto peças e partes empregadas, que ficam sujeitas ao ICMS).
+14.03.01	Recondicionamento de motores
+14.04   	Recauchutagem ou regeneração de pneus.
+14.04.01	Recauchutagem de pneus
+14.04.02	Regeneração de pneus
+14.04.03	Borracharia para veículos
+14.05   	Restauração, recondicionamento, acondicionamento, pintura, beneficiamento, lavagem, secagem, tingimento, galvanoplastia, anodização, corte, recorte, plastificação, costura, acabamento, polimento e congêneres de objetos quaisquer.
+14.05.01	Restauração
+14.05.02	Recondicionamento
+14.05.03	Acondicionamento
+14.05.04	Pintura
+14.05.05	Beneficiamento
+14.05.06	Lavagem
+14.05.07	Secagem
+14.05.08	Tingimento
+14.05.09	Galvanoplastia
+14.05.10	Anodização
+14.05.11	Corte
+14.05.12	Recorte
+14.05.13	Polimento
+14.05.14	Plastificação
+14.05.15	Estamparia têxtil
+14.05.16	Texturização têxtil
+14.05.17	Alvejamento de tecidos
+14.05.18	Usinagem
+14.05.19	Solda
+14.05.20	Revestimento de metais
+14.05.21	Tratamento de metais
+14.05.22	Britamento de pedras
+14.05.23	Aparelhamento de pedras
+14.05.24	Vitrificação
+14.05.25	Envasamento
+14.05.26	Empacotamento
+14.05.27	Serviços não especificados, aplicados a objetos quaisquer
+14.05.28	Tinturaria - lavagem, secagem, tingimento e serviços conexos
+14.05.29	Lei nº 5.133/2009, art. 4º - restauração, recondicionamento, acondicionamento, pintura, beneficiamento, lavagem, secagem, tingimento, galvanoplastia, anodização, corte, recorte, polimento, plastificação ou congênere, de objeto qualquer, vinculado(a) à operação de complexo siderúrgico na Zona Oeste do Município, conforme definição constante do inc. IV do art. 3º da Lei nº 4.372/2006.
+14.05.30	Costura e congêneres
+14.05.31	Acabamento e congêneres, de objetos quaisquer
+14.06   	Instalação e montagem de aparelhos, máquinas e equipamentos, inclusive montagem industrial, prestados ao usuário final, exclusivamente com material por ele fornecido.
+14.06.01	Montagem industrial
+14.06.02	Instalação de aparelhos
+14.06.03	Instalação de máquinas
+14.06.04	Instalação de equipamentos
+14.06.05	Montagem de aparelhos
+14.06.06	Montagem de máquinas
+14.06.07	Montagem de equipamentos
+14.06.08	Montagem de locomotivas
+14.06.09	Montagem de vagões
+14.06.10	Montagem de material rodante
+14.06.11	Montagem de aeronaves
+14.06.12	Montagem de estruturas metálicas
+14.06.13	Instalação de painéis
+14.06.14	Montagem de stands
+14.06.15	Instalação de acessórios para veículos
+14.06.16	Lei nº 5.133/2009, art. 4º - instalação e/ou montagem de aparelhos, máquinas e equipamentos, inclusive montagem industrial, prestada ao usuário final, exclusivamente com material por ele fornecido, e vinculada à construção ou à operação de complexo siderúrgico na Zona Oeste do Município, conforme definição constante do inc. IV do art. 3º da Lei nº 4.372/2006.
+14.07   	Colocação de molduras e congêneres.
+14.07.01	Colocação de molduras
+14.08   	Encadernação, gravação e douração de livros, revistas e congêneres.
+14.08.01	Encadernação de livros ou congêneres
+14.08.02	Douração de livros ou congêneres
+14.08.03	Gravação de livros ou congêneres
+14.08.04	Encadernação de revistas ou congêneres
+14.09   	Alfaiataria e costura, quando o material for fornecido pelo usuário final, exceto aviamento.
+14.09.01	Alfaiataria
+14.09.02	Costura
+14.09.03	Confecção sob medida
+14.10   	Tinturaria e lavanderia.
+14.10.01	Tinturaria
+14.10.02	Lavanderia
+14.10.03	Toalharia
+14.11   	Tapeçaria e reforma de estofamentos em geral.
+14.11.01	Tapeçaria
+14.11.02	Reforma de estofamentos
+14.12   	Funilaria e lanternagem.
+14.12.01	Funilaria
+14.13   	Carpintaria e serralheria.
+14.13.01	Carpintaria
+14.13.02	Serralheria
+14.14   	Guincho intramunicipal, guindaste e içamento.
+14.14.01	Guincho intramunicipal, guindaste e içamento
+15      	Serviços relacionados ao setor bancário ou financeiro, inclusive aqueles prestados por instituições financeiras autorizadas a funcionar pela União ou por quem de direito.
+15.01   	Administração de fundos quaisquer, de consórcio, de cartão de crédito ou débito e congêneres, de carteira de clientes, de cheques pré-datados e congêneres.
+15.01.01	Administração de fundos quaisquer
+15.01.02	Administração de carteira de clientes
+15.01.03	Administração de consórcio
+15.01.04	Administração de cartões de crédito ou débito e congêneres
+15.01.05	Administração de cheques pré-datados e congêneres
+15.02   	Abertura de contas em geral, inclusive conta-corrente, conta de investimentos e aplicação e caderneta de poupança, no País e no exterior, bem como a manutenção das referidas contas ativas e inativas.
+15.02.01	Abertura de contas em geral, inclusive conta-corrente, conta de investimentos e aplicação e caderneta de poupança, no país e no exterior, bem como a manutenção das referidas contas ativas e inativas
+15.03   	Locação e manutenção de cofres particulares, de terminais eletrônicos, de terminais de atendimento e de bens e equipamentos em geral.
+15.03.01	Locação e manutenção de cofres particulares
+15.03.02	Locação e manutenção de terminais eletrônicos, de terminais de atendimento e de bens e equipamentos em geral
+15.04   	Fornecimento ou emissão de atestados em geral, inclusive atestado de idoneidade, atestado de capacidade financeira e congêneres
+15.04.01	Fornecimento ou emissão de atestados em geral, inclusive atestado de idoneidade, atestado de capacidade financeira e congêneres
+15.05   	Cadastro, elaboração de ficha cadastral, renovação cadastral e congêneres, inclusão ou exclusão no Cadastro de Emitentes de Cheques sem Fundos ¿ CCF ou em quaisquer outros bancos cadastrais
+15.05.01	Cadastro,elaboração de ficha cadastral, renovação cadastral e congêneres 
+15.05.02	Inclusão ou exclusão no Cadastro de Emitentes de Cheques sem Fundos ¿ CCF ou em quaisquer outros bancos cadastrais
+15.06   	Emissão, reemissão e fornecimento de avisos, comprovantes e documentos em geral; abono de firmas; coleta e entrega de documentos, bens e valores; comunicação com outra agência ou com a administração central; licenciamento eletrônico de veículos; transferência de veículos; agenciamento fiduciário ou depositário; devolução de bens em custódia
+15.06.01	Emissão, reemissão e fornecimento de avisos, comprovantes e documentos em geral
+15.06.02	Abono de firmas
+15.06.03	Coleta e entrega de documentos, bens e valores
+15.06.04	Comunicação com outra agência ou com a administração central 
+15.06.05	Licenciamento eletrônico de veículos
+15.06.06	Transferência de veículos
+15.06.07	Agenciamento fiduciário ou depositário 
+15.06.08	Devolução de bens em custódia
+15.06.09	Baixa eletrônica de gravame para veículos
+15.07   	Acesso, movimentação, atendimento e consulta a contas em geral, por qualquer meio ou processo, inclusive por telefone, fac-símile, internet e telex, acesso a terminais de atendimento, inclusive vinte e quatro horas; acesso a outro banco e a rede compartilhada; fornecimento de saldo, extrato e demais informações relativas a contas em geral, por qualquer meio ou processo
+15.07.01	Acesso, movimentação, atendimento e consulta a contas em geral, por qualquer meio ou processo, inclusive por telefone, facsímile, internet e telex, acesso a terminais de atendimento, inclusive vinte e quatro horas 
+15.07.02	 acesso a outro banco e a rede compartilhada
+15.07.03	Fornecimento de saldo, extrato e demais informações relativas a contas em geral, por qualquer meio ou processo
+15.08   	Emissão, reemissão, alteração, cessão, substituição, cancelamento e registro de contrato de crédito; estudo, análise e avaliação de operações de crédito; emissão, concessão, alteração ou contratação de aval, fiança, anuência e congêneres; serviços relativos a abertura de crédito, para quaisquer fins.
+15.08.01	Emissão de contrato de crédito 
+15.08.02	Reemissão de contrato de crédito 
+15.08.03	Alteração de contrato de crédito
+15.08.04	Cessão de contrato de crédito
+15.08.05	Substituição de contrato de crédito
+15.08.06	Cancelamento de contrato de crédito
+15.08.07	Registro de contrato de crédito
+15.08.08	Estudo, análise e avaliação de operações de crédito
+15.08.09	Emissão, concessão, alteração ou contratação de aval, fiança, anuência e congêneres
+15.08.10	Serviços relativos a abertura de crédito, para quaisquer fins 
+15.08.11	Operações não especificadas relativas a contratos de crédito
+15.09   	Arrendamento mercantil (leasing) de quaisquer bens, inclusive cessão de direitos e obrigações, substituição de garantia, alteração, cancelamento e registro de contrato, e demais serviços relacionados ao arrendamento mercantil (leasing).
+15.09.01	Arrendamento mercantil (leasing) de quaisquer bens, cessão de direitos e obrigações, substituição de garantia, alteração, cancelamento e registro de contrato 
+15.09.02	 serviços não especificados relacionados ao arrendamento mercantil (leasing) 
+15.10   	Serviços relacionados a cobranças, recebimentos ou pagamentos em geral, de títulos quaisquer, de contas ou carnês, de câmbio, de tributos e por conta de terceiros, inclusive os efetuados por meio eletrônico, automático ou por máquinas de atendimento; fornecimento de posição de cobrança, recebimento ou pagamento; emissão de carnês, fichas de compensação, impressos e documentos em geral.
+15.10.01	Serviços relacionados a cobranças, recebimentos ou pagamentos em geral, de títulos quaisquer, de contas ou carnês, de câmbio, de tributos e por conta de terceiros, inclusive os efetuados por meio eletrônico, automático ou por máquinas de atendimento 
+15.10.02	Fornecimento de posição de cobrança, recebimento ou pagamento 
+15.10.03	Emissão de carnês, fichas de compensação, impressos ou documentos em geral 
+15.11   	Devolução de títulos, protesto de títulos, sustação de protesto, manutenção de títulos, reapresentação de títulos, e demais serviços a eles relacionados
+15.11.01	Devolução de títulos
+15.11.02	Protesto de títulos
+15.11.03	Sustação de protesto de títulos
+15.11.04	Manutenção de títulos
+15.11.05	Reapresentação de títulos
+15.11.06	Serviços não especificados relacionados a títulos
+15.12   	Custódia em geral, inclusive de títulos e valores mobiliários.
+15.12.01	Custódia de títulos
+15.12.02	Custódia de valores mobiliários
+15.12.03	Custódia de bens
+15.12.04	Custódia em geral
+15.13   	Serviços relacionados a operações de câmbio em geral, edição, alteração, prorrogação, cancelamento e baixa de contrato de câmbio; emissão de registro de exportação ou de crédito; cobrança ou depósito no exterior; emissão, fornecimento e cancelamento de cheques de viagem; fornecimento, transferência, cancelamento e demais serviços relativos a carta de crédito de importação, exportação e garantias recebidas; envio e recebimento de mensagens em geral relacionadas a operações de câmbio.
+15.13.01	Serviços relacionados a operações de câmbio em geral
+15.13.02	Edição, alteração, prorrogação, cancelamento e baixa de contrato de câmbio 
+15.13.03	Emissão de registro de exportação ou de crédito 
+15.13.04	Cobrança ou depósito no exterior
+15.13.05	Emissão, fornecimento e cancelamento de cheques de viagem 
+15.13.06	Fornecimento, transferência, cancelamento e demais serviços relativos a carta de crédito de importação, exportação e garantias recebidas 
+15.13.07	Envio e recebimento de mensagens em geral relacionadas a operações de câmbio 
+15.14   	Fornecimento, emissão, reemissão, renovação e manutenção de cartão magnético, cartão de crédito, cartão de débito, cartão salário e congêneres
+15.14.01	Fornecimento de cartão magnético, cartão de crédito, cartão de débito, cartão salário ou congêneres 
+15.14.02	Emissão de cartão magnético, cartão de crédito, cartão de débito, cartão salário ou congêneres 
+15.14.03	Reemissão de cartão magnético, cartão de crédito, cartão de débito, cartão salário ou congêneres 
+15.14.04	Renovação de cartão magnético, cartão de crédito, cartão de débito, cartão salário ou congêneres
+15.14.05	Manutenção de cartão magnético, cartão de crédito, cartão de débito, cartão salário ou congêneres 
+15.14.06	Cartões de convênios refeição e alimentação - administração, fornecimento, emissão, reemissão, renovação, manutenção e controle de créditos
+15.15   	Compensação de cheques e títulos quaisquer; serviços relacionados a depósito, inclusive depósito identificado, a saque de contas quaisquer, por qualquer meio ou processo, inclusive em terminais eletrônicos e de atendimento
+15.15.01	Compensação de cheques e títulos quaisquer 
+15.15.02	Serviços relacionados a depósito, inclusive depósito identificado, por qualquer meio ou processo, inclusive em terminais eletrônicos e de atendimento
+15.15.03	Serviços relacionados a saque de contas quaisquer, por qualquer meio ou processo, inclusive em terminais eletrônicos e de atendimento 
+15.16   	Emissão, reemissão, liquidação, alteração, cancelamento e baixa de ordens de pagamento, ordens de crédito e similares, por qualquer meio ou processo; serviços relacionados à transferência de valores, dados, fundos, pagamentos e similares, inclusive entre contas em geral.
+15.16.01	Emissão de ordens de pagamento, ordens de crédito e similares, por qualquer meio ou processo 
+15.16.02	Reemissão de ordens de pagamento, ordens de crédito e similares, por qualquer meio ou processo 
+15.16.03	Liquidação de ordens de pagamento, ordens de crédito e similares, por qualquer meio ou processo
+15.16.04	Alteração de ordens de pagamento, ordens de crédito e similares, por qualquer meio ou processo 
+15.16.05	Cancelamento de ordens de pagamento, ordens de crédito e similares, por qualquer meio ou processo 
+15.16.06	Baixa de ordens de pagamento, ordens de crédito e similares, por qualquer meio ou processo 
+15.16.07	Serviços relacionados a transferência de valores, dados, fundos, pagamentos e similares, inclusive entre contas em geral 
+15.17   	Emissão, fornecimento, devolução, sustação, cancelamento e oposição de cheques quaisquer, avulso ou por talão.
+15.17.01	Emissão de cheques quaisquer, avulso ou por talão 
+15.17.02	Fornecimento de cheques quaisquer, avulso ou por talão 
+15.17.03	Devolução de cheques quaisquer, avulso ou por talão 
+15.17.04	Sustação de cheques quaisquer, avulso ou por talão 
+15.17.05	Cancelamento de cheques quaisquer, avulso ou por talão 
+15.17.06	Oposição de cheques quaisquer, avulso ou por talão 
+15.18   	Serviços relacionados a crédito imobiliário, avaliação e vistoria de imóvel ou obra, análise técnica e jurídica, emissão, reemissão, alteração, transferência e renegociação de contrato, emissão e reemissão do termo de quitação e demais serviços relacionados a crédito imobiliário.
+15.18.01	Serviços relacionados a crédito imobiliário 
+15.18.02	Avaliação e vistoria de imóvel ou obra 
+15.18.03	Análise técnica e jurídica relacionada a crédito imobiliário 
+15.18.04	Emissão de contrato de crédito imobiliário
+15.18.05	Reemissão de contrato de crédito imobiliário
+15.18.06	Alteração de contrato de crédito imobiliário
+15.18.07	Transferência de contrato de crédito imobiliário
+15.18.08	Renegociação de contrato de crédito imobiliário
+15.18.09	Emissão e reemissão de termo de quitação de crédito imobiliário
+15.18.10	Serviços não discriminados relativos a crédito imobiliário
+16      	Serviços de transporte de natureza municipal.
+16.01   	Serviços de transporte coletivo municipal rodoviário, metroviário, ferroviário e aquaviário de passageiros.
+16.01.01	Ônibus (transporte rodoviário coletivo de passageiros quando prestado sob o regime de concessão ou permissão do poder público, em ônibus ou microônibus)
+16.01.02	Van (transporte rodoviário coletivo de passageiros quando prestado em van, perua ou veículo congênere, com circulação adstrita a determinadas linhas ) 
+16.01.05	Transporte rodoviário municipal de passageiros - casos não especificados
+16.01.06	Transporte ferroviário municipal de passageiros
+16.01.07	Transporte metroviário municipal de passageiros
+16.01.08	Transporte aquaviário municipal de passageiros
+16.01.09	Transporte escolar
+16.01.10	Transporte turístico
+16.01.18	Transporte aquaviário municipal coletivo de passageiros
+16.01.19	Transporte escolar coletivo
+16.02   	Outros serviços de transporte de natureza municipal.
+16.02.01	Táxi
+16.02.02	Serviços de táxi prestados por sociedades cooperativas formadas exclusivamente por profissionais autônomos
+16.02.03	Transporte não coletivo de passageiros - casos não especificados em outros códigos
+16.02.04	Transporte municipal de carga
+16.02.05	Transporte municipal dutoviário
+16.02.06	Serviços de transporte de natureza municipal, não especificados em outros códigos
+16.02.07	Serviço de navegação e transporte fluvial de cargas cujo terminal de embarque ou de desembarque se localize às margens dos rios Acari e Pavuna
+16.02.08	Ônibus (transporte rodoviário de passageiros contratado por pessoa física ou jurídica, sem que haja pagamento individual ao prestador do serviço pelos passageiros, em ônibus ou microônibus)
+16.02.09	Van (transporte rodoviário de passageiros contratado por pessoa física ou jurídica, sem que haja pagamento individual ao prestador do serviço pelos passageiros, prestado em van, perua ou veículo congênere).
+16.02.10	Transporte aquaviário municipal de passageiros
+16.02.11	Transporte escolar
+17      	Serviços de apoio técnico, administrativo, jurídico, contábil, comercial e congêneres.
+17.01   	Assessoria ou consultoria de qualquer natureza, não contida em outros itens desta lista; análise, exame, pesquisa, coleta, compilação e fornecimento de dados e informações de qualquer natureza, inclusive cadastro e similares.
+17.01.01	Assessoria ou consultoria de qualquer natureza, não especificada
+17.01.02	Análise, exame, pesquisa, coleta, compilação ou fornecimento de dados e informações de qualquer natureza, inclusive cadastro e similares
+17.02   	Datilografia, digitação, estenografia, expediente, secretaria em geral, resposta audível, redação, edição, interpretação, revisão, tradução, apoio e infra-estrutura administrativa e congêneres.
+17.02.01	Datilografia, digitação e congêneres
+17.02.02	Estenografia e congêneres
+17.02.03	Expediente e secretaria em geral
+17.02.04	Redação
+17.02.05	Edição
+17.02.06	Resposta audível, interpretação, apoio e infra-estrutura administrativa e congêneres
+17.02.07	Revisão
+17.02.08	Tradução
+17.02.09	Apoio administrativo
+17.02.10	Atendimento telefônico
+17.02.11	Atendimento a clientes com uso de solução integrada por multicanais (telefonia, e-mail, SMS, aplicativos e presencial)
+17.03   	Planejamento, coordenação, programação ou organização técnica, financeira ou administrativa.
+17.03.01	Planejamento técnico ou congênere
+17.03.02	Planejamento financeiro ou congênere
+17.03.03	Planejamento administrativo ou congênere
+17.03.04	Coordenação técnica ou congênere
+17.03.05	Coordenação financeira ou congênere
+17.03.06	Coordenação administrativa ou congênere
+17.03.07	Programação técnica ou congênere
+17.03.08	Programação financeira ou congênere
+17.03.09	Programação administrativa ou congênere
+17.03.10	Organização técnica ou congênere
+17.03.11	Organização financeira ou congênere
+17.03.12	Organização administrativa ou congênere
+17.04   	Recrutamento, agenciamento, seleção e colocação de mão-de-obra.
+17.04.01	Recrutamento e seleção de mão-de-obra
+17.04.02	Agenciamento de mão-de-obra
+17.04.03	Colocação de mão-de-obra
+17.05   	Fornecimento de mão-de-obra, mesmo em caráter temporário, inclusive de empregados ou trabalhadores, avulsos ou temporários, contratados pelo prestador de serviço
+17.05.01	Fornecimento de mão-de-obra
+17.05.02	Fornecimento de mão-de-obra temporária
+17.06   	Propaganda e publicidade, inclusive promoção de vendas, planejamento de campanhas ou sistemas de publicidade, elaboração de desenhos, textos e demais materiais publicitários.
+17.06.01	Propaganda e publicidade
+17.06.02	Propaganda e publicidade - serviços concernentes à concepção, redação e produção  de propaganda e publicidade, inclusive divulgação de material publicitário
+17.06.03	Promoção de vendas
+17.06.04	Planejamento de campanhas ou sistemas de publicidade
+17.06.05	Elaboração de desenhos, textos ou demais materiais publicitários
+17.06.06	Pesquisa de mercado
+17.06.07	Relações públicas
+17.06.08	Assessoria na edição de boletins ou revistas informativas ou publicitárias
+17.06.09	Anúncios fúnebres
+17.06.10	Anúncios de emprego
+17.06.11	Publicações de demonstrações financeiras
+17.06.12	Serviços especiais ligados à atividade de publicidade e propaganda, não especificados em outros códigos
+17.06.13	Produção de filmes publicitários
+17.08   	Franquia (franchising).
+17.08.01	Franquia (franchising)
+17.09   	Perícias, laudos, exames técnicos e análises técnicas.
+17.09.01	Perícia
+17.09.02	Elaboração de laudos
+17.09.03	Exames técnicos
+17.09.04	Análise técnica
+17.10   	Planejamento, organização e administração de feiras, exposições, congressos e congêneres.
+17.10.01	Planejamento de feira ou congênere
+17.10.02	Planejamento de exposição ou congênere
+17.10.03	Planejamento de congresso ou congênere
+17.10.04	Organização de feira ou congênere
+17.10.05	Organização de exposição ou congênere
+17.10.06	Organização de congresso ou congênere
+17.10.07	Administração de feira ou congênere
+17.10.08	Administração de exposição ou congênere
+17.10.09	Administração de congresso ou congênere
+17.11   	Organização de festas e recepções; bufê (exceto o fornecimento de alimentação e bebidas, que fica sujeito ao ICMS).
+17.11.01	Organização de festas
+17.11.02	Organização de recepções
+17.11.03	Bufê
+17.11.04	Preparo de alimentos
+17.12   	Administração em geral, inclusive de bens e negócios de terceiros.
+17.12.01	Administração de bens de terceiros
+17.12.02	Administração de negócios de terceiros
+17.12.03	Administração de instalação para a prática esportiva
+17.12.04	Administração de cemitérios
+17.12.05	Administração de condomínios
+17.12.06	Administração escolar
+17.12.07	Administração em geral
+17.12.08	Administração de benefícios relativos a planos de assistência à saúde
+17.13   	Leilão e congêneres.
+17.13.01	Leilão ou congênere
+17.14   	Advocacia.
+17.14.01	Advocacia
+17.15   	Arbitragem de qualquer espécie, inclusive jurídica.
+17.15.01	Arbitragem de qualquer espécie, inclusive jurídica
+17.16   	Auditoria.
+17.16.01	Auditoria
+17.16.02	Auditoria de projetos de créditos de carbono
+17.16.03	Serviços de inventário de emissões de gases de efeito estufa
+17.16.04	Auditoria de inventários de emissões de gases de efeito estufa
+17.17   	Análise de Organização e Métodos.
+17.17.01	Análise de organização e métodos
+17.18   	Atuária e cálculos técnicos de qualquer natureza.
+17.18.01	Atuária
+17.18.02	Cálculos técnicos
+17.19   	Contabilidade, inclusive serviços técnicos e auxiliares.
+17.19.01	Contabilidade, inclusive serviços técnicos e auxiliares
+17.20   	Consultoria e assessoria econômica ou financeira.
+17.20.01	Consultoria e assessoria econômica ou financeira
+17.20.02	Serviços de registro e certificação de créditos de carbono
+17.20.03	Serviços de disponibilização de plataformas de transação de créditos de carbono
+17.21   	Estatística.
+17.21.01	Estatística
+17.22   	Cobrança em geral.
+17.22.01	Cobrança
+17.23   	Assessoria, análise, avaliação, atendimento, consulta, cadastro, seleção, gerenciamento de informações, administração de contas a receber ou a pagar e em geral, relacionados a operações de faturização (factoring).
+17.23.01	Assessoria, análise, avaliação, atendimento, consulta, cadastro, seleção, gerenciamento de informações, administração de contas a receber ou a pagar e em geral, relacionadas a operações de faturização (factoring) 
+17.24   	Apresentação de palestras, conferências, seminários e congêneres.
+17.24.01	Apresentação de palestras e congêneres
+17.24.02	Apresentação em conferências e congêneres
+17.24.03	Apresentação em seminários e congêneres
+17.25   	Inserção de textos, desenhos e outros materiais de propaganda e publicidade, em qualquer meio (exceto em livros, jornais, periódicos e nas modalidades de serviços de radiodifusão sonora e de sons e imagens de recepção livre e gratuita).
+17.25.01	Inserção de textos, desenhos ou outros materiais de propaganda e publicidade, em qualquer meio (exceto em livros, jornais, periódicos e nas modalidades de serviços de radiodifusão sonora e de sons e imagens de recepção livre e gratuita)
+17.25.02	Veiculação de publicidade na internet, contratada por pessoa jurídica
+17.25.03	Veiculação de publicidade na internet, contratada por pessoa natural
+17.25.04	Serviços de veiculação de publicidade, quando efetuada por meio, exclusivamente, da internet.
+18      	Serviços de regulação de sinistros vinculados a contratos de seguros; inspeção e avaliação de riscos para cobertura de contratos de seguros; prevenção e gerência de riscos seguráveis e congêneres.
+18.01   	Serviços de regulação de sinistros vinculados a contratos de seguros; inspeção e avaliação de riscos para cobertura de contratos de seguros; prevenção e gerência de riscos seguráveis e congêneres.
+18.01.01	Serviços de regulação de sinistros vinculados a contratos de seguros
+18.01.02	Inspeção e avaliação de riscos para cobertura de contratos de seguros
+18.01.03	Prevenção e gerência de riscos seguráveis e congêneres
+18.01.04	Liderança em co-seguro
+18.01.05	Serviços relativos a seguros
+19      	Serviços de distribuição e venda de bilhetes e demais produtos de loteria, bingos, cartões, pules ou cupons de apostas, sorteios, prêmios, inclusive os decorrentes de títulos de capitalização e congêneres.
+19.01   	Serviços de distribuição e venda de bilhetes e demais produtos de loteria, bingos, cartões, pules ou cupons de apostas, sorteios, prêmios, inclusive os decorrentes de títulos de capitalização e congêneres.
+19.01.01	Serviços de distribuição e venda de bilhetes e demais produtos de loteria, bingos, cartões, pules ou cupons de apostas, sorteios, prêmios, inclusive os decorrentes de títulos de capitalização e congêneres
+19.01.02	Serviços relativos a títulos de capitalização e congêneres
+20      	Serviços portuários, aeroportuários, ferroportuários, de terminais rodoviários, ferroviários e metroviários.
+20.01   	Serviços portuários, ferroportuários, utilização de porto, movimentação de passageiros, reboque de embarcações, rebocador escoteiro, atracação, desatracação, serviços de praticagem, capatazia, armazenagem de qualquer natureza, serviços acessórios, movimentação de mercadorias, serviços de apoio marítimo, de movimentação ao largo, serviços de armadores, estiva, conferência, logística e congêneres.
+20.01.01	Serviços ferroportuários
+20.01.02	Logística ferroportuária
+20.01.03	Armazenagem de qualquer natureza, relacionada a terminal ferroportuário
+20.01.04	Movimentação de mercadorias em terminal ferroportuário e/ou operaçoes congêneres
+20.01.05	Serviços acessórios ferroportuários
+20.01.06	Administração da infra-estrutura ferroportuária
+20.01.07	Serviços portuários
+20.01.08	Serviços vinculados às operações dos terminais portuários na Zona Oeste do Município do Rio de Janeiro, de importação de carvão e outros insumos e exportação de placas de aço produzidas no Complexo Siderúrgico destinado à produção e à exportação de placas de aço na Zona Oeste do Município do Rio de Janeiro, satisfazendo os termos da Lei nº 4.372, de 13 de junho de 2006
+20.01.09	Logística portuária
+20.01.10	Utilização de porto
+20.01.11	Movimentação de passageiros em porto
+20.01.12	Reboque de embarcações e/ou rebocador escoteiro
+20.01.13	Atracação e desatracação
+20.01.14	Serviços de praticagem
+20.01.15	Capatazia em porto
+20.01.16	Armazenagem de qualquer natureza, em porto ou relacionada a porto
+20.01.18	Movimentação de mercadorias em porto e/ou operações congêneres
+20.01.19	Serviços de apoio marítimo e/ou movimentação ao largo
+20.01.20	Escolta de embarcações
+20.01.21	Serviços de armador
+20.01.22	Serviços de estiva, conferência e congêneres, em portos
+20.01.23	Administração da infra-estrutura portuária
+20.01.24	Serviços portuários acessórios
+20.02   	Serviços aeroportuários, utilização de aeroporto, movimentação de passageiros, armazenagem de qualquer natureza, capatazia, movimentação de aeronaves, serviços de apoio aeroportuários, serviços acessórios, movimentação de mercadorias, logística e congêneres.
+20.02.01	Serviços aeroportuários
+20.02.02	Logística aeroportuária
+20.02.03	Utilização de aeroporto
+20.02.04	Movimentação de passageiros em aeroporto
+20.02.05	Armazenagem de qualquer natureza, em aeroporto ou relacionada a aeroporto
+20.02.06	Movimentação de mercadorias em aeroporto e operaçoes congêneres
+20.02.07	Apoio aeroportuário
+20.03   	Serviços de terminais rodoviários, ferroviários, metroviários, movimentação de passageiros, mercadorias, inclusive     suas operações, logística e congêneres.
+20.03.01	Serviços de terminais rodoviários, movimentação de passageiros, mercadorias, inclusive suas operações, logística e congêneres
+20.03.02	Serviços de terminais ferroviários, movimentação de passageiros, mercadorias, inclusive suas operações, logística e congêneres
+20.03.03	Serviços de terminais metroviários, movimentação de passageiros, mercadorias, inclusive suas operações, logística e congêneres
+21      	Serviços de registros públicos, cartorários e notariais
+21.01   	Serviços de registros públicos, cartorários e notariais
+21.01.01	Serviços de registros públicos, cartorários e notariais
+22      	Serviços de exploração de rodovia.
+22.01   	Serviços de exploração de rodovia
+22.01.01	Serviços de exploração de rodovia mediante cobrança de preço ou pedágio dos usuários, envolvendo execução de serviços de conservação, manutenção, melhoramentos para adequação de capacidade e segurança de trânsito, operação, monitoração, assistência aos usuários e/ou outros serviços definidos em contratos, atos de concessão ou de permissão ou em normas oficiais
+23      	Serviços de programação e comunicação visual, desenho industrial e congêneres.
+23.01   	Serviços de programação e comunicação visual, desenho industrial e congêneres.
+23.01.01	Serviços de programação visual, comunicação visual ou congêneres
+23.01.02	Desenho industrial ou serviço congênere
+24      	Serviços de chaveiros, confecção de carimbos, placas, sinalização visual, banners, adesivos e congêneres.
+24.01   	Serviços de chaveiros, confecção de carimbos, placas, sinalização visual, banners, adesivos e congêneres.
+24.01.01	Chaveiro
+24.01.02	Confecção de carimbos
+24.01.03	Confecção de placas, sinalização visual, banners, adesivos e congêneres
+25      	Serviços funerários.
+25.01   	Funerais, inclusive fornecimento de caixão, urna ou esquifes; aluguel de capela; transporte do corpo cadavérico; fornecimento de flores, coroas e outros paramentos; desembaraço de certidão de óbito; fornecimento de véu, essa e outros adornos; embalsamamento, embelezamento, conservação ou restauração de cadáveres.
+25.01.01	Serviços funerários
+25.02   	Translado intramunicipal e cremação de corpos e partes de corpos cadavéricos.
+25.02.01	Cremação de corpos ou partes de corpos cadavéricos
+25.02.02	Translado intramunicipal de corpos e partes de corpos cadavéricos
+25.03   	Planos ou convênio funerários.
+25.03.01	Plano funerário
+25.03.02	Convênio funerário
+25.04   	Manutenção e conservação de jazigos e cemitérios. 
+25.04.01	Manutenção e conservação de jazigos e cemitérios
+25.05   	Cessão de uso de espaços em cemitérios para sepultamento.
+25.05.01	Cessão de uso de espaços em cemitérios para sepultamento
+26      	Serviços de coleta, remessa ou entrega de correspondências, documentos, objetos, bens ou valores, inclusive pelos correios e suas agências franqueadas; courrier e congêneres.
+26.01   	Serviços de coleta, remessa ou entrega de correspondências, documentos, objetos, bens ou valores, inclusive pelos correios e suas agências franqueadas; courrier e congêneres.
+26.01.01	Serviços de coleta, remessa ou entrega de correspondências, documentos, objetos, bens ou valores, inclusive pelos correios e suas agências franqueadas
+26.01.02	Serviços de courrier ou congêneres
+27      	Serviços de assistência social.
+27.01   	Serviços de assistência social.
+27.01.01	Serviços de assistência social
+28      	Serviços de avaliação de bens e serviços de qualquer natureza. 
+28.01   	Serviços de avaliação de bens e serviços de qualquer natureza.
+28.01.01	Avaliação de bens de qualquer natureza
+28.01.02	Avaliação de serviços de qualquer natureza
+28.01.03	Avaliação de imóveis
+29      	Serviços de biblioteconomia.
+29.01   	Serviços de biblioteconomia.
+29.01.01	Serviços de biblioteconomia
+30      	Serviços de biologia, biotecnologia e química.
+30.01   	Serviços de biologia, biotecnologia e química.
+30.01.01	Serviços de biologia
+30.01.02	Serviços de biotecnologia
+30.01.03	Serviços de química
+31      	Serviços técnicos em edificações, eletrônica, eletrotécnica, mecânica, telecomunicações e congêneres. 
+31.01   	Serviços técnicos em edificações, eletrônica, eletrotécnica, mecânica, telecomunicações e congêneres.
+31.01.01	Serviços técnicos em edificações
+31.01.02	Serviços técnicos em eletrônica
+31.01.03	Serviços técnicos em eletrotécnica
+31.01.04	Serviços técnicos em mecânica
+31.01.05	Serviços técnicos em telecomunicações
+31.01.06	Serviços técnicos e congêneres, não especificados
+31.01.07	SVA ¿ serviços de valor adicionado suportados por serviços de telecomunicações, nos termos da Lei Federal nº 9.472/97
+32      	Serviços de desenhos técnicos.
+32.01   	Serviços de desenhos técnicos.
+32.01.01	Serviços de desenhos técnicos
+33      	Serviços de desembaraço aduaneiro, comissários, despachantes e congêneres.
+33.01   	Serviços de desembaraço aduaneiro, comissários, despachantes e congêneres.
+33.01.01	Desembaraço aduaneiro
+33.01.02	Comissário aduaneiro
+33.01.03	Despachante aduaneiro
+33.01.04	Serviços de despachantes e congêneres
+34      	Serviços de investigações particulares, detetives e congêneres.
+34.01   	Serviços de investigações particulares, detetives e congêneres.
+34.01.01	Serviços de investigações particulares, detetives ou congêneres
+35      	Serviços de reportagem, assessoria de imprensa, jornalismo e relações públicas.
+35.01   	Serviços de reportagem, assessoria de imprensa, jornalismo e relações públicas.
+35.01.01	Reportagem
+35.01.02	Jornalismo
+35.01.03	Assessoria de imprensa
+35.01.04	Relações públicas
+35.01.05	Assessoria de relações públicas
+36      	Serviços de meteorologia.
+36.01   	Serviços de meteorologia.
+36.01.01	Serviços de meteorologia
+37      	Serviços de artistas, atletas, modelos e manequins.
+37.01   	Serviços de artistas, atletas, modelos e manequins.
+37.01.01	Serviços de artistas
+37.01.02	Serviços de atletas
+37.01.03	Serviços de modelos e manequins
+37.01.04	Fornecimento de elenco (cast) de artistas e figurantes
+38      	Serviços de museologia.
+38.01   	Serviços de museologia.
+38.01.01	Museologia
+39      	Serviços de ourivesaria e lapidação.
+39.01   	Serviços de ourivesaria e lapidação (quando o material for fornecido pelo tomador do serviço).
+39.01.01	Serviços de ourivesaria e lapidação
+40      	Serviços relativos a obras de arte sob encomenda.
+40.01   	Obras de arte sob encomenda.
+40.01.01	Serviços relativos a obras de arte sob encomenda

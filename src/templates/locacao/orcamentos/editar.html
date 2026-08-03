@@ -1,0 +1,169 @@
+{% extends "locacao/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('locacao.orcamentos_lista') }}">Orçamentos</a></li>
+<li class="breadcrumb-item active">{{ orcamento.numero }}</li>
+{% endblock %}
+
+{% block locacao_content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-file-invoice me-2"></i>Orçamento: {{ orcamento.numero }}</h2>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Cliente</h6>
+            <p class="mb-0"><strong>{{ orcamento.cliente.nome }}</strong></p>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Período</h6>
+            <p class="mb-0">
+                <strong>{{ orcamento.data_retirada_prevista.strftime('%d/%m/%Y') }} a {{ orcamento.data_devolucao_prevista.strftime('%d/%m/%Y') }}</strong>
+                <br><small>{{ orcamento.dias_locacao }} dias</small>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Itens do Orçamento -->
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-list me-2"></i>Itens</h5>
+
+    {% if orcamento.itens %}
+    <div class="table-responsive mb-3">
+        <table class="table table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Descrição</th>
+                    <th class="text-end">Quantidade</th>
+                    <th class="text-end">Valor Unitário</th>
+                    <th class="text-end">Total</th>
+                    <th class="text-center">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in orcamento.itens %}
+                <tr>
+                    <td>{{ item.descricao }}</td>
+                    <td class="text-end">{{ item.quantidade }}</td>
+                    <td class="text-end">R$ {{ item.valor_unitario|brl }}</td>
+                    <td class="text-end"><strong>R$ {{ item.valor_total|brl }}</strong></td>
+                    <td class="text-center">
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="acao" value="remover_item">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remover este item?');">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center py-3">Nenhum item adicionado ainda</p>
+    {% endif %}
+
+    <!-- Adicionar Item -->
+    <form method="POST" class="row g-3 mt-3 pt-3 border-top">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="acao" value="adicionar_item">
+
+        <div class="col-md-4">
+            <label class="form-label">Tipo</label>
+            <select name="tipo_item" id="tipo_item" class="form-select" required onchange="atualizarOpcoes()">
+                <option value="">Selecione...</option>
+                <option value="P">Peça</option>
+                <option value="K">Kit</option>
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Item</label>
+            <select name="peca_id" id="peca_id" class="form-select" style="display:none;">
+                <option value="">Selecione uma peça...</option>
+                {% for peca in pecas %}
+                <option value="{{ peca.id }}">{{ peca.descricao }} - R$ {{ peca.preco_aluguel_diario|brl }}/dia</option>
+                {% endfor %}
+            </select>
+            <select name="kit_id" id="kit_id" class="form-select" style="display:none;">
+                <option value="">Selecione um kit...</option>
+                {% for kit in kits %}
+                <option value="{{ kit.id }}">{{ kit.descricao }} - R$ {{ kit.preco_aluguel_diario|brl }}/dia</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Quantidade</label>
+            <input type="number" name="quantidade" class="form-control" value="1" min="1" required>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-success w-100">
+                <i class="fas fa-plus me-2"></i>Adicionar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Resumo Financeiro -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Aluguel</h6>
+            <h4 class="text-primary">R$ {{ orcamento.valor_aluguel|brl }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Sinal (30%)</h6>
+            <h4 class="text-info">R$ {{ orcamento.valor_sinal|brl }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Caução (20%)</h6>
+            <h4 class="text-warning">R$ {{ orcamento.valor_caucao|brl }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Total</h6>
+            <h4 class="text-success">R$ {{ orcamento.valor_total|brl }}</h4>
+        </div>
+    </div>
+</div>
+
+<!-- Botões de Ação -->
+<div class="d-grid gap-2 d-md-flex justify-content-md-end">
+    <a href="{{ url_for('locacao.orcamentos_lista') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+    {% if orcamento.status == 'rascunho' %}
+    <form method="POST" style="display:inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="acao" value="finalizar">
+        <button type="submit" class="btn ls-btn-primary">
+            <i class="fas fa-send me-2"></i>Enviar para Cliente
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<script>
+function atualizarOpcoes() {
+    const tipo = document.getElementById('tipo_item').value;
+    document.getElementById('peca_id').style.display = tipo === 'P' ? 'block' : 'none';
+    document.getElementById('kit_id').style.display = tipo === 'K' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

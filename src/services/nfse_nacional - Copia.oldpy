@@ -1,0 +1,1046 @@
+from __future__ import annotations
+import hashlib
+import json as _json
+import os
+import tempfile
+import uuid
+import gzip
+import base64
+import unicodedata
+from datetime import datetime, date, timezone, timedelta
+from decimal import Decimal, InvalidOperation
+from lxml import etree
+from xml.etree import ElementTree as ET
+from xml.etree.ElementTree import QName
+from src.services.nfse_validation import validate_xml
+from src.services.xml_signer import sign_xml_enveloped
+import logging
+
+BASE_DISTRIBUICAO_HOMOLOGACAO = "https://adn.producaorestrita.nfse.gov.br"
+BASE_DISTRIBUICAO_PRODUCAO    = "https://adn.nfse.gov.br"
+BASE_EMISSAO_HOMOLOGACAO      = "https://sefin.producaorestrita.nfse.gov.br/API/SefinNacional"
+BASE_EMISSAO_PRODUCAO         = "https://sefin.nfse.gov.br/SefinNacional"
+BRASILIA_TZ                   = timezone(timedelta(hours=-3))
+
+
+def limpartextoxml(texto) -> str:
+    if not texto:
+        return ""
+    textonormalizado = unicodedata.normalize("NFKD", str(texto))
+    return "".join(c for c in textonormalizado if not unicodedata.combining(c))
+
+
+def defaultoutputdir() -> str:
+    reporoot = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    return os.environ.get("NFS_XML_OUT_DIR") or os.path.join(reporoot, "dist", "data", "XML")
+
+
+def ensureoutputdir() -> str:
+    out = defaultoutputdir()
+    try:
+        os.makedirs(out, exist_ok=True)
+    except Exception:
+        pass
+    return out
+
+
+def savexml(xmlstring: str, prefix: str) -> str:
+    out = ensureoutputdir()
+    ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    safeprefix = "".join(ch for ch in prefix if ch.isalnum() or ch in ("_", "-"))[:64]
+    filename = f"{safeprefix}{ts}.xml"
+    path = os.path.join(out, filename)
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(xmlstring)
+    except Exception:
+        return ""
+    return path
+
+
+def onlydigits(value) -> str:
+    if value is None:
+        return ""
+    return "".join(ch for ch in str(value) if ch.isdigit())
+
+
+def decimal(value, default: Decimal = Decimal("0.00")) -> Decimal:
+    if value is None:
+        return default
+    if isinstance(value, Decimal):
+        return value
+    try:
+        return Decimal(str(value).replace(",", "."))
+    except (InvalidOperation, ValueError, TypeError):
+        return default
+
+
+def date_(value) -> date | None:
+    if value in (None, ""):
+        return None
+    if isinstance(value, date):
+        return value
+    try:
+        return datetime.strptime(str(value)[:10], "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+
+def firstnonempty(payload: dict, *keys: str) -> str:
+    for key in keys:
+        value = payload.get(key)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
+
+
+def normalizetext(value) -> str:
+    text = unicodedata.normalize("NFKD", str(value) or "")
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return text.strip().casefold()
+
+
+def resolvemunicipiocodigoibge(
+    codigo: str | None = None,
+    cidade: str | None = None,
+    uf: str | None = None,
+) -> str:
+    codigodigits = onlydigits(codigo) or ""
+    if len(codigodigits) == 7:
+        return codigodigits
+    cidadenorm = normalizetext(cidade)
+    ufnorm = str(uf or "").strip().upper()
+    if not cidadenorm:
+        return ""
+    try:
+        from src.models import NfseMunicipioReferencia
+    except Exception:
+        return ""
+    query = NfseMunicipioReferencia.query.filter_by(ativo=True)
+    if ufnorm:
+        query = query.filter(NfseMunicipioReferencia.uf_sigla == ufnorm)
+    for municipio in query.all():
+        if normalizetext(municipio.nome_municipio) == cidadenorm:
+            return municipio.codigo_ibge
+    return ""
+
+
+def requirefields(
+    payload: dict,
+    fields: list[tuple[str, tuple[str, ...]]],
+    scope: str,
+) -> dict[str, str]:
+    values: dict[str, str] = {}
+    missing: list[str] = []
+    for label, keys in fields:
+        value = firstnonempty(payload, *keys)
+        if not value:
+            missing.append(label)
+        else:
+            values[label] = value
+    if missing:
+        raise ValueError(f"{scope}: preencha os campos obrigatórios: {', '.join(missing)}.")
+    return values
+
+
+def generateinternalnumber(empresa_id: int) -> str:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    suffix = uuid.uuid4().hex[:8].upper()
+    return f"NFSE-{empresa_id}-{stamp}-{suffix}"
+
+
+def buildidempotencyhash(payload: dict) -> str:
+    normalized = _json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def resolvendpssequence(payload: dict) -> str:
+    suggested = str(
+        payload.get("numeronfsesugerido") or payload.get("nDPS") or payload.get("numerodps") or ""
+    ).strip()
+    if suggested.isdigit():
+        return suggested.lstrip("0") or "1"
+    empresa_id = payload.get("empresa_id")
+    ambiente = str(payload.get("ambiente") or "").strip().lower()
+    if empresa_id:
+        try:
+            from src.models import NfseNacionalEmissao
+            query = NfseNacionalEmissao.query.filter_by(empresa_id=empresa_id)
+            if ambiente:
+                query = query.filter(NfseNacionalEmissao.ambiente == ambiente)
+            ultimo = query.order_by(NfseNacionalEmissao.id.desc()).first()
+            if ultimo and getattr(ultimo, "id", None):
+                return str(int(ultimo.id))
+        except Exception:
+            pass
+    return "1"
+
+
+def jsonsafe(obj):
+    if isinstance(obj, Decimal):
+        return format(obj, "0.2f")
+    if isinstance(obj, dict):
+        return {k: jsonsafe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [jsonsafe(v) for v in obj]
+    return obj
+
+
+def validatecatalogreferences(payload: dict) -> None:
+    try:
+        from src.models import NfseMunicipioReferencia
+    except Exception:
+        return
+    codigomunicipio = onlydigits(payload.get("codigomunicipio") or "")
+    if codigomunicipio:
+        try:
+            municipio = NfseMunicipioReferencia.query.filter_by(
+                codigoibge=codigomunicipio, ativo=True
+            ).first()
+            if not municipio:
+                raise ValueError(
+                    f"Código de município inválido ou não importado: {codigomunicipio}."
+                )
+        except ValueError:
+            raise
+        except Exception:
+            pass
+    codigonbs = onlydigits(payload.get("serviconbs") or payload.get("nbs") or "")
+    if codigonbs:
+        try:
+            from src.models import NfseNbsReferencia
+            nbs = NfseNbsReferencia.query.filter_by(codigonbs=codigonbs, ativo=True).first()
+            if not nbs:
+                logging.warning("Código NBS não encontrado no catálogo: %s", codigonbs)
+        except Exception:
+            pass
+
+
+def resolveservicocodigonacional(payload: dict) -> str:
+    # Debug: print para diagnóstico (logging pode não estar configurado)
+    print(f"[DEBUG] resolveservicocodigonacional - Payload keys: {list(payload.keys())}")
+    print(f"[DEBUG] servico_codigo_nacional: {payload.get('servico_codigo_nacional')}")
+    print(f"[DEBUG] servico_codigo_interno: {payload.get('servico_codigo_interno')}")
+    print(f"[DEBUG] servicocodigonacional: {payload.get('servicocodigonacional')}")
+    print(f"[DEBUG] servicoid: {payload.get('servicoid')}")
+    print(f"[DEBUG] servico_id: {payload.get('servico_id')}")
+
+    try:
+        xmltext = payload.get("xmlanexo") or payload.get("attachedxml") or payload.get("anexoxml")
+        xmlpath = (payload.get("xmlanexopath") or payload.get("attachedxmlpath")
+                   or payload.get("anexoxmlpath"))
+        if not xmltext and not xmlpath:
+            reporoot = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            candidate = os.path.join(reporoot, "tmp_attached_original.xml")
+            if os.path.exists(candidate):
+                xmlpath = candidate
+        if xmlpath and not xmltext:
+            try:
+                with open(xmlpath, "r", encoding="utf-8") as f:
+                    xmltext = f.read()
+            except Exception:
+                xmltext = None
+        if xmltext:
+            try:
+                root = ET.fromstring(xmltext)
+                found = root.findall(".//{http://www.sped.fazenda.gov.br/nfse}cTribNac")
+                if not found:
+                    found = root.findall(".//cTribNac")
+                if found:
+                    val = onlydigits("".join(found[0].itertext()))
+                    if val:
+                        try:
+                            from src.models import NfseServicoNacionalReferencia
+                            if NfseServicoNacionalReferencia.query.filter_by(
+                                codigo_tributacao_nacional=val, ativo=True
+                            ).first():
+                                return val.zfill(6)
+                        except Exception:
+                            return val.zfill(6)
+                        return val.zfill(6)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    servicoid = payload.get("servicoid") or payload.get("servico")
+    if servicoid:
+        try:
+            from src.models import Servico, NfseServicoNacionalReferencia
+            serv = None
+            try:
+                serv = Servico.query.filter_by(id=int(servicoid)).first()
+            except Exception:
+                serv = Servico.query.filter_by(id=servicoid).first()
+            if serv and serv.codigoservico:
+                codigo = onlydigits(serv.codigoservico)
+                if codigo and NfseServicoNacionalReferencia.query.filter_by(
+                    codigo_tributacao_nacional=codigo, ativo=True
+                ).first():
+                    return codigo.zfill(6)
+        except Exception:
+            pass
+
+    explicit = onlydigits(
+        payload.get("servicocodigonacional") or payload.get("cTribNac")
+        or payload.get("servicocodigo") or payload.get("servico_codigo_nacional")
+        or payload.get("servico_codigo_interno") or ""
+    )
+    print(f"[DEBUG] Explicit code extracted: {explicit}")
+    if explicit:
+        try:
+            from src.models import NfseServicoNacionalReferencia
+            ref = NfseServicoNacionalReferencia.query.filter_by(
+                codigo_tributacao_nacional=explicit, ativo=True
+            ).first()
+            if ref:
+                print(f"[DEBUG] Found in catalog: {explicit}")
+                return explicit.zfill(6)
+            else:
+                print(f"[WARNING] Code {explicit} not found in catalog NfseServicoNacionalReferencia")
+        except Exception as e:
+            print(f"[WARNING] Error querying catalog: {e}")
+            pass
+
+    descricao = str(
+        payload.get("servicodescricao") or payload.get("descricao")
+        or payload.get("xDescServ") or ""
+    ).strip().lower()
+    if descricao:
+        try:
+            from src.models import NfseServicoNacionalReferencia
+            for ref in NfseServicoNacionalReferencia.query.filter_by(ativo=True).all():
+                refdescricao = (ref.descricao or "").strip().lower()
+                if not refdescricao:
+                    continue
+                if (descricao == refdescricao or descricao in refdescricao
+                        or refdescricao in descricao):
+                    codigoref = onlydigits(ref.codigo_tributacao_nacional)
+                    if codigoref:
+                        return codigoref.zfill(6)
+        except Exception:
+            pass
+
+    raise ValueError(
+        "Código de serviço nacional inválido ou não encontrado no catálogo oficial."
+    )
+
+
+def ambientehomologacao(ambiente: str | None) -> bool:
+    text = str(ambiente or "").strip().lower()
+    return text.startswith("h") or text in (
+        "2", "homologacao", "homologação", "prodrestrita",
+        "producaorestrita", "produção restrita",
+    )
+
+
+def normalizesefinemissaobase(url: str, ambiente: str | None = None) -> str:
+    normalized = (url or "").strip().rstrip("/")
+    lowered = normalized.lower()
+    if not normalized:
+        return normalized
+    if ("sefin.nfse.gov.br" in lowered
+            and "sefinnacional" not in lowered
+            and "apisefinnacional" not in lowered):
+        return "https://sefin.nfse.gov.br/SefinNacional"
+    if ("sefin.producaorestrita.nfse.gov.br" in lowered
+            and "sefinnacional" not in lowered
+            and "apisefinnacional" not in lowered):
+        return "https://sefin.producaorestrita.nfse.gov.br/API/SefinNacional"
+    return normalized
+
+
+def getbaseemissao(configuracao=None, ambiente: str | None = None) -> str:
+    explicit = (
+        os.environ.get("NFS_BASE_EMISSAO")
+        or getattr(configuracao, "endpointemissao", None)
+        or getattr(configuracao, "endpointbaseemissao", None)
+        or getattr(configuracao, "endpointbase", None)
+        or ""
+    ).strip().rstrip("/")
+    if explicit:
+        return normalizesefinemissaobase(explicit, ambiente=ambiente)
+    return BASE_EMISSAO_HOMOLOGACAO if ambientehomologacao(ambiente) else BASE_EMISSAO_PRODUCAO
+
+
+def getbasedistribuicao(configuracao=None, ambiente: str | None = None) -> str:
+    explicit = (
+        os.environ.get("NFS_BASE_DISTRIBUICAO")
+        or getattr(configuracao, "endpointdistribuicao", None)
+        or getattr(configuracao, "endpointbasedistribuicao", None)
+        or getattr(configuracao, "endpointbase", None)
+        or ""
+    ).strip().rstrip("/")
+    if explicit:
+        return explicit
+    return BASE_DISTRIBUICAO_HOMOLOGACAO if ambientehomologacao(ambiente) else BASE_DISTRIBUICAO_PRODUCAO
+
+
+def endpointlookslikedistribuicao(url: str) -> bool:
+    lowered = (url or "").lower()
+    return "adn." in lowered or "contribuintes" in lowered
+
+
+def candidateemissionurls(baseemissao: str) -> list[str]:
+    base = (baseemissao or "").strip().rstrip("/")
+    candidates: list[str] = []
+    if not base:
+        return candidates
+    for suffix in ("/nfse", "", "/API/SefinNacional/nfse", "/API/SefinNacional"):
+        candidate = f"{base}{suffix}".rstrip("/")
+        if candidate not in candidates:
+            candidates.append(candidate)
+    return candidates
+
+
+def resolvecertificatesettings(
+    empresa_id: int | None = None,
+    ambiente: str | None = None,
+) -> tuple[str | None, str | None]:
+    pfxpath = None
+    pfxpass = None
+    if empresa_id is None:
+        print(f"[DEBUG] empresa_id is None, returning None, None")
+        return None, None
+    try:
+        from src.models import NfseNacionalCertificado
+        ambientetext = (ambiente or "").strip().lower()
+        ambienteq = None
+        if ambientetext:
+            ambienteq = "homologacao" if ambientehomologacao(ambientetext) else "producao"
+        print(f"[DEBUG] Searching cert: empresa_id={empresa_id}, ambienteq={ambienteq}")
+        query = NfseNacionalCertificado.query.filter_by(empresa_id=empresa_id, ativo=True)
+        if ambienteq:
+            query = query.filter(NfseNacionalCertificado.ambiente == ambienteq)
+        all_certs = query.all()
+        print(f"[DEBUG] Found {len(all_certs)} certificates matching criteria")
+        cert = query.order_by(NfseNacionalCertificado.validade_em.desc()).first()
+        if cert:
+            print(f"[DEBUG] Certificate found: id={cert.id}, ambiente={cert.ambiente}, caminho_arquivo={cert.caminho_arquivo}")
+            if cert.caminho_arquivo:
+                pfxpath = cert.caminho_arquivo.strip() or None
+            if cert.senha is not None:
+                pfxpass = cert.senha.strip() if isinstance(cert.senha, str) else cert.senha
+        else:
+            print(f"[DEBUG] No certificate found")
+    except Exception as e:
+        print(f"[ERROR] Exception in resolvecertificatesettings: {e}")
+        pass
+    print(f"[DEBUG] Returning pfxpath={pfxpath}, pfxpass={'***' if pfxpass else None}")
+    return pfxpath, pfxpass
+
+
+def preparemtlsfrompfx(
+    pfxpath: str,
+    pfxpassword: str | None,
+) -> tuple[str, str, list[str]]:
+    from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
+    from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
+
+    with open(pfxpath, "rb") as handle:
+        data = handle.read()
+
+    privatekey, cert, additionalcerts = load_key_and_certificates(
+        data,
+        pfxpassword.encode("utf-8") if pfxpassword else None,
+    )
+
+    if privatekey is None or cert is None:
+        raise ValueError("PFX sem chave privada ou certificado.")
+
+    now = datetime.utcnow()
+    if cert.not_valid_before > now:
+        raise ValueError(f"Certificado não válido ainda. Válido a partir de {cert.not_valid_before}")
+    if cert.not_valid_after < now:
+        raise ValueError(f"Certificado expirado. Expirou em {cert.not_valid_after}")
+
+    try:
+        for attr in cert.subject:
+            if attr.oid.dotted_string == "2.5.4.45":
+                cnpjmatch = "".join(c for c in attr.value if c.isdigit())
+                if cnpjmatch:
+                    logging.info("CNPJ extraído do certificado: %s", cnpjmatch)
+                break
+    except Exception as e:
+        logging.warning("Não foi possível extrair CNPJ do certificado: %s", e)
+
+    keypem = privatekey.private_bytes(
+        encoding=Encoding.PEM,
+        format=PrivateFormat.PKCS8,
+        encryption_algorithm=NoEncryption(),
+    )
+    certpem = cert.public_bytes(Encoding.PEM)
+
+    if additionalcerts:
+        chaincount = 0
+        for ca in additionalcerts:
+            certpem += ca.public_bytes(Encoding.PEM)
+            chaincount += 1
+        logging.info("Cadeia: 1 cliente + %d CAs intermediárias", chaincount)
+
+    temppaths: list[str] = []
+    certfile = tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".pem")
+    certfile.write(certpem)
+    certfile.close()
+    temppaths.append(certfile.name)
+
+    keyfile = tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".pem")
+    keyfile.write(keypem)
+    keyfile.close()
+    temppaths.append(keyfile.name)
+
+    return certfile.name, keyfile.name, temppaths
+
+
+def responsepayload(response) -> dict:
+    try:
+        contenttype = response.headers.get("content-type", "").lower()
+        if "json" in contenttype:
+            return response.json()
+    except Exception:
+        pass
+    return {
+        "raw": response.text,
+        "headers": dict(getattr(response, "headers", {}) or {}),
+        "statuscode": getattr(response, "status_code", None),
+    }
+
+
+def defaultxsddir() -> str:
+    env = os.environ.get("NFS_XSD_DIR")
+    if env:
+        return env
+    reporoot = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    return os.path.join(reporoot, "XSD", "PLNFSe1.00-Produção")
+
+
+def builddpsxml(payload: dict) -> str:
+    NS = "http://www.sped.fazenda.gov.br/nfse"
+    DS = "http://www.w3.org/2000/09/xmldsig#"
+    ET.register_namespace("", NS)
+    ET.register_namespace("ds", DS)
+    validatecatalogreferences(payload)
+
+    # Debug: log payload keys para diagnóstico
+    logging.debug("Payload keys: %s", list(payload.keys()))
+
+    def q(tag: str) -> str:
+        return QName(NS, tag)
+
+    prestador = requirefields(
+        payload,
+        [
+            ("codigomunicipio", ("codigomunicipio", "codigomunicipioibge", "municipio_codigo", "codigo_municipio")),
+            ("CNPJ", ("empresacnpj", "cnpj", "cnpj_prestador", "prestador_cnpj", "empresa_cnpj")),
+            ("Razão social", ("empresanome", "empresanomefantasia", "razao_social", "nome", "empresa_nome")),
+            ("Rua", ("empresaenderecorua", "enderecorua", "rua", "logradouro", "empresa_endereco_rua")),
+            ("Número", ("empresaendereconumero", "endereconumero", "numero", "nro", "empresa_endereco_numero")),
+            ("Bairro", ("empresaenderecobairro", "enderecobairro", "bairro", "empresa_endereco_bairro")),
+            ("CEP", ("empresaenderecocep", "enderecocep", "cep", "empresa_endereco_cep")),
+        ],
+        "Prestador",
+    )
+
+    root = ET.Element(q("DPS"), versao="1.00")
+    codigomun = prestador["codigomunicipio"]
+    cmun7 = codigomun.zfill(7)[-7:]
+
+    localprestacao = str(
+        payload.get("servicolocalprestacao") or payload.get("localprestacao") or "emitente"
+    ).strip().lower()
+    tomadorcodigomunicipio = resolvemunicipiocodigoibge(
+        payload.get("tomadorcodigomunicipioibge"),
+        payload.get("tomadorenderecocidade") or payload.get("tomadorenderecomunicipio"),
+        payload.get("tomadorenderecouf"),
+    )
+    cmunprestacao = cmun7
+    if localprestacao == "tomador" and tomadorcodigomunicipio:
+        cmunprestacao = tomadorcodigomunicipio.zfill(7)[-7:]
+
+    cnpjvalue = "".join(filter(str.isdigit, prestador.get("CNPJ") or "")).zfill(14)[-14:]
+    idinscr = cnpjvalue
+    tipoinsc = 2 if len(idinscr) == 14 else 1
+    serie = str(payload.get("serie") or "1")[:5].zfill(5)
+    nDPSstr = resolvendpssequence(payload)
+    if not nDPSstr.isdigit():
+        nDPSstr = "1"
+    iddps = f"DPS{cmun7}{tipoinsc}{idinscr}{serie}{nDPSstr.zfill(15)}"
+
+    inf = ET.SubElement(root, q("infDPS"), Id=iddps)
+    ET.SubElement(inf, q("tpAmb")).text = "2" if ambientehomologacao(payload.get("ambiente")) else "1"
+    ET.SubElement(inf, q("dhEmi")).text = (
+        datetime.now(BRASILIA_TZ) - timedelta(minutes=1)
+    ).replace(microsecond=0).isoformat()
+    ET.SubElement(inf, q("verAplic")).text = str(os.environ.get("APP_NAME") or "LiveSun/1.0")
+    ET.SubElement(inf, q("serie")).text = serie
+    ET.SubElement(inf, q("nDPS")).text = str(int(nDPSstr)) if int(nDPSstr) > 0 else "1"
+    ET.SubElement(inf, q("dCompet")).text = (
+        date_(payload.get("dCompet")) or date.today()
+    ).strftime("%Y-%m-%d")
+    tpemit = str(payload.get("tpEmit") or "1")
+    ET.SubElement(inf, q("tpEmit")).text = tpemit
+    ET.SubElement(inf, q("cLocEmi")).text = codigomun
+
+    prest = ET.SubElement(inf, q("prest"))
+    ET.SubElement(prest, q("CNPJ")).text = cnpjvalue
+    if payload.get("inscricaomunicipal"):
+        ET.SubElement(prest, q("IM")).text = str(payload.get("inscricaomunicipal"))
+    if tpemit in ("2", "3"):
+        ET.SubElement(prest, q("xNome")).text = limpartextoxml(prestador["Razão social"])
+        end = ET.SubElement(prest, q("end"))
+        endnac = ET.SubElement(end, q("endNac"))
+        ET.SubElement(endnac, q("cMun")).text = cmun7
+        ET.SubElement(endnac, q("CEP")).text = onlydigits(prestador["CEP"]).zfill(8)[-8:]
+        ET.SubElement(end, q("xLgr")).text = limpartextoxml(prestador["Rua"])
+        ET.SubElement(end, q("nro")).text = prestador["Número"]
+        ET.SubElement(end, q("xBairro")).text = limpartextoxml(prestador["Bairro"])
+
+    reg = ET.SubElement(prest, q("regTrib"))
+    ET.SubElement(reg, q("opSimpNac")).text = str(payload.get("opSimpNac") or "1")
+    ET.SubElement(reg, q("regEspTrib")).text = str(payload.get("regEspTrib") or "0")
+
+    tomadoc = onlydigits(
+        payload.get("tomadordocumento") or payload.get("cnpjcpf") or payload.get("tomadorcnpjcpf")
+    )
+    tomanome = str(
+        payload.get("tomadornome") or payload.get("razaonome") or payload.get("nome") or ""
+    ).strip()
+
+    if tomadoc or tomanome:
+        toma = ET.SubElement(inf, q("toma"))
+        if len(tomadoc) == 11:
+            ET.SubElement(toma, q("CPF")).text = tomadoc
+        elif tomadoc:
+            ET.SubElement(toma, q("CNPJ")).text = tomadoc.zfill(14)[-14:]
+        if tomanome:
+            ET.SubElement(toma, q("xNome")).text = limpartextoxml(tomanome)
+
+        tomaendrua    = str(payload.get("tomadorenderecorua") or "").strip()
+        tomaendnumero = str(payload.get("tomadorendereconumero") or "").strip()
+        tomaendbairro = str(payload.get("tomadorenderecobairro") or "").strip()
+        tomaendcep    = onlydigits(payload.get("tomadorenderecocep") or "")
+        tomaendcidade = resolvemunicipiocodigoibge(
+            payload.get("tomadorcodigomunicipioibge"),
+            payload.get("tomadorenderecocidade") or payload.get("tomadorenderecomunicipio"),
+            payload.get("tomadorenderecouf"),
+        )
+        tomaenduf    = str(payload.get("tomadorenderecouf") or "").strip()
+        tomaendcompl = str(payload.get("tomadorenderecocomplemento") or "").strip()
+        temendereconacional = bool(tomaendcidade and tomaendcep)
+
+        if any([tomaendrua, tomaendnumero, tomaendbairro, tomaendcep,
+                tomaendcidade, tomaenduf, tomaendcompl]) and not temendereconacional:
+            logging.warning("Tomador com endereço parcial — bloco end omitido.")
+
+        if temendereconacional:
+            end = ET.SubElement(toma, q("end"))
+            endnac = ET.SubElement(end, q("endNac"))
+            if tomaendcidade:
+                ET.SubElement(endnac, q("cMun")).text = tomaendcidade.zfill(7)[-7:]
+            if tomaendcep:
+                ET.SubElement(endnac, q("CEP")).text = tomaendcep.zfill(8)[-8:]
+            if tomaendrua:
+                ET.SubElement(end, q("xLgr")).text = tomaendrua
+            if tomaendnumero:
+                ET.SubElement(end, q("nro")).text = tomaendnumero
+            if tomaendcompl:
+                ET.SubElement(end, q("xCpl")).text = tomaendcompl
+            if tomaendbairro:
+                ET.SubElement(end, q("xBairro")).text = tomaendbairro
+            if not tomaendcidade:
+                logging.warning("Tomador sem município IBGE — cMun ausente.")
+
+    serv = ET.SubElement(inf, q("serv"))
+    loc = ET.SubElement(serv, q("locPrest"))
+    ET.SubElement(loc, q("cLocPrestacao")).text = cmunprestacao
+
+    cserv = ET.SubElement(serv, q("cServ"))
+    ctribnacdigits = resolveservicocodigonacional(payload)
+    ET.SubElement(cserv, q("cTribNac")).text = ctribnacdigits
+
+    ctribmun = onlydigits(
+        payload.get("cTribMun") or payload.get("codigotributacaomunicipal") or ""
+    )
+    if not ctribmun:
+        try:
+            xmlpath = (payload.get("xmlanexopath") or payload.get("anexoxmlpath")
+                       or "tmp_attached_original.xml")
+            if os.path.exists(xmlpath):
+                xmltext = open(xmlpath, "r", encoding="utf-8").read()
+                root2 = ET.fromstring(xmltext)
+                found = (
+                    root2.findall(".//{http://www.sped.fazenda.gov.br/nfse}cTribMun")
+                    or root2.findall(".//cTribMun")
+                )
+                if found:
+                    ctribmun = onlydigits("".join(found[0].itertext()))
+        except Exception:
+            pass
+    if ctribmun:
+        ET.SubElement(cserv, q("cTribMun")).text = ctribmun.zfill(3)[-3:]
+
+    desc = str(payload.get("servicodescricao") or payload.get("descricao") or "")
+    if not desc:
+        try:
+            from src.models import NfseServicoNacionalReferencia
+            ref = NfseServicoNacionalReferencia.query.filter_by(
+                codigo_tributacao_nacional=ctribnacdigits
+            ).first()
+            if ref and getattr(ref, "descricao", None):
+                desc = str(ref.descricao)
+        except Exception:
+            pass
+    ET.SubElement(cserv, q("xDescServ")).text = limpartextoxml(desc)
+
+    nbsval = onlydigits(payload.get("serviconbs") or payload.get("nbs") or "")
+    if nbsval:
+        ET.SubElement(cserv, q("cNBS")).text = nbsval.zfill(9)[-9:]
+
+    valores = ET.SubElement(inf, q("valores"))
+    vServPrest = ET.SubElement(valores, q("vServPrest"))
+    valor_servico = payload.get('valorservico') or payload.get('valor_servico') or "0"
+    ET.SubElement(vServPrest, q("vServ")).text = f"{decimal(valor_servico):.2f}"
+
+    trib = ET.SubElement(valores, q("trib"))
+    tribMun = ET.SubElement(trib, q("tribMun"))
+    ET.SubElement(tribMun, q("tribISSQN")).text = str(payload.get("tribISSQN") or "1")
+    ET.SubElement(tribMun, q("tpRetISSQN")).text = str(
+        payload.get("tpRetISSQN") or payload.get("tpretissqn") or "1"
+    )
+    totTrib = ET.SubElement(trib, q("totTrib"))
+    ET.SubElement(totTrib, q("indTotTrib")).text = "0"
+
+    def limpaespaco(elem):
+        for node in elem.iter():
+            if node.text:
+                node.text = node.text.strip()
+            if node.tail:
+                node.tail = node.tail.strip()
+
+    limpaespaco(root)
+    xmlpurostring = ET.tostring(
+        root, encoding="utf-8", method="xml", xml_declaration=False
+    ).decode("utf-8")
+    savexml(xmlpurostring, f"dps_{nDPSstr}")
+    return xmlpurostring
+
+
+def validateandsignxml(
+    xmlstring: str,
+    kind: str = "dps",
+    empresa_id: int | None = None,
+    ambiente: str | None = None,
+) -> dict:
+    # Pular validação XSD por enquanto - focar no envio primeiro
+    valid = True
+    errors = None
+    
+    signedxml = None
+    pfxpath, pfxpass = resolvecertificatesettings(empresa_id=empresa_id, ambiente=ambiente)
+
+    referenceuri = None
+    if valid:
+        try:
+            parser = etree.XMLParser(remove_blank_text=True)
+            root = etree.fromstring(xmlstring.encode("utf-8"), parser)
+            ns = {"ns": "http://www.sped.fazenda.gov.br/nfse"}
+            infdpsnode = root.xpath("ns:infDPS/@Id", namespaces=ns)
+            if not infdpsnode:
+                infdpsnode = root.xpath("*[local-name()='infDPS']/@Id")
+            if infdpsnode:
+                infdpsid = infdpsnode[0]
+                if infdpsid:
+                    referenceuri = f"#{infdpsid}"
+        except Exception as e:
+            logging.warning("Failed to extract infDPS ID: %s", e)
+
+    if valid and pfxpath and pfxpass is not None:
+        try:
+            signedxml = sign_xml_enveloped(
+                xmlstring, pfxpath, pfxpass, reference_uri=referenceuri
+            )
+            try:
+                parser = etree.XMLParser(remove_blank_text=True)
+                root2 = etree.fromstring(xmlstring.encode("utf-8"), parser)
+                ns = {"ns": "http://www.sped.fazenda.gov.br/nfse"}
+                ndpsnode = root2.xpath("ns:infDPS/ns:nDPS/text()", namespaces=ns)
+                if not ndpsnode:
+                    ndpsnode = root2.xpath(
+                        "*[local-name()='infDPS']/*[local-name()='nDPS']/text()"
+                    )
+                nDPSstr = ndpsnode[0] if ndpsnode else "unknown"
+            except Exception:
+                nDPSstr = "unknown"
+            savexml(signedxml, f"dps_{nDPSstr}_signed")
+        except Exception as e:
+            if errors is None:
+                errors = []
+            errors.append(f"Signing error: {e}")
+            signedxml = None
+
+    return {"valid": valid, "errors": errors, "signedxml": signedxml}
+
+
+def buildemissaojsonpayload(payload: dict, dpsxmlassinado: str) -> dict:
+    """
+    Sefin Nacional: campo dpsXmlGZipB64, XML compactado em gzip e codificado em base64.
+    """
+    xml_limpo = (dpsxmlassinado or "").strip().lstrip("\ufeff")
+    if not xml_limpo:
+        raise ValueError("XML DPS assinado está vazio.")
+    # Compactar XML em gzip e codificar em base64
+    xml_compactado = gzipbase64(xml_limpo)
+    return {"dpsXmlGZipB64": xml_compactado}
+
+
+def gzipbase64(text: str) -> str:
+    return base64.b64encode(gzip.compress((text or "").encode("utf-8"))).decode("ascii")
+
+
+def xmltoutf8bytes(xmltext: str) -> bytes:
+    xml = (xmltext or "").strip()
+    return xml.encode("utf-8") if xml else b""
+
+
+def validatecompactedxmlpayload(b64gzip: str) -> None:
+    pass
+
+
+def transmitiremissao(payload: dict, configuracao=None) -> dict:
+    import requests
+    from requests import exceptions as requestsexceptions
+
+    try:
+        dpsxml = builddpsxml(payload)
+    except ValueError as exc:
+        return {
+            "sucesso": False, "status": "ERRO_DADOS_OBRIGATORIOS",
+            "situacaofiscal": "PENDENTE", "protocolo": None,
+            "numeronfse": None, "codigoverificacao": None, "chavenfse": None,
+            "xmlnfse": None, "payloadretorno": {"erro": str(exc)},
+            "responsetext": None, "responseheaders": {},
+            "mensagem": str(exc), "httpstatus": 422,
+        }
+
+    empresa_id = payload.get("empresa_id") or payload.get("empresa_id")
+    ambiente = (
+        getattr(configuracao, "ambiente", None) if configuracao
+        else payload.get("ambiente")
+    )
+    print(f"[DEBUG] empresa_id resolved: {empresa_id}")
+    print(f"[DEBUG] ambiente resolved: {ambiente}")
+
+    validation = validateandsignxml(
+        dpsxml, kind="dps", empresa_id=empresa_id, ambiente=ambiente
+    )
+    if (not validation.get("valid")
+            and os.environ.get("NFS_VALIDATE_ON_SEND", "true").lower() == "true"):
+        return {
+            "sucesso": False, "status": "REJEITADA_VALIDACAO",
+            "situacaofiscal": "REJEITADA",
+            "mensagem": "Validação XSD falhou antes do envio.",
+            "errors": validation.get("errors"), "httpstatus": 400,
+        }
+
+    dpsxmltosend = validation.get("signedxml") or dpsxml
+    baseemissao = getbaseemissao(configuracao, ambiente=ambiente)
+    basedistribuicao = getbasedistribuicao(configuracao, ambiente=ambiente)
+
+    if endpointlookslikedistribuicao(baseemissao):
+        return {
+            "sucesso": False, "status": "ERRO_CONFIGURACAO_ENDPOINT",
+            "situacaofiscal": "PENDENTE", "protocolo": None,
+            "numeronfse": None, "codigoverificacao": None, "chavenfse": None,
+            "xmlnfse": None,
+            "payloadretorno": {"baseemissao": baseemissao, "basedistribuicao": basedistribuicao},
+            "responsetext": None, "responseheaders": {},
+            "mensagem": "Endpoint aponta para ADN/distribuição. Defina endpointemissao com a base da SEFIN Nacional.",
+            "httpstatus": 500,
+        }
+
+    pfxpath, pfxpass = resolvecertificatesettings(empresa_id=empresa_id, ambiente=ambiente)
+    certpair = None
+    certpaths: list[str] = []
+    debugcert = os.environ.get("NFS_DEBUG_CERT", "0").strip() == "1"
+    certdebug: dict = {
+        "empresa_id_resolvido": empresa_id,
+        "ambiente_resolvido": ambiente,
+        "pfx_path_resolvido": pfxpath,
+        "cert_enviado": False,
+        "pfx_pass_preenchida": pfxpass is not None,
+    }
+
+    try:
+        if pfxpath:
+            print(f"[DEBUG] Preparing mTLS from PFX: {pfxpath}")
+            print(f"[DEBUG] PFX exists: {os.path.exists(pfxpath)}")
+            certpempath, keypempath, certpaths = preparemtlsfrompfx(pfxpath, pfxpass)
+            certpair = (certpempath, keypempath)
+            certdebug["cert_enviado"] = True
+            certdebug["cert_pem_tmp"] = certpempath
+            certdebug["key_pem_tmp"] = keypempath
+            print(f"[DEBUG] mTLS prepared successfully")
+    except Exception as exc:
+        certdebug["erro_preparo_certificado"] = str(exc)
+        print(f"[ERROR] Failed to prepare mTLS: {exc}")
+
+    requestjsonbody = buildemissaojsonpayload(payload, dpsxmltosend)
+    print(f"[DEBUG] JSON payload to send: {requestjsonbody}")
+    bodybytes = _json.dumps(jsonsafe(requestjsonbody), ensure_ascii=False).encode("utf-8")
+    print(f"[DEBUG] Body bytes length: {len(bodybytes)}")
+
+    headersjson = {
+        "Content-Type": "application/json; charset=utf-8",
+        "Accept": "application/json",
+        "X-Idempotency-Key": str(payload.get("hashidempotencia") or ""),
+    }
+
+    candidateurls = candidateemissionurls(baseemissao)
+    logging.info(
+        "Transmissão NFS-e empresa=%s ambiente=%s urls=%s pfx=%s",
+        empresa_id, ambiente, candidateurls, pfxpath,
+    )
+
+    response = None
+    requestattempts: list[dict] = []
+    sawmethodnotallowed = False
+    requesturl = ""
+
+    try:
+        for requesturl in candidateurls:
+            sawmethodnotallowed = False
+            for method in ("POST",):
+                try:
+                    requestkwargs = {
+                        "headers": headersjson,
+                        "data": bodybytes,
+                        "timeout": 30,
+                        "cert": certpair,
+                        "verify": os.environ.get("NFS_CA_BUNDLE") or True,
+                    }
+                    response = requests.request(method, requesturl, **requestkwargs)
+                    requestattempts.append({
+                        "url": requesturl,
+                        "method": method,
+                        "status_code": response.status_code,
+                        "allow": response.headers.get("Allow") or response.headers.get("allow"),
+                    })
+                    contenttype = response.headers.get("content-type", "").lower()
+                    if response.status_code == 403 and "text/html" in contenttype:
+                        continue
+                    if response.status_code == 405:
+                        sawmethodnotallowed = True
+                        continue
+                    if response.status_code == 404:
+                        continue
+                    break
+                except requestsexceptions.RequestException as exc:
+                    requestattempts.append({"url": requesturl, "method": method, "error": str(exc)})
+                    response = None
+                    continue
+
+            if response is not None and response.status_code not in (404, 405):
+                break
+
+        if response is None:
+            raise requestsexceptions.RequestException(
+                f"Falha ao enviar. Tentativas: {requestattempts}"
+            )
+
+        if not response.ok:
+            logging.warning("NFS-e falhou status=%s url=%s", response.status_code, requesturl)
+            logging.debug("Headers: %s", dict(response.headers))
+            logging.debug("Body: %s", (response.text or "")[:1000])
+
+        retorno = responsepayload(response)
+        mensagem = None
+        if isinstance(retorno, dict):
+            mensagem = retorno.get("mensagem") or retorno.get("message") or retorno.get("raw")
+        mensagem = mensagem or response.reason
+
+        # Debug: mostrar resposta da SEFIN
+        print(f"[DEBUG] Response status: {response.status_code}")
+        print(f"[DEBUG] Response text (first 500 chars): {(response.text or '')[:500]}")
+        print(f"[DEBUG] Response headers: {dict(response.headers)}")
+        print(f"[DEBUG] Retorno parsed: {retorno}")
+
+        return {
+            "sucesso": response.ok,
+            "status": (retorno.get("status") if isinstance(retorno, dict) else None)
+                      or ("PROCESSADA" if response.ok else "ERRO_API"),
+            "situacaofiscal": (retorno.get("situacaofiscal") if isinstance(retorno, dict) else None)
+                              or ("AUTORIZADA" if response.ok else "REJEITADA"),
+            "protocolo": retorno.get("protocolo") if isinstance(retorno, dict) else None,
+            "numeronfse": None,
+            "codigoverificacao": None,
+            "chavenfse": None,
+            "xmlnfse": response.text if str(response.text or "").lstrip().startswith("<") else None,
+            "payloadretorno": {
+                "request_url": requesturl,
+                "request_content_type": headersjson["Content-Type"],
+                "request_body": requestjsonbody,
+                "base_emissao": baseemissao,
+                "base_distribuicao": basedistribuicao,
+                "response_headers": dict(response.headers),
+                "response_body": retorno,
+                "request_attempts": requestattempts,
+                "allow_header": response.headers.get("Allow") or response.headers.get("allow"),
+                **(certdebug if debugcert else {}),
+            },
+            "responsetext": getattr(response, "text", ""),
+            "responseheaders": dict(getattr(response, "headers", {}) or {}),
+            "mensagem": mensagem,
+            "httpstatus": response.status_code,
+        }
+
+    except requestsexceptions.SSLError as exc:
+        return {
+            "sucesso": False,
+            "status": "ERRO_SSL",
+            "situacaofiscal": "PENDENTE",
+            "protocolo": None,
+            "numeronfse": None,
+            "codigoverificacao": None,
+            "chavenfse": payload.get("hashidempotencia"),
+            "xmlnfse": None,
+            "payloadretorno": {
+                "erro": str(exc),
+                "request_url": requesturl,
+                **(certdebug if debugcert else {}),
+            },
+            "responsetext": None,
+            "responseheaders": {},
+            "mensagem": f"Falha SSL no transporte para o endpoint configurado: {exc}",
+            "httpstatus": 495,
+        }
+
+    except requestsexceptions.RequestException as exc:
+        return {
+            "sucesso": False,
+            "status": "ERRO_TRANSPORTE",
+            "situacaofiscal": "PENDENTE",
+            "protocolo": None,
+            "numeronfse": None,
+            "codigoverificacao": None,
+            "chavenfse": payload.get("hashidempotencia"),
+            "xmlnfse": None,
+            "payloadretorno": {
+                "erro": str(exc),
+                "request_url": requesturl,
+                **(certdebug if debugcert else {}),
+            },
+            "responsetext": None,
+            "responseheaders": {},
+            "mensagem": f"Falha no transporte para o endpoint configurado: {exc}",
+            "httpstatus": 503,
+        }
+
+    finally:
+        for path in certpaths:
+            try:
+                os.remove(path)
+            except Exception:
+                pass

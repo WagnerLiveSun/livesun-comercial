@@ -1,0 +1,484 @@
+{% extends "layout.html" %}
+
+{% block title %}Cadastro de Empresa{% endblock %}
+
+{% block login %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveSun Comercial - Cadastro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --ls-bg-main: #020617;
+            --ls-primary: #2563eb;
+            --ls-accent: #22c55e;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top, rgba(52, 211, 153, 0.16), transparent 55%),
+                radial-gradient(circle at bottom, rgba(59, 130, 246, 0.18), transparent 60%),
+                var(--ls-bg-main);
+            color: #e5e7eb;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 0;
+        }
+
+        .register-container {
+            width: 100%;
+            max-width: 720px;
+            padding: 20px;
+        }
+
+        .register-card {
+            background-color: rgba(15, 23, 42, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .register-logo {
+            font-size: 46px;
+            color: var(--ls-accent);
+            margin-bottom: 14px;
+        }
+
+        .register-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f9fafb;
+            margin-bottom: 8px;
+            letter-spacing: -0.03em;
+        }
+
+        .register-subtitle {
+            font-size: 15px;
+            color: #9ca3af;
+            margin-bottom: 0;
+        }
+
+        .section-label {
+            color: #d1d5db;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin: 24px 0 12px;
+        }
+
+        .nav-tabs {
+            border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .nav-tabs .nav-link {
+            border: 1px solid transparent;
+            border-radius: 12px 12px 0 0;
+            color: #94a3b8;
+            background: transparent;
+        }
+
+        .nav-tabs .nav-link:hover {
+            border-color: rgba(148, 163, 184, 0.25) rgba(148, 163, 184, 0.25) transparent;
+            color: #e5e7eb;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #f8fafc;
+            background-color: rgba(37, 99, 235, 0.15);
+            border-color: rgba(37, 99, 235, 0.35) rgba(37, 99, 235, 0.35) rgba(15, 23, 42, 0.72);
+        }
+
+        .tab-content {
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-top: none;
+            border-radius: 0 0 18px 18px;
+            padding: 24px;
+            background: rgba(2, 6, 23, 0.18);
+        }
+
+        .form-control {
+            background-color: rgba(30, 41, 59, 0.82);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            color: #e5e7eb;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            background-color: rgba(30, 41, 59, 0.92);
+            border-color: var(--ls-primary);
+            color: #e5e7eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: #6b7280;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #d1d5db;
+            margin-bottom: 8px;
+        }
+
+        .form-text {
+            color: #94a3b8;
+        }
+
+        .btn-register {
+            background: linear-gradient(135deg, var(--ls-accent), rgba(34, 197, 94, 0.86));
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 13px 18px;
+            border-radius: 12px;
+            width: 100%;
+            transition: all 0.2s ease;
+            margin-top: 28px;
+            font-size: 16px;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 26px rgba(34, 197, 94, 0.35);
+            color: white;
+        }
+
+        .register-footer {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .register-footer a {
+            color: var(--ls-primary);
+            text-decoration: none;
+        }
+
+        .register-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .alert-success {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.25);
+        }
+
+        .alert-dismissible .btn-close {
+            filter: brightness(0.8);
+        }
+
+        .divider {
+            border-color: rgba(148, 163, 184, 0.2);
+            margin: 22px 0;
+        }
+
+        @media (max-width: 768px) {
+            .register-card {
+                padding: 28px 20px;
+            }
+
+            .register-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-card">
+            <div class="register-header">
+                <div class="register-logo">
+                    <i class="fas fa-building-user"></i>
+                </div>
+                <h1 class="register-title">LiveSun Comercial</h1>
+                <p class="register-subtitle">Cadastro da empresa e do primeiro usuário administrador</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.register') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <ul class="nav nav-tabs" id="registerTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="empresa-tab" data-bs-toggle="tab" data-bs-target="#empresa-pane" type="button" role="tab" aria-controls="empresa-pane" aria-selected="true">Empresa</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="usuario-tab" data-bs-toggle="tab" data-bs-target="#usuario-pane" type="button" role="tab" aria-controls="usuario-pane" aria-selected="false">Usuário</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="registerTabsContent">
+                    <div class="tab-pane fade show active" id="empresa-pane" role="tabpanel" aria-labelledby="empresa-tab">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="empresa_nome" class="form-label">Razão Social</label>
+                                <input type="text" class="form-control" id="empresa_nome" name="empresa_nome" placeholder="Ex.: LiveSun Comercial" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="nome_fantasia" class="form-label">Nome Fantasia</label>
+                                <input type="text" class="form-control" id="nome_fantasia" name="nome_fantasia" placeholder="Nome de uso / fantasia">
+                            </div>
+                            <div class="col-12">
+                                <label for="plano" class="form-label">Plano</label>
+                                <select class="form-control" id="plano" name="plano" required>
+                                    {% for value, label in plan_choices %}
+                                    <option value="{{ value }}" {% if value == 'basic' %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Básico reduz campos avançados. Intermediário e Premium mantêm o cadastro completo.</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="tipo_pessoa" class="form-label">Tipo de Pessoa</label>
+                                <select class="form-control mb-2" id="tipo_pessoa" name="tipo_pessoa" required>
+                                    <option value="J" selected>Jurídica (CNPJ)</option>
+                                    <option value="F">Física (CPF)</option>
+                                </select>
+                                <label for="empresa_cnpj" class="form-label">CPF/CNPJ</label>
+                                <input type="text" class="form-control" id="empresa_cnpj" name="empresa_cnpj" placeholder="Somente números ou formatado" required maxlength="18">
+                            </div>
+                            <div class="col-12">
+                                <h5 class="mt-3">Endereço</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="endereco_rua" class="form-label">Rua</label>
+                                <input type="text" class="form-control" id="endereco_rua" name="endereco_rua" placeholder="Rua, avenida...">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="endereco_numero" class="form-label">Número</label>
+                                <input type="text" class="form-control" id="endereco_numero" name="endereco_numero">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="endereco_bairro" class="form-label">Bairro</label>
+                                <input type="text" class="form-control" id="endereco_bairro" name="endereco_bairro">
+                            </div>
+                            <div class="col-md-5">
+                                <label for="endereco_cidade" class="form-label">Cidade</label>
+                                <input type="text" class="form-control" id="endereco_cidade" name="endereco_cidade">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="endereco_uf" class="form-label">UF</label>
+                                <input type="text" class="form-control" id="endereco_uf" name="endereco_uf" maxlength="2">
+                            </div>
+                            <div class="col-md-5">
+                                <label for="endereco_cep" class="form-label">CEP</label>
+                                <input type="text" class="form-control" id="endereco_cep" name="endereco_cep">
+                            </div>
+                            <div class="col-12">
+                                <h5 class="mt-3">Inscrições e Contato</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="inscricao_municipal" class="form-label">Inscrição Municipal</label>
+                                <input type="text" class="form-control" id="inscricao_municipal" name="inscricao_municipal">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="inscricao_estadual" class="form-label">Inscrição Estadual</label>
+                                <input type="text" class="form-control" id="inscricao_estadual" name="inscricao_estadual">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="telefone" class="form-label">Telefone</label>
+                                <input type="text" class="form-control" id="telefone" name="telefone">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="empresa_email" class="form-label">Email da Empresa</label>
+                                <input type="email" class="form-control" id="empresa_email" name="empresa_email">
+                            </div>
+                            <div class="col-12">
+                                <h5 class="mt-3">Fiscal (opcional)</h5>
+                                <div class="form-text text-muted">Cadastre apenas o item principal inicial. Os demais podem ser gerenciados depois na empresa.</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="fiscal_tipo" class="form-label">Tipo</label>
+                                <select class="form-select" id="fiscal_tipo" name="fiscal_tipo">
+                                    <option value="">Selecione...</option>
+                                    <option value="cnae">CNAE</option>
+                                    <option value="codigo_servico">Código nacional</option>
+                                    <option value="nbs">NBS</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label for="fiscal_valor" class="form-label">Valor</label>
+                                <input type="text" class="form-control" id="fiscal_valor" name="fiscal_valor" placeholder="Informe o código ou CNAE principal">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="usuario-pane" role="tabpanel" aria-labelledby="usuario-tab">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="username" class="form-label">Usuário</label>
+                                <input type="text" class="form-control" id="username" name="username" placeholder="admin" required>
+                                <div class="form-text">Único apenas dentro da empresa.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="admin@empresa.com.br" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="password" class="form-label">Senha</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Crie uma senha forte" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="full_name" class="form-label">Nome Completo</label>
+                                <input type="text" class="form-control" id="full_name" name="full_name" placeholder="Nome do administrador" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-register">Cadastrar Empresa e Admin</button>
+            </form>
+
+            <div class="register-footer">
+                <p class="mt-3 mb-0">
+                    <a href="{{ url_for('auth.login') }}">Voltar ao login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function(){
+            const tipo = document.getElementById('tipo_pessoa');
+            const input = document.getElementById('empresa_cnpj');
+            const form = document.querySelector('form[action="{{ url_for('auth.register') }}"]');
+
+            function onlyDigits(v){return v.replace(/\D/g,'');}
+
+            function maskCPF(v){
+                v = onlyDigits(v).slice(0,11);
+                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                return v;
+            }
+
+            function maskCNPJ(v){
+                v = onlyDigits(v).slice(0,14);
+                v = v.replace(/(\d{2})(\d)/, '$1.$2');
+                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                v = v.replace(/(\d{3})(\d)/, '$1/$2');
+                v = v.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+                return v;
+            }
+
+            function isValidCPF(cpf){
+                cpf = onlyDigits(cpf);
+                if(cpf.length !== 11) return false;
+                if(/^(\d)\1+$/.test(cpf)) return false;
+                let sum=0, rem;
+                for(let i=1;i<=9;i++) sum += parseInt(cpf.substring(i-1,i)) * (11 - i);
+                rem = (sum * 10) % 11; if(rem===10) rem=0;
+                if(rem !== parseInt(cpf.substring(9,10))) return false;
+                sum = 0;
+                for(let i=1;i<=10;i++) sum += parseInt(cpf.substring(i-1,i)) * (12 - i);
+                rem = (sum * 10) % 11; if(rem===10) rem=0;
+                if(rem !== parseInt(cpf.substring(10,11))) return false;
+                return true;
+            }
+
+            function isValidCNPJ(cnpj){
+                cnpj = onlyDigits(cnpj);
+                if(cnpj.length !== 14) return false;
+                if(/^(\d)\1+$/.test(cnpj)) return false;
+                const calc = (cnpj, pos) => {
+                    let tamanho = pos - 7;
+                    let soma = 0;
+                    let idx = 0;
+                    for (let i = pos; i >= 1; i--) {
+                        soma += parseInt(cnpj[idx]) * i;
+                        idx++;
+                        if (i === 2) i = 9;
+                    }
+                    let res = soma % 11;
+                    return (res < 2) ? 0 : 11 - res;
+                };
+                let dig1 = calc(cnpj, 12);
+                let dig2 = calc(cnpj, 13);
+                return (dig1 === parseInt(cnpj[12]) && dig2 === parseInt(cnpj[13]));
+            }
+
+            function applyMask(){
+                const t = tipo.value;
+                if(t === 'F'){
+                    input.value = maskCPF(input.value);
+                    input.maxLength = 14;
+                } else {
+                    input.value = maskCNPJ(input.value);
+                    input.maxLength = 18;
+                }
+            }
+
+            tipo && tipo.addEventListener('change', function(){
+                input.value = '';
+                applyMask();
+            });
+
+            input && input.addEventListener('input', applyMask);
+
+            form && form.addEventListener('submit', function(e){
+                const t = tipo.value;
+                const raw = onlyDigits(input.value);
+                if(t === 'F'){
+                    if(!isValidCPF(raw)){
+                        e.preventDefault(); alert('CPF inválido. Verifique o número informado.'); return false;
+                    }
+                } else {
+                    if(!isValidCNPJ(raw)){
+                        e.preventDefault(); alert('CNPJ inválido. Verifique o número informado.'); return false;
+                    }
+                }
+                // submit only digits
+                input.value = raw;
+            });
+
+            // initialize mask if browser restored value
+            applyMask();
+        })();
+    </script>
+</body>
+</html>
+{% endblock %}

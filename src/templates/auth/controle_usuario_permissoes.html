@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+{% block title %}Exceções por Usuário{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold ls-page-title">Exceções de Permissão</h1>
+        <p class="text-muted mb-0">Usuário: {{ usuario.full_name or usuario.username }} (papel: {{ usuario.role }})</p>
+    </div>
+    <a href="{{ url_for('auth.controle_acesso') }}" class="btn btn-primary">Voltar</a>
+</div>
+
+<div class="ls-card p-4">
+    <p class="text-muted mb-3">
+        Ajuste fino por usuário: configure exceções para liberar ou bloquear processos específicos.
+        Por padrão, segue as permissões do papel do usuário.
+    </p>
+
+    <form method="POST" action="{{ url_for('auth.controle_usuario_permissoes', user_id=usuario.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle ls-theme-table">
+                <thead>
+                    <tr>
+                        <th>Grupo</th>
+                        <th>Processo</th>
+                        <th class="text-center">Papel</th>
+                        <th class="text-center">Exceção</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in permission_catalog %}
+                    {% set mode = overrides_matrix[item.key] %}
+                    {% set is_inherit_allow = mode == 'inherit_allow' %}
+                    {% set is_inherit_deny = mode == 'inherit_deny' %}
+                    <tr>
+                        <td>{{ item.group }}</td>
+                        <td>{{ item.label }}</td>
+                        <td class="text-center">
+                            <span style="font-size: 1.2em;">
+                                {% if is_inherit_allow %}
+                                    <i class="fas fa-check-circle text-success"></i>
+                                {% elif is_inherit_deny %}
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                {% else %}
+                                    <i class="fas fa-minus-circle text-muted"></i>
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <select name="userperm__{{ item.key }}" class="form-control form-select-sm" style="width: auto; display: inline-block;">
+                                <option value="inherit" {% if is_inherit_allow or is_inherit_deny %}selected{% endif %}>Seguir papel</option>
+                                <option value="allow" {% if mode == 'allow' %}selected{% endif %}>Liberar</option>
+                                <option value="deny" {% if mode == 'deny' %}selected{% endif %}>Bloquear</option>
+                            </select>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+            <button type="submit" class="btn ls-btn-primary">Salvar Exceções</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

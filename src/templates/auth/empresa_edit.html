@@ -1,0 +1,459 @@
+{% extends "layout.html" %}
+
+{% block title %}Editar Empresa{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-6">Manutenção da Empresa</h1>
+        <p class="text-muted">Atualize endereço, inscrições e contato</p>
+    </div>
+</div>
+
+<div class="ls-card p-4 ls-card-centered">
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="geral-tab-btn" data-bs-toggle="tab" data-bs-target="#geral-tab" type="button" role="tab" aria-controls="geral-tab" aria-selected="true">Geral</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="fiscal-tab-btn" data-bs-toggle="tab" data-bs-target="#fiscal-tab" type="button" role="tab" aria-controls="fiscal-tab" aria-selected="false">Fiscal</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="geral-tab" role="tabpanel" aria-labelledby="geral-tab-btn">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row g-3">
+                    {% if empresa and empresa.id %}
+                    <div class="col-md-3">
+                        <label class="form-label">ID</label>
+                        <input type="text" class="form-control" value="{{ empresa.id }}" disabled>
+                        <input type="hidden" name="id" value="{{ empresa.id }}">
+                    </div>
+                    <div class="col-md-9">
+                        <label class="form-label">Razão Social</label>
+                        <input type="text" class="form-control" value="{{ empresa.nome }}" disabled>
+                    </div>
+                    {% else %}
+                    <div class="col-12">
+                        <label class="form-label">Razão Social</label>
+                        <input type="text" class="form-control" name="nome" value="{{ empresa.nome if empresa else '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Nome Fantasia</label>
+                        <input type="text" class="form-control" name="nome_fantasia" value="{{ empresa.nome_fantasia if empresa else '' }}">
+                    </div>
+                    {% endif %}
+
+                    <div class="col-md-6">
+                        <label class="form-label">CNPJ</label>
+                        {% if empresa and empresa.cnpj %}
+                        <input type="text" class="form-control" value="{{ empresa.cnpj or '' }}" disabled>
+                        <input type="hidden" name="empresa_cnpj" value="{{ empresa.cnpj or '' }}">
+                        {% else %}
+                        <input type="text" class="form-control" name="empresa_cnpj" value="{{ empresa.cnpj or '' }}">
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Inscrição Municipal</label>
+                        <input type="text" name="inscricao_municipal" class="form-control" value="{{ empresa.inscricao_municipal or '' }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Inscrição Estadual</label>
+                        <input type="text" name="inscricao_estadual" class="form-control" value="{{ empresa.inscricao_estadual or '' }}">
+                    </div>
+
+                    <div class="col-md-8">
+                        <label class="form-label">Endereço (Rua)</label>
+                        <input type="text" name="endereco_rua" class="form-control" value="{{ empresa.endereco_rua or '' }}" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Número</label>
+                        <input type="text" name="endereco_numero" class="form-control" value="{{ empresa.endereco_numero or '' }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Bairro</label>
+                        <input type="text" name="endereco_bairro" class="form-control" value="{{ empresa.endereco_bairro or '' }}" required>
+                    </div>
+
+                    <div class="col-md-4 position-relative">
+                        <label class="form-label">Municipio</label>
+                        <input type="text" id="municipioSearch" class="form-control" placeholder="Busque por nome, UF ou código IBGE" 
+                            autocomplete="off">
+                        <div id="municipioDropdown" class="list-group position-absolute w-100" style="z-index: 1050; top: calc(100% + .25rem); display: none; max-height: 240px; overflow: auto;"></div>
+                        <input type="hidden" name="municipio_ref" id="municipio_ref" value="{{ empresa.codigo_municipio_ibge or '' }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">UF</label>
+                        <input type="text" name="endereco_uf" id="endereco_uf" class="form-control" maxlength="2"
+                            value="{{ empresa.endereco_uf or '' }}">
+                        <small class="form-text text-muted">Preenchido automaticamente</small>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">CEP</label>
+                        <input type="text" name="endereco_cep" class="form-control" value="{{ empresa.endereco_cep or '' }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Telefone</label>
+                        <input type="text" name="telefone" class="form-control" value="{{ empresa.telefone or '' }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Email da Empresa</label>
+                        <input type="email" name="empresa_email" class="form-control" value="{{ empresa.email or '' }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Situação Simples Nacional</label>
+                        <select name="op_simp_nac" class="form-control">
+                            <option value="1" {% if empresa.op_simp_nac == 1 %}selected{% endif %}>Não Optante</option>
+                            <option value="2" {% if empresa.op_simp_nac == 2 %}selected{% endif %}>Optante - MEI</option>
+                            <option value="3" {% if empresa.op_simp_nac == 3 or not empresa.op_simp_nac %}selected{% endif %}>Optante - ME/EPP</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Regime Apuração (ME/EPP)</label>
+                        <select name="reg_ap_trib_sn" class="form-control">
+                            <option value="1" {% if empresa.reg_ap_trib_sn == 1 or not empresa.reg_ap_trib_sn %}selected{% endif %}>Tributos pelo SN</option>
+                            <option value="2" {% if empresa.reg_ap_trib_sn == 2 %}selected{% endif %}>Federais pelo SN, ISSQN fora</option>
+                            <option value="3" {% if empresa.reg_ap_trib_sn == 3 %}selected{% endif %}>Tributos fora do SN</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <h5 class="border-bottom pb-2"><i class="fas fa-tasks me-2"></i> Atividades da Empresa</h5>
+                        <p class="text-muted small">Habilite os módulos que serão utilizados por esta empresa.</p>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="form-check form-switch p-3 border rounded">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_comercial" id="ativ_comercial" {% if empresa.atividade_comercial %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="ativ_comercial">Comercial</label>
+                                    <div class="small text-muted mt-1">PDV, NF-e, NFC-e e Pedidos</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch p-3 border rounded">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_servicos" id="ativ_servicos" {% if empresa.atividade_servicos %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="ativ_servicos">Serviços</label>
+                                    <div class="small text-muted mt-1">NFS-e e Importação de Notas</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch p-3 border rounded">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_financeiro" id="ativ_financeiro" {% if empresa.atividade_financeiro %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="ativ_financeiro">Financeiro</label>
+                                    <div class="small text-muted mt-1">Gestão Financeira e Fluxo de Caixa</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch p-3 border rounded">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_locacao" id="ativ_locacao" {% if empresa.atividade_locacao %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="ativ_locacao">Locação</label>
+                                    <div class="small text-muted mt-1">Aluguel de Roupas e Fantasias</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch p-3 border rounded">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_contratos" id="ativ_contratos" {% if empresa.atividade_contratos %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="ativ_contratos">Contratos</label>
+                                    <div class="small text-muted mt-1">Gestão de Contratos de Serviços</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn ls-btn-primary"><i class="fas fa-save"></i> Salvar</button>
+                    <a href="{{ url_for('auth.perfil') }}" class="btn btn-secondary ms-2">Cancelar</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="tab-pane fade" id="fiscal-tab" role="tabpanel" aria-labelledby="fiscal-tab-btn">
+            <div class="row g-3">
+                <div class="col-12 mt-2">
+                    <h5 class="mt-3">Fiscal para NFS-e</h5>
+                    <div class="form-text text-muted">Cadastre um item por vez e marque o principal. Esta é a única fonte fiscal da empresa.</div>
+                </div>
+
+                <div class="col-12 mt-2">
+                    <form method="POST" class="row g-3 align-items-start" id="fiscalForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="fiscal_action" value="add_item">
+
+                        <div class="col-lg-3 col-md-4">
+                            <label class="form-label">Tipo</label>
+                            <select name="fiscal_tipo" id="fiscalTipo" class="form-select">
+                                {% for key, label in fiscal_tipo_labels.items() %}
+                                <option value="{{ key }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-lg-5 col-md-8">
+                            <label class="form-label">Valor</label>
+                            <input type="text" name="fiscal_valor" id="fiscalValor" list="fiscalValorOptions" class="form-control" placeholder="Selecione um tipo fiscal" autocomplete="off">
+                            <datalist id="fiscalValorOptions"></datalist>
+                            <input type="hidden" id="fiscalNbsRelacionado" name="fiscal_nbs_relacionado" value="">
+                            <div class="form-text text-muted" id="fiscalValorHint">Escolha um tipo para carregar a lista.</div>
+                        </div>
+
+                        <div class="col-lg-2 col-md-6 d-flex align-items-center pt-lg-4 pt-md-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="fiscal_principal" id="fiscalPrincipalAdd">
+                                <label class="form-check-label" for="fiscalPrincipalAdd">Principal</label>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-2 col-md-6 d-grid pt-lg-4 pt-md-0">
+                            <button type="submit" class="btn btn-outline-light">Adicionar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="col-12 mt-3">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Valor</th>
+                                    <th>Principal</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in empresa_fiscal_itens %}
+                                <tr>
+                                    <td>{{ fiscal_tipo_labels.get(item.tipo, item.tipo) }}</td>
+                                    <td>{{ item.valor }}</td>
+                                    <td>
+                                        {% if item.principal %}
+                                        <span class="badge bg-success">Principal</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Secundário</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        {% if not item.principal %}
+                                        <form method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="fiscal_action" value="set_primary">
+                                            <input type="hidden" name="fiscal_item_id" value="{{ item.id }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">Definir principal</button>
+                                        </form>
+                                        {% endif %}
+                                        <form method="POST" class="d-inline ms-1" onsubmit="return confirm('Remover este item fiscal?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="fiscal_action" value="delete_item">
+                                            <input type="hidden" name="fiscal_item_id" value="{{ item.id }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Nenhum item fiscal cadastrado.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+console.log('[Empresa] Script carregado');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[Empresa] DOMContentLoaded');
+    
+    const municipioSearch = document.getElementById('municipioSearch');
+    const municipioDropdown = document.getElementById('municipioDropdown');
+    const municipioRef = document.getElementById('municipio_ref');
+    const ufInput = document.getElementById('endereco_uf');
+    
+    console.log('[Empresa] Elementos:', municipioSearch, municipioDropdown, municipioRef, ufInput);
+
+    const municipioOptions = [
+        {% for municipio in municipios or [] %}
+        {
+            value: {{ municipio.codigo_ibge|tojson }},
+            nome: {{ municipio.nome_municipio|tojson }},
+            uf: {{ municipio.uf_sigla|tojson }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const codigoIbgeInicial = {{ (empresa.codigo_municipio_ibge or '')|tojson }};
+    console.log('[Empresa] Municipios:', municipioOptions.length, 'Codigo IBGE:', codigoIbgeInicial);
+
+    function normalizeText(value) {
+        return (value || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    }
+
+    function buildSearchText(option) {
+        return normalizeText(`${option.nome} ${option.uf} ${option.value}`);
+    }
+
+    function renderMunicipioDropdown(query) {
+        const normalized = normalizeText(query);
+        const matches = normalized ? municipioOptions.filter(o => buildSearchText(o).includes(normalized)) : municipioOptions.slice(0, 20);
+        
+        municipioDropdown.innerHTML = '';
+        if (matches.length === 0) {
+            municipioDropdown.style.display = 'none';
+            return;
+        }
+        
+        matches.forEach(option => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item list-group-item-action';
+            item.style.cursor = 'pointer';
+            item.textContent = `${option.nome}${option.uf ? ' / ' + option.uf : ''} - ${option.value}`;
+            item.onclick = function() {
+                municipioRef.value = option.value;
+                municipioSearch.value = `${option.nome}${option.uf ? ' / ' + option.uf : ''} - ${option.value}`;
+                ufInput.value = option.uf || '';
+                municipioDropdown.style.display = 'none';
+            };
+            municipioDropdown.appendChild(item);
+        });
+        
+        municipioDropdown.style.display = 'block';
+    }
+
+    if (municipioSearch) {
+        municipioSearch.addEventListener('input', function(e) {
+            renderMunicipioDropdown(e.target.value);
+        });
+
+        municipioSearch.addEventListener('focus', function() {
+            if (municipioSearch.value) {
+                renderMunicipioDropdown(municipioSearch.value);
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!municipioSearch.contains(e.target) && !municipioDropdown.contains(e.target)) {
+                municipioDropdown.style.display = 'none';
+            }
+        });
+
+        if (municipioSearch && ufInput && municipioOptions.length > 0 && codigoIbgeInicial) {
+            const initialMunicipio = municipioOptions.find(o => String(o.value) === String(codigoIbgeInicial));
+            if (initialMunicipio) {
+                municipioSearch.value = `${initialMunicipio.nome}${initialMunicipio.uf ? ' / ' + initialMunicipio.uf : ''} - ${initialMunicipio.value}`;
+                ufInput.value = initialMunicipio.uf || '';
+                if (municipioRef) municipioRef.value = initialMunicipio.value;
+            }
+        }
+    }
+    
+    // FISCAL
+    const fiscalTipo = document.getElementById('fiscalTipo');
+    const fiscalValor = document.getElementById('fiscalValor');
+    const fiscalValorOptions = document.getElementById('fiscalValorOptions');
+    const fiscalValorHint = document.getElementById('fiscalValorHint');
+    const fiscalNbsRelacionado = document.getElementById('fiscalNbsRelacionado');
+    const fiscalCatalogos = {{ fiscal_catalogos|tojson }};
+
+    function renderFiscalValueOptions() {
+        if (!fiscalTipo || !fiscalValorOptions) return;
+        const tipo = fiscalTipo.value;
+        const catalogo = (fiscalCatalogos && fiscalCatalogos[`${tipo}_opcoes`]) ? fiscalCatalogos[`${tipo}_opcoes`] : [];
+        fiscalValorOptions.innerHTML = '';
+        catalogo.forEach(option => {
+            const el = document.createElement('option');
+            el.value = option.valor || '';
+            el.textContent = option.rotulo || option.valor || '';
+            fiscalValorOptions.appendChild(el);
+        });
+    }
+
+    function updateFiscalHint() {
+        if (!fiscalTipo || !fiscalValor || !fiscalValorHint || !fiscalNbsRelacionado) return;
+
+        const tipo = fiscalTipo.value;
+        const valor = fiscalValor.value.trim();
+        const codigoServicoMap = (fiscalCatalogos && fiscalCatalogos.codigo_servico_nbs_map) ? fiscalCatalogos.codigo_servico_nbs_map : {};
+
+        fiscalValor.placeholder = tipo === 'codigo_servico'
+            ? 'Informe ou selecione o código nacional'
+            : tipo === 'nbs' ? 'Informe ou selecione o NBS' : tipo === 'cnae' ? 'Informe ou selecione o CNAE' : 'Informe o valor fiscal';
+
+        if (tipo === 'codigo_servico') {
+            const nbsRelacionado = codigoServicoMap[valor] || '';
+            fiscalNbsRelacionado.value = nbsRelacionado;
+            fiscalValorHint.textContent = nbsRelacionado
+                ? `NBS relacionado: ${nbsRelacionado}`
+                : 'Selecione um código nacional da lista para ver o NBS relacionado.';
+            return;
+        }
+
+        if (tipo === 'cnae') {
+            fiscalNbsRelacionado.value = '';
+            fiscalValorHint.textContent = 'Digite o CNAE ou escolha na lista oficial.';
+            return;
+        }
+
+        fiscalNbsRelacionado.value = '';
+        fiscalValorHint.textContent = 'Digite o valor fiscal ou escolha na lista.';
+    }
+
+    function syncFiscalTypeUI() {
+        renderFiscalValueOptions();
+        updateFiscalHint();
+    }
+
+    if (fiscalTipo && fiscalValor) {
+        fiscalTipo.addEventListener('change', syncFiscalTypeUI);
+        fiscalValor.addEventListener('input', updateFiscalHint);
+        fiscalValor.addEventListener('change', updateFiscalHint);
+        syncFiscalTypeUI();
+    }
+
+    if (municipioSearch) {
+        municipioSearch.addEventListener('input', (e) => {
+            renderMunicipioDropdown(e.target.value);
+        });
+
+        municipioSearch.addEventListener('focus', () => {
+            if (municipioSearch.value) {
+                renderMunicipioDropdown(municipioSearch.value);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!municipioSearch.contains(e.target) && !municipioDropdown.contains(e.target)) {
+                municipioDropdown.style.display = 'none';
+            }
+        });
+
+        // Inicializar UF ao carregar a página com base no código IBGE
+        if (municipioSearch && ufInput && municipioOptions.length > 0 && codigoIbgeInicial) {
+            const initialMunicipio = municipioOptions.find(o => String(o.value) === String(codigoIbgeInicial));
+            if (initialMunicipio) {
+                municipioSearch.value = `${initialMunicipio.nome}${initialMunicipio.uf ? ' / ' + initialMunicipio.uf : ''} - ${initialMunicipio.value}`;
+                ufInput.value = initialMunicipio.uf || '';
+                if (municipioRef) municipioRef.value = initialMunicipio.value;
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

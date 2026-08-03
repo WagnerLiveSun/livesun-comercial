@@ -1,0 +1,172 @@
+[
+  [
+    "#",
+    "REGRAS DE NEGÓCIO",
+    null,
+    "APLIC.",
+    "EFEITO",
+    "CÓD. ERRO",
+    "MSG. ERRO",
+    "NOTAS EXPLICATIVAS"
+  ],
+  [
+    "=ROW(A1)",
+    "Validação do Certificado de Transmissão",
+    null,
+    "-",
+    "-",
+    "-",
+    "-",
+    "-"
+  ],
+  [
+    "=ROW(A2)",
+    "Certificado de Transmissor Inválido:\n- Certificado de Transmissor inexistente na mensagem\n- Versão difere \"3\"\n- Se informado o Basic Constraint deve ser true (não pode ser Certificado de AC)\n- KeyUsage não define \"Autenticação Cliente\"",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1200",
+    "Certificado de Transmissão Inválido",
+    "-"
+  ],
+  [
+    "=ROW(A3)",
+    "Validade do Certificado (data início e data fim)",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1203",
+    "Certificado de Transmissão expirado",
+    "-"
+  ],
+  [
+    "=ROW(A4)",
+    "Verifica a Cadeia de Certificação:\n- Certificado da AC emissora não cadastrado na RFB\n- Certificado de AC revogado\n- Certificado não assinado pela AC emissora do Certificado",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1205",
+    "Certificado de Transmissão - Erro Cadeira de Certificação",
+    "-"
+  ],
+  [
+    "=ROW(A5)",
+    "LCR do Certificado de Transmissor\n- Falta o endereço da LCR (CRL DistributionPoint)\n- LCR indisponível\n- LCR inválida",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1206",
+    "Certificado de Transmissão - Erro de acesso a LCR",
+    "-"
+  ],
+  [
+    "=ROW(A6)",
+    "Certificado do Transmissor revogado",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1207",
+    "Certificado de Transmissão revogado",
+    "-"
+  ],
+  [
+    "=ROW(A7)",
+    "Certificado Raiz difere da \"ICP-Brasil\"",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1208",
+    "Certificado de Transmissão difere da ICP - Brasil",
+    "-"
+  ],
+  [
+    "=ROW(A8)",
+    "Falta a extensão de CNPJ ou CPF no Certificado (OtherName - OID=2.16.76.1.3.3)",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1209",
+    "Certificado de Transmissão sem CNPJ ou CPF.",
+    "-"
+  ],
+  [
+    "=ROW(A9)",
+    "Validação da Área de Dados",
+    null,
+    "-",
+    "-",
+    "-",
+    "-",
+    "-"
+  ],
+  [
+    "=ROW(A10)",
+    "Falha na descompactado da base 64.",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1225",
+    "Falha na decodificação da base 64 da área de dados",
+    "-"
+  ],
+  [
+    "=ROW(A11)",
+    "Estrutura descompactada mal formada.",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1226",
+    "Estrutura descompactada mal formada.",
+    "-"
+  ],
+  [
+    "=ROW(A12)",
+    "Validação dos Tipos de Documentos",
+    null,
+    "-",
+    "-",
+    "-",
+    "-",
+    "-"
+  ],
+  [
+    "=ROW(A13)",
+    "Validar os tipos de DF-e tratados pelo Sistema Nacional NFS-e.",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1242",
+    "Tipo DF-e não tratado pelo Sistema Nacional NFS-e.",
+    "-"
+  ],
+  [
+    "=ROW(A14)",
+    "Uso de prefixo de namespace não permitido na área de dados descompactada.",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1228",
+    "Uso de prefixo de namespace não permitido na área de dados descompactada.",
+    "-"
+  ],
+  [
+    "=ROW(A15)",
+    "XML não está utilizando codificação UTF8.",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1229",
+    "XML não está utilizando codificação UTF8.",
+    "-"
+  ],
+  [
+    "=ROW(A16)",
+    "Falha no esquema XML do DF-e.",
+    null,
+    "Obrig.",
+    "Rej.",
+    "E1235",
+    "Falha no esquema XML do DF-e.",
+    "-"
+  ]
+]

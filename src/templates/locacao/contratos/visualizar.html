@@ -1,0 +1,169 @@
+{% extends "locacao/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('locacao.contratos_lista') }}">Contratos</a></li>
+<li class="breadcrumb-item active">{{ contrato.numero }}</li>
+{% endblock %}
+
+{% block locacao_content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-file-contract me-2"></i>Contrato: {{ contrato.numero }}</h2>
+    </div>
+</div>
+
+<!-- Informações Principais -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Cliente</h6>
+            <p class="mb-0"><strong>{{ contrato.cliente.nome }}</strong></p>
+            <small class="text-muted">{{ contrato.cliente.cnpj_cpf }}</small>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Status</h6>
+            <p class="mb-0">
+                <span class="badge 
+                    {% if contrato.status == 'assinado' %}bg-secondary
+                    {% elif contrato.status == 'ativo' %}bg-success
+                    {% elif contrato.status == 'finalizado' %}bg-primary
+                    {% elif contrato.status == 'cancelado' %}bg-danger
+                    {% endif %}">
+                    {{ contrato.status|upper }}
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Período de Locação</h6>
+            <p class="mb-0">
+                <strong>{{ contrato.data_retirada.strftime('%d/%m/%Y') }} a {{ contrato.data_devolucao.strftime('%d/%m/%Y') }}</strong>
+            </p>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Data do Contrato</h6>
+            <p class="mb-0"><strong>{{ contrato.data_contrato.strftime('%d/%m/%Y') }}</strong></p>
+        </div>
+    </div>
+</div>
+
+<!-- Valores -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Aluguel</h6>
+            <h4 class="text-primary">R$ {{ contrato.valor_aluguel|brl }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Sinal</h6>
+            <h4 class="text-info">R$ {{ contrato.valor_sinal|brl }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Caução</h6>
+            <h4 class="text-warning">R$ {{ contrato.valor_caucao|brl }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3 text-center">
+            <h6 class="text-muted">Total</h6>
+            <h4 class="text-success">R$ {{ contrato.valor_total|brl }}</h4>
+        </div>
+    </div>
+</div>
+
+<!-- Multas e Penalidades -->
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Multas e Penalidades</h5>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Multa por Atraso (Diária)</label>
+            <p class="mb-0"><strong>R$ {{ contrato.multa_atraso_diaria|brl }}</strong></p>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Multa por Avaria</label>
+            <p class="mb-0"><strong>{{ contrato.multa_avaria_percentual }}%</strong> do valor de reposição</p>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Multa por Perda</label>
+            <p class="mb-0"><strong>{{ contrato.multa_perda_percentual }}%</strong> do valor de reposição</p>
+        </div>
+    </div>
+</div>
+
+<!-- Condições Gerais -->
+{% if contrato.condicoes_gerais %}
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-file-alt me-2"></i>Condições Gerais</h5>
+    <p>{{ contrato.condicoes_gerais }}</p>
+</div>
+{% endif %}
+
+<!-- Títulos Financeiros -->
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-money-bill me-2"></i>Títulos Financeiros</h5>
+    {% if contrato.titulos %}
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Número</th>
+                    <th>Tipo</th>
+                    <th>Vencimento</th>
+                    <th class="text-end">Valor</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for titulo in contrato.titulos %}
+                <tr>
+                    <td>{{ titulo.numero }}</td>
+                    <td><span class="badge bg-info">{{ titulo.tipo_titulo|upper }}</span></td>
+                    <td>{{ titulo.data_vencimento.strftime('%d/%m/%Y') }}</td>
+                    <td class="text-end"><strong>R$ {{ titulo.valor_original|brl }}</strong></td>
+                    <td>
+                        <span class="badge 
+                            {% if titulo.status == 'aberto' %}bg-warning
+                            {% elif titulo.status == 'pago' %}bg-success
+                            {% elif titulo.status == 'vencido' %}bg-danger
+                            {% endif %}">
+                            {{ titulo.status|upper }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">Nenhum título financeiro gerado</p>
+    {% endif %}
+</div>
+
+<!-- Botões de Ação -->
+<div class="d-grid gap-2 d-md-flex justify-content-md-end">
+    <a href="{{ url_for('locacao.contratos_lista') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+    {% if contrato.status == 'assinado' %}
+    <a href="{{ url_for('locacao.operacao_retirada', contrato_id=contrato.id) }}" class="btn ls-btn-primary">
+        <i class="fas fa-arrow-right me-2"></i>Registrar Retirada
+    </a>
+    {% elif contrato.status == 'ativo' %}
+    <a href="{{ url_for('locacao.operacao_devolucao', contrato_id=contrato.id) }}" class="btn ls-btn-primary">
+        <i class="fas fa-arrow-left me-2"></i>Registrar Devolução
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

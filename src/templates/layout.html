@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveSun - Sistema de Gestão - {% block title %}{% endblock %}</title>
+
+    <script>
+        try {
+            var storedTheme = localStorage.getItem('ls-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', storedTheme);
+        } catch (e) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3079088931491086" crossorigin="anonymous"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+
+    <style>
+        :root {
+            --ls-bg-main: #08111f;
+            --ls-bg-elevated: #0d1728;
+            --ls-border-subtle: rgba(160, 176, 204, 0.22);
+            --ls-border-strong: rgba(214, 224, 238, 0.38);
+            --ls-text-main: #e8eefc;
+            --ls-text-muted: #a8b6cc;
+            --ls-text-strong: #f8fbff;
+            --ls-page-title: #f4f8ff;
+            --ls-input-bg: rgba(12, 24, 43, 0.92);
+            --ls-input-border: rgba(148, 163, 184, 0.30);
+            --ls-input-disabled-bg: rgba(12, 24, 43, 0.62);
+            --ls-primary: #dfe7f4;
+            --ls-primary-soft: rgba(223, 231, 244, 0.12);
+            --ls-accent: #8fd3ff;
+            --ls-topbar-bg: rgba(8, 17, 31, 0.94);
+            --ls-sidebar-bg: rgba(10, 20, 36, 0.96);
+            --ls-card-bg: rgba(15, 25, 43, 0.82);
+            --ls-hover-bg: rgba(143, 211, 255, 0.12);
+            --ls-footer-bg: rgba(8, 17, 31, 0.95);
+            --ls-dropdown-bg: #101b2d;
+            --ls-dropdown-text: #e8eefc;
+            --ls-alert-success-text: #86efac;
+            --ls-alert-danger-text: #fca5a5;
+            --ls-alert-warning-text: #fcd34d;
+            --ls-alert-info-text: #93c5fd;
+            --ls-header-bg: rgba(143, 211, 255, 0.08);
+            --ls-header-border: rgba(143, 211, 255, 0.20);
+            --ls-sidebar-active-text: #ffffff;
+            --ls-sidebar-active-shadow: rgba(125, 211, 252, 0.22);
+            --ls-body-glow-top: rgba(143, 211, 255, 0.14);
+            --ls-body-glow-mid: rgba(226, 232, 240, 0.08);
+            --ls-body-glow-bottom: rgba(59, 130, 246, 0.16);
+        }
+
+        :root[data-theme="light"] {
+            --ls-bg-main: #fff7ef;
+            --ls-bg-elevated: #fffdf9;
+            --ls-border-subtle: rgba(180, 120, 42, 0.20);
+            --ls-border-strong: rgba(180, 120, 42, 0.36);
+            --ls-text-main: #4a2a12;
+            --ls-text-muted: #6b4420;
+            --ls-text-strong: #2f190c;
+            --ls-page-title: #9a3412;
+            --ls-input-bg: rgba(255, 252, 247, 0.96);
+            --ls-input-border: rgba(217, 119, 6, 0.30);
+            --ls-input-disabled-bg: rgba(255, 244, 230, 0.95);
+            --ls-primary: #ea580c;
+            --ls-primary-soft: rgba(234, 88, 12, 0.10);
+            --ls-accent: #f7b733;
+            --ls-topbar-bg: rgba(255, 248, 239, 0.96);
+            --ls-sidebar-bg: rgba(255, 252, 247, 0.97);
+            --ls-card-bg: rgba(255, 250, 244, 0.92);
+            --ls-hover-bg: rgba(245, 158, 11, 0.12);
+            --ls-footer-bg: rgba(255, 248, 239, 0.96);
+            --ls-dropdown-bg: #fffaf4;
+            --ls-dropdown-text: #4a2a12;
+            --ls-alert-success-text: #166534;
+            --ls-alert-danger-text: #b91c1c;
+            --ls-alert-warning-text: #b45309;
+            --ls-alert-info-text: #c2410c;
+            --ls-header-bg: rgba(251, 146, 60, 0.10);
+            --ls-header-border: rgba(234, 88, 12, 0.22);
+            --ls-sidebar-active-text: #ffffff;
+            --ls-sidebar-active-shadow: rgba(234, 88, 12, 0.18);
+            --ls-body-glow-top: rgba(251, 146, 60, 0.20);
+            --ls-body-glow-mid: rgba(255, 214, 102, 0.12);
+            --ls-body-glow-bottom: rgba(245, 158, 11, 0.14);
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top, var(--ls-body-glow-top), transparent 40%),
+                radial-gradient(circle at right 20%, var(--ls-body-glow-mid), transparent 28%),
+                radial-gradient(circle at bottom, var(--ls-body-glow-bottom), transparent 44%),
+                var(--ls-bg-main);
+            color: var(--ls-text-main);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .text-muted { color: var(--ls-text-muted) !important; }
+        .ls-page-title {
+            color: var(--ls-page-title) !important;
+            letter-spacing: -0.03em;
+            font-size: 2rem;
+            font-weight: 600;
+            text-shadow: 0 6px 18px rgba(0, 0, 0, 0.10);
+        }
+
+        .ls-content h1, .ls-content h2, .ls-content h3, .ls-content h4, .ls-content h5, .ls-content h6 {
+            font-weight: 500 !important;
+            color: var(--ls-text-strong);
+        }
+
+        .form-control, .form-select, .form-check-input, .ls-theme-control {
+            background-color: var(--ls-input-bg) !important;
+            border-color: var(--ls-input-border) !important;
+            color: var(--ls-text-main) !important;
+        }
+
+        .form-control::placeholder, .form-select::placeholder {
+            color: var(--ls-text-muted) !important;
+            opacity: 1;
+        }
+
+        .form-control:focus, .form-select:focus, .ls-theme-control:focus {
+            background-color: var(--ls-input-bg) !important;
+            border-color: var(--ls-primary) !important;
+            color: var(--ls-text-main) !important;
+            box-shadow: 0 0 0 0.2rem var(--ls-primary-soft) !important;
+        }
+
+        .form-control:disabled, .form-control[readonly], .form-select:disabled {
+            background-color: var(--ls-input-disabled-bg) !important;
+            color: var(--ls-text-muted) !important;
+        }
+
+        .form-label, .ls-card .form-label, .ls-card .col-form-label, .ls-card .form-text {
+            color: var(--ls-text-muted) !important;
+            font-weight: 500;
+        }
+
+        .badge {
+            font-weight: 600;
+            border: 1px solid transparent;
+            padding: 0.35em 0.65em;
+        }
+        .badge.bg-success { background-color: #059669 !important; color: #fff !important; border-color: #047857 !important; }
+        .badge.bg-danger { background-color: #dc2626 !important; color: #fff !important; border-color: #b91c1c !important; }
+        .badge.bg-warning { background-color: #d97706 !important; color: #fff !important; border-color: #b45309 !important; }
+        .badge.bg-primary { background-color: #2563eb !important; color: #fff !important; border-color: #1d4ed8 !important; }
+        .badge.bg-info { background-color: #0891b2 !important; color: #fff !important; border-color: #0e7490 !important; }
+        .badge.bg-secondary { background-color: #475569 !important; color: #fff !important; border-color: #334155 !important; }
+        .badge.bg-light { background-color: #64748b !important; color: #fff !important; border-color: #475569 !important; }
+        .badge.bg-dark { background-color: #1e293b !important; color: #fff !important; border-color: #0f172a !important; }
+
+        .ls-shell {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        .ls-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            border-bottom: 1px solid var(--ls-border-subtle);
+            background-color: var(--ls-topbar-bg);
+            backdrop-filter: blur(12px);
+            padding: 1rem;
+        }
+
+        .ls-topbar .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            font-size: 18px;
+            color: var(--ls-text-strong);
+        }
+
+        .ls-topbar .nav-link {
+            color: var(--ls-text-muted) !important;
+            font-size: 0.9rem;
+        }
+
+        .ls-topbar .nav-link:hover,
+        .ls-topbar .nav-link.active {
+            color: var(--ls-text-strong) !important;
+        }
+
+        .ls-layout {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+
+        .ls-sidebar {
+            width: 240px;
+            border-right: 1px solid var(--ls-border-subtle);
+            background-color: var(--ls-sidebar-bg);
+            padding: 16px 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ls-sidebar-section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ls-text-muted);
+            margin: 12px 12px 8px;
+            font-weight: 700;
+            background: var(--ls-hover-bg);
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.15s ease;
+        }
+
+        .ls-sidebar-section-label:hover {
+            background: var(--ls-primary-soft);
+        }
+
+        .ls-sidebar-nav {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .ls-sidebar-nav li + li { margin-top: 4px; }
+
+        .ls-sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            color: var(--ls-text-muted);
+            text-decoration: none;
+            transition: all 0.15s ease;
+            font-weight: 500;
+            min-height: 36px;
+        }
+
+        .ls-sidebar-link i {
+            width: 22px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ls-sidebar-link:hover {
+            background-color: var(--ls-hover-bg);
+            color: var(--ls-text-strong);
+            transform: translateX(2px);
+        }
+
+        .ls-sidebar-link.active {
+            background: linear-gradient(135deg, var(--ls-primary), var(--ls-accent));
+            color: var(--ls-sidebar-active-text) !important;
+            box-shadow: 0 12px 30px var(--ls-sidebar-active-shadow);
+        }
+
+        .ls-sidebar-footer {
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px dashed var(--ls-border-subtle);
+            font-size: 11px;
+            color: var(--ls-text-muted);
+            text-align: center;
+        }
+
+        .ls-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .ls-content .inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .ls-content img, .ls-content video, .ls-content iframe {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .ls-content table {
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .ls-content pre, .ls-content code {
+            max-width: 100%;
+            overflow-x: auto;
+            display: block;
+            word-break: break-word;
+        }
+
+        .ls-card {
+            background-color: var(--ls-card-bg);
+            border: 1px solid var(--ls-border-subtle);
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        .ls-card:hover {
+            border-color: var(--ls-border-strong);
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+        }
+
+        .ls-card-centered {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .ls-card table { width: 100%; table-layout: auto; }
+
+        .ls-card .table,
+        .ls-card .table thead,
+        .ls-card .table thead th,
+        .ls-card .table tbody,
+        .ls-card .table tbody tr,
+        .ls-card .table tbody td,
+        .ls-theme-table,
+        .ls-theme-table th,
+        .ls-theme-table td {
+            background: transparent !important;
+            color: var(--ls-text-main) !important;
+            border-color: var(--ls-border-subtle) !important;
+        }
+
+        .ls-card .table thead th,
+        .ls-theme-table thead th,
+        .ls-content .table thead th {
+            background: var(--ls-header-bg) !important;
+            color: var(--ls-text-strong) !important;
+            font-weight: 600;
+            padding: 14px 12px;
+            border-bottom: 1px solid var(--ls-header-border) !important;
+        }
+
+        .ls-card .table tbody td,
+        .ls-theme-table tbody td,
+        .ls-card tbody td {
+            padding: 12px 12px;
+            vertical-align: middle;
+            border-top: 1px solid var(--ls-border-subtle) !important;
+        }
+
+        .ls-card .table-hover tbody tr:hover td,
+        .ls-theme-table.table-hover tbody tr:hover td,
+        .ls-content .table-hover tbody tr:hover td {
+            background-color: var(--ls-hover-bg) !important;
+        }
+
+        .ls-card .table { max-width: 1100px; margin: 0 auto; }
+
+        .dropdown-menu {
+            background-color: var(--ls-dropdown-bg);
+            color: var(--ls-dropdown-text);
+            border: 1px solid var(--ls-border-subtle);
+            box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+        }
+
+        .dropdown-item {
+            color: var(--ls-dropdown-text);
+        }
+
+        .dropdown-item:hover,
+        .dropdown-item:focus {
+            background-color: var(--ls-primary-soft);
+            color: var(--ls-dropdown-text);
+        }
+
+        .theme-toggle-btn {
+            border: 1px solid var(--ls-border-subtle);
+            color: var(--ls-text-main);
+            background: var(--ls-input-bg);
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--ls-hover-bg);
+            color: var(--ls-text-main);
+            border-color: var(--ls-border-strong);
+        }
+
+        .ls-btn-primary {
+            background: linear-gradient(135deg, var(--ls-primary), var(--ls-accent));
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.2s ease;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            text-shadow: none !important;
+        }
+
+        .ls-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px var(--ls-sidebar-active-shadow);
+            filter: brightness(1.04);
+        }
+
+        :root:not([data-theme="light"]) .ls-btn-primary {
+            color: #08111f !important;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 10px;
+        }
+
+        .alert-success {
+            background-color: rgba(34, 197, 94, 0.12);
+            color: var(--ls-alert-success-text);
+            border: 1px solid rgba(34, 197, 94, 0.22);
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.12);
+            color: var(--ls-alert-danger-text);
+            border: 1px solid rgba(239, 68, 68, 0.22);
+        }
+
+        .alert-warning {
+            background-color: rgba(245, 158, 11, 0.12);
+            color: var(--ls-alert-warning-text);
+            border: 1px solid rgba(245, 158, 11, 0.22);
+        }
+
+        .alert-info {
+            background-color: rgba(59, 130, 246, 0.12);
+            color: var(--ls-alert-info-text);
+            border: 1px solid rgba(59, 130, 246, 0.22);
+        }
+
+        .ls-footer {
+            background: var(--ls-footer-bg);
+            border-top: 1px solid var(--ls-border-subtle);
+            padding: 14px 0;
+        }
+
+        @media (max-width: 768px) {
+            .ls-sidebar { display: none; }
+            .ls-content { padding: 12px; }
+            .ls-content .inner { padding: 0 8px; }
+        }
+    </style>
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="ls-shell">
+        <nav class="navbar navbar-expand-lg ls-topbar">
+            <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard.index') }}">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}"
+                        alt="LiveSun Tecnologia"
+                        height="46"
+                        class="me-2">
+                    <span> Sistema de Gestão e <u><i>Controle</i></u></span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item me-2">
+                            <button id="theme-toggle" class="btn btn-sm theme-toggle-btn" type="button" title="Alternar tema">
+                                <i class="fas fa-sun" id="theme-toggle-icon"></i>
+                                <span id="theme-toggle-label">Claro</span>
+                            </button>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle"></i> {{ current_user.full_name or current_user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                {% if current_user.is_admin %}
+                                <li><a class="dropdown-item" href="{{ safe_url_for('auth.perfil') or '#' }}">Perfil</a></li>
+                                <li><a class="dropdown-item" href="{{ safe_url_for('auth.editar_empresa') or '#' }}">Editar Empresa</a></li>
+                                {% if plan_allows_endpoint('auth.assinatura') %}
+                                {% set assinatura_url = safe_url_for('auth.assinatura') %}
+                                <li><a class="dropdown-item" href="{{ assinatura_url or '#' }}">Assinatura</a></li>
+                                {% endif %}
+                                {% if has_permission('controle_acesso') %}
+                                {% set controle_acesso_url = safe_url_for('auth.controle_acesso') %}
+                                <li><a class="dropdown-item" href="{{ controle_acesso_url or '#' }}">Controle de Acesso</a></li>
+                                {% endif %}
+                                {% if has_permission('usuarios') and plan_allows_endpoint('auth.add_user') %}
+                                {% set add_user_url = safe_url_for('auth.add_user') %}
+                                <li><a class="dropdown-item" href="{{ add_user_url or '#' }}">Adicionar Usuário</a></li>
+                                {% endif %}
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{{ url_for('suporte') }}">Suporte</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Sair</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="ls-layout">
+            <aside class="ls-sidebar">
+                {% set show_dashboard = has_permission('dashboard') %}
+                {% set show_add_user = current_user.is_admin and has_permission('usuarios') and plan_allows_endpoint('auth.add_user') %}
+                {% set show_controle_acesso = current_user.is_admin and has_permission('controle_acesso') and plan_allows_endpoint('auth.controle_acesso') %}
+                {% set show_admin = show_add_user or show_controle_acesso %}
+                {% set show_menu_principal = show_dashboard or show_add_user or show_controle_acesso %}
+
+                {% set show_entidades = has_permission('entidades') %}
+                {% set show_fluxo = has_permission('fluxo') and plan_allows_endpoint('fluxo.index') %}
+                {% set show_contas_banco = has_permission('contas_banco') %}
+                {% set show_cadastros = show_entidades or show_fluxo or show_contas_banco %}
+
+                {% set show_filiais = has_permission('comercial_filiais') and plan_allows_endpoint('comercial_operacional.filiais_index') %}
+                {% set show_produtos = has_permission('comercial_produtos') and plan_allows_endpoint('comercial_operacional.produtos_index') %}
+                {% set show_servicos = has_permission('comercial_servicos') and plan_allows_endpoint('comercial_operacional.servicos_index') %}
+                {% set show_estoque = has_permission('comercial_estoque') and plan_allows_endpoint('comercial_operacional.estoque_index') %}
+                {% set show_compras = has_permission('comercial_compras') and plan_allows_endpoint('comercial_operacional.compras_index') %}
+                {% set show_documentos = has_permission('comercial_documentos') and plan_allows_endpoint('comercial_operacional.documentos_index') %}
+                {% set show_tabelas_preco = has_permission('comercial_tabelas_preco') and plan_allows_endpoint('comercial_operacional.tabelas_preco_index') %}
+                {% set show_orcamentos = has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.orcamentos_index') %}
+                {% set show_propostas_aprovacao = has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.propostas_aprovacao') %}
+                {% set show_pedidos = has_permission('comercial_pedidos') and plan_allows_endpoint('comercial_operacional.pedidos_index') %}
+                {% set show_pdv = has_permission('comercial_pdv') and plan_allows_endpoint('comercial_operacional.pdv_index') %}
+                {% set show_comercial = has_activity('comercial') and (show_filiais or show_produtos or show_servicos or show_estoque or show_compras or show_documentos or show_tabelas_preco or show_orcamentos or show_propostas_aprovacao or show_pedidos or show_pdv) %}
+
+                {% set show_lancamentos = has_permission('lancamentos') %}
+                {% set show_comissoes = has_permission('comissoes') and plan_allows_endpoint('comissoes.listar') %}
+                {% set show_relatorios = has_permission('relatorios') and (plan_allows_endpoint('relatorio_fluxo.index') or plan_allows_endpoint('relatorios.fluxo_caixa_csv') or plan_allows_endpoint('relatorios.listagem_lancamentos') or plan_allows_endpoint('relatorios.listagem_notas_nfse')) %}
+                {% set show_import_nfse = has_permission('importar_nfse') and plan_allows_endpoint('importacoes.importar_nfse') %}
+                {% set show_import_ofx = has_permission('importar_ofx') and plan_allows_endpoint('importacoes.importar_ofx') %}
+                {% set show_conciliacao = has_permission('conciliacao') and plan_allows_endpoint('conciliacao.index') %}
+                {% set show_importacao = has_activity('servicos') and (show_import_nfse or show_import_ofx or show_conciliacao) %}
+                {% set show_nfse_nacional = has_activity('servicos') and has_permission('nfse_nacional') and plan_allows_endpoint('nfse_nacional.index') %}
+                {% set show_financeiro = has_activity('financeiro') and (show_fluxo or show_contas_banco or show_lancamentos or show_relatorios) %}
+                
+                {% set show_contratos = has_permission('contratos_view') %}
+                {% set show_clausulas = has_permission('clausulas_view') %}
+                {% set show_contratos_module = has_activity('contratos') and (show_contratos or show_clausulas) %}
+                
+                {% set show_locacao_acervo = has_permission('locacao_acervo') %}
+                {% set show_locacao_agenda = has_permission('locacao_agenda') %}
+                {% set show_locacao_contratos = has_permission('locacao_contratos') %}
+                {% set show_locacao_operacao = has_permission('locacao_operacao') %}
+                {% set show_locacao = has_activity('locacao') and (show_locacao_acervo or show_locacao_agenda or show_locacao_contratos or show_locacao_operacao) %}
+
+                {% if show_menu_principal %}
+                <div class="ls-sidebar-section-label" id="menu-principal-toggle"><i class="fas fa-home"></i> Menu Principal</div>
+                <ul class="ls-sidebar-nav" id="menu-principal-nav">
+                </ul>
+                {% endif %}
+
+                {% if show_dashboard %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-chart-pie"></i> Dashboard</div>
+                <ul class="ls-sidebar-nav">
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" href="{{ url_for('dashboard.index') }}"><i class="fas fa-chart-line"></i> Painel Gerencial</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.comercial' %}active{% endif %}" href="{{ url_for('dashboard.comercial') }}"><i class="fas fa-briefcase"></i> Painel Comercial</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.financeiro' %}active{% endif %}" href="{{ url_for('dashboard.financeiro') }}"><i class="fas fa-hand-holding-usd"></i> Painel Financeiro</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.fiscal' %}active{% endif %}" href="{{ url_for('dashboard.fiscal') }}"><i class="fas fa-file-invoice"></i> Painel Fiscal</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.locacao' %}active{% endif %}" href="{{ url_for('dashboard.locacao') }}"><i class="fas fa-tshirt"></i> Painel Locação</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.propostas' %}active{% endif %}" href="{{ url_for('dashboard.propostas') }}"><i class="fas fa-file-invoice-dollar"></i> Painel Propostas</a></li>
+                </ul>
+                {% endif %}
+
+                {% if show_cadastros %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-database"></i> Cadastros</div>
+                <ul class="ls-sidebar-nav">
+                    {% if show_entidades %}
+                    <li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('entidades.') %}active{% endif %}" href="{{ url_for('entidades.index') }}"><i class="fas fa-users"></i> Entidades</a></li>
+                    {% endif %}
+                    {% if show_fluxo %}
+                    <li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('fluxo.') %}active{% endif %}" href="{{ url_for('fluxo.index') }}"><i class="fas fa-stream"></i> Fluxo Caixa</a></li>
+                    {% endif %}
+                    {% if show_contas_banco %}
+                    <li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('contas_banco.') %}active{% endif %}" href="{{ url_for('contas_banco.index') }}"><i class="fas fa-university"></i> Contas Banco</a></li>
+                    {% endif %}
+                    {% if show_filiais %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.filiais') %}active{% endif %}" href="{{ url_for('comercial_operacional.filiais_index') }}"><i class="fas fa-building"></i> Filiais</a></li>{% endif %}
+                    {% if show_produtos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.produtos') %}active{% endif %}" href="{{ url_for('comercial_operacional.produtos_index') }}"><i class="fas fa-box"></i> Produtos</a></li>{% endif %}
+                    {% if show_servicos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.servicos') %}active{% endif %}" href="{{ url_for('comercial_operacional.servicos_index') }}"><i class="fas fa-concierge-bell"></i> Serviços</a></li>{% endif %}
+                    {% if show_tabelas_preco %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.tabelas_preco') %}active{% endif %}" href="{{ url_for('comercial_operacional.tabelas_preco_index') }}"><i class="fas fa-tags"></i> Tabelas de Preço</a></li>{% endif %}
+                </ul>
+                {% endif %}
+
+                {% if show_comercial %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-briefcase"></i> Comercial</div>
+                <ul class="ls-sidebar-nav">
+                    {% if show_estoque %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.estoque') %}active{% endif %}" href="{{ url_for('comercial_operacional.estoque_index') }}"><i class="fas fa-warehouse"></i> Movimento de estoque</a></li>{% endif %}
+                    {% if show_compras %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.compras') %}active{% endif %}" href="{{ url_for('comercial_operacional.compras_index') }}"><i class="fas fa-file-invoice"></i> Entrada de NF de compra</a></li>{% endif %}
+                    {% if show_orcamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.orcamentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.orcamentos_index') }}"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>{% endif %}
+                    {% if show_propostas_aprovacao %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint == 'comercial_operacional.propostas_aprovacao' %}active{% endif %}" href="{{ url_for('comercial_operacional.propostas_aprovacao') }}"><i class="fas fa-clipboard-check"></i> Aprovação de Propostas</a></li>{% endif %}
+                    {% if show_pedidos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pedidos') %}active{% endif %}" href="{{ url_for('comercial_operacional.pedidos_index') }}"><i class="fas fa-clipboard-check"></i> Pedidos de venda</a></li>{% endif %}
+                    {% if show_pdv %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pdv') %}active{% endif %}" href="{{ url_for('comercial_operacional.pdv_index') }}"><i class="fas fa-cash-register"></i> PDV Caixa</a></li>{% endif %}
+                </ul>
+                {% endif %}
+
+                {% if show_locacao %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-tshirt"></i> Locação</div>
+                <ul class="ls-sidebar-nav">
+                    {% if show_locacao_acervo %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.acervo') %}active{% endif %}" href="{{ url_for('locacao.acervo_lista') }}"><i class="fas fa-tags"></i> Acervo</a></li>{% endif %}
+                    {% if show_locacao_agenda %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.operacao_agenda') %}active{% endif %}" href="{{ url_for('locacao.operacao_agenda') }}"><i class="fas fa-calendar-alt"></i> Agenda / Disponibilidade</a></li>{% endif %}
+                    {% if show_locacao_contratos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.contratos') %}active{% endif %}" href="{{ url_for('locacao.contratos_lista') }}"><i class="fas fa-file-contract"></i> Contrato de Locação</a></li>{% endif %}
+                    {% if show_locacao_operacao %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.orcamentos') %}active{% endif %}" href="{{ url_for('locacao.orcamentos_lista') }}"><i class="fas fa-truck-loading"></i> Orçamento de locação</a></li>{% endif %}
+                </ul>
+                {% endif %}
+
+                {% if show_contratos_module %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-file-contract"></i> Contratos</div>
+                <ul class="ls-sidebar-nav">
+                    {% if show_contratos %}<li><a class="ls-sidebar-link {% if request.endpoint == 'contratos.index' %}active{% endif %}" href="{{ url_for('contratos.index') }}"><i class="fas fa-file-contract"></i> Contrato de Vendas</a></li>{% endif %}
+                    {% if show_contratos %}<li><a class="ls-sidebar-link {% if request.endpoint == 'contratos.index' %}active{% endif %}" href="{{ url_for('contratos.index') }}"><i class="fas fa-file-alt"></i> Minuta de contrato</a></li>{% endif %}
+                    {% if show_clausulas %}<li><a class="ls-sidebar-link {% if request.endpoint == 'contratos.clausulas_lista' %}active{% endif %}" href="{{ url_for('contratos.clausulas_lista') }}"><i class="fas fa-file-alt"></i> Cláusulas Padrão</a></li>{% endif %}
+                </ul>
+                {% endif %}
+
+                {% if show_financeiro %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-hand-holding-usd"></i> Financeiro</div>
+                <ul class="ls-sidebar-nav">
+                    {% if show_lancamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('lancamentos.') %}active{% endif %}" href="{{ url_for('lancamentos.index') }}"><i class="fas fa-receipt"></i> Lançamentos</a></li>{% endif %}
+                    {% if show_relatorios %}
+                        {% if plan_allows_endpoint('relatorio_fluxo.index') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorio_fluxo.index' %}active{% endif %}" href="{{ url_for('relatorio_fluxo.index') }}"><i class="fas fa-chart-line"></i> Fluxo de Caixa</a></li>{% endif %}
+                        <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_lancamentos' %}active{% endif %}" href="{{ url_for('relatorios.listagem_lancamentos') }}"><i class="fas fa-list"></i> Listagem de Lançamentos</a></li>
+                    {% endif %}
+                </ul>
+                {% endif %}
+
+                {% if show_importacao or show_nfse_nacional or show_documentos %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-file-invoice"></i> Serviços / Fiscal</div>
+                <ul class="ls-sidebar-nav">
+                    {% if show_import_nfse %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.importar_nfse' %}active{% endif %}" href="{{ url_for('importacoes.importar_nfse') }}"><i class="fas fa-file-upload"></i> Importação de XML NFSe</a></li>{% endif %}
+                    {% if show_nfse_nacional %}
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.listagem' %}active{% endif %}" href="{{ url_for('nfse_nacional.listagem') }}"><i class="fas fa-list"></i> NFS-e Emitidas</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.emissoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.emissoes') }}"><i class="fas fa-plus-circle"></i> Nova Emissão</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_consultar' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_consultar') }}"><i class="fas fa-search"></i> Consultar NFS-e</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.cancelamento' %}active{% endif %}" href="{{ url_for('nfse_nacional.cancelamento') }}"><i class="fas fa-times-circle"></i> Cancelamento</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_cancelamento_substituicao' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_cancelamento_substituicao') }}"><i class="fas fa-exchange-alt"></i> Cancelamento por Substituição</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.configuracoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.configuracoes') }}"><i class="fas fa-cog"></i> Configurações</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.tomadores' %}active{% endif %}" href="{{ url_for('nfse_nacional.tomadores') }}"><i class="fas fa-users"></i> Tomadores</a></li>
+                    {% endif %}
+                    {% if show_documentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.documentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.documentos_index') }}"><i class="fas fa-receipt"></i> Emissão de NF-e Avulsa</a></li>{% endif %}
+                    {% if show_relatorios and plan_allows_endpoint('relatorios.listagem_notas_nfse') %}
+                        <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_notas_nfse' %}active{% endif %}" href="{{ url_for('relatorios.listagem_notas_nfse') }}"><i class="fas fa-file-invoice"></i> Listagem das NFS-e importadas</a></li>
+                    {% endif %}
+                </ul>
+                {% endif %}
+
+                {% if show_admin %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-user-shield"></i> Admin</div>
+                <ul class="ls-sidebar-nav">
+                    {% if show_add_user %}
+                    {% set add_user_url = safe_url_for('auth.add_user') %}
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'auth.add_user' %}active{% endif %}" href="{{ add_user_url or '#' }}"><i class="fas fa-user-plus"></i> Adicionar Usuário</a></li>
+                    {% endif %}
+                    {% if show_controle_acesso %}
+                    {% set controle_acesso_url = safe_url_for('auth.controle_acesso') %}
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'auth.controle_acesso' %}active{% endif %}" href="{{ controle_acesso_url or '#' }}"><i class="fas fa-shield-alt"></i> Controle de Acesso</a></li>
+                    {% endif %}
+                </ul>
+                {% endif %}
+
+                <div class="ls-sidebar-footer">
+                    LiveSun Tecnologia<br>v2.0.0
+                </div>
+            </aside>
+
+            <div class="ls-content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="inner">
+                    {% block content %}{% endblock %}
+                </div>
+
+                <footer class="ls-footer text-muted mt-4">
+                    <div class="container">
+                        <small class="d-block text-center">&copy; {{ current_year }} LiveSun <u>Tecnologia</u>. Todos os direitos reservados.</small>
+                        <div class="my-3">
+                            <ins class="adsbygoogle"
+                                 style="display:block;text-align:center;"
+                                 data-ad-client="ca-pub-3079088931491086"
+                                 data-ad-slot="1234567890"
+                                 data-ad-format="auto"
+                                 data-full-width-responsive="true"></ins>
+                            <script>
+                                (adsbygoogle = window.adsbygoogle || []).push({});
+                            </script>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+    {% else %}
+        {% block login %}{% endblock %}
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        (function () {
+            const root = document.documentElement;
+            const button = document.getElementById('theme-toggle');
+            const icon = document.getElementById('theme-toggle-icon');
+            const label = document.getElementById('theme-toggle-label');
+
+            function syncThemeUi(theme) {
+                if (!icon || !label) return;
+                if (theme === 'light') {
+                    icon.className = 'fas fa-moon';
+                    label.textContent = 'Escuro';
+                } else {
+                    icon.className = 'fas fa-sun';
+                    label.textContent = 'Claro';
+                }
+            }
+
+            const initialTheme = root.getAttribute('data-theme') || 'dark';
+            syncThemeUi(initialTheme);
+
+            if (button) {
+                button.addEventListener('click', function () {
+                    const current = root.getAttribute('data-theme') || 'dark';
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    root.setAttribute('data-theme', next);
+                    try {
+                        localStorage.setItem('ls-theme', next);
+                    } catch (e) {}
+                    syncThemeUi(next);
+                });
+            }
+
+            // Toggle sidebar sections with localStorage persistence
+            document.querySelectorAll('.ls-sidebar-section-label').forEach(label => {
+                label.style.cursor = 'pointer';
+                
+                // Get section ID for localStorage
+                const sectionId = label.textContent.trim().toLowerCase().replace(/\s+/g, '-');
+                
+                // Restore saved state
+                const savedState = localStorage.getItem(`ls-sidebar-${sectionId}`);
+                if (savedState !== null) {
+                    const nav = label.nextElementSibling;
+                    if (nav && nav.classList.contains('ls-sidebar-nav')) {
+                        nav.style.display = savedState === 'expanded' ? 'block' : 'none';
+                    }
+                }
+                
+                label.addEventListener('click', function() {
+                    const nav = this.nextElementSibling;
+                    if (nav && nav.classList.contains('ls-sidebar-nav')) {
+                        const newState = nav.style.display === 'none' ? 'block' : 'none';
+                        nav.style.display = newState;
+                        
+                        // Save state to localStorage
+                        try {
+                            localStorage.setItem(`ls-sidebar-${sectionId}`, newState === 'block' ? 'expanded' : 'collapsed');
+                        } catch (e) {}
+                    }
+                });
+            });
+
+            // Auto-expand section based on current route
+            function autoExpandActiveSection() {
+                const currentEndpoint = '{{ request.endpoint or "" }}';
+                
+                document.querySelectorAll('.ls-sidebar-section-label').forEach(label => {
+                    const nav = label.nextElementSibling;
+                    if (!nav || !nav.classList.contains('ls-sidebar-nav')) return;
+                    
+                    // Check if this section contains the active link
+                    const hasActiveLink = nav.querySelector('.ls-sidebar-link.active');
+                    
+                    if (hasActiveLink) {
+                        nav.style.display = 'block';
+                        const sectionId = label.textContent.trim().toLowerCase().replace(/\s+/g, '-');
+                        try {
+                            localStorage.setItem(`ls-sidebar-${sectionId}`, 'expanded');
+                        } catch (e) {}
+                    }
+                });
+            }
+            
+            // Run auto-expand on page load
+            autoExpandActiveSection();
+
+            // Menu Principal toggle - collapse/expand all sections
+            const menuPrincipalToggle = document.getElementById('menu-principal-toggle');
+            if (menuPrincipalToggle) {
+                menuPrincipalToggle.addEventListener('click', function() {
+                    const allNavs = document.querySelectorAll('.ls-sidebar-nav');
+                    const allCollapsed = Array.from(allNavs).every(nav => nav.style.display === 'none');
+                    
+                    allNavs.forEach(nav => {
+                        nav.style.display = allCollapsed ? 'block' : 'none';
+                    });
+                    
+                    // Save all sections state
+                    document.querySelectorAll('.ls-sidebar-section-label').forEach(label => {
+                        const sectionId = label.textContent.trim().toLowerCase().replace(/\s+/g, '-');
+                        try {
+                            localStorage.setItem(`ls-sidebar-${sectionId}`, allCollapsed ? 'expanded' : 'collapsed');
+                        } catch (e) {}
+                    });
+                });
+            }
+        })();
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

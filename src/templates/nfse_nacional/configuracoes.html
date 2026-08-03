@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+
+{% block title %}Configurações NFS-e Nacional{% endblock %}
+
+{% block content %}
+<style>
+.form-check-input:checked {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+[data-bs-theme="dark"] .form-check-input:checked {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+</style>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Configurações NFS-e Nacional</h2>
+        <p class="text-muted mb-0">Dados fiscais, ambiente e certificado por ambiente.</p>
+    </div>
+    <a href="{{ url_for('nfse_nacional.index') }}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="ls-card p-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Ambiente</label>
+                        <select name="ambiente" class="form-select ls-theme-control" onchange="window.location.href='{{ url_for('nfse_nacional.configuracoes') }}?ambiente=' + this.value">
+                            <option value="homologacao" {% if ambiente == 'homologacao' %}selected{% endif %}>Homologação</option>
+                            <option value="producao" {% if ambiente == 'producao' %}selected{% endif %}>Produção</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Inscrição Municipal</label>
+                        <input type="text" name="inscricao_municipal" class="form-control ls-theme-control" value="{{ configuracao.inscricao_municipal if configuracao else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Código Município</label>
+                        <input type="text" name="codigo_municipio" class="form-control ls-theme-control" value="{{ configuracao.codigo_municipio if configuracao else '' }}">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Versão Layout</label>
+                        <input type="text" name="versao_layout" class="form-control ls-theme-control" value="{{ configuracao.versao_layout if configuracao else '1.0' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observações</label>
+                        <textarea name="observacoes" rows="4" class="form-control ls-theme-control">{{ (configuracao.observacoes or '') if configuracao else '' }}</textarea>
+                    </div>
+                    <div class="col-12 form-check form-switch ps-3">
+                        <input class="form-check-input" type="checkbox" name="emissor_ativo" {% if configuracao is none or configuracao.emissor_ativo %}checked{% endif %}>
+                        <label class="form-check-label">Emissor ativo</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="ls-card p-4 mb-4">
+                <h6 class="mb-2">Ambientes configurados</h6>
+                <div class="list-group">
+                    {% for cfg in configuracoes_list %}
+                    <a href="{{ url_for('nfse_nacional.configuracoes', ambiente=cfg.ambiente) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if cfg.emissor_ativo %}active{% endif %}">
+                        <div>
+                            <strong>{{ cfg.ambiente|capitalize }}</strong>
+                            <div class="small text-muted">{{ cfg.inscricao_municipal or '—' }} • {{ cfg.codigo_municipio or '—' }}</div>
+                        </div>
+                        {% if cfg.emissor_ativo %}
+                        <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inativo</span>
+                        {% endif %}
+                    </a>
+                    {% else %}
+                    <div class="text-muted small">Nenhuma configuração encontrada.</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="ls-card p-4 mb-4">
+                <h5 class="ls-page-title mb-3">Certificado</h5>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Arquivo PFX/P12</label>
+                        <input type="file" name="certificado_arquivo" accept=".pfx,.p12" class="form-control ls-theme-control">
+                        <div class="form-text">O arquivo fica vinculado à empresa logada.</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Senha do Certificado</label>
+                        <input type="password" name="certificado_senha" class="form-control ls-theme-control" placeholder="(não exibido)">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Validade</label>
+                        <input type="date" class="form-control ls-theme-control" value="{{ certificado.validade_em.strftime('%Y-%m-%d') if certificado and certificado.validade_em else '' }}" readonly>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observações do Certificado</label>
+                        <textarea rows="3" class="form-control ls-theme-control" readonly>{{ (certificado.observacoes or '') if certificado else '' }}</textarea>
+                    </div>
+                    <div class="col-12 mt-2">
+                        {% if certificado %}
+                        <button type="submit" name="remover_certificado" value="1" class="btn btn-outline-danger w-100" onclick="return confirm('Confirma remover o certificado? Esta ação não pode ser desfeita.');">Remover/Revogar certificado</button>
+                        {% else %}
+                        <div class="text-muted small">Nenhum certificado cadastrado para este ambiente.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="ls-card p-4">
+                <button type="submit" class="btn ls-btn-primary w-100">Salvar Configuração</button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

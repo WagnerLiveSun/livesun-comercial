@@ -1,0 +1,169 @@
+{% extends "layout.html" %}
+
+{% block title %}Contrato {{ contrato.numero }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('contratos.index') }}">Contratos</a></li>
+<li class="breadcrumb-item active">{{ contrato.numero }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-file-contract me-2"></i>Contrato: {{ contrato.numero }} <span class="badge
+            {% if contrato.status == 'rascunho' %}bg-secondary
+            {% elif contrato.status == 'aguardando_assinatura' %}bg-warning
+            {% elif contrato.status == 'assinado' %}bg-success
+            {% elif contrato.status == 'cancelado' %}bg-danger
+            {% elif contrato.status == 'rescindido' %}bg-dark
+            {% endif %}">{{ contrato.status|replace('_', ' ')|title }}</span></h2>
+    </div>
+</div>
+
+<!-- Botões de Ação -->
+<div class="d-flex gap-2 mb-4">
+    <a href="{{ url_for('contratos.index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+    {% if contrato.status == 'rascunho' %}
+    <a href="{{ url_for('contratos.editar', id=contrato.id) }}" class="btn ls-btn-primary">
+        <i class="fas fa-edit me-2"></i>Editar
+    </a>
+    {% endif %}
+    <a href="{{ url_for('contratos.exportar_pdf', id=contrato.id) }}" class="btn btn-outline-danger">
+        <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+    </a>
+    <a href="{{ url_for('contratos.exportar_docx', id=contrato.id) }}" class="btn btn-outline-primary">
+        <i class="fas fa-file-word me-2"></i>Exportar DOCX
+    </a>
+    {% if contrato.status == 'aguardando_assinatura' %}
+    <form method="POST" action="{{ url_for('contratos.assinar', id=contrato.id) }}" class="d-inline">
+        <button type="submit" class="btn btn-success" onclick="return confirm('Confirmar assinatura do contrato?')">
+            <i class="fas fa-signature me-2"></i>Assinar
+        </button>
+    </form>
+    {% endif %}
+    {% if contrato.status in ['rascunho', 'aguardando_assinatura'] %}
+    <form method="POST" action="{{ url_for('contratos.cancelar', id=contrato.id) }}" class="d-inline">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Confirmar cancelamento do contrato?')">
+            <i class="fas fa-times me-2"></i>Cancelar
+        </button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('contratos.historico', id=contrato.id) }}" class="btn btn-outline-info">
+        <i class="fas fa-history me-2"></i>Histórico
+    </a>
+    <a href="{{ url_for('contratos.index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Voltar
+    </a>
+</div>
+
+<!-- Dados Gerais -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Contratada</h6>
+            <p class="mb-0"><strong>{{ contrato.contratada.nome }}</strong></p>
+            <small class="text-muted">{{ contrato.contratada.cnpj_cpf }}</small>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Contratante</h6>
+            <p class="mb-0"><strong>{{ contrato.contratante.nome }}</strong></p>
+            <small class="text-muted">{{ contrato.contratante.cnpj_cpf }}</small>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Valor Total</h6>
+            <p class="mb-0"><strong>R$ {{ contrato.valor_total|brl }}</strong></p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Valor Mensal</h6>
+            <p class="mb-0"><strong>{% if contrato.valor_mensal %}R$ {{ contrato.valor_mensal|brl }}{% else %}-{% endif %}</strong></p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Forma de Pagamento</h6>
+            <p class="mb-0"><strong>{{ contrato.forma_pagamento or '-' }}</strong></p>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Período de Vigência</h6>
+            <p class="mb-0">
+                <strong>{{ contrato.data_inicio_vigencia.strftime('%d/%m/%Y') if contrato.data_inicio_vigencia else '-' }}</strong>
+                {% if contrato.data_fim_vigencia %}
+                a <strong>{{ contrato.data_fim_vigencia.strftime('%d/%m/%Y') }}</strong>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="ls-card p-3">
+            <h6 class="text-muted">Data de Geração</h6>
+            <p class="mb-0"><strong>{{ contrato.data_geracao.strftime('%d/%m/%Y %H:%M') }}</strong></p>
+        </div>
+    </div>
+</div>
+
+<!-- Descrição dos Serviços -->
+{% if contrato.descricao_servicos %}
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3">Descrição dos Serviços</h5>
+    <p>{{ contrato.descricao_servicos }}</p>
+</div>
+{% endif %}
+
+<!-- Cláusulas do Contrato -->
+<div class="ls-card p-4 mb-4">
+    <h5 class="border-bottom pb-2 mb-3">Cláusulas do Contrato</h5>
+    
+    {% for clausula in contrato.clausulas|sort(attribute='ordem') %}
+    <div class="mb-4">
+        <h6 class="fw-bold">{{ clausula.ordem }}. {{ clausula.titulo }}</h6>
+        <div class="clausula-texto mt-2">
+            {{ clausula.texto_com_placeholders|safe|nl2br }}
+        </div>
+    </div>
+    <hr>
+    {% endfor %}
+    
+    {% if not contrato.clausulas %}
+    <p class="text-muted">Nenhuma cláusula adicionada.</p>
+    {% endif %}
+</div>
+
+<!-- Assinaturas -->
+{% if contrato.status == 'assinado' %}
+<div class="ls-card p-4">
+    <h5 class="border-bottom pb-2 mb-3">Assinaturas</h5>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="text-center">
+                <p class="fw-bold mb-4">CONTRATADA</p>
+                <p class="mb-4">{{ contrato.contratada.nome }}</p>
+                <p class="text-muted">Data: {{ contrato.data_assinatura.strftime('%d/%m/%Y') if contrato.data_assinatura else '-' }}</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="text-center">
+                <p class="fw-bold mb-4">CONTRATANTE</p>
+                <p class="mb-4">{{ contrato.contratante.nome }}</p>
+                <p class="text-muted">Data: {{ contrato.data_assinatura.strftime('%d/%m/%Y') if contrato.data_assinatura else '-' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

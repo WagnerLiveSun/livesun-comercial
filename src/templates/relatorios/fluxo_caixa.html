@@ -1,0 +1,214 @@
+{% extends "layout.html" %}
+
+{% block title %}Fluxo de Caixa{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">Fluxo de Caixa</h2>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <form method="GET" action="{{ url_for('relatorio_fluxo.index') }}" class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label">De</label>
+            <input type="date" name="data_inicio" class="form-control ls-theme-control" value="{{ data_inicio }}">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Até</label>
+            <input type="date" name="data_fim" class="form-control ls-theme-control" value="{{ data_fim }}">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Tipo</label>
+            <select name="tipo" class="form-control ls-theme-control">
+                <option value="" {% if not tipo %}selected{% endif %}>Todos</option>
+                <option value="R" {% if tipo == 'R' %}selected{% endif %}>Recebimentos</option>
+                <option value="P" {% if tipo == 'P' %}selected{% endif %}>Pagamentos</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Conta Banco</label>
+            <select name="conta_banco_id" class="form-control ls-theme-control">
+                <option value="">Todas</option>
+                {% for cb in contas_banco %}
+                <option value="{{ cb.id }}" {% if conta_banco_id == cb.id %}selected{% endif %}>{{ cb.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Entidade</label>
+            <select name="entidade_id" class="form-control ls-theme-control">
+                <option value="">Todas</option>
+                {% for e in entidades %}
+                <option value="{{ e.id }}" {% if entidade_id == e.id %}selected{% endif %}>{{ e.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Agrupar</label>
+            <select name="agrupar_por" class="form-control ls-theme-control">
+                <option value="dia" {% if agrupar_por == 'dia' %}selected{% endif %}>Diário</option>
+                <option value="semana" {% if agrupar_por == 'semana' %}selected{% endif %}>Semanal</option>
+                <option value="mes" {% if agrupar_por == 'mes' %}selected{% endif %}>Mensal</option>
+            </select>
+        </div>
+
+        <div class="col-12 d-flex gap-2 justify-content-end">
+            <button type="submit" class="btn ls-btn-primary">
+                <i class="fas fa-search"></i> Filtrar
+            </button>
+            <a class="btn btn-outline-success" href="{{ url_for('relatorio_fluxo.exportar', data_inicio=data_inicio, data_fim=data_fim, tipo=tipo, conta_banco_id=conta_banco_id, entidade_id=entidade_id, agrupar_por=agrupar_por) }}">
+                <i class="fas fa-file-export"></i> Exportar Excel
+            </a>
+        </div>
+    </form>
+</div>
+
+{% set t = resultado.totais %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="ls-card p-3">
+            <small class="text-muted">Saldo Previsto</small>
+            <div class="fs-5 fw-bold">R$ {{ t.saldo_previsto|brl }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3">
+            <small class="text-muted">Saldo Realizado</small>
+            <div class="fs-5 fw-bold">R$ {{ t.saldo_realizado|brl }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3">
+            <small class="text-muted">Saldo Disponível</small>
+            <div class="fs-5 fw-bold">R$ {{ t.saldo_disponivel|brl }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="ls-card p-3">
+            <small class="text-muted">Desvio Total</small>
+            <div class="fs-5 fw-bold {% if t.desvio_total < 0 %}text-danger{% else %}text-success{% endif %}">
+                R$ {{ t.desvio_total|brl }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <canvas id="graficoFluxo" height="90"></canvas>
+</div>
+
+<div class="ls-card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+            <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
+                <tr>
+                    <th>Data</th>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Tipo</th>
+                    <th class="text-end">Previsto</th>
+                    <th class="text-end">Realizado</th>
+                    <th class="text-end">Disponível</th>
+                    <th class="text-end">Desvio</th>
+                    <th class="text-end">Desvio %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set ns = namespace(data_atual='') %}
+                {% for linha in resultado.linhas %}
+                    {% if ns.data_atual != linha.data %}
+                        {% set ns.data_atual = linha.data %}
+                        <tr style="background-color: rgba(30,41,59,0.25);">
+                            <td colspan="9" class="fw-semibold">{{ linha.data }}</td>
+                        </tr>
+                    {% endif %}
+                    <tr {% if linha.is_sintetica %}style="font-weight: 700;"{% endif %}>
+                        <td>{{ linha.data }}</td>
+                        <td>{{ linha.codigo }}</td>
+                        <td>{{ linha.descricao }}</td>
+                        <td>{{ linha.tipo }}</td>
+                        <td class="text-end">R$ {{ linha.previsto|brl }}</td>
+                        <td class="text-end">R$ {{ linha.realizado|brl }}</td>
+                        <td class="text-end">R$ {{ linha.disponivel|brl }}</td>
+                        <td class="text-end {% if linha.desvio < 0 %}text-danger{% else %}text-success{% endif %}">R$ {{ linha.desvio|brl }}</td>
+                        <td class="text-end {% if linha.desvio_pct < 0 %}text-danger{% else %}text-success{% endif %}">{{ '%.2f'|format(linha.desvio_pct) }}%</td>
+                    </tr>
+
+                    {% if loop.last or loop.nextitem.data != linha.data %}
+                        {% set subtotal = resultado.por_data[linha.data] %}
+                        <tr style="background-color: rgba(30,41,59,0.35); font-weight: 700;">
+                            <td colspan="4">Subtotal {{ linha.data }}</td>
+                            <td class="text-end">R$ {{ subtotal.previsto|brl }}</td>
+                            <td class="text-end">R$ {{ subtotal.realizado|brl }}</td>
+                            <td class="text-end">R$ {{ subtotal.disponivel|brl }}</td>
+                            <td class="text-end">R$ {{ (subtotal.realizado - subtotal.previsto)|brl }}</td>
+                            <td class="text-end">
+                                {% if subtotal.previsto %}
+                                    {{ '%.2f'|format(((subtotal.realizado - subtotal.previsto) / subtotal.previsto) * 100) }}%
+                                {% else %}
+                                    0.00%
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">Nenhum dado encontrado para o período.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td colspan="4">TOTAL GERAL</td>
+                    <td class="text-end">R$ {{ (t.total_previsto_r - t.total_previsto_p)|brl }}</td>
+                    <td class="text-end">R$ {{ (t.total_realizado_r - t.total_realizado_p)|brl }}</td>
+                    <td class="text-end">R$ {{ t.saldo_disponivel|brl }}</td>
+                    <td class="text-end {% if t.desvio_total < 0 %}text-danger{% else %}text-success{% endif %}">R$ {{ t.desvio_total|brl }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<script id="fluxo-por-data-json" type="application/json">{{ resultado.por_data|tojson }}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const porDataRaw = document.getElementById('fluxo-por-data-json');
+    const porData = porDataRaw ? JSON.parse(porDataRaw.textContent || '{}') : {};
+    const labels = Object.keys(porData);
+    const previsto = labels.map(k => porData[k].previsto || 0);
+    const realizado = labels.map(k => porData[k].realizado || 0);
+    const disponivel = labels.map(k => porData[k].disponivel || 0);
+
+    const ctx = document.getElementById('graficoFluxo');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Previsto', data: previsto, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.2)', tension: 0.25 },
+                    { label: 'Realizado', data: realizado, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.2)', tension: 0.25 },
+                    { label: 'Disponível', data: disponivel, borderColor: '#94a3b8', backgroundColor: 'rgba(148,163,184,0.2)', tension: 0.25 }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#e5e7eb' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,0.15)' } },
+                    y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,0.15)' } }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

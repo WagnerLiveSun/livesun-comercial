@@ -1,0 +1,257 @@
+{% extends "layout.html" %}
+
+{% block title %}Nova Compra NF Manual{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">Nova Compra (NF Manual)</h2>
+    <a href="{{ url_for('comercial_operacional.compras_index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST" id="compras-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Fornecedor *</label>
+                <select name="fornecedor_id" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    {% for fornecedor in fornecedores %}
+                    <option value="{{ fornecedor.id }}">{{ fornecedor.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Numero *</label>
+                <input type="text" name="numero_documento" class="form-control" required>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Serie</label>
+                <input type="text" name="serie" class="form-control">
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Emissao *</label>
+                <input type="date" name="data_emissao" class="form-control" value="{{ today.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Entrada *</label>
+                <input type="date" name="data_entrada" class="form-control" value="{{ today.strftime('%Y-%m-%d') }}" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Filial</label>
+                <select name="filial_id" class="form-control">
+                    <option value="">Sem filial</option>
+                    {% for filial in filiais %}
+                    <option value="{{ filial.id }}">{{ filial.codigo }} - {{ filial.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Conta Fluxo (P) *</label>
+                <select name="fluxo_conta_id" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    {% for conta in contas_fluxo %}
+                    <option value="{{ conta.id }}" {{ 'selected' if conta_fluxo_padrao and conta.id == conta_fluxo_padrao.id else '' }}>{{ conta.codigo }} - {{ conta.descricao }}</option>
+                    {% endfor %}
+                </select>
+                {% if conta_fluxo_padrao %}
+                <small class="form-text text-muted">Padrão: {{ conta_fluxo_padrao.codigo }}</small>
+                {% endif %}
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Conta Banco *</label>
+                <select name="conta_banco_id" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    {% for conta in contas_banco %}
+                    <option value="{{ conta.id }}">{{ conta.nome }} - {{ conta.banco }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Vencimento *</label>
+                <input type="date" name="data_vencimento" class="form-control" value="{{ today.strftime('%Y-%m-%d') }}" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Pagamento</label>
+                <input type="date" name="data_pagamento" id="data_pagamento" class="form-control">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Parcelas</label>
+                <input type="number" name="parcelas" id="parcelas" class="form-control" value="1" min="1" max="120">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Intervalo (dias)</label>
+                <input type="number" name="intervalo_dias" id="intervalo_dias" class="form-control" value="30" min="1" max="365">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Outros Custos (Frete/Seguro)</label>
+                <input type="number" name="outros_custos" id="outros_custos" class="form-control" value="0.00" step="0.01" min="0" onchange="calcularTotal()">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Observacoes</label>
+                <input type="text" name="observacoes" class="form-control">
+            </div>
+        </div>
+
+        <!-- Resumo da Nota -->
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="alert alert-info d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Total Itens:</strong> R$ <span id="total_itens">0,00</span>
+                        <span class="mx-2">+</span>
+                        <strong>Outros Custos:</strong> R$ <span id="resumo_outros">0,00</span>
+                    </div>
+                    <div class="h4 mb-0">
+                        <strong>Total NF:</strong> R$ <span id="total_nota">0,00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-4">
+        <h5 class="mb-3">Itens da compra</h5>
+
+        <div class="table-responsive">
+            <table class="table table-sm" id="compras-itens">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Descricao</th>
+                        <th>Qtd</th>
+                        <th>Valor unitario</th>
+                        <th>NCM</th>
+                        <th>CFOP</th>
+                        <th>CST</th>
+                        <th>CSOSN</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <select name="item_produto_id" class="form-control">
+                                <option value="">---</option>
+                                {% for produto in produtos %}
+                                <option value="{{ produto.id }}">{{ produto.codigo_interno }} - {{ produto.descricao_resumida }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><input type="text" name="item_descricao" class="form-control"></td>
+                        <td><input type="number" name="item_quantidade" class="form-control" step="0.001" min="0.001"></td>
+                        <td><input type="number" name="item_valor_unitario" class="form-control" step="0.01" min="0"></td>
+                        <td><input type="text" name="item_ncm" class="form-control"></td>
+                        <td><input type="text" name="item_cfop" class="form-control"></td>
+                        <td><input type="text" name="item_cst" class="form-control"></td>
+                        <td><input type="text" name="item_csosn" class="form-control"></td>
+                        <td>
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-row">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button type="button" class="btn btn-outline-light" id="add-item">
+            <i class="fas fa-plus"></i> Adicionar item
+        </button>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn ls-btn-primary"><i class="fas fa-save"></i> Salvar</button>
+            <a href="{{ url_for('comercial_operacional.compras_index') }}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    const table = document.getElementById('compras-itens');
+    const addButton = document.getElementById('add-item');
+    const parcelasInput = document.getElementById('parcelas');
+    const pagamentoInput = document.getElementById('data_pagamento');
+
+    function togglePagamento() {
+        if (!parcelasInput || !pagamentoInput) return;
+        const parcelas = Number(parcelasInput.value || 1);
+        pagamentoInput.disabled = parcelas > 1;
+        if (parcelas > 1) {
+            pagamentoInput.value = '';
+        }
+    }
+
+    function bindRemove(button) {
+        button.addEventListener('click', function () {
+            const row = button.closest('tr');
+            if (!row) return;
+            const body = table.querySelector('tbody');
+            if (body.children.length > 1) {
+                row.remove();
+            }
+        });
+    }
+
+    if (addButton) {
+        addButton.addEventListener('click', function () {
+            const body = table.querySelector('tbody');
+            const firstRow = body.querySelector('tr');
+            const clone = firstRow.cloneNode(true);
+            clone.querySelectorAll('input').forEach((input) => { input.value = ''; });
+            clone.querySelectorAll('select').forEach((select) => { select.selectedIndex = 0; });
+            bindRemove(clone.querySelector('.remove-row'));
+            // Adicionar listener de cálculo aos novos inputs
+            clone.querySelectorAll('input[name="item_quantidade"], input[name="item_valor_unitario"]').forEach(input => {
+                input.addEventListener('input', calcularTotal);
+            });
+            body.appendChild(clone);
+        });
+    }
+
+    // Função de cálculo de totais
+    window.calcularTotal = function() {
+        const table = document.getElementById('compras-itens');
+        const rows = table.querySelectorAll('tbody tr');
+        let totalItens = 0;
+
+        rows.forEach(row => {
+            const qtd = parseFloat(row.querySelector('input[name="item_quantidade"]')?.value || 0);
+            const valor = parseFloat(row.querySelector('input[name="item_valor_unitario"]')?.value || 0);
+            totalItens += (qtd * valor);
+        });
+
+        const outrosCustos = parseFloat(document.getElementById('outros_custos')?.value || 0);
+        const totalNota = totalItens + outrosCustos;
+
+        // Formatar valores
+        const formatar = (v) => v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        document.getElementById('total_itens').textContent = formatar(totalItens);
+        document.getElementById('resumo_outros').textContent = formatar(outrosCustos);
+        document.getElementById('total_nota').textContent = formatar(totalNota);
+    };
+
+    // Adicionar listeners aos inputs de quantidade e valor
+    document.querySelectorAll('input[name="item_quantidade"], input[name="item_valor_unitario"]').forEach(input => {
+        input.addEventListener('input', calcularTotal);
+    });
+
+    // Calcular inicial
+    calcularTotal();
+
+    document.querySelectorAll('.remove-row').forEach(bindRemove);
+    if (parcelasInput) {
+        parcelasInput.addEventListener('input', togglePagamento);
+        togglePagamento();
+    }
+})();
+</script>
+{% endblock %}

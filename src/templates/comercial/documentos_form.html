@@ -1,0 +1,196 @@
+{% extends "layout.html" %}
+
+{% block title %}Novo Documento nao fiscal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">Novo Documento nao fiscal</h2>
+    <a href="{{ url_for('comercial_operacional.documentos_index') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST" id="documento-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Cliente *</label>
+                <select name="cliente_id" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Numero *</label>
+                <input type="text" name="numero_documento" class="form-control" required>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label">Emissao *</label>
+                <input type="date" name="data_emissao" class="form-control" value="{{ today.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Filial</label>
+                <select name="filial_id" class="form-control">
+                    <option value="">Sem filial</option>
+                    {% for filial in filiais %}
+                    <option value="{{ filial.id }}">{{ filial.codigo }} - {{ filial.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Conta Fluxo (R) *</label>
+                <select name="fluxo_conta_id" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    {% for conta in contas_fluxo %}
+                    <option value="{{ conta.id }}">{{ conta.codigo }} - {{ conta.descricao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Conta Banco *</label>
+                <select name="conta_banco_id" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    {% for conta in contas_banco %}
+                    <option value="{{ conta.id }}">{{ conta.nome }} - {{ conta.banco }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Vencimento *</label>
+                <input type="date" name="data_vencimento" class="form-control" value="{{ today.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Pagamento</label>
+                <input type="date" name="data_pagamento" class="form-control">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 mb-3">
+                <label class="form-label">Observacoes</label>
+                <input type="text" name="observacoes" class="form-control">
+            </div>
+        </div>
+
+        <hr class="my-4">
+        <h5 class="mb-3">Itens do documento</h5>
+
+        <div class="table-responsive">
+            <table class="table table-sm" id="documento-itens">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Produto</th>
+                        <th>Servico</th>
+                        <th>Descricao</th>
+                        <th>Qtd</th>
+                        <th>Valor unitario</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <select name="item_tipo" class="form-control item-tipo">
+                                <option value="P">Produto</option>
+                                <option value="S">Servico</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select name="item_produto_id" class="form-control item-produto">
+                                <option value="">---</option>
+                                {% for produto in produtos %}
+                                <option value="{{ produto.id }}">{{ produto.codigo_interno }} - {{ produto.descricao_resumida }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="item_servico_id" class="form-control item-servico" style="display:none;">
+                                <option value="">---</option>
+                                {% for servico in servicos %}
+                                <option value="{{ servico.id }}">{{ servico.codigo_interno }} - {{ servico.descricao }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><input type="text" name="item_descricao" class="form-control"></td>
+                        <td><input type="number" name="item_quantidade" class="form-control" step="0.001" min="0.001"></td>
+                        <td><input type="number" name="item_valor_unitario" class="form-control" step="0.01" min="0"></td>
+                        <td>
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-row">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button type="button" class="btn btn-outline-light" id="add-item">
+            <i class="fas fa-plus"></i> Adicionar item
+        </button>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn ls-btn-primary"><i class="fas fa-save"></i> Salvar</button>
+            <a href="{{ url_for('comercial_operacional.documentos_index') }}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    const table = document.getElementById('documento-itens');
+    const addButton = document.getElementById('add-item');
+
+    function syncTipo(row) {
+        const tipo = row.querySelector('.item-tipo');
+        const produto = row.querySelector('.item-produto');
+        const servico = row.querySelector('.item-servico');
+        if (!tipo || !produto || !servico) return;
+        if (tipo.value === 'S') {
+            produto.style.display = 'none';
+            servico.style.display = 'block';
+        } else {
+            produto.style.display = 'block';
+            servico.style.display = 'none';
+        }
+    }
+
+    function bindRow(row) {
+        const tipo = row.querySelector('.item-tipo');
+        const remove = row.querySelector('.remove-row');
+        if (tipo) {
+            tipo.addEventListener('change', function () { syncTipo(row); });
+            syncTipo(row);
+        }
+        if (remove) {
+            remove.addEventListener('click', function () {
+                const body = table.querySelector('tbody');
+                if (body.children.length > 1) {
+                    row.remove();
+                }
+            });
+        }
+    }
+
+    if (addButton) {
+        addButton.addEventListener('click', function () {
+            const body = table.querySelector('tbody');
+            const firstRow = body.querySelector('tr');
+            const clone = firstRow.cloneNode(true);
+            clone.querySelectorAll('input').forEach((input) => { input.value = ''; });
+            clone.querySelectorAll('select').forEach((select) => { select.selectedIndex = 0; });
+            bindRow(clone);
+            body.appendChild(clone);
+        });
+    }
+
+    document.querySelectorAll('#documento-itens tbody tr').forEach(bindRow);
+})();
+</script>
+{% endblock %}

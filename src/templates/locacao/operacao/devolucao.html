@@ -1,0 +1,81 @@
+{% extends "locacao/base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('locacao.operacao_agenda') }}">Agenda</a></li>
+<li class="breadcrumb-item active">Registrar Devolução</li>
+{% endblock %}
+
+{% block locacao_content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <h2 class="mb-4"><i class="fas fa-arrow-left me-2"></i>Registrar Devolução</h2>
+
+        <div class="ls-card p-4 mb-4">
+            <h5 class="border-bottom pb-2 mb-3">Informações do Contrato</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Contrato</label>
+                    <p class="mb-0"><strong>{{ contrato.numero }}</strong></p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Cliente</label>
+                    <p class="mb-0"><strong>{{ contrato.cliente.nome }}</strong></p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Data Prevista de Devolução</label>
+                    <p class="mb-0"><strong>{{ contrato.data_devolucao.strftime('%d/%m/%Y') }}</strong></p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Valor Total do Contrato</label>
+                    <p class="mb-0"><strong>R$ {{ contrato.valor_total|brl }}</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" class="ls-card p-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-clipboard me-2"></i>Dados da Devolução</h5>
+
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <label class="form-label">Responsável pela Devolução *</label>
+                    <input type="text" name="responsavel" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Devolução *</label>
+                    <select name="tipo_devolucao" class="form-select" required>
+                        <option value="total">Total</option>
+                        <option value="parcial">Parcial</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Horário</label>
+                    <input type="time" class="form-control" value="{{ now.strftime('%H:%M') }}" disabled>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Observações</label>
+                    <textarea name="observacoes" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Atenção:</strong> Após registrar a devolução, você deverá realizar a inspeção de cada peça para classificar seu estado.
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('locacao.operacao_agenda') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn ls-btn-primary">
+                    <i class="fas fa-check me-2"></i>Confirmar Devolução
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
