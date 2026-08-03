@@ -460,8 +460,11 @@
             input && input.addEventListener('input', applyMask);
 
             form && form.addEventListener('submit', function(e){
+                console.log('Form submit event triggered');
                 const t = tipo.value;
                 const raw = onlyDigits(input.value);
+                console.log('Tipo pessoa:', t, 'Raw value:', raw);
+                
                 if(t === 'F'){
                     if(!isValidCPF(raw)){
                         e.preventDefault(); alert('CPF inválido. Verifique o número informado.'); return false;
@@ -473,6 +476,7 @@
                 }
                 // submit only digits
                 input.value = raw;
+                console.log('Form will submit');
             });
 
             // initialize mask if browser restored value
