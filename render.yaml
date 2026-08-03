@@ -18,15 +18,15 @@ services:
       - key: DB_TYPE
         value: mysql
       - key: DB_HOST
-        sync: false
+        value: 195.35.61.111
       - key: DB_PORT
         value: "3306"
       - key: DB_USER
-        sync: false
+        value: u951548013_LS_Comercial
       - key: DB_PASSWORD
         sync: false
       - key: DB_NAME
-        sync: false
+        value: u951548013_LS_Comercial
       - key: SECRET_KEY
         sync: false
       - key: SESSION_TIMEOUT
