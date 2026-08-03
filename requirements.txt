@@ -18,7 +18,6 @@ colorama==0.4.6
 openpyxl==3.1.2
 gunicorn
 requests==2.32.3
-signxml==4.4.0
 lxml==6.0.1
 fpdf2==2.7.8
 python-docx==0.8.11
@@ -34,5 +33,4 @@ sqlalchemy==2.0.43
 python-dotenv==1.0.0
 email-validator==2.1.0
 colorama==0.4.6
-signxml==4.4.0
 psycopg2-binary==2.9.9
