@@ -1156,6 +1156,77 @@ def editar_empresa():
         try:
             print(f'[DEBUG] Form data received: {dict(request.form)}')
             
+            # Fiscal actions (add/set primary/delete) from the Fiscal tab
+            # These are handled separately and don't affect address fields
+            fiscal_action = (request.form.get('fiscal_action') or '').strip().lower()
+            if fiscal_action:
+                if fiscal_action == 'add_item':
+                    tipo = (request.form.get('fiscal_tipo') or '').strip().lower()
+                    valor = (request.form.get('fiscal_valor') or '').strip()
+                    principal = request.form.get('fiscal_principal') == 'on'
+                    if tipo not in FISCAL_TIPO_LABELS:
+                        raise ValueError('Tipo fiscal inválido.')
+                    if not valor:
+                        raise ValueError('Informe o valor do item fiscal.')
+
+                    item = EmpresaFiscalItem.query.filter_by(empresa_id=empresa.id, tipo=tipo, valor=valor).first()
+                    if not item:
+                        item = EmpresaFiscalItem(empresa_id=empresa.id, tipo=tipo, valor=valor, principal=principal)
+                        db.session.add(item)
+                    else:
+                        item.principal = principal or item.principal
+
+                    if principal:
+                        EmpresaFiscalItem.query.filter(
+                            EmpresaFiscalItem.empresa_id == empresa.id,
+                            EmpresaFiscalItem.tipo == tipo,
+                            EmpresaFiscalItem.valor != valor,
+                        ).update({'principal': False})
+                        item.principal = True
+
+                    db.session.commit()
+                    flash('Item fiscal adicionado com sucesso.', 'success')
+                    return redirect(url_for('auth.editar_empresa', _anchor='fiscal-tab'))
+
+                if fiscal_action == 'set_primary':
+                    item_id = request.form.get('fiscal_item_id', type=int)
+                    item = EmpresaFiscalItem.query.filter_by(id=item_id, empresa_id=empresa.id).first()
+                    if not item:
+                        raise ValueError('Item fiscal não encontrado.')
+                    EmpresaFiscalItem.query.filter(
+                        EmpresaFiscalItem.empresa_id == empresa.id,
+                        EmpresaFiscalItem.tipo == item.tipo,
+                    ).update({'principal': False})
+                    item.principal = True
+                    db.session.commit()
+                    flash('Item fiscal marcado como principal.', 'success')
+                    return redirect(url_for('auth.editar_empresa', _anchor='fiscal-tab'))
+
+                if fiscal_action == 'delete_item':
+                    item_id = request.form.get('fiscal_item_id', type=int)
+                    item = EmpresaFiscalItem.query.filter_by(id=item_id, empresa_id=empresa.id).first()
+                    if not item:
+                        raise ValueError('Item fiscal não encontrado.')
+                    tipo = item.tipo
+                    era_principal = bool(item.principal)
+                    db.session.delete(item)
+                    db.session.flush()
+                    if era_principal:
+                        proximo = (
+                            EmpresaFiscalItem.query
+                            .filter_by(empresa_id=empresa.id, tipo=tipo)
+                            .order_by(EmpresaFiscalItem.principal.desc(), EmpresaFiscalItem.id.asc())
+                            .first()
+                        )
+                        if proximo:
+                            proximo.principal = True
+                    db.session.commit()
+                    flash('Item fiscal removido com sucesso.', 'success')
+                    return redirect(url_for('auth.editar_empresa', _anchor='fiscal-tab'))
+
+            # If no fiscal action, process general company data (address, etc.)
+            # Only validate and save address fields if they were submitted
+            
             empresa.endereco_rua = (request.form.get('endereco_rua') or '').strip()
             empresa.endereco_numero = (request.form.get('endereco_numero') or '').strip()
             empresa.endereco_bairro = (request.form.get('endereco_bairro') or '').strip()
@@ -1230,73 +1301,6 @@ def editar_empresa():
             empresa.atividade_financeiro = request.form.get('atividade_financeiro') == 'on'
             empresa.atividade_locacao = request.form.get('atividade_locacao') == 'on'
             empresa.atividade_contratos = request.form.get('atividade_contratos') == 'on'
-
-            # Fiscal actions (add/set primary/delete) from the Fiscal tab
-            fiscal_action = (request.form.get('fiscal_action') or '').strip().lower()
-            if fiscal_action:
-                if fiscal_action == 'add_item':
-                    tipo = (request.form.get('fiscal_tipo') or '').strip().lower()
-                    valor = (request.form.get('fiscal_valor') or '').strip()
-                    principal = request.form.get('fiscal_principal') == 'on'
-                    if tipo not in FISCAL_TIPO_LABELS:
-                        raise ValueError('Tipo fiscal inválido.')
-                    if not valor:
-                        raise ValueError('Informe o valor do item fiscal.')
-
-                    item = EmpresaFiscalItem.query.filter_by(empresa_id=empresa.id, tipo=tipo, valor=valor).first()
-                    if not item:
-                        item = EmpresaFiscalItem(empresa_id=empresa.id, tipo=tipo, valor=valor, principal=principal)
-                        db.session.add(item)
-                    else:
-                        item.principal = principal or item.principal
-
-                    if principal:
-                        EmpresaFiscalItem.query.filter(
-                            EmpresaFiscalItem.empresa_id == empresa.id,
-                            EmpresaFiscalItem.tipo == tipo,
-                            EmpresaFiscalItem.valor != valor,
-                        ).update({'principal': False})
-                        item.principal = True
-
-                    db.session.commit()
-                    flash('Item fiscal adicionado com sucesso.', 'success')
-                    return redirect(url_for('auth.editar_empresa', _anchor='fiscal-tab'))
-
-                if fiscal_action == 'set_primary':
-                    item_id = request.form.get('fiscal_item_id', type=int)
-                    item = EmpresaFiscalItem.query.filter_by(id=item_id, empresa_id=empresa.id).first()
-                    if not item:
-                        raise ValueError('Item fiscal não encontrado.')
-                    EmpresaFiscalItem.query.filter(
-                        EmpresaFiscalItem.empresa_id == empresa.id,
-                        EmpresaFiscalItem.tipo == item.tipo,
-                    ).update({'principal': False})
-                    item.principal = True
-                    db.session.commit()
-                    flash('Item fiscal marcado como principal.', 'success')
-                    return redirect(url_for('auth.editar_empresa', _anchor='fiscal-tab'))
-
-                if fiscal_action == 'delete_item':
-                    item_id = request.form.get('fiscal_item_id', type=int)
-                    item = EmpresaFiscalItem.query.filter_by(id=item_id, empresa_id=empresa.id).first()
-                    if not item:
-                        raise ValueError('Item fiscal não encontrado.')
-                    tipo = item.tipo
-                    era_principal = bool(item.principal)
-                    db.session.delete(item)
-                    db.session.flush()
-                    if era_principal:
-                        proximo = (
-                            EmpresaFiscalItem.query
-                            .filter_by(empresa_id=empresa.id, tipo=tipo)
-                            .order_by(EmpresaFiscalItem.principal.desc(), EmpresaFiscalItem.id.asc())
-                            .first()
-                        )
-                        if proximo:
-                            proximo.principal = True
-                    db.session.commit()
-                    flash('Item fiscal removido com sucesso.', 'success')
-                    return redirect(url_for('auth.editar_empresa', _anchor='fiscal-tab'))
 
             # Basic validations
             missing = []
