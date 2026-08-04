@@ -172,6 +172,62 @@
             color: var(--ls-page-title);
         }
 
+        /* Form switches para todos os temas */
+        .form-check-input {
+            width: 2.5em;
+            height: 1.25em;
+            cursor: pointer;
+        }
+
+        body[data-theme="moonlight"] .form-check-input {
+            background-color: #1e293b;
+            border-color: #475569;
+        }
+
+        body[data-theme="moonlight"] .form-check-input:checked {
+            background-color: #8fd3ff;
+            border-color: #8fd3ff;
+        }
+
+        body[data-theme="sunset"] .form-check-input {
+            background-color: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+
+        body[data-theme="sunset"] .form-check-input:checked {
+            background-color: #ea580c;
+            border-color: #ea580c;
+        }
+
+        body[data-theme="bluemetal"] .form-check-input {
+            background-color: #e2e8f0;
+            border-color: #b9cbe0;
+        }
+
+        body[data-theme="bluemetal"] .form-check-input:checked {
+            background-color: #2f6fa8;
+            border-color: #2f6fa8;
+        }
+
+        .form-check-label {
+            cursor: pointer;
+        }
+
+        .form-switch .form-check-input {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='white'/%3e%3c/svg%3e");
+            background-position: left center;
+            background-repeat: no-repeat;
+            background-size: 1em 1em;
+        }
+
+        body[data-theme="moonlight"] .form-switch .form-check-input {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23e8eefc'/%3e%3c/svg%3e");
+        }
+
+        body[data-theme="moonlight"] .form-switch .form-check-input:checked {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='white'/%3e%3c/svg%3e");
+        }
+
         body {
             margin: 0;
             min-height: 100vh;
