@@ -33,6 +33,9 @@ class BrevoService:
             logger.error('BREVO_API_KEY não configurada')
             return False
         
+        logger.info(f'Enviando email para {to_email} com código {reset_code}')
+        logger.info(f'Template ID: {self.reset_password_template_id}')
+        
         headers = {
             'accept': 'application/json',
             'content-type': 'application/json',
@@ -55,12 +58,16 @@ class BrevoService:
         }
         
         try:
+            logger.info(f'Payload: {payload}')
             response = requests.post(
                 f'{self.base_url}/smtp/email',
                 headers=headers,
                 json=payload,
                 timeout=30
             )
+            
+            logger.info(f'Response status: {response.status_code}')
+            logger.info(f'Response body: {response.text}')
             
             if response.status_code == 201:
                 logger.info(f'Email de recuperação enviado para {to_email}')
