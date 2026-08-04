@@ -333,67 +333,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const codigoIbgeInicial = {{ (empresa.codigo_municipio_ibge or '')|tojson }};
     console.log('[Empresa] Municipios:', municipioOptions.length, 'Codigo IBGE:', codigoIbgeInicial);
 
-    // Obter o tema atual
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'moonlight';
-    console.log('[Empresa] Tema atual:', currentTheme);
-
-    // Definir cores baseadas no tema
-    const themeColors = {
-        moonlight: {
-            unchecked: '#1e3a8a', // azul marinho
-            checked: '#3b82f6', // azul claro
-            border: '#60a5fa'
-        },
-        sunset: {
-            unchecked: '#c2410c', // laranja escuro/vermelho
-            checked: '#ea580c', // laranja
-            border: '#f97316'
-        },
-        bluemetal: {
-            unchecked: '#1e40af', // azul
-            checked: '#3b82f6', // azul claro
-            border: '#60a5fa'
-        }
-    };
-
-    const colors = themeColors[currentTheme] || themeColors.moonlight;
-    console.log('[Empresa] Cores do tema:', colors);
-
-    // Forçar estilos nos switches de atividades
-    const switches = document.querySelectorAll('.form-check-input[type="checkbox"]');
-    console.log('[Empresa] Switches encontrados:', switches.length);
-    switches.forEach(function(switchEl) {
-        switchEl.style.setProperty('width', '2.5em', 'important');
-        switchEl.style.setProperty('height', '1.25em', 'important');
-        switchEl.style.setProperty('border-color', colors.border, 'important');
-        switchEl.style.setProperty('border-width', '2px', 'important');
-        switchEl.style.setProperty('background-image', "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='white'/%3e%3c/svg%3e\")", 'important');
-        switchEl.style.setProperty('background-position', 'left center', 'important');
-        switchEl.style.setProperty('background-repeat', 'no-repeat', 'important');
-        switchEl.style.setProperty('background-size', '1em 1em', 'important');
-
-        // Aplicar cor inicial baseado no estado
-        if (switchEl.checked) {
-            switchEl.style.setProperty('background-color', colors.checked, 'important');
-            switchEl.style.setProperty('background-position', 'right center', 'important');
-        } else {
-            switchEl.style.setProperty('background-color', colors.unchecked, 'important');
-        }
-    });
-
-    // Atualizar estilos quando o switch é alterado
-    switches.forEach(function(switchEl) {
-        switchEl.addEventListener('change', function() {
-            if (this.checked) {
-                this.style.setProperty('background-color', colors.checked, 'important');
-                this.style.setProperty('background-position', 'right center', 'important');
-            } else {
-                this.style.setProperty('background-color', colors.unchecked, 'important');
-                this.style.setProperty('background-position', 'left center', 'important');
-            }
-        });
-    });
-
     function normalizeText(value) {
         return (value || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     }
