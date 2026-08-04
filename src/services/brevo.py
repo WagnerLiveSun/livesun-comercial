@@ -74,10 +74,16 @@ class BrevoService:
                 return True
             else:
                 logger.error(f'Erro ao enviar email: {response.status_code} - {response.text}')
+                logger.error(f'Headers: {response.headers}')
                 return False
                 
         except requests.exceptions.RequestException as e:
             logger.error(f'Erro na requisição ao Brevo: {e}')
+            logger.error(f'Tipo de erro: {type(e).__name__}')
+            return False
+        except Exception as e:
+            logger.error(f'Erro inesperado ao enviar email: {e}')
+            logger.error(f'Tipo de erro: {type(e).__name__}')
             return False
 
 
