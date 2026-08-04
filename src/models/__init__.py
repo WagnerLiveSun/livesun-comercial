@@ -3763,13 +3763,13 @@ class PasswordResetCode(db.Model):
 
         """Verifica se o código ainda é válido (não expirado e não usado)."""
 
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         return (
 
             not self.used and
 
-            self.expires_at > datetime.now(timezone.utc)
+            self.expires_at > datetime.utcnow()
 
         )
 
@@ -3779,11 +3779,11 @@ class PasswordResetCode(db.Model):
 
         """Marca o código como usado."""
 
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         self.used = True
 
-        self.used_at = datetime.now(timezone.utc)
+        self.used_at = datetime.utcnow()
 
 
 

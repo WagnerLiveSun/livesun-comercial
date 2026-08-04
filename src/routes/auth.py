@@ -1442,17 +1442,18 @@ def reset_password():
         try:
             # Atualizar senha
             user.set_password(new_password)
-            
+
             # Marcar código como usado
             reset_code.mark_as_used()
-            
+
             db.session.commit()
-            
+
             flash('Senha redefinida com sucesso! Faça login com sua nova senha.', 'success')
             return redirect(url_for('auth.login'))
-            
+
         except Exception as e:
             db.session.rollback()
+            logger.error(f'Erro ao redefinir senha: {e}')
             flash('Erro ao redefinir senha. Tente novamente.', 'danger')
     
     return render_template('auth/reset_password.html', email=email)

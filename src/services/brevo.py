@@ -43,13 +43,18 @@ class BrevoService:
         }
         
         payload = {
-            'to': [{'email': to_email}],
+            'to': [
+                {
+                    'email': to_email,
+                    'name': username
+                }
+            ],
             'templateId': int(self.reset_password_template_id),
             'params': {
                 'username': username,
-                'reset_code': reset_code,
                 'app_name': 'LiveSun Comercial',
-                'current_year': str(datetime.now().year)
+                'reset_code': reset_code,
+                'current_year': datetime.now().year
             },
             'sender': {
                 'name': 'LiveSun Comercial',
