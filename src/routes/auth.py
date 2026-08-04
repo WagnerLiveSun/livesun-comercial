@@ -18,6 +18,7 @@ from src.models import (
     CatalogoPlanoComercial,
     HistoricoMudancaPlano,
     NotificacaoComercial,
+    PasswordResetCode,
 )
 from src.extensions import limiter, require_role
 from src.access_control import (
@@ -37,6 +38,9 @@ from src.services.planos import (
     PLAN_CHOICES,
 )
 from src.services.assinatura import ServicoAssinatura
+from src.services.brevo import brevo_service
+import random
+import string
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -1339,3 +1343,116 @@ def editar_empresa():
         fiscal_tipo_labels=FISCAL_TIPO_LABELS,
         fiscal_catalogos=_empresa_fiscal_catalogos(empresa),
     )
+
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Página de recuperação de senha - solicitação de envio de código."""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        
+        if not email:
+            flash('Por favor, informe seu email.', 'warning')
+            return render_template('auth/forgot_password.html')
+        
+        # Verificar se usuário existe
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            # Não informamos se email existe ou não por segurança
+            flash('Se o email estiver cadastrado, você receberá um código de recuperação.', 'info')
+            return render_template('auth/forgot_password.html')
+        
+        # Gerar código de 6 dígitos
+        code = ''.join(random.choices(string.digits, k=6))
+        
+        # Expiração em 15 minutos
+        expires_at = datetime.now() + timedelta(minutes=15)
+        
+        # Invalidar códigos anteriores do mesmo email
+        PasswordResetCode.query.filter_by(email=email).update({'used': True})
+        
+        # Criar novo código
+        reset_code = PasswordResetCode(
+            email=email,
+            code=code,
+            expires_at=expires_at,
+            used=False
+        )
+        db.session.add(reset_code)
+        
+        try:
+            db.session.commit()
+            
+            # Enviar email via Brevo
+            username = user.full_name or user.username
+            if brevo_service.send_reset_password_email(email, username, code):
+                flash('Código de recuperação enviado para seu email. Verifique sua caixa de entrada.', 'success')
+                return redirect(url_for('auth.reset_password', email=email))
+            else:
+                flash('Erro ao enviar email. Tente novamente mais tarde.', 'danger')
+                
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao processar solicitação. Tente novamente.', 'danger')
+    
+    return render_template('auth/forgot_password.html')
+
+
+@auth_bp.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    """Página de redefinição de senha usando código."""
+    email = request.args.get('email', '')
+    
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        code = request.form.get('code', '').strip()
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        # Validações básicas
+        if not email or not code or not new_password:
+            flash('Todos os campos são obrigatórios.', 'warning')
+            return render_template('auth/reset_password.html', email=email)
+        
+        if len(new_password) < 8:
+            flash('A senha deve ter no mínimo 8 caracteres.', 'warning')
+            return render_template('auth/reset_password.html', email=email)
+        
+        if new_password != confirm_password:
+            flash('As senhas não coincidem.', 'warning')
+            return render_template('auth/reset_password.html', email=email)
+        
+        # Buscar código válido
+        reset_code = PasswordResetCode.query.filter_by(
+            email=email,
+            code=code,
+            used=False
+        ).order_by(PasswordResetCode.created_at.desc()).first()
+        
+        if not reset_code or not reset_code.is_valid():
+            flash('Código inválido ou expirado. Solicite um novo código.', 'danger')
+            return render_template('auth/reset_password.html', email=email)
+        
+        # Buscar usuário
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            flash('Usuário não encontrado.', 'danger')
+            return render_template('auth/reset_password.html', email=email)
+        
+        try:
+            # Atualizar senha
+            user.set_password(new_password)
+            
+            # Marcar código como usado
+            reset_code.mark_as_used()
+            
+            db.session.commit()
+            
+            flash('Senha redefinida com sucesso! Faça login com sua nova senha.', 'success')
+            return redirect(url_for('auth.login'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao redefinir senha. Tente novamente.', 'danger')
+    
+    return render_template('auth/reset_password.html', email=email)

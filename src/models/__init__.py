@@ -3725,3 +3725,71 @@ class PDVItem(db.Model):
 
 
 
+class PasswordResetCode(db.Model):
+
+    """Password Reset Code - Código de Recuperação de Senha"""
+
+    __tablename__ = 'password_reset_codes'
+
+    __table_args__ = (
+
+        db.Index('idx_reset_code_code', 'code'),
+
+        db.Index('idx_reset_code_email', 'email'),
+
+        db.Index('idx_reset_code_expires_at', 'expires_at'),
+
+    )
+
+
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    email = db.Column(db.String(120), nullable=False, index=True)
+
+    code = db.Column(db.String(6), nullable=False)  # Código de 6 dígitos
+
+    expires_at = db.Column(db.DateTime, nullable=False, index=True)
+
+    used = db.Column(db.Boolean, default=False, nullable=False)
+
+    used_at = db.Column(db.DateTime)
+
+    created_at = db.Column(db.DateTime, default=_utcnow, nullable=False)
+
+
+
+    def is_valid(self):
+
+        """Verifica se o código ainda é válido (não expirado e não usado)."""
+
+        from datetime import datetime, timezone
+
+        return (
+
+            not self.used and
+
+            self.expires_at > datetime.now(timezone.utc)
+
+        )
+
+
+
+    def mark_as_used(self):
+
+        """Marca o código como usado."""
+
+        from datetime import datetime, timezone
+
+        self.used = True
+
+        self.used_at = datetime.now(timezone.utc)
+
+
+
+    def __repr__(self):
+
+        return f'<PasswordResetCode {self.code} for {self.email}>'
+
+
+
