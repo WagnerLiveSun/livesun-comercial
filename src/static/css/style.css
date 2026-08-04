@@ -175,8 +175,8 @@ body.theme-bluemetal .alert-info {
 }
 
 body[data-theme="moonlight"] .form-check-input {
-    background-color: #1e293b !important;
-    border-color: #475569 !important;
+    background-color: #334155 !important;
+    border-color: #64748b !important;
 }
 
 body[data-theme="moonlight"] .form-check-input:checked {
@@ -185,8 +185,8 @@ body[data-theme="moonlight"] .form-check-input:checked {
 }
 
 body[data-theme="sunset"] .form-check-input {
-    background-color: #e2e8f0 !important;
-    border-color: #cbd5e1 !important;
+    background-color: #cbd5e1 !important;
+    border-color: #94a3b8 !important;
 }
 
 body[data-theme="sunset"] .form-check-input:checked {
@@ -195,8 +195,8 @@ body[data-theme="sunset"] .form-check-input:checked {
 }
 
 body[data-theme="bluemetal"] .form-check-input {
-    background-color: #e2e8f0 !important;
-    border-color: #b9cbe0 !important;
+    background-color: #cbd5e1 !important;
+    border-color: #94a3b8 !important;
 }
 
 body[data-theme="bluemetal"] .form-check-input:checked {
@@ -204,7 +204,15 @@ body[data-theme="bluemetal"] .form-check-input:checked {
     border-color: #2f6fa8 !important;
 }
 
-/* Ajustar cor do ícone do switch para temas claros */
+/* Ajustar cor do ícone do switch para todos os temas */
+body[data-theme="moonlight"] .form-switch .form-check-input {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23e8eefc'/%3e%3c/svg%3e") !important;
+}
+
+body[data-theme="moonlight"] .form-switch .form-check-input:checked {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%230f172a'/%3e%3c/svg%3e") !important;
+}
+
 body[data-theme="sunset"] .form-switch .form-check-input {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23475569'/%3e%3c/svg%3e") !important;
 }
