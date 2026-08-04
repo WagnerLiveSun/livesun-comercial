@@ -166,35 +166,35 @@
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <div class="form-check form-switch p-3 border rounded">
-                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_comercial" id="ativ_comercial" {% if empresa.atividade_comercial %}checked{% endif %} style="width: 2.5em; height: 1.25em; background-color: #1e40af; border-color: #3b82f6; border-width: 2px;">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_comercial" id="ativ_comercial" {% if empresa.atividade_comercial %}checked{% endif %}>
                                     <label class="form-check-label fw-bold" for="ativ_comercial">Comercial</label>
                                     <div class="small text-muted mt-1">PDV, NF-e, NFC-e e Pedidos</div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-check form-switch p-3 border rounded">
-                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_servicos" id="ativ_servicos" {% if empresa.atividade_servicos %}checked{% endif %} style="width: 2.5em; height: 1.25em; background-color: #1e40af; border-color: #3b82f6; border-width: 2px;">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_servicos" id="ativ_servicos" {% if empresa.atividade_servicos %}checked{% endif %}>
                                     <label class="form-check-label fw-bold" for="ativ_servicos">Serviços</label>
                                     <div class="small text-muted mt-1">NFS-e e Importação de Notas</div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-check form-switch p-3 border rounded">
-                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_financeiro" id="ativ_financeiro" {% if empresa.atividade_financeiro %}checked{% endif %} style="width: 2.5em; height: 1.25em; background-color: #1e40af; border-color: #3b82f6; border-width: 2px;">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_financeiro" id="ativ_financeiro" {% if empresa.atividade_financeiro %}checked{% endif %}>
                                     <label class="form-check-label fw-bold" for="ativ_financeiro">Financeiro</label>
                                     <div class="small text-muted mt-1">Gestão Financeira e Fluxo de Caixa</div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-check form-switch p-3 border rounded">
-                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_locacao" id="ativ_locacao" {% if empresa.atividade_locacao %}checked{% endif %} style="width: 2.5em; height: 1.25em; background-color: #1e40af; border-color: #3b82f6; border-width: 2px;">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_locacao" id="ativ_locacao" {% if empresa.atividade_locacao %}checked{% endif %}>
                                     <label class="form-check-label fw-bold" for="ativ_locacao">Locação</label>
                                     <div class="small text-muted mt-1">Aluguel de Roupas e Fantasias</div>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-check form-switch p-3 border rounded">
-                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_contratos" id="ativ_contratos" {% if empresa.atividade_contratos %}checked{% endif %} style="width: 2.5em; height: 1.25em; background-color: #1e40af; border-color: #3b82f6; border-width: 2px;">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="atividade_contratos" id="ativ_contratos" {% if empresa.atividade_contratos %}checked{% endif %}>
                                     <label class="form-check-label fw-bold" for="ativ_contratos">Contratos</label>
                                     <div class="small text-muted mt-1">Gestão de Contratos de Serviços</div>
                                 </div>
@@ -335,6 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Obter o tema atual
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'moonlight';
+    console.log('[Empresa] Tema atual:', currentTheme);
 
     // Definir cores baseadas no tema
     const themeColors = {
@@ -356,9 +357,11 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const colors = themeColors[currentTheme] || themeColors.moonlight;
+    console.log('[Empresa] Cores do tema:', colors);
 
     // Forçar estilos nos switches de atividades
     const switches = document.querySelectorAll('.form-check-input[type="checkbox"]');
+    console.log('[Empresa] Switches encontrados:', switches.length);
     switches.forEach(function(switchEl) {
         switchEl.style.setProperty('width', '2.5em', 'important');
         switchEl.style.setProperty('height', '1.25em', 'important');
@@ -368,6 +371,14 @@ document.addEventListener('DOMContentLoaded', function() {
         switchEl.style.setProperty('background-position', 'left center', 'important');
         switchEl.style.setProperty('background-repeat', 'no-repeat', 'important');
         switchEl.style.setProperty('background-size', '1em 1em', 'important');
+
+        // Aplicar cor inicial baseado no estado
+        if (switchEl.checked) {
+            switchEl.style.setProperty('background-color', colors.checked, 'important');
+            switchEl.style.setProperty('background-position', 'right center', 'important');
+        } else {
+            switchEl.style.setProperty('background-color', colors.unchecked, 'important');
+        }
     });
 
     // Atualizar estilos quando o switch é alterado
@@ -381,14 +392,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.style.setProperty('background-position', 'left center', 'important');
             }
         });
-
-        // Aplicar estilo inicial baseado no estado
-        if (switchEl.checked) {
-            switchEl.style.setProperty('background-color', colors.checked, 'important');
-            switchEl.style.setProperty('background-position', 'right center', 'important');
-        } else {
-            switchEl.style.setProperty('background-color', colors.unchecked, 'important');
-        }
     });
 
     function normalizeText(value) {
