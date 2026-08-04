@@ -2,6 +2,32 @@
 
 {% block title %}Editar Empresa{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Estilos específicos para os switches de atividades */
+.form-check-input {
+    width: 2.5em !important;
+    height: 1.25em !important;
+    cursor: pointer !important;
+    background-color: #2563eb !important;
+    border-color: #3b82f6 !important;
+}
+
+.form-check-input:checked {
+    background-color: #60a5fa !important;
+    border-color: #60a5fa !important;
+}
+
+.form-switch .form-check-input {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23e0f2fe'/%3e%3c/svg%3e") !important;
+}
+
+.form-switch .form-check-input:checked {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff'/%3e%3c/svg%3e") !important;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-12">
