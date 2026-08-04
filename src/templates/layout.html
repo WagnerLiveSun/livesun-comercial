@@ -7,10 +7,10 @@
 
     <script>
         try {
-            var storedTheme = localStorage.getItem('ls-theme') || 'dark';
+            var storedTheme = localStorage.getItem('ls-theme') || 'moonlight';
             document.documentElement.setAttribute('data-theme', storedTheme);
         } catch (e) {
-            document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.setAttribute('data-theme', 'moonlight');
         }
     </script>
 
@@ -22,7 +22,7 @@
     {% block extra_css %}{% endblock %}
 
     <style>
-        :root {
+        :root[data-theme="moonlight"] {
             --ls-bg-main: #08111f;
             --ls-bg-elevated: #0d1728;
             --ls-border-subtle: rgba(160, 176, 204, 0.22);
@@ -57,7 +57,7 @@
             --ls-body-glow-bottom: rgba(59, 130, 246, 0.16);
         }
 
-        :root[data-theme="light"] {
+        :root[data-theme="sunset"] {
             --ls-bg-main: #fff7ef;
             --ls-bg-elevated: #fffdf9;
             --ls-border-subtle: rgba(180, 120, 42, 0.20);
@@ -90,6 +90,86 @@
             --ls-body-glow-top: rgba(251, 146, 60, 0.20);
             --ls-body-glow-mid: rgba(255, 214, 102, 0.12);
             --ls-body-glow-bottom: rgba(245, 158, 11, 0.14);
+        }
+
+        :root[data-theme="bluemetal"] {
+            --ls-bg-main: #f4f8fc;
+            --ls-bg-elevated: #ffffff;
+            --ls-border-subtle: #b9cbe0;
+            --ls-border-strong: #a8b8d0;
+            --ls-text-main: #18324a;
+            --ls-text-muted: #57718a;
+            --ls-text-strong: #0f1f2e;
+            --ls-page-title: #1f4f7a;
+            --ls-input-bg: #ffffff;
+            --ls-input-border: #b9cbe0;
+            --ls-input-disabled-bg: #edf4fb;
+            --ls-primary: #2f6fa8;
+            --ls-primary-soft: rgba(47, 111, 168, 0.12);
+            --ls-accent: #7fb0de;
+            --ls-topbar-bg: #ffffff;
+            --ls-sidebar-bg: #ffffff;
+            --ls-card-bg: #ffffff;
+            --ls-hover-bg: #e4eef8;
+            --ls-footer-bg: #f4f8fc;
+            --ls-dropdown-bg: #ffffff;
+            --ls-dropdown-text: #18324a;
+            --ls-alert-success-text: #1f6b3b;
+            --ls-alert-danger-text: #8b2c2c;
+            --ls-alert-warning-text: #8a5a00;
+            --ls-alert-info-text: #1f4f75;
+            --ls-header-bg: #eff5fb;
+            --ls-header-border: #b9cbe0;
+            --ls-sidebar-active-text: #ffffff;
+            --ls-sidebar-active-shadow: rgba(31, 79, 122, 0.22);
+            --ls-body-glow-top: rgba(127, 176, 222, 0.26);
+            --ls-body-glow-mid: rgba(127, 176, 222, 0.12);
+            --ls-body-glow-bottom: rgba(47, 111, 168, 0.16);
+        }
+
+        body[data-theme="bluemetal"] {
+            background:
+                radial-gradient(circle at top left, rgba(127, 176, 222, 0.26), transparent 32%),
+                linear-gradient(180deg, #f8fbfe 0%, #eef4fa 100%);
+        }
+
+        body[data-theme="bluemetal"] .ls-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+        }
+
+        body[data-theme="bluemetal"] .ls-topbar {
+            background: linear-gradient(180deg, #ffffff 0%, #eaf2fb 100%);
+        }
+
+        body[data-theme="bluemetal"] .ls-sidebar {
+            background: linear-gradient(180deg, #ffffff 0%, #eaf1f9 100%);
+        }
+
+        body[data-theme="bluemetal"] .ls-btn-primary {
+            background: linear-gradient(180deg, #3b7fb8 0%, #245f92 48%, #1f4f7a 100%);
+            border: 1px solid #1f4f7a;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.25),
+                0 6px 16px rgba(31, 79, 122, 0.22);
+        }
+
+        body[data-theme="bluemetal"] .ls-btn-primary:hover {
+            background: linear-gradient(180deg, #4a8cc2 0%, #2d6d9f 48%, #214f74 100%);
+        }
+
+        body[data-theme="bluemetal"] .ls-btn-secondary {
+            background: linear-gradient(180deg, #f8fbfe 0%, #e6eef7 100%);
+            color: var(--ls-text-main);
+            border: 1px solid var(--ls-border-subtle);
+        }
+
+        body[data-theme="bluemetal"] .ls-card .table thead th {
+            background: linear-gradient(180deg, #eff5fb 0%, #dce8f4 100%);
+        }
+
+        body[data-theme="bluemetal"] .ls-sidebar-link.active {
+            background: linear-gradient(180deg, #eef5fb 0%, #dbe8f5 100%);
+            color: var(--ls-page-title);
         }
 
         body {
@@ -729,22 +809,28 @@
 
             function syncThemeUi(theme) {
                 if (!icon || !label) return;
-                if (theme === 'light') {
+                if (theme === 'moonlight') {
                     icon.className = 'fas fa-moon';
-                    label.textContent = 'Escuro';
-                } else {
+                    label.textContent = 'Sunset';
+                } else if (theme === 'sunset') {
                     icon.className = 'fas fa-sun';
-                    label.textContent = 'Claro';
+                    label.textContent = 'BlueMetal';
+                } else if (theme === 'bluemetal') {
+                    icon.className = 'fas fa-palette';
+                    label.textContent = 'Moonlight';
                 }
             }
 
-            const initialTheme = root.getAttribute('data-theme') || 'dark';
+            const initialTheme = root.getAttribute('data-theme') || 'moonlight';
             syncThemeUi(initialTheme);
 
             if (button) {
                 button.addEventListener('click', function () {
-                    const current = root.getAttribute('data-theme') || 'dark';
-                    const next = current === 'dark' ? 'light' : 'dark';
+                    const current = root.getAttribute('data-theme') || 'moonlight';
+                    const themes = ['moonlight', 'sunset', 'bluemetal'];
+                    const currentIndex = themes.indexOf(current);
+                    const nextIndex = (currentIndex + 1) % themes.length;
+                    const next = themes[nextIndex];
                     root.setAttribute('data-theme', next);
                     try {
                         localStorage.setItem('ls-theme', next);

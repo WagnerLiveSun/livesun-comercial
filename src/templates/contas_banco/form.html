@@ -31,13 +31,13 @@
             <div class="col-md-6 mb-3">
                 <label class="form-label">Nome da Conta *</label>
                 <input type="text" name="nome" class="form-control"
-                    value="{{ conta.nome if conta else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    value="{{ conta.nome if conta else '' }}" required">
             </div>
 
             <div class="col-md-6 mb-3">
                 <label class="form-label">Banco *</label>
                 <input type="text" name="banco" class="form-control"
-                    value="{{ conta.banco if conta else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    value="{{ conta.banco if conta else '' }}" required">
             </div>
         </div>
 
@@ -45,19 +45,19 @@
             <div class="col-md-3 mb-3">
                 <label class="form-label">Agência *</label>
                 <input type="text" name="agencia" class="form-control"
-                    value="{{ conta.agencia if conta else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    value="{{ conta.agencia if conta else '' }}" required>
             </div>
 
             <div class="col-md-6 mb-3">
                 <label class="form-label">Número da Conta *</label>
                 <input type="text" name="numero_conta" class="form-control"
-                    value="{{ conta.numero_conta if conta else '' }}" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    value="{{ conta.numero_conta if conta else '' }}" required>
             </div>
 
             <div class="col-md-3 mb-3">
                 <label class="form-label">DV</label>
                 <input type="text" name="dv" class="form-control" maxlength="2"
-                    value="{{ conta.dv if conta else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    value="{{ conta.dv if conta else '' }}"">
             </div>
         </div>
 
@@ -65,12 +65,12 @@
             <div class="col-md-4 mb-3">
                 <label class="form-label">Tipo</label>
                 <input type="text" name="tipo" class="form-control" placeholder="Corrente, Poupança..."
-                    value="{{ conta.tipo if conta else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    value="{{ conta.tipo if conta else '' }}"">
             </div>
 
             <div class="col-md-4 mb-3">
                 <label class="form-label">Conta de Fluxo *</label>
-                <select name="fluxo_conta_id" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                <select name="fluxo_conta_id" class="form-control" required>
                     <option value="">Selecione...</option>
                     {% for cf in contas_fluxo %}
                     <option value="{{ cf.id }}" {% if conta and conta.fluxo_conta_id == cf.id %}selected{% endif %}>
@@ -83,7 +83,7 @@
             <div class="col-md-4 mb-3">
                 <label class="form-label">Saldo Inicial</label>
                 <input type="number" name="saldo_inicial" class="form-control" step="0.01"
-                    value="{{ conta.saldo_inicial if conta else '0' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    value="{{ conta.saldo_inicial if conta else '0' }}">
             </div>
         </div>
 

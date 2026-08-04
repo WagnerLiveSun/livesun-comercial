@@ -19,10 +19,13 @@ from src.models import (
     CompraNFManual,
     CompraNFItem,
     CompraNFLancamento,
+    CompraNFXMLImport,
+    CompraNFXMLItem,
     DocumentoVenda,
     DocumentoVendaItem,
 )
 from src.tenant import scoped_query, scoped_get_or_404, tenant_id
+from src.services.nfe_parser import parse_nfe_xml, formatar_cnpj
 
 
 comercial_bp = Blueprint('comercial_operacional', __name__, url_prefix='/comercial')
@@ -585,6 +588,341 @@ def compras_index():
         fornecedor_id=fornecedor_id,
         fornecedores=fornecedores,
     )
+
+
+@comercial_bp.route('/compras/importar-xml', methods=['GET', 'POST'])
+@login_required
+def compras_importar_xml():
+    if request.method == 'POST':
+        try:
+            if 'xml_file' not in request.files:
+                raise ValueError('Nenhum arquivo XML enviado.')
+            
+            xml_file = request.files['xml_file']
+            if xml_file.filename == '':
+                raise ValueError('Nenhum arquivo selecionado.')
+            
+            if not xml_file.filename.endswith('.xml'):
+                raise ValueError('O arquivo deve ser um XML.')
+            
+            # Ler conteúdo do XML
+            xml_content = xml_file.read().decode('utf-8')
+            
+            # Parsear XML
+            dados_nfe = parse_nfe_xml(xml_content)
+            
+            # Verificar se fornecedor existe pelo CNPJ
+            cnpj_emitente = formatar_cnpj(dados_nfe['emitente']['CNPJ'])
+            fornecedor = scoped_query(Entidade).filter_by(
+                cnpj_cpf=cnpj_emitente,
+                tipo='F'
+            ).first()
+            
+            # Se fornecedor não existir, criar automaticamente
+            if not fornecedor:
+                endereco_emitente = dados_nfe['emitente'].get('endereco', {})
+                fornecedor = Entidade(
+                    empresa_id=tenant_id(),
+                    nome=dados_nfe['emitente']['xNome'],
+                    tipo='F',
+                    cnpj_cpf=cnpj_emitente,
+                    inscricao_estadual=dados_nfe['emitente'].get('IE'),
+                    endereco_rua=endereco_emitente.get('xLgr'),
+                    endereco_numero=endereco_emitente.get('nro'),
+                    endereco_bairro=endereco_emitente.get('xBairro'),
+                    endereco_cidade=endereco_emitente.get('xMun'),
+                    endereco_uf=endereco_emitente.get('UF'),
+                    endereco_cep=endereco_emitente.get('CEP'),
+                    telefone=endereco_emitente.get('fone'),
+                    ativo=True,
+                )
+                db.session.add(fornecedor)
+                db.session.flush()
+            
+            # Criar registro de importação
+            importacao = CompraNFXMLImport(
+                empresa_id=tenant_id(),
+                fornecedor_id=fornecedor.id,
+                xml_original=xml_content,
+                dados_parseados=dados_nfe,
+                status='pendente',
+                criado_por_user_id=current_user.id,
+            )
+            db.session.add(importacao)
+            db.session.flush()
+            
+            # Criar itens da importação
+            for item in dados_nfe['itens']:
+                item_import = CompraNFXMLItem(
+                    empresa_id=tenant_id(),
+                    import_id=importacao.id,
+                    dados_item=item,
+                    confirmado=False,
+                )
+                db.session.add(item_import)
+            
+            db.session.commit()
+            flash('XML importado com sucesso. Revise os dados antes de confirmar.', 'success')
+            return redirect(url_for('comercial_operacional.compras_xml_validar', import_id=importacao.id))
+            
+        except Exception as exc:
+            db.session.rollback()
+            flash(f'Erro ao importar XML: {exc}', 'danger')
+    
+    return render_template('comercial/compras_xml_importar.html')
+
+
+@comercial_bp.route('/compras/importar-xml/<int:import_id>/validar', methods=['GET'])
+@login_required
+def compras_xml_validar(import_id):
+    importacao = scoped_get_or_404(CompraNFXMLImport, import_id)
+    
+    if importacao.status != 'pendente':
+        flash('Esta importação já foi processada.', 'warning')
+        return redirect(url_for('comercial_operacional.compras_index'))
+    
+    fornecedores = scoped_query(Entidade).filter_by(tipo='F', ativo=True).order_by(Entidade.nome.asc()).all()
+    filiais = scoped_query(Filial).filter_by(ativo=True).order_by(Filial.codigo.asc()).all()
+    produtos = scoped_query(Produto).filter_by(ativo=True).order_by(Produto.descricao_resumida.asc()).all()
+    contas_banco = scoped_query(ContaBanco).filter_by(ativo=True).order_by(ContaBanco.nome.asc()).all()
+    contas_fluxo = scoped_query(FluxoContaModel).filter_by(ativo=True, tipo='P').order_by(FluxoContaModel.codigo.asc()).all()
+    
+    # Buscar conta de fluxo padrão para compras
+    conta_fluxo_padrao = None
+    if contas_fluxo:
+        conta_fluxo_padrao = next((c for c in contas_fluxo if c.codigo == '1.01.01'), contas_fluxo[0])
+    
+    return render_template(
+        'comercial/compras_xml_validar.html',
+        importacao=importacao,
+        dados=importacao.dados_parseados,
+        fornecedores=fornecedores,
+        filiais=filiais,
+        produtos=produtos,
+        contas_banco=contas_banco,
+        contas_fluxo=contas_fluxo,
+        conta_fluxo_padrao=conta_fluxo_padrao,
+    )
+
+
+@comercial_bp.route('/compras/importar-xml/<int:import_id>/confirmar', methods=['POST'])
+@login_required
+def compras_xml_confirmar(import_id):
+    importacao = scoped_get_or_404(CompraNFXMLImport, import_id)
+    
+    if importacao.status != 'pendente':
+        flash('Esta importação já foi processada.', 'warning')
+        return redirect(url_for('comercial_operacional.compras_index'))
+    
+    try:
+        dados = importacao.dados_parseados
+        cabecalho = dados['cabecalho']
+        
+        # Obter dados do formulário
+        fornecedor_id = request.form.get('fornecedor_id', type=int) or importacao.fornecedor_id
+        filial_id = request.form.get('filial_id', type=int) or None
+        fluxo_conta_id = request.form.get('fluxo_conta_id', type=int)
+        conta_banco_id = request.form.get('conta_banco_id', type=int)
+        data_vencimento = datetime.strptime(request.form.get('data_vencimento') or '', '%Y-%m-%d').date()
+        data_pagamento_str = (request.form.get('data_pagamento') or '').strip()
+        data_pagamento = datetime.strptime(data_pagamento_str, '%Y-%m-%d').date() if data_pagamento_str else None
+        parcelas = request.form.get('parcelas', type=int) or 1
+        intervalo_dias = request.form.get('intervalo_dias', type=int) or 30
+        observacoes = request.form.get('observacoes') or None
+        
+        if parcelas < 1:
+            parcelas = 1
+        if parcelas > 1 and data_pagamento:
+            raise ValueError('Nao informe pagamento quando houver parcelamento.')
+        
+        if not fluxo_conta_id or not conta_banco_id:
+            raise ValueError('Conta de fluxo e conta bancaria sao obrigatorias.')
+        
+        fluxo_conta = scoped_get_or_404(FluxoContaModel, fluxo_conta_id)
+        if not fluxo_conta.is_pagamento():
+            raise ValueError('Conta de fluxo deve ser do tipo Pagamento (P).')
+        
+        # Processar itens confirmados
+        item_ids = request.form.getlist('item_confirmado')
+        produto_ids = request.form.getlist('item_produto_id')
+        
+        if not item_ids:
+            raise ValueError('Selecione ao menos um item para confirmar.')
+        
+        itens_confirmados = []
+        total = Decimal('0.00')
+        
+        for item_id in item_ids:
+            item_import = scoped_query(CompraNFXMLItem).filter_by(id=int(item_id), import_id=importacao.id).first()
+            if not item_import:
+                continue
+            
+            item_dados = item_import.dados_item
+            produto_id = request.form.get(f'produto_id_{item_id}', type=int) or None
+            
+            quantidade = Decimal(str(item_dados.get('qCom', 0)))
+            valor_unitario = Decimal(str(item_dados.get('vUnCom', 0)))
+            total_item = quantidade * valor_unitario
+            total += total_item
+            
+            itens_confirmados.append({
+                'produto_id': produto_id,
+                'descricao_livre': item_dados.get('xProd'),
+                'quantidade': quantidade,
+                'valor_unitario': valor_unitario,
+                'total_item': total_item,
+                'ncm': item_dados.get('NCM'),
+                'cfop': item_dados.get('CFOP'),
+                'cst': None,
+                'csosn': None,
+            })
+            
+            # Atualizar item da importação
+            item_import.produto_id = produto_id
+            item_import.confirmado = True
+        
+        if total <= 0:
+            raise ValueError('O valor total da nota deve ser maior que zero.')
+        
+        valor_total_nota = Decimal(str(dados['totais'].get('vNF', total)))
+        
+        # Criar compra
+        numero_documento = cabecalho.get('nNF', '')
+        serie = cabecalho.get('serie', '')
+        data_emissao_str = cabecalho.get('data_emissao')
+        if data_emissao_str:
+            data_emissao = datetime.strptime(data_emissao_str, '%Y-%m-%d').date()
+        else:
+            data_emissao = date.today()
+        data_entrada = data_emissao
+        
+        compra = CompraNFManual(
+            empresa_id=tenant_id(),
+            filial_id=filial_id,
+            fornecedor_id=fornecedor_id,
+            lancamento_id=None,
+            numero_documento=numero_documento,
+            serie=serie,
+            data_emissao=data_emissao,
+            data_entrada=data_entrada,
+            valor_total=valor_total_nota,
+            observacoes=observacoes,
+            status='registrada',
+            criado_por_user_id=current_user.id,
+        )
+        db.session.add(compra)
+        db.session.flush()
+        
+        # Gerar lançamentos financeiros
+        valor_base = (valor_total_nota / parcelas).quantize(Decimal('0.01')) if parcelas > 1 else valor_total_nota
+        
+        for parcela in range(1, parcelas + 1):
+            vencimento = data_vencimento + timedelta(days=(parcela - 1) * intervalo_dias)
+            
+            if parcelas == 1 and data_pagamento:
+                status_lancamento = 'pago'
+                data_pagamento_lancamento = data_pagamento
+            else:
+                status_lancamento = 'aberto'
+                data_pagamento_lancamento = None
+            
+            lancamento = Lancamento(
+                empresa_id=tenant_id(),
+                entidade_id=fornecedor_id,
+                fluxo_conta_id=fluxo_conta_id,
+                conta_banco_id=conta_banco_id,
+                data_evento=data_entrada,
+                data_vencimento=vencimento,
+                data_pagamento=data_pagamento_lancamento,
+                status=status_lancamento,
+                valor_real=valor_base,
+                valor_pago=valor_base if data_pagamento_lancamento else Decimal('0.00'),
+                valor_imposto=Decimal('0.00'),
+                valor_outros_custos=Decimal('0.00'),
+                numero_documento=numero_documento,
+                observacoes=f'Compra NF XML - parcela {parcela}/{parcelas}',
+                fonte='xml',
+            )
+            db.session.add(lancamento)
+            db.session.flush()
+            
+            link = CompraNFLancamento(
+                empresa_id=tenant_id(),
+                compra_id=compra.id,
+                lancamento_id=lancamento.id,
+                parcela_numero=parcela,
+                parcela_total=parcelas,
+                valor_parcela=valor_base,
+                data_vencimento=vencimento,
+            )
+            db.session.add(link)
+        
+        # Criar itens da compra
+        for item in itens_confirmados:
+            compra_item = CompraNFItem(
+                empresa_id=tenant_id(),
+                compra_id=compra.id,
+                produto_id=item['produto_id'],
+                descricao_livre=item['descricao_livre'],
+                quantidade=item['quantidade'],
+                valor_unitario=item['valor_unitario'],
+                total_item=item['total_item'],
+                ncm=item['ncm'],
+                cfop=item['cfop'],
+                cst=item['cst'],
+                csosn=item['csosn'],
+            )
+            db.session.add(compra_item)
+            
+            if item['produto_id']:
+                produto = scoped_get_or_404(Produto, item['produto_id'])
+                if produto.controla_estoque:
+                    produto.estoque_atual = Decimal(str(produto.estoque_atual or 0)) + item['quantidade']
+                    movimento = EstoqueMovimento(
+                        empresa_id=tenant_id(),
+                        filial_id=compra.filial_id,
+                        produto_id=produto.id,
+                        tipo_movimento='entrada',
+                        quantidade=item['quantidade'],
+                        valor_unitario=item['valor_unitario'],
+                        origem='compra_xml',
+                        documento_ref=numero_documento,
+                        data_movimento=data_entrada,
+                        criado_por_user_id=current_user.id,
+                    )
+                    db.session.add(movimento)
+        
+        # Atualizar status da importação
+        importacao.status = 'confirmada'
+        
+        db.session.commit()
+        flash('Compra gerada com sucesso a partir do XML.', 'success')
+        return redirect(url_for('comercial_operacional.compras_detalhe', compra_id=compra.id))
+        
+    except Exception as exc:
+        db.session.rollback()
+        flash(f'Erro ao confirmar importação: {exc}', 'danger')
+        return redirect(url_for('comercial_operacional.compras_xml_validar', import_id=import_id))
+
+
+@comercial_bp.route('/compras/importar-xml/<int:import_id>/cancelar', methods=['POST'])
+@login_required
+def compras_xml_cancelar(import_id):
+    importacao = scoped_get_or_404(CompraNFXMLImport, import_id)
+    
+    if importacao.status != 'pendente':
+        flash('Esta importação já foi processada.', 'warning')
+        return redirect(url_for('comercial_operacional.compras_index'))
+    
+    try:
+        importacao.status = 'cancelada'
+        db.session.commit()
+        flash('Importação cancelada com sucesso.', 'success')
+    except Exception as exc:
+        db.session.rollback()
+        flash(f'Erro ao cancelar importação: {exc}', 'danger')
+    
+    return redirect(url_for('comercial_operacional.compras_index'))
 
 
 @comercial_bp.route('/compras/nova', methods=['GET', 'POST'])

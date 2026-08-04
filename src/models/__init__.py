@@ -2301,6 +2301,100 @@ class CompraNFLancamento(db.Model):
 
 
 
+class CompraNFXMLImport(db.Model):
+
+    """Importação de XML de NF-e de compra (pendente de validação)."""
+
+    __tablename__ = 'compras_nf_xml_import'
+
+
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+
+    empresa = db.relationship('Empresa', backref='compras_nf_xml_import')
+
+
+
+    fornecedor_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=True, index=True)
+
+    fornecedor = db.relationship('Entidade', foreign_keys=[fornecedor_id])
+
+
+
+    xml_original = db.Column(db.Text, nullable=False)
+
+    dados_parseados = db.Column(db.JSON, nullable=False)
+
+    status = db.Column(db.String(20), default='pendente')
+
+    criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
+    criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
+
+
+
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+
+    def __repr__(self):
+
+        return f'<CompraNFXMLImport id={self.id} status={self.status}>'
+
+
+
+
+class CompraNFXMLItem(db.Model):
+
+    """Itens da importação de XML de NF-e de compra."""
+
+    __tablename__ = 'compras_nf_xml_itens'
+
+
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+
+    empresa = db.relationship('Empresa', backref='compras_nf_xml_itens')
+
+
+
+    import_id = db.Column(db.Integer, db.ForeignKey('compras_nf_xml_import.id', ondelete='CASCADE'), nullable=False, index=True)
+
+    importacao = db.relationship('CompraNFXMLImport', backref=db.backref('itens', cascade='all, delete-orphan', passive_deletes=True))
+
+
+
+    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True, index=True)
+
+    produto = db.relationship('Produto', foreign_keys=[produto_id])
+
+
+
+    dados_item = db.Column(db.JSON, nullable=False)
+
+    confirmado = db.Column(db.Boolean, default=False)
+
+
+
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+
+    def __repr__(self):
+
+        return f'<CompraNFXMLItem import_id={self.import_id} confirmado={self.confirmado}>'
+
+
+
+
 
 class DocumentoVenda(db.Model):
 
