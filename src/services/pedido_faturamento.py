@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 from datetime import date
-from typing import tuple, list, dict
+from typing import Tuple, List, Dict
 
 from src.models import (
     PedidoVenda,
@@ -19,12 +19,12 @@ from src.models import (
 )
 
 
-def separar_itens_por_natureza(pedido: PedidoVenda) -> dict:
+def separar_itens_por_natureza(pedido: PedidoVenda) -> Dict:
     """
     Separa itens do pedido por natureza fiscal.
     
     Returns:
-        dict: {'produtos': list[PedidoVendaItem], 'servicos': list[PedidoVendaItem]}
+        Dict: {'produtos': List[PedidoVendaItem], 'servicos': List[PedidoVendaItem]}
     """
     produtos = [item for item in pedido.itens if item.tipo_item == 'P']
     servicos = [item for item in pedido.itens if item.tipo_item == 'S']
@@ -37,12 +37,12 @@ def separar_itens_por_natureza(pedido: PedidoVenda) -> dict:
     }
 
 
-def validar_cliente_documento_venda(cliente: Entidade) -> tuple[bool, list[str]]:
+def validar_cliente_documento_venda(cliente: Entidade) -> Tuple[bool, List[str]]:
     """
     Valida se cliente possui dados completos para documento não fiscal.
     
     Returns:
-        tuple: (valido, lista_erros)
+        Tuple: (valido, lista_erros)
     """
     erros = []
     
@@ -73,12 +73,12 @@ def validar_cliente_documento_venda(cliente: Entidade) -> tuple[bool, list[str]]
     return (len(erros) == 0, erros)
 
 
-def validar_cliente_nfse(cliente: Entidade) -> tuple[bool, list[str]]:
+def validar_cliente_nfse(cliente: Entidade) -> Tuple[bool, List[str]]:
     """
     Valida se cliente (tomador) possui dados completos para NFS-e.
     
     Returns:
-        tuple: (valido, lista_erros)
+        Tuple: (valido, lista_erros)
     """
     erros = []
     
@@ -114,12 +114,12 @@ def validar_cliente_nfse(cliente: Entidade) -> tuple[bool, list[str]]:
     return (len(erros) == 0, erros)
 
 
-def validar_servico_nfse(servico: Servico) -> tuple[bool, list[str]]:
+def validar_servico_nfse(servico: Servico) -> Tuple[bool, List[str]]:
     """
     Valida se serviço possui dados fiscais completos para NFS-e.
     
     Returns:
-        tuple: (valido, lista_erros)
+        Tuple: (valido, lista_erros)
     """
     erros = []
     
@@ -156,7 +156,7 @@ def validar_servico_nfse(servico: Servico) -> tuple[bool, list[str]]:
     return (len(erros) == 0, erros)
 
 
-def validar_produto(produto: Produto) -> tuple[bool, list[str]]:
+def validar_produto(produto: Produto) -> Tuple[bool, List[str]]:
     """
     Valida se produto possui dados básicos para documento não fiscal.
     
@@ -178,12 +178,12 @@ def validar_produto(produto: Produto) -> tuple[bool, list[str]]:
     return (len(erros) == 0, erros)
 
 
-def validar_empresa_nfse(empresa: Empresa) -> tuple[bool, list[str]]:
+def validar_empresa_nfse(empresa: Empresa) -> Tuple[bool, List[str]]:
     """
     Valida se empresa possui configurações NFS-e válidas.
     
     Returns:
-        tuple: (valido, lista_erros)
+        Tuple: (valido, lista_erros)
     """
     erros = []
     
@@ -220,18 +220,18 @@ def validar_empresa_nfse(empresa: Empresa) -> tuple[bool, list[str]]:
     return (len(erros) == 0, erros)
 
 
-def validar_faturamento_pedido(pedido: PedidoVenda) -> tuple[bool, dict]:
+def validar_faturamento_pedido(pedido: PedidoVenda) -> Tuple[bool, Dict]:
     """
     Valida se pedido pode ser faturado com separação fiscal.
     
     Returns:
-        tuple: (valido, dict_com_erros)
+        Tuple: (valido, dict_com_erros)
         dict_com_erros: {
-            'cliente_documento_venda': list[str],
-            'cliente_nfse': list[str],
-            'servicos': {servico_id: list[str]},
-            'produtos': {produto_id: list[str]},
-            'empresa_nfse': list[str],
+            'cliente_documento_venda': List[str],
+            'cliente_nfse': List[str],
+            'servicos': {servico_id: List[str]},
+            'produtos': {produto_id: List[str]},
+            'empresa_nfse': List[str],
         }
     """
     erros = {
@@ -293,12 +293,12 @@ def validar_faturamento_pedido(pedido: PedidoVenda) -> tuple[bool, dict]:
     return (not tem_erros, erros)
 
 
-def formatar_erros_validacao(erros: dict) -> list[str]:
+def formatar_erros_validacao(erros: Dict) -> List[str]:
     """
     Formata erros de validação em lista de mensagens.
     
     Returns:
-        list[str]: Lista de mensagens de erro formatadas
+        List[str]: Lista de mensagens de erro formatadas
     """
     mensagens = []
     
