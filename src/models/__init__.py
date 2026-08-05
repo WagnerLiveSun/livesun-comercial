@@ -2444,6 +2444,12 @@ class DocumentoVenda(db.Model):
 
     status = db.Column(db.String(20), default='emitido')
 
+    # Referência ao pedido de venda de origem
+    pedido_id = db.Column(db.Integer, nullable=True)
+
+    # Tipo de origem ('PEDIDO', 'MANUAL')
+    origem_tipo = db.Column(db.String(10), nullable=True)
+
 
 
     criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
@@ -2790,6 +2796,9 @@ class NfseNacionalEmissao(db.Model):
     origem_tipo = db.Column(db.String(40), nullable=False, default='MANUAL', index=True)
 
     origem_referencia = db.Column(db.String(120), nullable=True, index=True)
+
+    # Referência ao pedido de venda de origem
+    pedido_id = db.Column(db.Integer, nullable=True)
 
     canal_origem = db.Column(db.String(40), nullable=False, default='manual', index=True)
 
@@ -3391,6 +3400,12 @@ class PedidoVenda(db.Model):
 
     documento_venda = db.relationship('DocumentoVenda', foreign_keys=[documento_venda_id])
 
+    # Referência à NFS-e gerada (para itens de serviço)
+    documento_nfse_id = db.Column(db.Integer, nullable=True)
+
+    # Referência à NF-e gerada (para itens de produto - futuro)
+    documento_nfe_id = db.Column(db.Integer, nullable=True)
+
 
 
     criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
@@ -3475,7 +3490,11 @@ class PedidoVendaItem(db.Model):
 
     valor_total = db.Column(db.Numeric(15, 2), nullable=False)
 
+    # Referência ao item do documento gerado (após faturamento)
+    documento_item_id = db.Column(db.Integer, nullable=True)
 
+    # Tipo de documento gerado ('VENDA', 'NFSE', 'NFE')
+    tipo_documento = db.Column(db.String(10), nullable=True)
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 

@@ -23,9 +23,15 @@ from src.models import (
     CompraNFXMLItem,
     DocumentoVenda,
     DocumentoVendaItem,
+    PedidoVenda,
 )
 from src.tenant import scoped_query, scoped_get_or_404, tenant_id
 from src.services.nfe_parser import parse_nfe_xml, formatar_cnpj
+from src.services.pedido_faturamento import (
+    separar_itens_por_natureza,
+    validar_faturamento_pedido,
+    formatar_erros_validacao,
+)
 
 
 comercial_bp = Blueprint('comercial_operacional', __name__, url_prefix='/comercial')
@@ -2948,6 +2954,17 @@ def pedidos_faturar(pedido_id):
         if not conta_banco_id or not fluxo_conta_id:
             raise ValueError('Selecione a conta bancaria e a conta de fluxo.')
 
+        # Validar faturamento com separação fiscal
+        if gerar_documento:
+            valido, erros = validar_faturamento_pedido(pedido)
+            if not valido:
+                mensagens = formatar_erros_validacao(erros)
+                flash(f'Erro de validação: {"; ".join(mensagens)}', 'danger')
+                return redirect(url_for('comercial_operacional.pedidos_detalhe', pedido_id=pedido_id))
+
+        # Separar itens por natureza
+        itens_por_natureza = separar_itens_por_natureza(pedido)
+
         # Criar lançamento financeiro
         lancamento = Lancamento(
             empresa_id=tenant_id(),
@@ -2967,30 +2984,62 @@ def pedidos_faturar(pedido_id):
         )
         db.session.add(lancamento)
 
-        documento = None
+        documento_venda = None
+        documento_nfse = None
+
         if gerar_documento:
-            # Criar documento de venda
-            documento = DocumentoVenda(
-                empresa_id=tenant_id(),
-                filial_id=pedido.filial_id,
-                cliente_id=pedido.cliente_id,
-                lancamento_id=None,  # Será atualizado após flush
-                numero_documento=f"DOC{pedido.numero}",
-                data_emissao=date.today(),
-                data_vencimento=data_vencimento,
-                valor_total=pedido.valor_total,
-                status='emitido',
-                criado_por_user_id=current_user.id,
-            )
-            db.session.add(documento)
-            db.session.flush()
-            lancamento.numero_documento = documento.numero_documento
+            # Se houver itens de produto, criar DocumentoVenda
+            if itens_por_natureza['produtos']:
+                documento_venda = DocumentoVenda(
+                    empresa_id=tenant_id(),
+                    filial_id=pedido.filial_id,
+                    cliente_id=pedido.cliente_id,
+                    lancamento_id=None,  # Será atualizado após flush
+                    numero_documento=f"DOC{pedido.numero}",
+                    data_emissao=date.today(),
+                    data_vencimento=data_vencimento,
+                    valor_total=itens_por_natureza['valor_produtos'],
+                    status='emitido',
+                    pedido_id=pedido.id,
+                    origem_tipo='PEDIDO',
+                    criado_por_user_id=current_user.id,
+                )
+                db.session.add(documento_venda)
+                db.session.flush()
+                lancamento.numero_documento = documento_venda.numero_documento
+
+                # Criar itens do documento
+                for item in itens_por_natureza['produtos']:
+                    documento_item = DocumentoVendaItem(
+                        empresa_id=tenant_id(),
+                        documento_id=documento_venda.id,
+                        tipo_item=item.tipo_item,
+                        produto_id=item.produto_id,
+                        servico_id=item.servico_id,
+                        descricao=item.descricao,
+                        quantidade=item.quantidade,
+                        valor_unitario=item.valor_unitario,
+                        valor_desconto=item.valor_desconto,
+                        percentual_desconto=item.percentual_desconto,
+                        valor_total=item.valor_total,
+                    )
+                    db.session.add(documento_item)
+                    
+                    # Atualizar referência no item do pedido
+                    item.documento_item_id = documento_item.id
+                    item.tipo_documento = 'VENDA'
+
+            # Se houver itens de serviço, criar NFS-e (implementação futura)
+            if itens_por_natureza['servicos']:
+                # TODO: Implementar geração de NFS-e
+                # Por enquanto, apenas logar que há serviços
+                flash(f'Atenção: {len(itens_por_natureza["servicos"])} itens de serviço não geraram NFS-e (implementação pendente).', 'warning')
 
         db.session.flush()
 
-        if documento:
-            documento.lancamento_id = lancamento.id
-            pedido.documento_venda_id = documento.id
+        if documento_venda:
+            documento_venda.lancamento_id = lancamento.id
+            pedido.documento_venda_id = documento_venda.id
 
         pedido.status = 'faturado'
         pedido.data_faturamento = date.today()
