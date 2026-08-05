@@ -108,7 +108,7 @@ class Contrato(db.Model):
     data_fim_vigencia = db.Column(db.Date)
 
     # Status e controle
-    status = db.Column(db.String(20), nullable=False, default='rascunho')  # 'rascunho', 'aguardando_assinatura', 'assinado', 'cancelado', 'rescindido'
+    status = db.Column(db.String(30), nullable=False, default='rascunho')  # 'rascunho', 'aguardando_assinatura', 'assinado', 'cancelado', 'rescindido'
     motivo_cancelamento = db.Column(db.Text)
 
     # Descrição dos serviços
