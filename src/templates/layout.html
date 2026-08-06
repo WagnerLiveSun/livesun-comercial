@@ -50,7 +50,7 @@
             --ls-alert-info-text: #93c5fd;
             --ls-header-bg: rgba(143, 211, 255, 0.08);
             --ls-header-border: rgba(143, 211, 255, 0.20);
-            --ls-sidebar-active-text: #ffffff;
+            --ls-sidebar-active-text: #092f75;
             --ls-sidebar-active-shadow: rgba(125, 211, 252, 0.22);
             --ls-body-glow-top: rgba(143, 211, 255, 0.14);
             --ls-body-glow-mid: rgba(226, 232, 240, 0.08);
@@ -96,15 +96,15 @@
             --ls-bg-main: #f4f8fc;
             --ls-bg-elevated: #ffffff;
             --ls-border-subtle: #b9cbe0;
-            --ls-border-strong: #a8b8d0;
+            --ls-border-strong: #063172;
             --ls-text-main: #18324a;
             --ls-text-muted: #57718a;
             --ls-text-strong: #0f1f2e;
             --ls-page-title: #1f4f7a;
             --ls-input-bg: #ffffff;
-            --ls-input-border: #b9cbe0;
+            --ls-input-border: #6da8eb;
             --ls-input-disabled-bg: #edf4fb;
-            --ls-primary: #2f6fa8;
+            --ls-primary: #2b54a0;
             --ls-primary-soft: rgba(47, 111, 168, 0.12);
             --ls-accent: #7fb0de;
             --ls-topbar-bg: #ffffff;
@@ -120,7 +120,7 @@
             --ls-alert-info-text: #1f4f75;
             --ls-header-bg: #eff5fb;
             --ls-header-border: #b9cbe0;
-            --ls-sidebar-active-text: #ffffff;
+            --ls-sidebar-active-text: #102466fd;
             --ls-sidebar-active-shadow: rgba(31, 79, 122, 0.22);
             --ls-body-glow-top: rgba(127, 176, 222, 0.26);
             --ls-body-glow-mid: rgba(127, 176, 222, 0.12);
@@ -172,38 +172,63 @@
             color: var(--ls-page-title);
         }
 
-        /* Form switches para melhor contraste - carregar depois do Bootstrap */
-        .form-check-input {
-            width: 2.6em !important;
-            height: 1.3em !important;
-            cursor: pointer !important;
-            background-color: #0f172a !important; /* off */
-            border: 2px solid #64748b !important;
-            transition: all 0.2s ease-in-out !important;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04) !important;
-        }
+        /* Switches por tema */
+            .form-check-input {
+                width: 2.4em !important;
+                height: 1.15em !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease-in-out !important;
+                box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04) !important;
+            }
 
-        .form-check-input:checked {
-            background-color: #2563eb !important; /* on */
-            border-color: #60a5fa !important;
-            box-shadow: 0 0 0 2px rgba(37,99,235,0.15) !important;
-        }
+            .form-check-input:focus {
+                box-shadow: 0 0 0 0.2rem rgba(59,130,246,0.25) !important;
+            }
 
-        .form-check-input:focus {
-            box-shadow: 0 0 0 0.2rem rgba(59,130,246,0.35) !important;
-        }
+            /* Moonlight */
+            :root[data-theme="moonlight"] .form-check-input {
+                background-color: #1e293b !important;
+                border: 2px solid #334155 !important;
+            }
 
-        .form-switch .form-check-input {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff'/%3e%3c/svg%3e") !important;
-            background-repeat: no-repeat !important;
-            background-size: 1em 1em !important;
-            background-position: left center !important;
-        }
+            :root[data-theme="moonlight"] .form-check-input:checked {
+                background-color: #0653aa !important;
+                border-color: #8fd3ff !important;
+            }
 
-        .form-switch .form-check-input:checked {
-            background-position: right center !important;
-        }
+            /* Sunset */
+            :root[data-theme="sunset"] .form-check-input {
+                background-color: #e2e8f0 !important;
+                border: 2px solid #cbd5e1 !important;
+            }
 
+            :root[data-theme="sunset"] .form-check-input:checked {
+                background-color: #e75f0fe0 !important;
+                border-color: #da4e24 !important;
+            }
+
+            /* BlueMetal */
+            :root[data-theme="bluemetal"] .form-check-input {
+                background-color: #e2e8f0 !important;
+                border: 2px solid #cbd5e1 !important;
+            }
+
+            :root[data-theme="bluemetal"] .form-check-input:checked {
+                background-color: #063e91 !important;
+                border-color: #024580 !important;
+            }
+
+            /* Bolinha interna menor */
+            .form-switch .form-check-input {
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='0.5' fill='%23ffffff'/%3e%3c/svg%3e") !important;
+                background-repeat: no-repeat !important;
+                background-size: 0.6em 0.6em !important;
+                background-position: left center !important;
+            }
+
+            .form-switch .form-check-input:checked {
+                background-position: right center !important;
+            }
         body {
             margin: 0;
             min-height: 100vh;
@@ -583,7 +608,7 @@
                         alt="LiveSun Tecnologia"
                         height="46"
                         class="me-2">
-                    <span> Sistema de Gestão e <u><i>Controle</i></u></span>
+                    <span>Gestão Comercial e Financeiro</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
@@ -709,16 +734,42 @@
                     {% if show_tabelas_preco %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.tabelas_preco') %}active{% endif %}" href="{{ url_for('comercial_operacional.tabelas_preco_index') }}"><i class="fas fa-tags"></i> Tabelas de Preço</a></li>{% endif %}
                 </ul>
                 {% endif %}
+                
+                {% if show_comercial %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-briefcase"></i> Propostas </div>
+                <ul class="ls-sidebar-nav">
+                    {% if show_orcamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.orcamentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.orcamentos_index') }}"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>{% endif %}
+                    {% if show_propostas_aprovacao %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint == 'comercial_operacional.propostas_aprovacao' %}active{% endif %}" href="{{ url_for('comercial_operacional.propostas_aprovacao') }}"><i class="fas fa-clipboard-check"></i> Aprovação de Propostas</a></li>{% endif %}
+                </ul>
+                {% endif %}
 
                 {% if show_comercial %}
-                <div class="ls-sidebar-section-label"><i class="fas fa-briefcase"></i> Comercial</div>
+                <div class="ls-sidebar-section-label"><i class="fas fa-briefcase"></i> Mercadoria </div>
                 <ul class="ls-sidebar-nav">
                     {% if show_estoque %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.estoque') %}active{% endif %}" href="{{ url_for('comercial_operacional.estoque_index') }}"><i class="fas fa-warehouse"></i> Movimento de estoque</a></li>{% endif %}
                     {% if show_compras %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.compras') %}active{% endif %}" href="{{ url_for('comercial_operacional.compras_index') }}"><i class="fas fa-file-invoice"></i> Entrada de NF de compra</a></li>{% endif %}
-                    {% if show_orcamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.orcamentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.orcamentos_index') }}"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>{% endif %}
-                    {% if show_propostas_aprovacao %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint == 'comercial_operacional.propostas_aprovacao' %}active{% endif %}" href="{{ url_for('comercial_operacional.propostas_aprovacao') }}"><i class="fas fa-clipboard-check"></i> Aprovação de Propostas</a></li>{% endif %}
                     {% if show_pedidos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pedidos') %}active{% endif %}" href="{{ url_for('comercial_operacional.pedidos_index') }}"><i class="fas fa-clipboard-check"></i> Pedidos de venda</a></li>{% endif %}
                     {% if show_pdv %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pdv') %}active{% endif %}" href="{{ url_for('comercial_operacional.pdv_index') }}"><i class="fas fa-cash-register"></i> PDV Caixa</a></li>{% endif %}
+                </ul>
+                {% endif %}
+
+                {% if show_importacao or show_nfse_nacional or show_documentos %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-file-invoice"></i> Serviços / Fiscal</div>
+                <ul class="ls-sidebar-nav">
+                    {% if show_import_nfse %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.importar_nfse' %}active{% endif %}" href="{{ url_for('importacoes.importar_nfse') }}"><i class="fas fa-file-upload"></i> Importação de XML NFS-e Emitida</a></li>{% endif %}
+                    {% if show_nfse_nacional %}
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.listagem' %}active{% endif %}" href="{{ url_for('nfse_nacional.listagem') }}"><i class="fas fa-list"></i> NFS-e Emitidas</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.emissoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.emissoes') }}"><i class="fas fa-plus-circle"></i> Geração de NFS-e</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_consultar' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_consultar') }}"><i class="fas fa-search"></i> Consultar NFS-e</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.cancelamento' %}active{% endif %}" href="{{ url_for('nfse_nacional.cancelamento') }}"><i class="fas fa-times-circle"></i> Cancelamento NFS-e</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_cancelamento_substituicao' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_cancelamento_substituicao') }}"><i class="fas fa-exchange-alt"></i> Cancelamento por Substituição</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.configuracoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.configuracoes') }}"><i class="fas fa-cog"></i> Configurações NFS-e</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.tomadores' %}active{% endif %}" href="{{ url_for('nfse_nacional.tomadores') }}"><i class="fas fa-users"></i> Tomadores de Serviços</a></li>
+                    {% endif %}
+                    {% if show_documentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.documentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.documentos_index') }}"><i class="fas fa-receipt"></i> Emissão de NF-e Avulsa</a></li>{% endif %}
+                    {% if show_relatorios and plan_allows_endpoint('relatorios.listagem_notas_nfse') %}
+                        <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_notas_nfse' %}active{% endif %}" href="{{ url_for('relatorios.listagem_notas_nfse') }}"><i class="fas fa-file-invoice"></i> Listagem de NFS-e Próprias importadas</a></li>
+                    {% endif %}
                 </ul>
                 {% endif %}
 
@@ -736,7 +787,6 @@
                 <div class="ls-sidebar-section-label"><i class="fas fa-file-contract"></i> Contratos</div>
                 <ul class="ls-sidebar-nav">
                     {% if show_contratos %}<li><a class="ls-sidebar-link {% if request.endpoint == 'contratos.index' %}active{% endif %}" href="{{ url_for('contratos.index') }}"><i class="fas fa-file-contract"></i> Contrato de Vendas</a></li>{% endif %}
-                    {% if show_contratos %}<li><a class="ls-sidebar-link {% if request.endpoint == 'contratos.index' %}active{% endif %}" href="{{ url_for('contratos.index') }}"><i class="fas fa-file-alt"></i> Minuta de contrato</a></li>{% endif %}
                     {% if show_clausulas %}<li><a class="ls-sidebar-link {% if request.endpoint == 'contratos.clausulas_lista' %}active{% endif %}" href="{{ url_for('contratos.clausulas_lista') }}"><i class="fas fa-file-alt"></i> Cláusulas Padrão</a></li>{% endif %}
                 </ul>
                 {% endif %}
@@ -745,6 +795,8 @@
                 <div class="ls-sidebar-section-label"><i class="fas fa-hand-holding-usd"></i> Financeiro</div>
                 <ul class="ls-sidebar-nav">
                     {% if show_lancamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('lancamentos.') %}active{% endif %}" href="{{ url_for('lancamentos.index') }}"><i class="fas fa-receipt"></i> Lançamentos</a></li>{% endif %}
+                    {% if show_import_ofx %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.import_ofx'%}active{% endif %}" href="{{ url_for('importacoes.importar_ofx') }}"><i class="fas fa-file-upload"></i> Importar OFX</a></li>{% endif %}
+                    {% if show_conciliacao %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('conciliacao.') %}active{% endif %}" href="{{ url_for('conciliacao.index') }}"><i class="fas fa-receipt"></i> Conciliação Bancária</a></li>{% endif %}
                     {% if show_relatorios %}
                         {% if plan_allows_endpoint('relatorio_fluxo.index') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorio_fluxo.index' %}active{% endif %}" href="{{ url_for('relatorio_fluxo.index') }}"><i class="fas fa-chart-line"></i> Fluxo de Caixa</a></li>{% endif %}
                         <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_lancamentos' %}active{% endif %}" href="{{ url_for('relatorios.listagem_lancamentos') }}"><i class="fas fa-list"></i> Listagem de Lançamentos</a></li>
@@ -752,26 +804,7 @@
                 </ul>
                 {% endif %}
 
-                {% if show_importacao or show_nfse_nacional or show_documentos %}
-                <div class="ls-sidebar-section-label"><i class="fas fa-file-invoice"></i> Serviços / Fiscal</div>
-                <ul class="ls-sidebar-nav">
-                    {% if show_import_nfse %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.importar_nfse' %}active{% endif %}" href="{{ url_for('importacoes.importar_nfse') }}"><i class="fas fa-file-upload"></i> Importação de XML NFSe</a></li>{% endif %}
-                    {% if show_nfse_nacional %}
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.listagem' %}active{% endif %}" href="{{ url_for('nfse_nacional.listagem') }}"><i class="fas fa-list"></i> NFS-e Emitidas</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.emissoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.emissoes') }}"><i class="fas fa-plus-circle"></i> Nova Emissão</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_consultar' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_consultar') }}"><i class="fas fa-search"></i> Consultar NFS-e</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.cancelamento' %}active{% endif %}" href="{{ url_for('nfse_nacional.cancelamento') }}"><i class="fas fa-times-circle"></i> Cancelamento</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_cancelamento_substituicao' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_cancelamento_substituicao') }}"><i class="fas fa-exchange-alt"></i> Cancelamento por Substituição</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.configuracoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.configuracoes') }}"><i class="fas fa-cog"></i> Configurações</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.tomadores' %}active{% endif %}" href="{{ url_for('nfse_nacional.tomadores') }}"><i class="fas fa-users"></i> Tomadores</a></li>
-                    {% endif %}
-                    {% if show_documentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.documentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.documentos_index') }}"><i class="fas fa-receipt"></i> Emissão de NF-e Avulsa</a></li>{% endif %}
-                    {% if show_relatorios and plan_allows_endpoint('relatorios.listagem_notas_nfse') %}
-                        <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_notas_nfse' %}active{% endif %}" href="{{ url_for('relatorios.listagem_notas_nfse') }}"><i class="fas fa-file-invoice"></i> Listagem das NFS-e importadas</a></li>
-                    {% endif %}
-                </ul>
-                {% endif %}
-
+                
                 {% if show_admin %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-user-shield"></i> Admin</div>
                 <ul class="ls-sidebar-nav">

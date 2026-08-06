@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 from datetime import date
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 
 from src.models import (
     PedidoVenda,
@@ -107,9 +107,9 @@ def validar_cliente_nfse(cliente: Entidade) -> Tuple[bool, List[str]]:
     if len(documento_numerico) not in [11, 14]:
         erros.append("CNPJ/CPF deve ter 11 ou 14 dígitos")
     
-    # Validar código IBGE do município
-    if not getattr(cliente, 'codigo_municipio_ibge', None):
-        erros.append("Código IBGE do município")
+    # NOTA: Código IBGE do município do cliente NÃO é obrigatório para NFS-e
+    # O que importa é o local de incidência do ISSQN (prestador, tomador ou local da execução)
+    # Essa validação será feita na empresa (prestador) e no local de prestação
     
     return (len(erros) == 0, erros)
 
@@ -187,9 +187,9 @@ def validar_empresa_nfse(empresa: Empresa) -> Tuple[bool, List[str]]:
     """
     erros = []
     
-    # Validar código IBGE do município
+    # Validar código IBGE do município da empresa (prestador)
     if not getattr(empresa, 'codigo_municipio_ibge', None):
-        erros.append("Código IBGE do município")
+        erros.append("Código IBGE do município da empresa (prestador)")
     
     # Validar configuração NFS-e
     configuracao = NfseNacionalConfiguracao.query.filter_by(
@@ -312,9 +312,13 @@ def formatar_erros_validacao(erros: Dict) -> List[str]:
         mensagens.append(f"Empresa (NFS-e): {', '.join(erros['empresa_nfse'])}")
     
     for servico_id, erros_lista in erros['servicos'].items():
-        mensagens.append(f"Serviço ID {servico_id}: {', '.join(erros_lista)}")
+        servico = Servico.query.get(servico_id)
+        servico_nome = servico.descricao if servico else f"ID {servico_id}"
+        mensagens.append(f"Serviço '{servico_nome}': {', '.join(erros_lista)}")
     
     for produto_id, erros_lista in erros['produtos'].items():
-        mensagens.append(f"Produto ID {produto_id}: {', '.join(erros_lista)}")
+        produto = Produto.query.get(produto_id)
+        produto_nome = produto.nome if produto else f"ID {produto_id}"
+        mensagens.append(f"Produto '{produto_nome}': {', '.join(erros_lista)}")
     
     return mensagens

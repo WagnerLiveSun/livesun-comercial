@@ -1,0 +1,138 @@
+Você é um especialista em análise de sistemas ERP, UX de dashboards e geração de relatórios profissionais.
+
+Com base no sistema, crie a especificação completa dos relatórios necessários para que o sistema seja eficiente, operacional e gerencial.
+Organize por blocos/modulos um item de menu relatorio com sub itens para os relatorios de cada módulo
+Considere as listagens existentes.
+
+
+Objetivo:
+Gerar relatórios funcionais, claros, profissionais e realmente úteis para operação diária, auditoria e tomada de decisão.
+
+Para cada módulo, entregue:
+1. Nome do relatório.
+2. Objetivo do relatório.
+3. Filtros obrigatórios.
+4. Campos exibidos.
+5. Agrupamentos e totalizadores.
+6. Regras de negócio.
+7. Status ou alertas importantes.
+8. Layout recomendado.
+9. Possibilidade de exportação.
+10. Sugestão de consulta base ou origem dos dados.
+
+Regras de qualidade:
+- Os relatórios devem ser práticos, não apenas descritivos.
+- Priorize conferência operacional, análise gerencial e auditoria.
+- Use linguagem profissional e objetiva.
+- Inclua relatórios sintéticos e analíticos.
+- Inclua indicadores de exceção, como vencidos, divergentes, cancelados, pendentes e abaixo do mínimo.
+- Considere a empresa relacionada ao usuário (prioritariamente), permissões por perfil e filtros por filial.
+- Sempre que fizer sentido, sugerir versão resumida e detalhada do mesmo relatório.
+- Para cada relatório, proponha uma estrutura visual limpa e fácil de ler.
+- Se houver oportunidade, recomende KPIs e cards para dashboard.
+- Considere a regra de ID_EMPRESA relacionada para o usuarios logado, para nunca acesse relatórios de outras empresas.
+
+Formato de saída:
+Organize por módulo, em tópicos hierárquicos.
+Ao final, apresente uma lista priorizada com os 15 relatórios mais importantes para a operação do sistema.
+
+Gere o conteúdo em português do Brasil, com tom técnico e profissional.
+
+Relatórios por módulo e numero de prioridades = P(numero)
+1. Administração
+Relatório de usuários ativos e inativos. P1
+Relatório de permissões por perfil e por usuário. P3
+Relatório de acessos negados e tentativas de operação. P3
+Relatório de plano contratado por empresa. P3
+Relatório de saúde da base, com inconsistências de schema e pendências de migração. P3
+
+2. Cadastros
+Relatório de entidades por tipo, cidade, UF e status. P1
+Relatório de clientes com vendedor e comissão configurados. P1
+Relatório de serviços por código, NBS, CNAE e situação. P2
+Relatório de tabelas de preço vigentes e itens vinculados. P3
+Relatório de contas bancárias e conta principal. P2
+
+3. Comercial
+Relatório de vendas por período, filial, cliente e vendedor. P1
+Relatório de pedidos por status, atendimento parcial e faturamento. P1
+Relatório de orçamentos por status, conversão e validade. P1
+Relatório de propostas emitidas, aprovadas, rejeitadas e convertidas. P1
+Relatório de documentos de venda não fiscal. P2
+Relatório de compras manuais por fornecedor, data e total. P1
+Relatório de importação de XML de NF-e com sucesso, rejeição e pendências. P3
+Relatório de estoque atual, entradas, saídas e ajustes. P1
+Relatório de movimentação de estoque por produto e por período. P2
+Relatório de PDV por caixa, operador, forma de pagamento e divergências. P1
+Relatório de fechamento de caixa. P1
+
+4. Financeiro
+Relatório de fluxo de caixa previsto x realizado. P1
+Relatório de saldo por conta bancária. P1
+Relatório de Extrato bancário P1
+Relatório analítico de receitas e despesas por categoria do fluxo. P1
+
+5. Fiscal / Serviços
+Relatório de NFS-e emitidas por período, status, tomador e serviço. P1
+Relatório de NFS-e autorizadas, canceladas, rejeitadas e em processamento. P2
+Relatório de NFS-e por valor e por município. P2
+Relatório de tomadores com maior volume. P3
+Relatório de serviços mais utilizados. P3
+Relatório de cancelamentos e substituições. P3
+Relatório de configurações fiscais por empresa. P3
+
+6. Locação
+Relatório de peças e kits cadastrados. P1
+Relatório de disponibilidade por período. P1
+Relatório de reservas em aberto. P1
+Relatório de locações ativas, concluídas e atrasadas. P1
+Relatório de contratos por status. P1
+Relatório de receita de locação por período. P2
+Relatório de peças em manutenção. P1
+Relatório de utilização por item. P1
+Relatório de caução, devolução e pendências. P2
+
+7. Contratos
+Relatório de contratos de serviços por status. P1
+Relatório de contratos por cliente, vigência e valor. P2
+Relatório de minutas criadas, aprovadas e convertidas. P2
+Relatório de contratos gerados a partir de propostas. P3
+Relatório de vencimentos e renovações. P3
+Relatório de valores mensais contratados. P2
+
+8. Dashboard / Gerencial
+Relatório executivo consolidado por empresa. P2
+Relatório de faturamento, margem e resultado do período. P2
+Relatório de indicadores comerciais e financeiros. P2
+Relatório de evolução mensal de vendas, receitas e despesas. P2
+Relatório de alertas operacionais. P3
+Relatório de pendências críticas do sistema. P3
+
+
+
+Implementar controle de acesso da empresa
+Atualmente quem define quais sao os modulos disponiveis é o ADMIN da empresa. Essa atividade deve passar a suncionar dentro do controle backoffice comercial em http://localhost:5000/backoffice/comercial/
+Os itens disponiveis no cadastro da empresa abaixo, devem ser retirados e esse controle deve ficar no acesso do comercial no backoffice, em perfis de assinatura. Onde libera o acesso da empresa conforme a assintura escolhida.
+
+Os itens: 
+ 
+ Atividades da Empresa
+Habilite os módulos que serão utilizados por esta empresa.
+Mercadoria
+	PDV, NF-e, NFC-e e Pedidos
+Serviços / Fiscal
+	NFS-e e Importação de Notas
+Financeiro
+	Gestão Financeira e Fluxo de Caixa
+Locação
+	Aluguel de Roupas e Fantasias
+Contratos
+	Gestão de Contratos de Serviços
+Propostas
+	Gestão de Propostas Comerciais
+Dashboard
+	Paineis de gestão
+
+Este painel deve possui autoridade sobre o acesso da empresa. Quando o stats da assinatura for: Suspenso ou Cancelado os usuarios da empresa devem ser bloqueados de usar o sistema. Quando for excluido, o acesso deve ser removido e banco de dadosdeve ser mantido por 60 dias, a contrar da data de exclusão.
+Deve mostrar o alerta com cronometro do tempo restante para exclusão dos dados da empresa.
+

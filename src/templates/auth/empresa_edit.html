@@ -4,31 +4,53 @@
 
 {% block extra_css %}
 <style>
-/* Estilos específicos para os switches de atividades */
 .form-check-input {
-    width: 2.5em !important;
-    height: 1.25em !important;
+    width: 2.8em !important;
+    height: 1.4em !important;
+    margin-left: 0 !important;
     cursor: pointer !important;
-    background-color: #1e40af !important;
-    border-color: #3b82f6 !important;
-    border-width: 2px !important;
+    border-radius: 2em !important;
+    border: 2px solid #64748b !important;
+    background-color: #334155 !important;
+    background-image: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    transition: all 0.2s ease-in-out !important;
+    position: relative !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05) !important;
 }
 
-.form-check-input:checked {
-    background-color: #3b82f6 !important;
-    border-color: #3b82f6 !important;
-}
-
-.form-switch .form-check-input {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff'/%3e%3c/svg%3e") !important;
-    background-position: left center !important;
-    background-repeat: no-repeat !important;
-    background-size: 1em 1em !important;
+.form-switch .form-check-input::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0.15em;
+    width: 0.8em;
+    height: 0.8em;
+    border-radius: 50%;
+    background: #ffffff;
+    transform: translateY(-50%);
+    transition: left 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.35);
 }
 
 .form-switch .form-check-input:checked {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff'/%3e%3c/svg%3e") !important;
-    background-position: right center !important;
+    background-color: #2563eb !important;
+    border-color: #60a5fa !important;
+}
+
+.form-switch .form-check-input:checked::before {
+    left: calc(100% - 1.2em);
+}
+
+.form-switch .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(59,130,246,0.28) !important;
+    outline: none !important;
+}
+
+.form-switch .form-check-input:disabled {
+    opacity: 0.65 !important;
+    cursor: not-allowed !important;
 }
 </style>
 {% endblock %}
@@ -114,16 +136,14 @@
 
                     <div class="col-md-4 position-relative">
                         <label class="form-label">Municipio</label>
-                        <input type="text" id="municipioSearch" class="form-control" placeholder="Busque por nome, UF ou código IBGE" 
-                            autocomplete="off">
+                        <input type="text" id="municipioSearch" class="form-control" placeholder="Busque por nome, UF ou código IBGE" autocomplete="off">
                         <div id="municipioDropdown" class="list-group position-absolute w-100" style="z-index: 1050; top: calc(100% + .25rem); display: none; max-height: 240px; overflow: auto;"></div>
                         <input type="hidden" name="municipio_ref" id="municipio_ref" value="{{ empresa.codigo_municipio_ibge or '' }}">
                     </div>
 
                     <div class="col-md-2">
                         <label class="form-label">UF</label>
-                        <input type="text" name="endereco_uf" id="endereco_uf" class="form-control" maxlength="2"
-                            value="{{ empresa.endereco_uf or '' }}">
+                        <input type="text" name="endereco_uf" id="endereco_uf" class="form-control" maxlength="2" value="{{ empresa.endereco_uf or '' }}">
                         <small class="form-text text-muted">Preenchido automaticamente</small>
                     </div>
 
@@ -240,21 +260,21 @@
                         </div>
 
                         <div class="col-lg-2 col-md-6 d-flex align-items-center pt-lg-4 pt-md-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="fiscal_principal" id="fiscalPrincipalAdd">
-                                <label class="form-check-label" for="fiscalPrincipalAdd">Principal</label>
+                            <div class= "form-check form-switch">
+                                <input class= "form-check-input switch-principal" type= "checkbox" name= "fiscal_principal" id= "fiscalPrincipalAdd">
+                                <label class= "form-check-label ms-2" for= "fiscalPrincipalAdd">Principal</label>
                             </div>
                         </div>
 
                         <div class="col-lg-2 col-md-6 d-grid pt-lg-4 pt-md-0">
-                            <button type="submit" class="btn btn-outline-light">Adicionar</button>
+                            <button type="submit" class="btn btn-outline-info">Adicionar</button>
                         </div>
                     </form>
                 </div>
 
                 <div class="col-12 mt-3">
                     <div class="table-responsive">
-                        <table class="table table-dark table-striped align-middle">
+                        <table class="table table-succes table-striped align-middle">
                             <thead>
                                 <tr>
                                     <th>Tipo</th>
@@ -311,14 +331,10 @@
 <script>
 console.log('[Empresa] Script carregado');
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[Empresa] DOMContentLoaded');
-    
     const municipioSearch = document.getElementById('municipioSearch');
     const municipioDropdown = document.getElementById('municipioDropdown');
     const municipioRef = document.getElementById('municipio_ref');
     const ufInput = document.getElementById('endereco_uf');
-    
-    console.log('[Empresa] Elementos:', municipioSearch, municipioDropdown, municipioRef, ufInput);
 
     const municipioOptions = [
         {% for municipio in municipios or [] %}
@@ -331,7 +347,6 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
 
     const codigoIbgeInicial = {{ (empresa.codigo_municipio_ibge or '')|tojson }};
-    console.log('[Empresa] Municipios:', municipioOptions.length, 'Codigo IBGE:', codigoIbgeInicial);
 
     function normalizeText(value) {
         return (value || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -344,13 +359,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderMunicipioDropdown(query) {
         const normalized = normalizeText(query);
         const matches = normalized ? municipioOptions.filter(o => buildSearchText(o).includes(normalized)) : municipioOptions.slice(0, 20);
-        
+
         municipioDropdown.innerHTML = '';
         if (matches.length === 0) {
             municipioDropdown.style.display = 'none';
             return;
         }
-        
+
         matches.forEach(option => {
             const item = document.createElement('div');
             item.className = 'list-group-item list-group-item-action';
@@ -364,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             municipioDropdown.appendChild(item);
         });
-        
+
         municipioDropdown.style.display = 'block';
     }
 
@@ -385,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        if (municipioSearch && ufInput && municipioOptions.length > 0 && codigoIbgeInicial) {
+        if (ufInput && municipioOptions.length > 0 && codigoIbgeInicial) {
             const initialMunicipio = municipioOptions.find(o => String(o.value) === String(codigoIbgeInicial));
             if (initialMunicipio) {
                 municipioSearch.value = `${initialMunicipio.nome}${initialMunicipio.uf ? ' / ' + initialMunicipio.uf : ''} - ${initialMunicipio.value}`;
@@ -394,8 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    
-    // FISCAL
+
     const fiscalTipo = document.getElementById('fiscalTipo');
     const fiscalValor = document.getElementById('fiscalValor');
     const fiscalValorOptions = document.getElementById('fiscalValorOptions');
@@ -456,34 +470,6 @@ document.addEventListener('DOMContentLoaded', function() {
         fiscalValor.addEventListener('input', updateFiscalHint);
         fiscalValor.addEventListener('change', updateFiscalHint);
         syncFiscalTypeUI();
-    }
-
-    if (municipioSearch) {
-        municipioSearch.addEventListener('input', (e) => {
-            renderMunicipioDropdown(e.target.value);
-        });
-
-        municipioSearch.addEventListener('focus', () => {
-            if (municipioSearch.value) {
-                renderMunicipioDropdown(municipioSearch.value);
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!municipioSearch.contains(e.target) && !municipioDropdown.contains(e.target)) {
-                municipioDropdown.style.display = 'none';
-            }
-        });
-
-        // Inicializar UF ao carregar a página com base no código IBGE
-        if (municipioSearch && ufInput && municipioOptions.length > 0 && codigoIbgeInicial) {
-            const initialMunicipio = municipioOptions.find(o => String(o.value) === String(codigoIbgeInicial));
-            if (initialMunicipio) {
-                municipioSearch.value = `${initialMunicipio.nome}${initialMunicipio.uf ? ' / ' + initialMunicipio.uf : ''} - ${initialMunicipio.value}`;
-                ufInput.value = initialMunicipio.uf || '';
-                if (municipioRef) municipioRef.value = initialMunicipio.value;
-            }
-        }
     }
 });
 </script>

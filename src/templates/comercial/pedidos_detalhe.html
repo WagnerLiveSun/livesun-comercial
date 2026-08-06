@@ -13,9 +13,9 @@
             <i class="fas fa-arrow-left"></i> Voltar
         </a>
         {% if pedido.status in ['aprovado', 'em_producao', 'pronto'] %}
-        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#faturarModal">
+        <a href="{{ url_for('comercial_operacional.pedidos_faturar_previa', pedido_id=pedido.id) }}" class="btn btn-success">
             <i class="fas fa-file-invoice-dollar"></i> Faturar
-        </button>
+        </a>
         {% endif %}
     </div>
 </div>
@@ -168,56 +168,6 @@
         {% endif %}
     </div>
 </div>
-
-<!-- Modal de Faturamento -->
-{% if pedido.status in ['aprovado', 'em_producao', 'pronto'] %}
-<div class="modal fade" id="faturarModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content ls-card">
-            <div class="modal-header">
-                <h5 class="modal-title">Faturar Pedido {{ pedido.numero }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <form method="post" action="{{ url_for('comercial_operacional.pedidos_faturar', pedido_id=pedido.id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="conta_banco_id" class="form-label">Conta Bancaria *</label>
-                        <select class="form-control" id="conta_banco_id" name="conta_banco_id" required>
-                            <option value="">Selecione...</option>
-                            {% for conta in contas_banco %}
-                            <option value="{{ conta.id }}">{{ conta.nome }} ({{ conta.banco_codigo }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="fluxo_conta_id" class="form-label">Conta de Fluxo *</label>
-                        <select class="form-control" id="fluxo_conta_id" name="fluxo_conta_id" required>
-                            <option value="">Selecione...</option>
-                            {% for conta in contas_fluxo %}
-                            <option value="{{ conta.id }}">{{ conta.codigo }} - {{ conta.nome }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="data_vencimento" class="form-label">Data Vencimento *</label>
-                        <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" value="{{ pedido.data_emissao.strftime('%Y-%m-%d') }}" required>
-                    </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="gerar_documento" name="gerar_documento" checked>
-                        <label class="form-check-label" for="gerar_documento">Gerar documento de venda</label>
-                    </div>
-                    <div class="alert alert-info">
-                        <strong>Valor a faturar:</strong> {{ pedido.valor_total|brl }}
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Confirmar Faturamento</button>
-                </div>
-            </form>
-        </div>
-    </div>
 </div>
-{% endif %}
 {% endblock %}
+

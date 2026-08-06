@@ -40,6 +40,7 @@ venvold/
 .env
 .env.local
 chave API AsaaS.txt
+Key_Brevo.txt
 ngrok_recovery_codes.txt
 
 # Ignore Flask

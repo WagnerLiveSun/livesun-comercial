@@ -2936,6 +2936,33 @@ def pedidos_detalhe(pedido_id):
     )
 
 
+@comercial_bp.route('/pedidos/<int:pedido_id>/faturar', methods=['GET'])
+@login_required
+def pedidos_faturar_previa(pedido_id):
+    """Exibe prévia do faturamento com separação fiscal."""
+    pedido = scoped_get_or_404(PedidoVenda, pedido_id)
+
+    if pedido.status not in ['aprovado', 'em_producao', 'pronto']:
+        flash('Pedido nao pode ser faturado neste status.', 'warning')
+        return redirect(url_for('comercial_operacional.pedidos_detalhe', pedido_id=pedido_id))
+
+    # Separar itens por natureza
+    itens_por_natureza = separar_itens_por_natureza(pedido)
+
+    # Validar faturamento
+    valido, erros = validar_faturamento_pedido(pedido)
+
+    return render_template(
+        'comercial/pedidos_faturar_previa.html',
+        pedido=pedido,
+        itens_por_natureza=itens_por_natureza,
+        erros=erros,
+        valido=valido,
+        contas_banco=scoped_query(ContaBanco).filter_by(ativo=True).order_by(ContaBanco.nome.asc()).all(),
+        contas_fluxo=scoped_query(FluxoContaModel).filter_by(ativo=True, tipo='R').order_by(FluxoContaModel.codigo.asc()).all(),
+    )
+
+
 @comercial_bp.route('/pedidos/<int:pedido_id>/faturar', methods=['POST'])
 @login_required
 def pedidos_faturar(pedido_id):
@@ -3029,11 +3056,9 @@ def pedidos_faturar(pedido_id):
                     item.documento_item_id = documento_item.id
                     item.tipo_documento = 'VENDA'
 
-            # Se houver itens de serviço, criar NFS-e (implementação futura)
+            # Se houver itens de serviço, apenas informar (não emitir automaticamente)
             if itens_por_natureza['servicos']:
-                # TODO: Implementar geração de NFS-e
-                # Por enquanto, apenas logar que há serviços
-                flash(f'Atenção: {len(itens_por_natureza["servicos"])} itens de serviço não geraram NFS-e (implementação pendente).', 'warning')
+                flash(f'Atenção: {len(itens_por_natureza["servicos"])} itens de serviço identificados. Emita NFS-e manualmente pelo menu NFS-e Nacional.', 'info')
 
         db.session.flush()
 
