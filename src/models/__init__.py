@@ -587,6 +587,10 @@ class Empresa(db.Model):
 
     atividade_contratos = db.Column(db.Boolean, default=False)
 
+    atividade_propostas = db.Column(db.Boolean, default=False)
+
+    atividade_dashboard = db.Column(db.Boolean, default=True)
+
 
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
@@ -1535,6 +1539,9 @@ class AssinaturaEmpresa(db.Model):
     bloqueado_desde = db.Column(db.DateTime, nullable=True)
 
     motivo_status = db.Column(db.String(255), nullable=True)
+
+    # Retenção de dados pós-exclusão (60 dias a contar de data_exclusao)
+    data_exclusao = db.Column(db.DateTime, nullable=True, index=True)
 
 
 

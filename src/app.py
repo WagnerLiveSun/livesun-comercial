@@ -326,10 +326,40 @@ def create_app(config_name=None):
         if not current_user.is_authenticated:
             return None
 
-        from flask import request, flash
+        from flask import request, flash, logout_user
         endpoint_name = request.endpoint
         if not endpoint_name:
             return None
+
+        # ------------------------------------------------------------------
+        # Controle de acesso por assinatura (Backoffice Comercial tem autoridade).
+        # Bloqueia usuários da empresa quando a assinatura está suspensa,
+        # cancelada ou excluída. Admins LiveSun (sem empresa) e rotas de
+        # autenticação/backoffice ficam isentos.
+        # ------------------------------------------------------------------
+        if not endpoint_name.startswith(('auth.', 'admin_comercial.', 'static')):
+            from src.models import AssinaturaEmpresa
+            assinatura = None
+            try:
+                assinatura = AssinaturaEmpresa.query.filter_by(
+                    empresa_id=getattr(current_user, 'empresa_id', None)
+                ).first()
+            except Exception:
+                assinatura = None
+
+            if assinatura and assinatura.status in {'suspensa', 'cancelada', 'excluida'}:
+                bloqueio_label = {
+                    'suspensa': 'suspensa',
+                    'cancelada': 'cancelada',
+                    'excluida': 'excluída',
+                }.get(assinatura.status, assinatura.status)
+                logout_user()
+                flash(
+                    f'A assinatura da sua empresa está {bloqueio_label}. '
+                    f'Entre em contato com o suporte para regularizar o acesso.',
+                    'danger',
+                )
+                return redirect(url_for('auth.login'))
 
         company_plan = normalize_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium'))
         if not plan_allows_endpoint(company_plan, endpoint_name):
@@ -550,6 +580,8 @@ def _ensure_schema_compatibility():
             {
                 'plano': "plano VARCHAR(20) DEFAULT 'premium'",
                 'nome_fantasia': "nome_fantasia VARCHAR(150)",
+                'atividade_propostas': 'atividade_propostas BOOLEAN DEFAULT FALSE',
+                'atividade_dashboard': 'atividade_dashboard BOOLEAN DEFAULT TRUE',
             }
         )
 
@@ -574,6 +606,13 @@ def _ensure_schema_compatibility():
             'importacao_nfse',
             'descricao_servico',
             'TEXT'
+        )
+
+        _ensure_columns(
+            'assinatura_empresa',
+            {
+                'data_exclusao': 'data_exclusao DATETIME NULL',
+            }
         )
     except Exception as exc:
         import traceback
