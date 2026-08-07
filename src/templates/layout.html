@@ -174,7 +174,7 @@
 
         /* Switches por tema */
             .form-check-input {
-                width: 2.4em !important;
+                width: 2.2em !important;
                 height: 1.15em !important;
                 cursor: pointer !important;
                 transition: all 0.2s ease-in-out !important;
@@ -220,7 +220,7 @@
 
             /* Bolinha interna menor */
             .form-switch .form-check-input {
-                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='0.5' fill='%23ffffff'/%3e%3c/svg%3e") !important;
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3.5' fill='%23ffffff'/%3e%3c/svg%3e") !important;
                 background-repeat: no-repeat !important;
                 background-size: 0.6em 0.6em !important;
                 background-position: left center !important;
@@ -668,7 +668,7 @@
 
         <div class="ls-layout">
             <aside class="ls-sidebar">
-                {% set show_dashboard = has_permission('dashboard') %}
+                {% set show_dashboard = has_permission('dashboard') and has_activity('dashboard') %}
                 {% set show_add_user = current_user.is_admin and has_permission('usuarios') and plan_allows_endpoint('auth.add_user') %}
                 {% set show_controle_acesso = current_user.is_admin and has_permission('controle_acesso') and plan_allows_endpoint('auth.controle_acesso') %}
                 {% set show_admin = show_add_user or show_controle_acesso %}
@@ -690,7 +690,8 @@
                 {% set show_propostas_aprovacao = has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.propostas_aprovacao') %}
                 {% set show_pedidos = has_permission('comercial_pedidos') and plan_allows_endpoint('comercial_operacional.pedidos_index') %}
                 {% set show_pdv = has_permission('comercial_pdv') and plan_allows_endpoint('comercial_operacional.pdv_index') %}
-                {% set show_comercial = has_activity('comercial') and (show_filiais or show_produtos or show_servicos or show_estoque or show_compras or show_documentos or show_tabelas_preco or show_orcamentos or show_propostas_aprovacao or show_pedidos or show_pdv) %}
+                {% set show_comercial = has_activity('comercial') and (show_filiais or show_produtos or show_servicos or show_estoque or show_compras or show_documentos or show_tabelas_preco or show_pedidos or show_pdv) %}
+                {% set show_propostas = has_activity('propostas') and (show_orcamentos or show_propostas_aprovacao) %}
 
                 {% set show_lancamentos = has_permission('lancamentos') %}
                 {% set show_comissoes = has_permission('comissoes') and plan_allows_endpoint('comissoes.listar') %}
@@ -722,11 +723,11 @@
                 <div class="ls-sidebar-section-label"><i class="fas fa-chart-pie"></i> Dashboard</div>
                 <ul class="ls-sidebar-nav">
                     <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" href="{{ url_for('dashboard.index') }}"><i class="fas fa-chart-line"></i> Painel Gerencial</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.comercial' %}active{% endif %}" href="{{ url_for('dashboard.comercial') }}"><i class="fas fa-briefcase"></i> Painel Comercial</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.financeiro' %}active{% endif %}" href="{{ url_for('dashboard.financeiro') }}"><i class="fas fa-hand-holding-usd"></i> Painel Financeiro</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.fiscal' %}active{% endif %}" href="{{ url_for('dashboard.fiscal') }}"><i class="fas fa-file-invoice"></i> Painel Fiscal</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.locacao' %}active{% endif %}" href="{{ url_for('dashboard.locacao') }}"><i class="fas fa-tshirt"></i> Painel Locação</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.propostas' %}active{% endif %}" href="{{ url_for('dashboard.propostas') }}"><i class="fas fa-file-invoice-dollar"></i> Painel Propostas</a></li>
+                    {% if show_comercial %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.comercial' %}active{% endif %}" href="{{ url_for('dashboard.comercial') }}"><i class="fas fa-briefcase"></i> Painel Comercial</a></li>{% endif %}
+                    {% if show_financeiro %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.financeiro' %}active{% endif %}" href="{{ url_for('dashboard.financeiro') }}"><i class="fas fa-hand-holding-usd"></i> Painel Financeiro</a></li>{% endif %}
+                    {% if show_nfse_nacional or show_importacao %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.fiscal' %}active{% endif %}" href="{{ url_for('dashboard.fiscal') }}"><i class="fas fa-file-invoice"></i> Painel Fiscal</a></li>{% endif %}
+                    {% if show_locacao %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.locacao' %}active{% endif %}" href="{{ url_for('dashboard.locacao') }}"><i class="fas fa-tshirt"></i> Painel Locação</a></li>{% endif %}
+                    {% if show_propostas %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.propostas' %}active{% endif %}" href="{{ url_for('dashboard.propostas') }}"><i class="fas fa-file-invoice-dollar"></i> Painel Propostas</a></li>{% endif %}
                 </ul>
                 {% endif %}
 
@@ -749,7 +750,7 @@
                 </ul>
                 {% endif %}
                 
-                {% if show_comercial %}
+                {% if show_propostas %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-briefcase"></i> Propostas </div>
                 <ul class="ls-sidebar-nav">
                     {% if show_orcamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.orcamentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.orcamentos_index') }}"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>{% endif %}

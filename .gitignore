@@ -76,3 +76,6 @@ desktop.ini
 # Keep important files
 !.env.example
 !.gitkeep
+_smoke_p1.py
+_verify_fix.py
+fix_indent.py
