@@ -240,6 +240,7 @@ def create_app(config_name=None):
     from src.routes.comercial_operacional import comercial_bp
     from src.routes.locacao import locacao_bp
     from src.routes.contratos import contratos_bp
+    from src.routes.relatorios_p1 import relatorios_p1_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -258,6 +259,7 @@ def create_app(config_name=None):
     app.register_blueprint(comercial_bp)
     app.register_blueprint(locacao_bp)
     app.register_blueprint(contratos_bp)
+    app.register_blueprint(relatorios_p1_bp)
 
     @app.route('/suporte')
     def suporte():
@@ -326,7 +328,8 @@ def create_app(config_name=None):
         if not current_user.is_authenticated:
             return None
 
-        from flask import request, flash, logout_user
+        from flask import request, flash
+        from flask_login import logout_user
         endpoint_name = request.endpoint
         if not endpoint_name:
             return None
