@@ -94,6 +94,8 @@ def index():
 def comercial():
     """Dashboard específico para módulo Comercial"""
     import logging, traceback
+    from flask import flash
+    from sqlalchemy.exc import SQLAlchemyError
     try:
         hoje = datetime.now().date()
         empresa_id = current_user.empresa_id
@@ -129,6 +131,23 @@ def comercial():
             pedidos_faturados=pedidos_faturados,
             valor_total_orcamentos=valor_total_orcamentos,
             valor_total_pedidos=valor_total_pedidos,
+        )
+    except SQLAlchemyError as e:
+        # Banco de produção ainda sem as tabelas/colunas do módulo (schema desatualizado)
+        db.session.rollback()
+        logging.error('Erro de banco no dashboard comercial (render com zeros): %s\n%s', e, traceback.format_exc())
+        flash('Não foi possível carregar os indicadores comerciais: banco sem as tabelas/colunas do módulo.', 'warning')
+        return render_template(
+            'dashboard_comercial.html',
+            total_orcamentos=0,
+            orcamentos_aprovados=0,
+            orcamentos_emitidos=0,
+            orcamentos_convertidos=0,
+            total_pedidos=0,
+            pedidos_pendentes=0,
+            pedidos_faturados=0,
+            valor_total_orcamentos=Decimal('0.00'),
+            valor_total_pedidos=Decimal('0.00'),
         )
     except Exception as e:
         logging.error('Erro no dashboard comercial: %s\n%s', e, traceback.format_exc())
@@ -332,6 +351,8 @@ def financeiro():
 def locacao():
     """Dashboard específico para módulo Locação"""
     import logging, traceback
+    from flask import flash
+    from sqlalchemy.exc import SQLAlchemyError
     try:
         empresa_id = current_user.empresa_id
 
@@ -373,6 +394,22 @@ def locacao():
             retiradas_pendentes=retiradas_pendentes,
             devolucoes_pendentes=devolucoes_pendentes,
             taxa_ocupacao=round(taxa_ocupacao, 1),
+        )
+    except SQLAlchemyError as e:
+        # Banco de produção ainda sem as tabelas/colunas do módulo (schema desatualizado)
+        db.session.rollback()
+        logging.error('Erro de banco no dashboard locação (render com zeros): %s\n%s', e, traceback.format_exc())
+        flash('Não foi possível carregar os indicadores de locação: banco sem as tabelas/colunas do módulo.', 'warning')
+        return render_template(
+            'dashboard_locacao.html',
+            total_pecas=0,
+            pecas_disponiveis=0,
+            pecas_manutencao=0,
+            contratos_ativos=0,
+            orcamentos_pendentes=0,
+            retiradas_pendentes=0,
+            devolucoes_pendentes=0,
+            taxa_ocupacao=0,
         )
     except Exception as e:
         logging.error('Erro no dashboard locação: %s\n%s', e, traceback.format_exc())

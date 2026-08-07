@@ -585,6 +585,45 @@ def _ensure_schema_compatibility():
                 'nome_fantasia': "nome_fantasia VARCHAR(150)",
                 'atividade_propostas': 'atividade_propostas BOOLEAN DEFAULT FALSE',
                 'atividade_dashboard': 'atividade_dashboard BOOLEAN DEFAULT TRUE',
+                'atividade_comercial': 'atividade_comercial BOOLEAN DEFAULT TRUE',
+                'atividade_servicos': 'atividade_servicos BOOLEAN DEFAULT TRUE',
+                'atividade_financeiro': 'atividade_financeiro BOOLEAN DEFAULT TRUE',
+                'atividade_locacao': 'atividade_locacao BOOLEAN DEFAULT FALSE',
+                'atividade_contratos': 'atividade_contratos BOOLEAN DEFAULT FALSE',
+            }
+        )
+
+        # Colunas críticas do módulo de locação que podem faltar em bancos antigos
+        _ensure_columns(
+            'locacao_pecas',
+            {
+                'estado_fisico': "estado_fisico VARCHAR(20) DEFAULT 'novo'",
+                'ativo': 'ativo BOOLEAN DEFAULT TRUE',
+            }
+        )
+        _ensure_columns(
+            'locacao_contratos',
+            {
+                'cliente_id': 'cliente_id INTEGER NULL',
+                'status': "status VARCHAR(20) DEFAULT 'assinado'",
+            }
+        )
+        _ensure_columns(
+            'locacao_orcamentos',
+            {
+                'status': "status VARCHAR(20) DEFAULT 'rascunho'",
+            }
+        )
+        _ensure_columns(
+            'locacao_retiradas',
+            {
+                'status': "status VARCHAR(20) DEFAULT 'pendente'",
+            }
+        )
+        _ensure_columns(
+            'locacao_devolucoes',
+            {
+                'status': "status VARCHAR(20) DEFAULT 'pendente'",
             }
         )
 
