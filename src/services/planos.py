@@ -221,3 +221,41 @@ def is_intermediate_plan(plan: Optional[str]) -> bool:
 
 def is_premium_plan(plan: Optional[str]) -> bool:
     return normalize_plan(plan) == 'premium'
+
+
+# ============================================================================
+# Módulos habilitados por plano de assinatura.
+# Chaves correspondem aos campos `atividade_*` do modelo Empresa e são usadas
+# pelo layout (has_activity) e pelo painel do Backoffice Comercial para liberar
+# o acesso da empresa conforme a assinatura escolhida.
+# ============================================================================
+PLAN_MODULES: Dict[str, set] = {
+    'basic': {'comercial', 'servicos', 'financeiro', 'dashboard'},
+    'intermediate': {'comercial', 'servicos', 'financeiro', 'locacao', 'contratos', 'propostas', 'dashboard'},
+    'premium': {'comercial', 'servicos', 'financeiro', 'locacao', 'contratos', 'propostas', 'dashboard'},
+}
+
+
+def modules_for_plan(plan: Optional[str]) -> set:
+    """Retorna o conjunto de módulos (atividades) liberados pelo plano."""
+    return set(PLAN_MODULES.get(normalize_plan(plan), PLAN_MODULES['basic']))
+
+
+ALL_MODULE_LABELS: Dict[str, Dict[str, str]] = {
+    'comercial': {'label': 'Mercadoria', 'descricao': 'PDV, NF-e, NFC-e e Pedidos'},
+    'servicos': {'label': 'Serviços / Fiscal', 'descricao': 'NFS-e e Importação de Notas'},
+    'financeiro': {'label': 'Financeiro', 'descricao': 'Gestão Financeira e Fluxo de Caixa'},
+    'locacao': {'label': 'Locação', 'descricao': 'Aluguel de Roupas e Fantasias'},
+    'contratos': {'label': 'Contratos', 'descricao': 'Gestão de Contratos de Serviços'},
+    'propostas': {'label': 'Propostas', 'descricao': 'Gestão de Propostas Comerciais'},
+    'dashboard': {'label': 'Dashboard', 'descricao': 'Painéis de gestão'},
+}
+
+
+def sync_empresa_modules(empresa, plan: Optional[str]) -> None:
+    """Aplica os módulos liberados pelo plano na empresa (atividade_*)."""
+    if empresa is None:
+        return
+    enabled = modules_for_plan(plan)
+    for module_key in ALL_MODULE_LABELS:
+        setattr(empresa, f'atividade_{module_key}', module_key in enabled)

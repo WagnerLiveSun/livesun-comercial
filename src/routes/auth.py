@@ -527,6 +527,29 @@ def login():
                     flash('Empresa, usuário ou senha inválidos', 'danger')
                     return redirect(url_for('auth.login'))
 
+                # Bloqueio por assinatura: usuários de empresas suspensas/canceladas/excluídas
+                # não podem entrar (controle tem autoridade sobre o acesso da empresa).
+                if user.empresa_id is not None:
+                    from src.models import AssinaturaEmpresa
+                    _assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=user.empresa_id).first()
+                    if _assinatura and _assinatura.status in {'suspensa', 'cancelada', 'excluida'}:
+                        import logging
+                        logging.info(
+                            f'Login bloqueado por assinatura {_assinatura.status}: '
+                            f'username={username}, empresa_id={user.empresa_id}'
+                        )
+                        _bloqueio = {
+                            'suspensa': 'suspensa',
+                            'cancelada': 'cancelada',
+                            'excluida': 'excluída',
+                        }.get(_assinatura.status, _assinatura.status)
+                        flash(
+                            f'A assinatura da sua empresa está {_bloqueio}. '
+                            f'Entre em contato com o suporte para regularizar o acesso.',
+                            'danger',
+                        )
+                        return redirect(url_for('auth.login'))
+
                 import logging
                 logging.info(f'Login sucesso: username={username}, empresa_id={user.empresa_id}, role={user.role}')
 
@@ -1294,13 +1317,6 @@ def editar_empresa():
             empresa.email = (request.form.get('empresa_email') or '').strip()
             empresa.op_simp_nac = int(request.form.get('op_simp_nac', 3) or 3)
             empresa.reg_ap_trib_sn = int(request.form.get('reg_ap_trib_sn', 1) or 1)
-            
-            # Atividades da Empresa
-            empresa.atividade_comercial = request.form.get('atividade_comercial') == 'on'
-            empresa.atividade_servicos = request.form.get('atividade_servicos') == 'on'
-            empresa.atividade_financeiro = request.form.get('atividade_financeiro') == 'on'
-            empresa.atividade_locacao = request.form.get('atividade_locacao') == 'on'
-            empresa.atividade_contratos = request.form.get('atividade_contratos') == 'on'
 
             # Basic validations
             missing = []

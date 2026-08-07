@@ -1,4 +1,6 @@
-Você é um especialista em análise de sistemas ERP, UX de dashboards e geração de relatórios profissionais.
+crie um ponto de restauração neste momento que possa ser recuperado por mim.
+
+Agora Você é um especialista em análise de sistemas ERP, UX de dashboards e geração de relatórios profissionais.
 
 Com base no sistema, crie a especificação completa dos relatórios necessários para que o sistema seja eficiente, operacional e gerencial.
 Organize por blocos/modulos um item de menu relatorio com sub itens para os relatorios de cada módulo

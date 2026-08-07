@@ -386,6 +386,20 @@
             min-height: 36px;
         }
 
+        .ls-sidebar-group-label {
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--ls-text-muted);
+            padding: 8px 12px;
+            cursor: default;
+            list-style: none;
+            border-radius: 12px;
+            opacity: 0.85;
+        }
+
+
         .ls-sidebar-link i {
             width: 22px;
             display: inline-flex;
@@ -804,7 +818,43 @@
                 </ul>
                 {% endif %}
 
-                
+                {% if show_relatorios %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-chart-bar"></i> Relatórios</div>
+                <ul class="ls-sidebar-nav">
+                    <li class="ls-sidebar-group-label">Administração</li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.usuarios' %}active{% endif %}" href="{{ url_for('relatorios_p1.usuarios') }}"><i class="fas fa-users"></i> Usuários</a></li>
+                    <li class="ls-sidebar-group-label">Cadastros</li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.entidades' %}active{% endif %}" href="{{ url_for('relatorios_p1.entidades') }}"><i class="fas fa-address-book"></i> Entidades</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.clientes_comissao' %}active{% endif %}" href="{{ url_for('relatorios_p1.clientes_comissao') }}"><i class="fas fa-percent"></i> Clientes c/ Comissão</a></li>
+                    {% if has_activity('comercial') %}
+                    <li class="ls-sidebar-group-label">Comercial</li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.orcamentos' %}active{% endif %}" href="{{ url_for('relatorios_p1.orcamentos') }}"><i class="fas fa-file-invoice-dollar"></i> Orçamentos</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.pedidos' %}active{% endif %}" href="{{ url_for('relatorios_p1.pedidos') }}"><i class="fas fa-shopping-cart"></i> Pedidos</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.estoque' %}active{% endif %}" href="{{ url_for('relatorios_p1.estoque') }}"><i class="fas fa-boxes"></i> Estoque</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.compras' %}active{% endif %}" href="{{ url_for('relatorios_p1.compras') }}"><i class="fas fa-truck"></i> Compras</a></li>
+                    {% endif %}
+                    {% if has_activity('financeiro') %}
+                    <li class="ls-sidebar-group-label">Financeiro</li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.saldo_contas' %}active{% endif %}" href="{{ url_for('relatorios_p1.saldo_contas') }}"><i class="fas fa-university"></i> Saldo por Conta</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.fluxo_categorias' %}active{% endif %}" href="{{ url_for('relatorios_p1.fluxo_categorias') }}"><i class="fas fa-stream"></i> Receitas/Despesas</a></li>
+                    {% endif %}
+                    {% if has_activity('servicos') %}
+                    <li class="ls-sidebar-group-label">Fiscal</li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.nfse' %}active{% endif %}" href="{{ url_for('relatorios_p1.nfse') }}"><i class="fas fa-file-invoice"></i> NFS-e</a></li>
+                    {% endif %}
+                    {% if has_activity('locacao') %}
+                    <li class="ls-sidebar-group-label">Locação</li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.locacao_pecas' %}active{% endif %}" href="{{ url_for('relatorios_p1.locacao_pecas') }}"><i class="fas fa-tshirt"></i> Peças / Acervo</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.locacao_contratos' %}active{% endif %}" href="{{ url_for('relatorios_p1.locacao_contratos') }}"><i class="fas fa-file-contract"></i> Contratos Locação</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.locacao_manutencao' %}active{% endif %}" href="{{ url_for('relatorios_p1.locacao_manutencao') }}"><i class="fas fa-tools"></i> Manutenção</a></li>
+                    {% endif %}
+                    {% if has_activity('contratos') %}
+                    <li class="ls-sidebar-group-label">Contratos</li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.contratos' %}active{% endif %}" href="{{ url_for('relatorios_p1.contratos') }}"><i class="fas fa-file-signature"></i> Contratos de Serviços</a></li>
+                    {% endif %}
+                </ul>
+                {% endif %}
+
                 {% if show_admin %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-user-shield"></i> Admin</div>
                 <ul class="ls-sidebar-nav">

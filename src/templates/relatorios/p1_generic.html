@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    .p1r-title { color: var(--ls-page-title); }
+    .p1r-subtitle, .p1r-meta { color: var(--ls-text-muted); }
+    .p1r-card { background: var(--ls-card-bg); border: 1px solid var(--ls-border-subtle); }
+    .p1r-card .form-label { color: var(--ls-text-main); font-weight: 600; }
+    .p1r-card .form-control, .p1r-card .form-select {
+        color: var(--ls-text-main); border-color: var(--ls-input-border);
+    }
+    .p1r-total-label { color: var(--ls-text-muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; }
+    .p1r-total-value { color: var(--ls-text-main); font-weight: 700; font-size: 1.05rem; }
+    .p1r-table thead th { white-space: nowrap; }
+</style>
+
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-1 p1r-title">{{ title }}</h2>
+        <p class="mb-0 p1r-subtitle small">{{ subtitle }}</p>
+    </div>
+    {% if rows is defined %}
+    <div>
+        <a class="btn btn-outline-success btn-sm"
+           href="{{ url_for(request.endpoint, formato='csv', **request.args) }}">
+            <i class="fas fa-file-csv me-1"></i> Exportar CSV
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% if filter_fields %}
+<div class="p1r-card rounded p-3 mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        {% for f in filter_fields %}
+        <div class="col-auto">
+            <label class="form-label tiny mb-1">{{ f.label }}</label>
+            {% if f.type == 'select' %}
+            <select name="{{ f.name }}" class="form-select form-select-sm">
+                {% for opt_value, opt_label in f.options %}
+                <option value="{{ opt_value }}" {% if f.value == opt_value %}selected{% endif %}>{{ opt_label }}</option>
+                {% endfor %}
+            </select>
+            {% elif f.type == 'date' %}
+            <input type="date" name="{{ f.name }}" value="{{ f.value }}" class="form-control form-control-sm">
+            {% elif f.type == 'number' %}
+            <input type="number" name="{{ f.name }}" value="{{ f.value }}" class="form-control form-control-sm" style="width: 130px">
+            {% else %}
+            <input type="text" name="{{ f.name }}" value="{{ f.value }}" class="form-control form-control-sm" style="width: 160px">
+            {% endif %}
+        </div>
+        {% endfor %}
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter me-1"></i>Filtrar</button>
+            <a href="{{ url_for(request.endpoint) }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+{% if totals %}
+<div class="row g-3 mb-3">
+    {% for label, value in totals %}
+    <div class="col-auto">
+        <div class="p1r-card rounded p-2 px-3 text-center">
+            <div class="p1r-total-label">{{ label }}</div>
+            <div class="p1r-total-value">{{ value }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="p1r-card rounded p-3">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle ls-theme-table mb-0 p1r-table">
+            <thead class="table-light">
+                <tr>
+                    {% for h in headers %}<th>{{ h }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    {% for cell in row %}<td>{{ cell }}</td>{% endfor %}
+                </tr>
+                {% else %}
+                <tr><td colspan="{{ headers|length }}" class="text-muted text-center py-3">Nenhum registro encontrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

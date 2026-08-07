@@ -56,7 +56,31 @@
                         <small class="text-muted">ID {{ r.empresa_id }}</small>
                     </td>
                     <td>{{ r.plano }}</td>
-                    <td class="text-capitalize">{{ r.status }}</td>
+                    <td>
+                        {% set st = r.status %}
+                        {% if st in ('ativa', 'trial') %}
+                            <span class="badge bg-success text-capitalize">{{ st }}</span>
+                        {% elif st == 'suspensa' %}
+                            <span class="badge bg-warning text-dark text-capitalize">{{ st }}</span>
+                        {% elif st == 'cancelada' %}
+                            <span class="badge bg-danger text-capitalize">{{ st }}</span>
+                        {% elif st == 'excluida' %}
+                            <span class="badge bg-dark text-capitalize">excluída</span>
+                        {% else %}
+                            <span class="badge bg-secondary text-capitalize">{{ st }}</span>
+                        {% endif %}
+                        {% if st == 'excluida' %}
+                            <div class="mt-2">
+                                <small class="text-danger fw-bold">
+                                    <i class="fas fa-hourglass-half me-1"></i>
+                                    Exclusão definitiva em {{ r.dias_restantes_exclusao }} dia(s)
+                                </small>
+                                <small class="text-muted d-block">
+                                    Purga em {{ r.data_purga_exclusao.strftime('%d/%m/%Y') if r.data_purga_exclusao else '-' }}
+                                </small>
+                            </div>
+                        {% endif %}
+                    </td>
                     <td>{{ r.vigencia.strftime('%d/%m/%Y') if r.vigencia else '-' }}</td>
                     <td>
                         {% if r.proximo_plano_codigo %}
@@ -105,6 +129,49 @@
             </tbody>
         </table>
     </div>
+</div>
+
+<div class="ls-card p-4 mb-4">
+    <h5 class="mb-1 ls-page-title"><i class="fas fa-tasks me-2"></i> Módulos / Atividades da Empresa</h5>
+    <p class="text-muted small mb-3">
+        Controle liberado pelo Backoffice Comercial conforme a assinatura. Este painel tem
+        autoridade sobre o acesso da empresa — os módulos definidos aqui determinam quais
+        funcionalidades os usuários da empresa visualizam no sistema.
+    </p>
+    {% for r in rows %}
+    <div class="border rounded p-3 mb-2">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+            <strong>{{ r.empresa_nome }}</strong>
+            <span class="badge bg-secondary">Plano {{ r.plano }}</span>
+        </div>
+        <form method="POST" action="{{ url_for('admin_comercial.atualizar_modulos', empresa_id=r.empresa_id) }}" class="row g-2 align-items-end">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% for key, meta in module_labels.items() %}
+            <div class="col-md-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox"
+                           name="modulo_{{ key }}" id="mod_{{ r.empresa_id }}_{{ key }}"
+                           {% if r.modulos.get(key) %}checked{% endif %}
+                           {% if r.status == 'excluida' %}disabled{% endif %}>
+                    <label class="form-check-label small fw-semibold" for="mod_{{ r.empresa_id }}_{{ key }}">
+                        {{ meta.label }}
+                    </label>
+                    <div class="small text-muted">{{ meta.descricao }}</div>
+                </div>
+            </div>
+            {% endfor %}
+            <div class="col-12 mt-2">
+                {% if r.status == 'excluida' %}
+                    <span class="text-danger small"><i class="fas fa-ban me-1"></i>Empresa excluída — módulos bloqueados até a purga dos dados.</span>
+                {% else %}
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-save me-1"></i>Salvar módulos de {{ r.empresa_nome }}</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">Nenhuma assinatura para gerenciar módulos.</p>
+    {% endfor %}
 </div>
 
 <div class="row g-4">
