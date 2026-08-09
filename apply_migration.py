@@ -86,13 +86,13 @@ def main():
         'database': Config.DB_NAME,
     }
     
-    # Configuração da base Hostinger (credenciais fixas do script de teste)
+    # Configuração da base Hostinger (credenciais via variáveis de ambiente)
     hostinger_config = {
-        'host': "195.35.61.111",
-        'port': 3306,
-        'user': "u951548013_LS_Comercial",
-        'password': "quemsabe123!A",
-        'database': "u951548013_LS_Comercial",
+        'host': os.environ.get('DB_HOST', "195.35.61.111"),
+        'port': int(os.environ.get('DB_PORT', 3306)),
+        'user': os.environ.get('DB_USER', "u951548013_LS_Comercial"),
+        'password': os.environ.get('DB_PASSWORD', ""),
+        'database': os.environ.get('DB_NAME', "u951548013_LS_Comercial"),
     }
     
     # Aplicar na base local

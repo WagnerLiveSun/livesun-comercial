@@ -5,14 +5,15 @@ Dropa todas as tabelas de forma agressiva.
 """
 import pymysql
 import sys
+import os
 
-# Credenciais Hostinger
+# Credenciais Hostinger (via variáveis de ambiente)
 DB_CONFIG = {
-    'host': '195.35.61.111',
-    'port': 3306,
-    'user': 'u951548013_LS_Comercial',
-    'password': 'quemsabe123!A',
-    'database': 'u951548013_LS_Comercial',
+    'host': os.environ.get('DB_HOST', '195.35.61.111'),
+    'port': int(os.environ.get('DB_PORT', 3306)),
+    'user': os.environ.get('DB_USER', 'u951548013_LS_Comercial'),
+    'password': os.environ.get('DB_PASSWORD', ''),
+    'database': os.environ.get('DB_NAME', 'u951548013_LS_Comercial'),
     'charset': 'utf8mb4'
 }
 

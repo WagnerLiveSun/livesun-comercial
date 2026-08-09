@@ -7,15 +7,15 @@ import sys
 # Adicionar o diretório src ao path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-# Configurar variáveis de ambiente para a Hostinger
-os.environ['DB_TYPE'] = 'mysql'
-os.environ['DB_HOST'] = '195.35.61.111'
-os.environ['DB_PORT'] = '3306'
-os.environ['DB_USER'] = 'u951548013_LS_Comercial'
-os.environ['DB_PASSWORD'] = 'quemsabe123!A'
-os.environ['DB_NAME'] = 'u951548013_LS_Comercial'
-os.environ['FLASK_ENV'] = 'production'
-os.environ['SECRET_KEY'] = 'temp-secret-key-for-migration'
+# Configurar variáveis de ambiente para a Hostinger (usa .env/secrets quando presentes)
+os.environ.setdefault('DB_TYPE', 'mysql')
+os.environ.setdefault('DB_HOST', '195.35.61.111')
+os.environ.setdefault('DB_PORT', '3306')
+os.environ.setdefault('DB_USER', 'u951548013_LS_Comercial')
+os.environ['DB_PASSWORD'] = os.environ.get('DB_PASSWORD', '')
+os.environ.setdefault('DB_NAME', 'u951548013_LS_Comercial')
+os.environ.setdefault('FLASK_ENV', 'production')
+os.environ['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'temp-secret-key-for-migration')
 
 from src.app import create_app
 from src.models import db

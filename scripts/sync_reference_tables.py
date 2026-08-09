@@ -3,20 +3,21 @@
 
 import pymysql
 from pymysql import MySQLError
+import os
 
-# Credenciais do banco LOCAL
-LOCAL_DB_HOST = "localhost"
-LOCAL_DB_PORT = 3306
-LOCAL_DB_USER = "root"
-LOCAL_DB_PASSWORD = "livesun"
-LOCAL_DB_NAME = "comercial"
+# Credenciais do banco LOCAL (via variáveis de ambiente)
+LOCAL_DB_HOST = os.environ.get("LOCAL_DB_HOST", "localhost")
+LOCAL_DB_PORT = int(os.environ.get("LOCAL_DB_PORT", 3306))
+LOCAL_DB_USER = os.environ.get("LOCAL_DB_USER", "root")
+LOCAL_DB_PASSWORD = os.environ.get("LOCAL_DB_PASSWORD", "")
+LOCAL_DB_NAME = os.environ.get("LOCAL_DB_NAME", "comercial")
 
-# Credenciais do banco HOSTINGER
-HOSTINGER_DB_HOST = "195.35.61.111"
-HOSTINGER_DB_PORT = 3306
-HOSTINGER_DB_USER = "u951548013_LS_Comercial"
-HOSTINGER_DB_PASSWORD = "quemsabe123!A"
-HOSTINGER_DB_NAME = "u951548013_LS_Comercial"
+# Credenciais do banco HOSTINGER (via variáveis de ambiente)
+HOSTINGER_DB_HOST = os.environ.get("DB_HOST", "195.35.61.111")
+HOSTINGER_DB_PORT = int(os.environ.get("DB_PORT", 3306))
+HOSTINGER_DB_USER = os.environ.get("DB_USER", "u951548013_LS_Comercial")
+HOSTINGER_DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
+HOSTINGER_DB_NAME = os.environ.get("DB_NAME", "u951548013_LS_Comercial")
 
 # Tabelas de referência para sincronizar
 REFERENCE_TABLES = [

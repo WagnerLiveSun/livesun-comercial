@@ -3,13 +3,14 @@
 
 import pymysql
 from pymysql import MySQLError
+import os
 
-# Credenciais do banco de dados na Hostinger
-DB_HOST = "195.35.61.111"
-DB_PORT = 3306
-DB_USER = "u951548013_LS_Comercial"
-DB_PASSWORD = "quemsabe123!A"
-DB_NAME = "u951548013_LS_Comercial"
+# Credenciais do banco de dados na Hostinger (via variáveis de ambiente)
+DB_HOST = os.environ.get("DB_HOST", "195.35.61.111")
+DB_PORT = int(os.environ.get("DB_PORT", 3306))
+DB_USER = os.environ.get("DB_USER", "u951548013_LS_Comercial")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
+DB_NAME = os.environ.get("DB_NAME", "u951548013_LS_Comercial")
 
 def test_connection():
     """Testa a conexão com o banco de dados"""
