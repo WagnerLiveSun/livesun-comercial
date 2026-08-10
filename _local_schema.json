@@ -1,0 +1,8703 @@
+{
+ "assinatura_empresa": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "bloqueado_desde": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "bloqueio_nivel": {
+   "default": "nenhum",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "carencia_dias": {
+   "default": "7",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "catalogo_plano_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "ciclo_cobranca": {
+   "default": "mensal",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_exclusao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_fim_trial": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_inicio": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_limite_carencia": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_renovacao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_vencimento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": false,
+   "type": "int"
+  },
+  "gateway": {
+   "default": "asaas",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "gateway_customer_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "gateway_subscription_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "motivo_status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "mudanca_plano_efetivar_em": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "mudanca_plano_solicitada_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "plano_codigo": {
+   "default": "premium",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "politica_efetivacao_dias": {
+   "default": "30",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "proximo_plano_codigo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(30)"
+  },
+  "status": {
+   "default": "trial",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  }
+ },
+ "catalogo_planos_comercial": {
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "codigo_plano": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "limite_usuarios": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "moeda": {
+   "default": "BRL",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(10)"
+  },
+  "nome_exibicao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(80)"
+  },
+  "periodicidade": {
+   "default": "mensal",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "preco": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(10,2)"
+  },
+  "recursos_json": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "versao_oferta": {
+   "default": "1",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "vigencia_fim": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "vigencia_inicio": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  }
+ },
+ "clausulas_contrato_padrao": {
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "atualizado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "categoria": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "codigo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "editavel": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "ordem_padrao": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "texto_base": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "text"
+  },
+  "tipo": {
+   "default": "opcional",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "tipo_contrato": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "titulo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(200)"
+  }
+ },
+ "cobranca_recorrente": {
+  "assinatura_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "competencia_ano": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "competencia_mes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_emissao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_pagamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_vencimento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "gateway": {
+   "default": "asaas",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "gateway_cobranca_id": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "payload_gateway": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "periodicidade": {
+   "default": "mensal",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "referencia_interna": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": false,
+   "type": "varchar(120)"
+  },
+  "status": {
+   "default": "pendente",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "tentativas_pagamento": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "ultimo_erro": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "valor_pago": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(10,2)"
+  },
+  "valor_previsto": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(10,2)"
+  }
+ },
+ "comissoes": {
+  "aliquota_aplicada": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(5,2)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "dt_lancamento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "dt_pagamento_recebimento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "dt_vencimento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "entidade_cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "entidade_vendedor_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "id_apuracao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "lancamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "situacao": {
+   "default": "ativo",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "vl_comissao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "vl_imposto": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "vl_liquido": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "vl_nota": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "vl_outros_custos": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "vl_repasse": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "compras_nf_itens": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "cfop": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "compra_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "csosn": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(5)"
+  },
+  "cst": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(5)"
+  },
+  "descricao_livre": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(200)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "ncm": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "produto_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "quantidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,3)"
+  },
+  "total_item": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_unitario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "compras_nf_lancamentos": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "compra_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_vencimento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "lancamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "parcela_numero": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "parcela_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "valor_parcela": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "compras_nf_manual": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "data_emissao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_entrada": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "fornecedor_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "lancamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "numero_documento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "serie": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "status": {
+   "default": "registrada",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "compras_nf_xml_import": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "dados_parseados": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "json"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "fornecedor_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "xml_original": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "text"
+  }
+ },
+ "compras_nf_xml_itens": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "confirmado": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "dados_item": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "json"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "import_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "produto_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "conciliacao_bancaria": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "conta_banco_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "periodo_fim": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "periodo_inicio": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "status": {
+   "default": "aberta",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  }
+ },
+ "conciliacao_item": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "conciliacao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_movimento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "descricao_extrato": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "lancamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "motivo_divergencia": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "referencia_banco": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "status": {
+   "default": "pendente",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "valor_extrato": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "contas_banco": {
+  "agencia": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(10)"
+  },
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "banco": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "dv": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(2)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "fluxo_conta_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "is_principal": {
+   "default": "0",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "nome": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(150)"
+  },
+  "numero_conta": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "saldo_inicial": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "tipo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  }
+ },
+ "contrato_anexos": {
+  "caminho_arquivo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(500)"
+  },
+  "contrato_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "nome_arquivo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(255)"
+  },
+  "tamanho_bytes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "bigint"
+  },
+  "tipo_anexo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "tipo_arquivo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(100)"
+  }
+ },
+ "contrato_clausulas": {
+  "alterado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "clausula_padrao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "contrato_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_alteracao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "editavel": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "obrigatoria": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "ordem": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "texto": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "text"
+  },
+  "titulo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(200)"
+  }
+ },
+ "contrato_historico": {
+  "acao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "alterado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "campos_alterados": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "json"
+  },
+  "clausulas_alteradas": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "json"
+  },
+  "contrato_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "data_alteracao": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "MUL",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao_alteracao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "bigint"
+  },
+  "snapshot_contrato": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "json"
+  },
+  "status_anterior": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "status_novo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "versao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  }
+ },
+ "contrato_parametros": {
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "codigo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "nome": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(100)"
+  },
+  "origem": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "tipo_dado": {
+   "default": "texto",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "valor_padrao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  }
+ },
+ "contrato_parametros_valores": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "contrato_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "parametro_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "valor": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "text"
+  }
+ },
+ "contratos": {
+  "assinado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "contratada_entidade_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "contratante_entidade_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_assinatura": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_fim_vigencia": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_geracao": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_inicio_vigencia": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "descricao_servicos": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "forma_pagamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "gerado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "motivo_cancelamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "objeto_contrato": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "orcamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "periodicidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "serie": {
+   "default": "CTR",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "status": {
+   "default": "rascunho",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "titulo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(200)"
+  },
+  "valor_mensal": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "vendedor_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "ctiss_bh": {
+  "ETM_CDTRIBUTACAO": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(12)"
+  },
+  "ETM_DSDESCRICAO": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "ETM_IDETM": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "documentos_venda": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "data_emissao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_pagamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_vencimento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "lancamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "numero_documento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "origem_tipo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "pedido_id": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "status": {
+   "default": "emitido",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "documentos_venda_itens": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(200)"
+  },
+  "documento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "produto_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "quantidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,3)"
+  },
+  "servico_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "tipo_item": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(1)"
+  },
+  "total_item": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_unitario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "empresa_fiscal_itens": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "principal": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "tipo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(32)"
+  },
+  "valor": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(120)"
+  }
+ },
+ "empresas": {
+  "atividade_comercial": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atividade_contratos": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atividade_dashboard": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atividade_financeiro": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atividade_locacao": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atividade_propostas": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atividade_servicos": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "cnpj": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": true,
+   "type": "varchar(18)"
+  },
+  "codigo_municipio_ibge": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(7)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "email": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "endereco_bairro": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "endereco_cep": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(8)"
+  },
+  "endereco_cidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "endereco_numero": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "endereco_rua": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(150)"
+  },
+  "endereco_uf": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(2)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "inscricao_estadual": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "inscricao_municipal": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "logo_caminho": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "nome": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": false,
+   "type": "varchar(150)"
+  },
+  "nome_fantasia": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(150)"
+  },
+  "op_simp_nac": {
+   "default": "3",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "plano": {
+   "default": "premium",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "reg_ap_trib_sn": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "telefone": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  }
+ },
+ "entidades": {
+  "aliquota_comissao_especifica": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "cnpj_cpf": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(18)"
+  },
+  "codigo_municipio_ibge": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(7)"
+  },
+  "contrato_produto": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "email": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "endereco_bairro": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "endereco_cep": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(9)"
+  },
+  "endereco_cidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "endereco_numero": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "endereco_rua": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(150)"
+  },
+  "endereco_uf": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(2)"
+  },
+  "fluxo_conta_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "inscricao_estadual": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "inscricao_municipal": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "nome": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(150)"
+  },
+  "nome_fantasia": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(150)"
+  },
+  "telefone": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "tipo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(1)"
+  },
+  "valor_repasse": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(10,2)"
+  },
+  "vendedor_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "estoque_movimentos": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "data_movimento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "documento_ref": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(80)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "origem": {
+   "default": "manual",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "produto_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "quantidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,3)"
+  },
+  "tipo_movimento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(10)"
+  },
+  "valor_unitario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  }
+ },
+ "evento_cobranca": {
+  "assinatura_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "cobranca_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "event_id_externo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(150)"
+  },
+  "gateway": {
+   "default": "asaas",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "mensagem_erro": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "payload": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "processado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "recebido_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "MUL",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "status_processamento": {
+   "default": "recebido",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "tipo_evento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(80)"
+  }
+ },
+ "filiais": {
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "cnpj": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(18)"
+  },
+  "codigo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "endereco_bairro": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "endereco_cep": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(8)"
+  },
+  "endereco_cidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "endereco_numero": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "endereco_rua": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(150)"
+  },
+  "endereco_uf": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(2)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "nome": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(150)"
+  }
+ },
+ "fluxo_caixa_previsto": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "conta_banco_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "fluxo_conta_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "saldo_anterior": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "saldo_previsto": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_previsto_pago": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_previsto_recebido": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "fluxo_caixa_realizado": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "conta_banco_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "fluxo_conta_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "saldo_anterior": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "saldo_atual": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_pago": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_recebido": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "fluxo_contas_modelo": {
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "codigo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(200)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "mascara": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "nivel_analitico": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "nivel_sintetico": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "tipo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(1)"
+  }
+ },
+ "historico_mudanca_plano": {
+  "assinatura_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "efetivado_em": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "executado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "plano_destino": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "plano_origem": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "regra_efetivacao": {
+   "default": "apos_30_dias",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "solicitado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "MUL",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "solicitado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "tipo_mudanca": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  }
+ },
+ "importacao_nfse": {
+  "aliquota_comissao_especifica": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "aliquota_iss": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "chave_nota": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(60)"
+  },
+  "cnpj_tomador": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "contrato_produto": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_emissao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_importacao": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao_servico": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "email": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "endereco_bairro": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "endereco_cep": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(8)"
+  },
+  "endereco_cidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "endereco_numero": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "endereco_rua": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(150)"
+  },
+  "endereco_uf": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(2)"
+  },
+  "entidade_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "entidade_vendedor_padrao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "lancamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "mensagem_erro": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "numero_nota": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "status_importacao": {
+   "default": "sucesso",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "telefone": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "valor_bruto": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_impostos": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_repasse": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(10,2)"
+  }
+ },
+ "lancamentos": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "conta_banco_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_evento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_pagamento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_vencimento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "entidade_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "fluxo_conta_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "fonte": {
+   "default": "manual",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "numero_documento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "referencia_banco": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "status": {
+   "default": "aberto",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "valor_imposto": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_outros_custos": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_pago": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_real": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_auditoria": {
+  "dados_anteriores": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "dados_novos": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "data_acao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "id_entidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "tipo_acao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "tipo_entidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "locacao_cobrancas": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "contrato_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "inspecao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "tipo_cobranca": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "titulo_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "valor_cobranca": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_pago": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_contratos": {
+  "assinado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "assinado_por_cliente": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "assinado_por_empresa": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "condicoes_gerais": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "data_contrato": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_devolucao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_retirada": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "evento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "multa_atraso_diaria": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "multa_avaria_percentual": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "multa_perda_percentual": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "reserva_id": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": false,
+   "type": "int"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "valor_aluguel": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_caucao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_sinal": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_devolucao_caucao": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "contrato_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_devolucao_efetiva": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_devolucao_prevista": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "titulo_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "valor_caucao_original": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_descontos": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_devolucao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_devolucoes": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "contrato_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_devolucao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_devolucao_prevista": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "dias_atraso": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "multa_atraso": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "responsavel_devolucao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(150)"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "tipo_devolucao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "user_devolucao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "locacao_disponibilidade": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_fim": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_inicio": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "manutencao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "motivo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "peca_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "reserva_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "locacao_eventos": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_evento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "local": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "tipo_evento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(100)"
+  }
+ },
+ "locacao_faturamentos": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "contrato_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_faturamento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "evento_faturamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "memoria_calculo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "numero_documento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "valor_aluguel": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_avaria": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_caucao_retida": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_multa": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_venda": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_inspecoes": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "classificacao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "devolucao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "encaminhamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "manutencao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "peca_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "valor_limpeza": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_reparo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_reposicao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_total_cobranca": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_kit_itens": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "kit_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "peca_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "quantidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "locacao_kits": {
+  "ativo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "codigo_interno": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(255)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "preco_aluguel_diario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "preco_venda": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "tema": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  }
+ },
+ "locacao_manutencoes": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_entrada": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_saida": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_saida_prevista": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "peca_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "tipo_servico": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "valor_material": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_servico": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_orcamento_itens": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(255)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "kit_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "orcamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "peca_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "quantidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "tipo_item": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(1)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_unitario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_orcamentos": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "data_devolucao_prevista": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_emissao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_retirada_prevista": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_validade": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "dias_locacao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "evento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "percentual_caucao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "percentual_sinal": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "valor_acrescimo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_aluguel": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_caucao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_desconto": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_sinal": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_parametros": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "chave": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(100)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "tipo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "valor": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "text"
+  }
+ },
+ "locacao_pecas": {
+  "ativo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "categoria": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(100)"
+  },
+  "codigo_barras": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "codigo_interno": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "cor": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(255)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "estado_fisico": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "localizacao_fisica": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "marca_colecao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "preco_aluguel_diario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "preco_venda": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "qr_code": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "serializado": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "tamanho": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "tecido": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "tema": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(100)"
+  },
+  "valor_aquisicao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_reposicao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_reservas": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "data_devolucao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_reserva": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_retirada": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "dias_locacao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "evento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "orcamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": true,
+   "type": "int"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "valor_acrescimo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_aluguel": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_caucao_retida": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_desconto": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_sinal_pago": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "locacao_retirada_itens": {
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "kit_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "peca_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "quantidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "retirada_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  }
+ },
+ "locacao_retiradas": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "contrato_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_retirada": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "modo_retirada": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "responsavel_retirada": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(150)"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "user_retirada_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "locacao_titulos": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "contrato_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_emissao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_pagamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_vencimento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "lancamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": true,
+   "type": "int"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "status": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "tipo_titulo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "valor_aberto": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_original": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_pago": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  }
+ },
+ "nbs_nbs": {
+  "CDNBS": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(9)"
+  },
+  "DESCRICAO": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  }
+ },
+ "nfse_cnae_referencia": {
+  "ativo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "classe": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "codigo": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "denominacao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(500)"
+  },
+  "divisao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(5)"
+  },
+  "grupo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "secao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(2)"
+  },
+  "subclasse": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  }
+ },
+ "nfse_ctrib_mun_referencia": {
+  "ativo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "codigo_ibge": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(7)"
+  },
+  "codigo_tributacao_municipal": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(12)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "data_fim_vigencia": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_inicio_vigencia": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "text"
+  },
+  "exige_ctribmun": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "nome_municipio": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(120)"
+  },
+  "origem_catalogo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(40)"
+  },
+  "uf_sigla": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(2)"
+  }
+ },
+ "nfse_indop_referencia": {
+  "art": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "ativo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "campo_leiaute": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "caracteristica_fornecimento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "codigo_indop": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "considera_local_operacao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "local_fornecimento_identificado": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "tipo_operacao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "text"
+  }
+ },
+ "nfse_municipios_referencia": {
+  "ativo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "codigo_ibge": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": false,
+   "type": "varchar(7)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "nome_municipio": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(120)"
+  },
+  "nome_uf": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(120)"
+  },
+  "pais_iso2": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(2)"
+  },
+  "pais_nome": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "uf_sigla": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(2)"
+  }
+ },
+ "nfse_nacional_certificados": {
+  "ambiente": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "arquivo_nome": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(255)"
+  },
+  "ativo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "caminho_arquivo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "removed_at": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "removed_by": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "removed_by_id": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "senha": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(512)"
+  },
+  "validade_em": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "date"
+  }
+ },
+ "nfse_nacional_configuracoes": {
+  "ambiente": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "codigo_municipio": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "emissor_ativo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "endpoint_base": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "inscricao_municipal": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(30)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "regime_tributario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "serie": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "versao_layout": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(30)"
+  }
+ },
+ "nfse_nacional_emissoes": {
+  "ambiente": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "canal_origem": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(40)"
+  },
+  "cancelado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "cancelado_por_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "certificado_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "chave_nfse": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "codigo_tributacao_municipal": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "codigo_tributacao_nacional": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "codigo_verificacao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(40)"
+  },
+  "configuracao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "erro_retorno": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "hash_idempotencia": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(80)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "integracao_origem_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "lancamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "local_prestacao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "log_tecnico": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "motivo_cancelamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "numero_interno": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "numero_nfse": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(30)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "origem_referencia": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "origem_tipo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(40)"
+  },
+  "payload_cancelamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "longtext"
+  },
+  "payload_envio": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "payload_retorno": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "pedido_id": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "protocolo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(80)"
+  },
+  "protocolo_cancelamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(80)"
+  },
+  "regime_tributacao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "servico_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "servico_local_prestacao": {
+   "default": "emitente",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "situacao_fiscal": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "status_processamento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "tomador_endereco": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "tomador_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "tp_ret_issqn": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(2)"
+  },
+  "valor_deducoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_iss": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_servico": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "versao_layout": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(30)"
+  },
+  "versao_xsd": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(30)"
+  },
+  "xml_dps": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "xml_nfse": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  }
+ },
+ "nfse_nacional_eventos": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "emissao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "mensagem": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "payload_envio": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "payload_retorno": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "protocolo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(80)"
+  },
+  "status_evento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "tipo_evento": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(40)"
+  }
+ },
+ "nfse_nacional_fila": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "emissao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "payload": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "processado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "proxima_tentativa_em": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "status_fila": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "tentativas": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "ultimo_erro": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  }
+ },
+ "nfse_nacional_integracoes_origem": {
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "canal_origem": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(40)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "hash_idempotencia": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(80)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "origem_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(80)"
+  },
+  "origem_referencia": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "origem_tipo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(40)"
+  },
+  "payload_origem": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  }
+ },
+ "nfse_nbs_referencia": {
+  "ativo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "codigo_nbs": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "text"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "origem_catalogo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(40)"
+  }
+ },
+ "nfse_servicos_nacionais_referencia": {
+  "ativo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "codigo_tributacao_nacional": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "criado_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "text"
+  },
+  "desdobro_nacional": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "item": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "subitem": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  }
+ },
+ "notificacao_comercial": {
+  "agendada_para": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "assinatura_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "canal": {
+   "default": "email",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "destinatario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(150)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "enviada_em": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "erro": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "payload": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "status": {
+   "default": "pendente",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "tentativas": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "tipo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(50)"
+  }
+ },
+ "orcamentos": {
+  "aprovado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "condicoes_pagamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "data_aprovacao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_emissao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_validade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "detalhes_tecnicos": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "observacoes_internas": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "pedido_id": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "serie": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "status": {
+   "default": "emitido",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "tabela_preco_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "termos_compra": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "validade_precos": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "valor_desconto": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_produtos": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_servicos": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "vendedor_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "orcamentos_itens": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(200)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "orcamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "percentual_desconto": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "produto_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "quantidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,3)"
+  },
+  "sequencia": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "servico_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "tipo_item": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(1)"
+  },
+  "valor_desconto": {
+   "default": "0.0000",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,4)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_unitario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,4)"
+  }
+ },
+ "parametros_sistema": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "chave": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(100)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(255)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "tipo": {
+   "default": "string",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "valor": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "text"
+  }
+ },
+ "password_reset_codes": {
+  "code": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(6)"
+  },
+  "created_at": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "email": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(120)"
+  },
+  "expires_at": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "used": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "used_at": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  }
+ },
+ "pdv_itens": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "codigo": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "codigo_barras": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(60)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(200)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "percentual_desconto": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "produto_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "quantidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,3)"
+  },
+  "sequencia": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "servico_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "tipo_item": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(1)"
+  },
+  "valor_desconto": {
+   "default": "0.0000",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,4)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_unitario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,4)"
+  },
+  "venda_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  }
+ },
+ "pdv_sessoes": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_abertura": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "MUL",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_fechamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "pdv_nome": {
+   "default": "PDV Principal",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "status": {
+   "default": "aberto",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "valor_abertura": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_fechamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_sangria": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_sangrias": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_suprimento": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_suprimentos": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_vendas": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  }
+ },
+ "pdv_vendas": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "chave_cupom": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(50)"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "data_venda": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "documento_venda_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "numero_cupom": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "sessao_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "situacao_cupom": {
+   "default": "pendente",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "status": {
+   "default": "em_andamento",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "subtotal": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_boleto": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_cartao_credito": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_cartao_debito": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_desconto": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_dinheiro": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_outros": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_pix": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_recebido": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_troco": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  }
+ },
+ "pedidos_venda": {
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "cliente_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_por_user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "data_emissao": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "date"
+  },
+  "data_entrega": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_faturamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "documento_nfe_id": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "documento_nfse_id": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "documento_venda_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "numero": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(30)"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "observacoes_faturamento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "observacoes_internas": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "orcamento_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "serie": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "status": {
+   "default": "aprovado",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "tabela_preco_id": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "valor_desconto": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_frete": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_produtos": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_servicos": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,2)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "vendedor_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  }
+ },
+ "pedidos_venda_itens": {
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(200)"
+  },
+  "documento_item_id": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "observacoes": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "orcamento_item_id": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "int"
+  },
+  "pedido_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "percentual_desconto": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "produto_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "quantidade": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,3)"
+  },
+  "quantidade_atendida": {
+   "default": "0.000",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,3)"
+  },
+  "sequencia": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "servico_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "tipo_documento": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "tipo_item": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(1)"
+  },
+  "valor_desconto": {
+   "default": "0.0000",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,4)"
+  },
+  "valor_total": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_unitario": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,4)"
+  }
+ },
+ "produtos": {
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "cest": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "codigo_barras": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(60)"
+  },
+  "codigo_interno": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "controla_estoque": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao_completa": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "descricao_resumida": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(200)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "estoque_atual": {
+   "default": "0.000",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,3)"
+  },
+  "estoque_minimo": {
+   "default": "0.000",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,3)"
+  },
+  "ex_tipi": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(5)"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "gtin": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(60)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "ipi_classe": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "ncm": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "origem_mercadoria": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "tipo_item": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "unidade_medida": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(10)"
+  },
+  "valor_custo": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  },
+  "valor_venda_padrao": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,2)"
+  }
+ },
+ "role_permissions": {
+  "allowed": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "created_at": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "permission_key": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(80)"
+  },
+  "role": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "updated_at": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  }
+ },
+ "servicos": {
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "codigo_interno": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(50)"
+  },
+  "codigo_servico": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(200)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "filial_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "indicador_incidencia": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(30)"
+  },
+  "natureza_servico": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "nbs": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(20)"
+  }
+ },
+ "tabelas_preco": {
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "codigo": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "data_fim": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "date"
+  },
+  "data_inicio": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "date"
+  },
+  "descricao": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "text"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "markup_padrao": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "nome": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(100)"
+  },
+  "tipo": {
+   "default": "venda",
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(20)"
+  }
+ },
+ "tabelas_preco_itens": {
+  "ativo": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "atualizado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "criado_em": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "desconto_maximo": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "markup": {
+   "default": "0.00",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(5,2)"
+  },
+  "preco_custo": {
+   "default": "0.0000",
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "decimal(15,4)"
+  },
+  "preco_venda": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "decimal(15,4)"
+  },
+  "produto_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "servico_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "tabela_preco_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  }
+ },
+ "user_permission_overrides": {
+  "allowed": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "created_at": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "permission_key": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(80)"
+  },
+  "updated_at": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "user_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "int"
+  }
+ },
+ "users": {
+  "created_at": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "dashboard_chart_days": {
+   "default": "30",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "int"
+  },
+  "email": {
+   "default": null,
+   "extra": "",
+   "key": "UNI",
+   "nullable": false,
+   "type": "varchar(120)"
+  },
+  "empresa_id": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": true,
+   "type": "int"
+  },
+  "full_name": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": true,
+   "type": "varchar(120)"
+  },
+  "id": {
+   "default": null,
+   "extra": "auto_increment",
+   "key": "PRI",
+   "nullable": false,
+   "type": "int"
+  },
+  "is_active": {
+   "default": "1",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "is_admin": {
+   "default": "0",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "tinyint(1)"
+  },
+  "password_hash": {
+   "default": null,
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(255)"
+  },
+  "role": {
+   "default": "viewer",
+   "extra": "",
+   "key": "",
+   "nullable": false,
+   "type": "varchar(20)"
+  },
+  "updated_at": {
+   "default": "CURRENT_TIMESTAMP",
+   "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+   "key": "",
+   "nullable": false,
+   "type": "datetime"
+  },
+  "username": {
+   "default": null,
+   "extra": "",
+   "key": "MUL",
+   "nullable": false,
+   "type": "varchar(80)"
+  }
+ }
+}
