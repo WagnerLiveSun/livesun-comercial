@@ -24,7 +24,7 @@ services:
       - key: DB_USER
         value: u951548013_LS_Comercial
       - key: DB_PASSWORD
-        sync: false
+        value: quemsabe123!A
       - key: DB_NAME
         value: u951548013_LS_Comercial
       - key: SECRET_KEY
