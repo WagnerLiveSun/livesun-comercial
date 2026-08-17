@@ -8,11 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from datetime import datetime, timezone
 
-
-
 db = SQLAlchemy()
-
-
 
 # Import models from locacao module to register them with SQLAlchemy
 
@@ -42,8 +38,6 @@ from src.models.locacao import (
 
 )
 
-
-
 # Import models from contratos module to register them with SQLAlchemy
 
 from src.models import contratos
@@ -66,15 +60,9 @@ from src.models.contratos import (
 
 )
 
-
-
-
-
 def _utcnow():
 
     return datetime.now(timezone.utc)
-
-
 
 # Modelo de Entidade (restaurado)
 
@@ -97,8 +85,6 @@ class Entidade(db.Model):
     inscricao_estadual = db.Column(db.String(50))
 
     inscricao_municipal = db.Column(db.String(50))
-
-
 
     tipo = db.Column(db.String(1))
 
@@ -142,8 +128,6 @@ class Entidade(db.Model):
 
     ativo = db.Column(db.Boolean, default=True)
 
-
-
     def get_tipo_descricao(self):
 
         """Retorna a descrição do tipo da entidade (C=Cliente, F=Fornecedor, V=Vendedor, L=Funcionário, etc)."""
@@ -170,13 +154,9 @@ class Entidade(db.Model):
 
         return 'Não definido'
 
-
-
     def __repr__(self):
 
         return f'<Entidade {self.nome}>'
-
-
 
 class NfseMunicipioReferencia(db.Model):
 
@@ -189,8 +169,6 @@ class NfseMunicipioReferencia(db.Model):
         db.Index('idx_nfse_municipio_uf_nome', 'uf_sigla', 'nome_municipio'),
 
     )
-
-
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -207,7 +185,6 @@ class NfseMunicipioReferencia(db.Model):
     pais_nome = db.Column(db.String(120), nullable=True)
 
     ativo = db.Column(db.Boolean, default=True)
-
 
 class NfseCnaeReferencia(db.Model):
 
@@ -245,10 +222,6 @@ class NfseCnaeReferencia(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
-
-
 class NfseServicoNacionalReferencia(db.Model):
 
     __tablename__ = 'nfse_servicos_nacionais_referencia'
@@ -260,8 +233,6 @@ class NfseServicoNacionalReferencia(db.Model):
         db.Index('idx_nfse_servico_codigo', 'codigo_tributacao_nacional'),
 
     )
-
-
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -281,10 +252,6 @@ class NfseServicoNacionalReferencia(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
-
-
 class NfseNbsReferencia(db.Model):
 
     __tablename__ = 'nfse_nbs_referencia'
@@ -296,8 +263,6 @@ class NfseNbsReferencia(db.Model):
         db.Index('idx_nfse_nbs_codigo', 'codigo_nbs'),
 
     )
-
-
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -313,10 +278,6 @@ class NfseNbsReferencia(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
-
-
 class NfseIndOpReferencia(db.Model):
 
     __tablename__ = 'nfse_indop_referencia'
@@ -328,8 +289,6 @@ class NfseIndOpReferencia(db.Model):
         db.Index('idx_nfse_indop_codigo', 'codigo_indop'),
 
     )
-
-
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -353,8 +312,6 @@ class NfseIndOpReferencia(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
 class NfseCtribMunReferencia(db.Model):
 
     __tablename__ = 'nfse_ctrib_mun_referencia'
@@ -368,8 +325,6 @@ class NfseCtribMunReferencia(db.Model):
         db.Index('idx_nfse_ctrib_mun_codigo', 'codigo_tributacao_municipal'),
 
     )
-
-
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -396,8 +351,6 @@ class NfseCtribMunReferencia(db.Model):
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
-
-
 
 # Modelo de Usuário para autenticação
 
@@ -437,19 +390,13 @@ class User(UserMixin, db.Model):
 
     updated_at = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def set_password(self, password):
 
         self.password_hash = generate_password_hash(password)
 
-
-
     def check_password(self, password):
 
         return check_password_hash(self.password_hash, password)
-
-
 
     def is_livesun_admin(self):
 
@@ -457,15 +404,9 @@ class User(UserMixin, db.Model):
 
         return self.role == 'admin' and self.empresa_id is None and self.is_admin
 
-
-
     def __repr__(self):
 
         return f'<User {self.username}>'
-
-
-
-
 
 class RolePermission(db.Model):
 
@@ -479,15 +420,11 @@ class RolePermission(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='role_permissions')
-
-
 
     role = db.Column(db.String(20), nullable=False, index=True)
 
@@ -495,21 +432,13 @@ class RolePermission(db.Model):
 
     allowed = db.Column(db.Boolean, nullable=False, default=True)
 
-
-
     created_at = db.Column(db.DateTime, default=_utcnow)
 
     updated_at = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<RolePermission empresa={self.empresa_id} role={self.role} key={self.permission_key} allowed={self.allowed}>'
-
-
-
-
 
 class UserPermissionOverride(db.Model):
 
@@ -523,39 +452,27 @@ class UserPermissionOverride(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='user_permission_overrides')
 
-
-
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
 
     user = db.relationship('User', backref='permission_overrides')
-
-
 
     permission_key = db.Column(db.String(80), nullable=False, index=True)
 
     allowed = db.Column(db.Boolean, nullable=False, default=True)
 
-
-
     created_at = db.Column(db.DateTime, default=_utcnow)
 
     updated_at = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<UserPermissionOverride empresa={self.empresa_id} user={self.user_id} key={self.permission_key} allowed={self.allowed}>'
-
-
 
 # Modelo Empresa para multi-tenant
 
@@ -573,7 +490,7 @@ class Empresa(db.Model):
 
     plano = db.Column(db.String(20), nullable=False, default='premium')
 
-    
+
 
     # Atividades da Empresa
 
@@ -587,17 +504,9 @@ class Empresa(db.Model):
 
     atividade_contratos = db.Column(db.Boolean, default=False)
 
-    atividade_propostas = db.Column(db.Boolean, default=False)
-
-    atividade_dashboard = db.Column(db.Boolean, default=True)
-
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
-
-
 
     # Endereço
 
@@ -615,8 +524,6 @@ class Empresa(db.Model):
 
     endereco_cep = db.Column(db.String(8))
 
-
-
     # Inscrições fiscais / contato
 
     inscricao_municipal = db.Column(db.String(50))
@@ -628,15 +535,18 @@ class Empresa(db.Model):
     email = db.Column(db.String(120))
 
     # Logo da empresa para DANFS-e e relatórios
+
     logo_caminho = db.Column(db.String(255))
 
     # Regime tributário para NFS-e (Simples Nacional)
+
     # opSimpNac: Situação perante o Simples Nacional (1=Não Optante, 2=MEI, 3=ME/EPP)
+
     op_simp_nac = db.Column(db.Integer, default=3)
+
     # regApTribSN: Regime de apuração (quando opSimpNac=3: 1=SN, 2=SN+ISSQN fora, 3=fora SN)
+
     reg_ap_trib_sn = db.Column(db.Integer, default=1)
-
-
 
     def fiscal_itens_por_tipo(self, tipo: str):
 
@@ -644,15 +554,11 @@ class Empresa(db.Model):
 
         return sorted(itens, key=lambda item: (not item.principal, (item.valor or '').lower()))
 
-
-
     def fiscal_principal_valor(self, tipo: str) -> str:
 
         itens = self.fiscal_itens_por_tipo(tipo)
 
         return itens[0].valor if itens else ''
-
-
 
     def fiscal_valores_por_tipo(self, tipo: str):
 
@@ -666,15 +572,9 @@ class Empresa(db.Model):
 
         return valores
 
-
-
     def __repr__(self):
 
         return f'<Empresa {self.nome}>'
-
-
-
-
 
 class EmpresaFiscalItem(db.Model):
 
@@ -689,8 +589,6 @@ class EmpresaFiscalItem(db.Model):
         db.Index('idx_empresa_fiscal_empresa_principal', 'empresa_id', 'tipo', 'principal'),
 
     )
-
-
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -708,15 +606,9 @@ class EmpresaFiscalItem(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<EmpresaFiscalItem empresa={self.empresa_id} tipo={self.tipo} valor={self.valor} principal={self.principal}>'
-
-
-
-
 
 class Comissao(db.Model):
 
@@ -724,7 +616,7 @@ class Comissao(db.Model):
 
     __tablename__ = 'comissoes'
 
-    
+
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -732,7 +624,7 @@ class Comissao(db.Model):
 
     empresa = db.relationship('Empresa', backref='comissoes')
 
-    
+
 
     # Identificação de apuração
 
@@ -744,13 +636,13 @@ class Comissao(db.Model):
 
     lancamento = db.relationship('Lancamento', foreign_keys=[lancamento_id])
 
-    
+
 
     entidade_cliente_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=False, index=True)
 
     entidade_vendedor_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=False, index=True)
 
-    
+
 
     # Datas
 
@@ -760,7 +652,7 @@ class Comissao(db.Model):
 
     dt_pagamento_recebimento = db.Column(db.Date, nullable=False, index=True)  # data_pagamento do lancamento
 
-    
+
 
     # Valores
 
@@ -778,13 +670,13 @@ class Comissao(db.Model):
 
     vl_comissao = db.Column(db.Numeric(15, 2), nullable=False)  # Valor da comissão
 
-    
+
 
     # Situação
 
     situacao = db.Column(db.String(20), default='ativo')  # ativo, estornado, reapurado
 
-    
+
 
     # Metadados
 
@@ -792,7 +684,7 @@ class Comissao(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-    
+
 
     __table_args__ = (
 
@@ -802,13 +694,11 @@ class Comissao(db.Model):
 
     )
 
-    
+
 
     def __repr__(self):
 
         return f'<Comissao {self.id} - Apuração {self.id_apuracao} - R$ {self.vl_comissao}>'
-
-
 
 # -------------------
 
@@ -838,8 +728,6 @@ class ImportacaoNFSe(db.Model):
 
     entidade = db.relationship('Entidade', foreign_keys=[entidade_id], backref='importacoes_nfse')
 
-
-
     # Relacionamento reverso para facilitar exclusão em cascata
 
     lancamento_id = db.Column(db.Integer, db.ForeignKey('lancamentos.id', ondelete='CASCADE'), nullable=True, index=True)
@@ -862,13 +750,13 @@ class ImportacaoNFSe(db.Model):
 
     # xml_original removido (não armazenar XML no banco)
 
-    
+
 
     def __repr__(self):
 
         return f'<ImportacaoNFSe {self.chave_nota} - {self.numero_nota}>'
 
-    
+
 
     # Endereço
 
@@ -884,7 +772,7 @@ class ImportacaoNFSe(db.Model):
 
     endereco_cep = db.Column(db.String(8))
 
-    
+
 
     # Contato
 
@@ -892,13 +780,13 @@ class ImportacaoNFSe(db.Model):
 
     email = db.Column(db.String(120))
 
-    
+
 
     # Contrato/Produto
 
     contrato_produto = db.Column(db.Text)
 
-    
+
 
     # Alíquota do ISS extraída do XML
 
@@ -910,13 +798,11 @@ class ImportacaoNFSe(db.Model):
 
     valor_repasse = db.Column(db.Numeric(10, 2), default=0.00)  # Valor fixo de repasse ao fornecedor
 
-
-
     entidade_vendedor_padrao_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=True)  # Vendedor padrão
 
     entidade_vendedor_padrao = db.relationship('Entidade', foreign_keys=[entidade_vendedor_padrao_id], backref='importacoes_nfse_vendedor_padrao')
 
-    
+
 
     # Metadados
 
@@ -926,14 +812,6 @@ class ImportacaoNFSe(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-    
-
-
-
-
-
-
-
 
 
 class FluxoContaModel(db.Model):
@@ -942,7 +820,7 @@ class FluxoContaModel(db.Model):
 
     __tablename__ = 'fluxo_contas_modelo'
 
-    
+
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -968,25 +846,19 @@ class FluxoContaModel(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-    
+
 
     # Relacionamentos
 
     lancamentos = db.relationship('Lancamento', backref='fluxo_conta', lazy='dynamic')
 
-
-
     def is_pagamento(self):
 
         return self.tipo == 'P'
 
-
-
     def is_recebimento(self):
 
         return self.tipo == 'R'
-
-
 
     def get_tipo_descricao(self):
 
@@ -1000,15 +872,11 @@ class FluxoContaModel(db.Model):
 
         return self.tipo or 'Não definido'
 
-    
+
 
     def __repr__(self):
 
         return f'<FluxoContaModel {self.codigo} - {self.descricao}>'
-
-
-
-
 
 class ContaBanco(db.Model):
 
@@ -1016,7 +884,7 @@ class ContaBanco(db.Model):
 
     __tablename__ = 'contas_banco'
 
-    
+
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -1036,7 +904,7 @@ class ContaBanco(db.Model):
 
     tipo = db.Column(db.String(20))  # Corrente, Poupança, etc
 
-    
+
 
     # Relacionamento com conta de fluxo analítica
 
@@ -1044,7 +912,7 @@ class ContaBanco(db.Model):
 
     fluxo_conta = db.relationship('FluxoContaModel', foreign_keys=[fluxo_conta_id])
 
-    
+
 
     saldo_inicial = db.Column(db.Numeric(15, 2), default=0.00)
 
@@ -1056,21 +924,17 @@ class ContaBanco(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-    
+
 
     # Relacionamentos
 
     lancamentos = db.relationship('Lancamento', backref='conta_banco', lazy='dynamic')
 
-    
+
 
     def __repr__(self):
 
         return f'<ContaBanco {self.nome} ({self.banco})>'
-
-
-
-
 
 class Lancamento(db.Model):
 
@@ -1078,7 +942,7 @@ class Lancamento(db.Model):
 
     __tablename__ = 'lancamentos'
 
-    
+
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -1086,7 +950,7 @@ class Lancamento(db.Model):
 
     empresa = db.relationship('Empresa', backref='lancamentos')
 
-    
+
 
     # Datas
 
@@ -1096,13 +960,13 @@ class Lancamento(db.Model):
 
     data_pagamento = db.Column(db.Date, index=True)  # Nulo se não pago
 
-    
+
 
     # Status
 
     status = db.Column(db.String(20), nullable=False, default='aberto')  # aberto, pago, vencido
 
-    
+
 
     # Relacionamentos
 
@@ -1114,7 +978,7 @@ class Lancamento(db.Model):
 
     conta_banco_id = db.Column(db.Integer, db.ForeignKey('contas_banco.id'), nullable=False)
 
-    
+
 
     # Valores
 
@@ -1126,7 +990,7 @@ class Lancamento(db.Model):
 
     valor_outros_custos = db.Column(db.Numeric(15, 2), default=0.00)  # Outros custos
 
-    
+
 
     # Documentação
 
@@ -1134,7 +998,7 @@ class Lancamento(db.Model):
 
     observacoes = db.Column(db.Text)
 
-    
+
 
     # Rastreabilidade de origem
 
@@ -1142,7 +1006,7 @@ class Lancamento(db.Model):
 
     fonte = db.Column(db.String(50), default='manual')  # 'manual', 'ofx', 'nfse', etc
 
-    
+
 
     # Metadados
 
@@ -1150,15 +1014,11 @@ class Lancamento(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-    
+
 
     def __repr__(self):
 
         return f'<Lancamento {self.numero_documento} - R$ {self.valor_real}>'
-
-
-
-
 
 class FluxoCaixaRealizado(db.Model):
 
@@ -1166,7 +1026,7 @@ class FluxoCaixaRealizado(db.Model):
 
     __tablename__ = 'fluxo_caixa_realizado'
 
-    
+
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -1174,13 +1034,13 @@ class FluxoCaixaRealizado(db.Model):
 
     empresa = db.relationship('Empresa', backref='fluxo_caixa_realizado')
 
-    
+
 
     # Data
 
     data = db.Column(db.Date, nullable=False, index=True)
 
-    
+
 
     # Relacionamento
 
@@ -1188,13 +1048,13 @@ class FluxoCaixaRealizado(db.Model):
 
     conta_banco_id = db.Column(db.Integer, db.ForeignKey('contas_banco.id'), nullable=False)
 
-    
+
 
     fluxo_conta = db.relationship('FluxoContaModel', foreign_keys=[fluxo_conta_id])
 
     conta_banco = db.relationship('ContaBanco', foreign_keys=[conta_banco_id])
 
-    
+
 
     # Valores
 
@@ -1206,21 +1066,17 @@ class FluxoCaixaRealizado(db.Model):
 
     saldo_atual = db.Column(db.Numeric(15, 2), default=0.00)
 
-    
+
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-    
+
 
     def __repr__(self):
 
         return f'<FluxoCaixaRealizado {self.data}>'
-
-
-
-
 
 class FluxoCaixaPrevisto(db.Model):
 
@@ -1228,7 +1084,7 @@ class FluxoCaixaPrevisto(db.Model):
 
     __tablename__ = 'fluxo_caixa_previsto'
 
-    
+
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -1236,13 +1092,13 @@ class FluxoCaixaPrevisto(db.Model):
 
     empresa = db.relationship('Empresa', backref='fluxo_caixa_previsto')
 
-    
+
 
     # Data
 
     data = db.Column(db.Date, nullable=False, index=True)
 
-    
+
 
     # Relacionamento
 
@@ -1250,13 +1106,13 @@ class FluxoCaixaPrevisto(db.Model):
 
     conta_banco_id = db.Column(db.Integer, db.ForeignKey('contas_banco.id'), nullable=False)
 
-    
+
 
     fluxo_conta = db.relationship('FluxoContaModel', foreign_keys=[fluxo_conta_id])
 
     conta_banco = db.relationship('ContaBanco', foreign_keys=[conta_banco_id])
 
-    
+
 
     # Valores
 
@@ -1268,21 +1124,17 @@ class FluxoCaixaPrevisto(db.Model):
 
     saldo_previsto = db.Column(db.Numeric(15, 2), default=0.00)
 
-    
+
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-    
+
 
     def __repr__(self):
 
         return f'<FluxoCaixaPrevisto {self.data}>'
-
-
-
-
 
 class ParametroSistema(db.Model):
 
@@ -1290,7 +1142,7 @@ class ParametroSistema(db.Model):
 
     __tablename__ = 'parametros_sistema'
 
-    
+
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -1298,7 +1150,7 @@ class ParametroSistema(db.Model):
 
     empresa = db.relationship('Empresa', backref='parametros_sistema')
 
-    
+
 
     chave = db.Column(db.String(100), nullable=False)  # Nome do parâmetro
 
@@ -1308,25 +1160,21 @@ class ParametroSistema(db.Model):
 
     descricao = db.Column(db.String(255))
 
-    
+
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-    
+
 
     __table_args__ = (db.UniqueConstraint('empresa_id', 'chave', name='uq_parametro_chave'),)
 
-    
+
 
     def __repr__(self):
 
         return f'<ParametroSistema {self.chave}={self.valor}>'
-
-
-
-
 
 class ConciliacaoBancaria(db.Model):
 
@@ -1334,21 +1182,15 @@ class ConciliacaoBancaria(db.Model):
 
     __tablename__ = 'conciliacao_bancaria'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='conciliacoes_bancarias')
 
-
-
     conta_banco_id = db.Column(db.Integer, db.ForeignKey('contas_banco.id'), nullable=False, index=True)
 
     conta_banco = db.relationship('ContaBanco', backref='conciliacoes')
-
-
 
     periodo_inicio = db.Column(db.Date, nullable=False, index=True)
 
@@ -1366,15 +1208,9 @@ class ConciliacaoBancaria(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<ConciliacaoBancaria {self.id} - {self.periodo_inicio} a {self.periodo_fim}>'
-
-
-
-
 
 class ConciliacaoItem(db.Model):
 
@@ -1382,27 +1218,19 @@ class ConciliacaoItem(db.Model):
 
     __tablename__ = 'conciliacao_item'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='conciliacao_itens')
 
-
-
     conciliacao_id = db.Column(db.Integer, db.ForeignKey('conciliacao_bancaria.id', ondelete='CASCADE'), nullable=False, index=True)
 
     conciliacao = db.relationship('ConciliacaoBancaria', backref='itens')
 
-
-
     lancamento_id = db.Column(db.Integer, db.ForeignKey('lancamentos.id', ondelete='SET NULL'), nullable=True, index=True)
 
     lancamento = db.relationship('Lancamento', foreign_keys=[lancamento_id])
-
-
 
     data_movimento = db.Column(db.Date, nullable=False, index=True)
 
@@ -1420,23 +1248,15 @@ class ConciliacaoItem(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<ConciliacaoItem {self.id} - {self.status}>'
-
-
-
-
 
 class CatalogoPlanoComercial(db.Model):
 
     """Catalogo versionado de ofertas comerciais por plano e periodicidade."""
 
     __tablename__ = 'catalogo_planos_comercial'
-
-
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -1466,23 +1286,15 @@ class CatalogoPlanoComercial(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     __table_args__ = (
 
         db.UniqueConstraint('codigo_plano', 'periodicidade', 'versao_oferta', name='uq_catalogo_plano_periodo_versao'),
 
     )
 
-
-
     def __repr__(self):
 
         return f'<CatalogoPlanoComercial {self.codigo_plano}/{self.periodicidade} v{self.versao_oferta}>'
-
-
-
-
 
 class AssinaturaEmpresa(db.Model):
 
@@ -1490,21 +1302,15 @@ class AssinaturaEmpresa(db.Model):
 
     __tablename__ = 'assinatura_empresa'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, unique=True, index=True)
 
     empresa = db.relationship('Empresa', backref='assinatura_atual')
 
-
-
     catalogo_plano_id = db.Column(db.Integer, db.ForeignKey('catalogo_planos_comercial.id'), nullable=True, index=True)
 
     catalogo_plano = db.relationship('CatalogoPlanoComercial', foreign_keys=[catalogo_plano_id])
-
-
 
     plano_codigo = db.Column(db.String(30), nullable=False, default='premium', index=True)
 
@@ -1518,8 +1324,6 @@ class AssinaturaEmpresa(db.Model):
 
     gateway_subscription_id = db.Column(db.String(120), nullable=True, index=True)
 
-
-
     data_inicio = db.Column(db.Date, nullable=False)
 
     data_vencimento = db.Column(db.Date, nullable=False, index=True)
@@ -1532,18 +1336,11 @@ class AssinaturaEmpresa(db.Model):
 
     data_limite_carencia = db.Column(db.Date, nullable=True, index=True)
 
-
-
     bloqueio_nivel = db.Column(db.String(20), nullable=False, default='nenhum')  # nenhum, parcial, total
 
     bloqueado_desde = db.Column(db.DateTime, nullable=True)
 
     motivo_status = db.Column(db.String(255), nullable=True)
-
-    # Retenção de dados pós-exclusão (60 dias a contar de data_exclusao)
-    data_exclusao = db.Column(db.DateTime, nullable=True, index=True)
-
-
 
     politica_efetivacao_dias = db.Column(db.Integer, nullable=False, default=30)
 
@@ -1553,21 +1350,13 @@ class AssinaturaEmpresa(db.Model):
 
     mudanca_plano_efetivar_em = db.Column(db.DateTime, nullable=True, index=True)
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<AssinaturaEmpresa empresa={self.empresa_id} status={self.status} plano={self.plano_codigo}>'
-
-
-
-
 
 class CobrancaRecorrente(db.Model):
 
@@ -1575,21 +1364,15 @@ class CobrancaRecorrente(db.Model):
 
     __tablename__ = 'cobranca_recorrente'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='cobrancas_recorrentes')
 
-
-
     assinatura_id = db.Column(db.Integer, db.ForeignKey('assinatura_empresa.id'), nullable=False, index=True)
 
     assinatura = db.relationship('AssinaturaEmpresa', backref='cobrancas')
-
-
 
     gateway = db.Column(db.String(30), nullable=False, default='asaas', index=True)
 
@@ -1597,15 +1380,11 @@ class CobrancaRecorrente(db.Model):
 
     referencia_interna = db.Column(db.String(120), nullable=False, unique=True)
 
-
-
     competencia_ano = db.Column(db.Integer, nullable=False, index=True)
 
     competencia_mes = db.Column(db.Integer, nullable=False, index=True)
 
     periodicidade = db.Column(db.String(20), nullable=False, default='mensal')
-
-
 
     valor_previsto = db.Column(db.Numeric(10, 2), nullable=False)
 
@@ -1613,15 +1392,11 @@ class CobrancaRecorrente(db.Model):
 
     status = db.Column(db.String(20), nullable=False, default='pendente', index=True)  # pendente, pago, vencido, falhou, cancelado, estornado
 
-
-
     data_emissao = db.Column(db.Date, nullable=True)
 
     data_vencimento = db.Column(db.Date, nullable=False, index=True)
 
     data_pagamento = db.Column(db.DateTime, nullable=True)
-
-
 
     tentativas_pagamento = db.Column(db.Integer, nullable=False, default=0)
 
@@ -1629,13 +1404,9 @@ class CobrancaRecorrente(db.Model):
 
     payload_gateway = db.Column(db.Text, nullable=True)
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
-
-
 
     __table_args__ = (
 
@@ -1643,15 +1414,9 @@ class CobrancaRecorrente(db.Model):
 
     )
 
-
-
     def __repr__(self):
 
         return f'<CobrancaRecorrente {self.id} empresa={self.empresa_id} status={self.status}>'
-
-
-
-
 
 class EventoCobranca(db.Model):
 
@@ -1659,27 +1424,19 @@ class EventoCobranca(db.Model):
 
     __tablename__ = 'evento_cobranca'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=True, index=True)
 
     empresa = db.relationship('Empresa', backref='eventos_cobranca')
 
-
-
     assinatura_id = db.Column(db.Integer, db.ForeignKey('assinatura_empresa.id'), nullable=True, index=True)
 
     assinatura = db.relationship('AssinaturaEmpresa', foreign_keys=[assinatura_id])
 
-
-
     cobranca_id = db.Column(db.Integer, db.ForeignKey('cobranca_recorrente.id'), nullable=True, index=True)
 
     cobranca = db.relationship('CobrancaRecorrente', foreign_keys=[cobranca_id])
-
-
 
     gateway = db.Column(db.String(30), nullable=False, default='asaas', index=True)
 
@@ -1689,8 +1446,6 @@ class EventoCobranca(db.Model):
 
     status_processamento = db.Column(db.String(20), nullable=False, default='recebido', index=True)  # recebido, processado, ignorado, erro
 
-
-
     recebido_em = db.Column(db.DateTime, default=_utcnow, index=True)
 
     processado_em = db.Column(db.DateTime, nullable=True)
@@ -1699,13 +1454,9 @@ class EventoCobranca(db.Model):
 
     mensagem_erro = db.Column(db.String(255), nullable=True)
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
-
-
 
     __table_args__ = (
 
@@ -1713,15 +1464,9 @@ class EventoCobranca(db.Model):
 
     )
 
-
-
     def __repr__(self):
 
         return f'<EventoCobranca {self.gateway}:{self.event_id_externo} {self.status_processamento}>'
-
-
-
-
 
 class HistoricoMudancaPlano(db.Model):
 
@@ -1729,21 +1474,15 @@ class HistoricoMudancaPlano(db.Model):
 
     __tablename__ = 'historico_mudanca_plano'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='historico_mudancas_plano')
 
-
-
     assinatura_id = db.Column(db.Integer, db.ForeignKey('assinatura_empresa.id'), nullable=False, index=True)
 
     assinatura = db.relationship('AssinaturaEmpresa', backref='historico_mudancas')
-
-
 
     plano_origem = db.Column(db.String(30), nullable=False)
 
@@ -1753,13 +1492,9 @@ class HistoricoMudancaPlano(db.Model):
 
     regra_efetivacao = db.Column(db.String(30), nullable=False, default='apos_30_dias')
 
-
-
     solicitado_em = db.Column(db.DateTime, default=_utcnow, index=True)
 
     efetivado_em = db.Column(db.DateTime, nullable=True, index=True)
-
-
 
     solicitado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
 
@@ -1769,23 +1504,15 @@ class HistoricoMudancaPlano(db.Model):
 
     executado_por = db.relationship('User', foreign_keys=[executado_por_user_id])
 
-
-
     observacoes = db.Column(db.Text, nullable=True)
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<HistoricoMudancaPlano empresa={self.empresa_id} {self.plano_origem}->{self.plano_destino}>'
-
-
-
-
 
 class NotificacaoComercial(db.Model):
 
@@ -1793,21 +1520,15 @@ class NotificacaoComercial(db.Model):
 
     __tablename__ = 'notificacao_comercial'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='notificacoes_comerciais')
 
-
-
     assinatura_id = db.Column(db.Integer, db.ForeignKey('assinatura_empresa.id'), nullable=True, index=True)
 
     assinatura = db.relationship('AssinaturaEmpresa', foreign_keys=[assinatura_id])
-
-
 
     tipo = db.Column(db.String(50), nullable=False, index=True)  # pre_vencimento, falha_pagamento, reativacao, bloqueio
 
@@ -1816,8 +1537,6 @@ class NotificacaoComercial(db.Model):
     destinatario = db.Column(db.String(150), nullable=True)
 
     status = db.Column(db.String(20), nullable=False, default='pendente', index=True)  # pendente, enviada, falha, cancelada
-
-
 
     agendada_para = db.Column(db.DateTime, nullable=True, index=True)
 
@@ -1829,21 +1548,13 @@ class NotificacaoComercial(db.Model):
 
     payload = db.Column(db.Text, nullable=True)
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<NotificacaoComercial empresa={self.empresa_id} tipo={self.tipo} status={self.status}>'
-
-
-
-
 
 class Filial(db.Model):
 
@@ -1857,23 +1568,17 @@ class Filial(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='filiais')
 
-
-
     codigo = db.Column(db.String(20), nullable=False, index=True)
 
     nome = db.Column(db.String(150), nullable=False)
 
     cnpj = db.Column(db.String(18), nullable=True)
-
-
 
     endereco_rua = db.Column(db.String(150))
 
@@ -1887,23 +1592,15 @@ class Filial(db.Model):
 
     endereco_cep = db.Column(db.String(8))
 
-
-
     ativo = db.Column(db.Boolean, default=True)
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<Filial {self.codigo} - {self.nome}>'
-
-
-
-
 
 class Produto(db.Model):
 
@@ -1919,21 +1616,15 @@ class Produto(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='produtos')
 
-
-
     filial_id = db.Column(db.Integer, db.ForeignKey('filiais.id'), nullable=True, index=True)
 
     filial = db.relationship('Filial', foreign_keys=[filial_id])
-
-
 
     codigo_interno = db.Column(db.String(50), nullable=False, index=True)
 
@@ -1959,15 +1650,11 @@ class Produto(db.Model):
 
     tipo_item = db.Column(db.String(20))
 
-
-
     controla_estoque = db.Column(db.Boolean, default=False)
 
     estoque_atual = db.Column(db.Numeric(15, 3), default=0.000)
 
     estoque_minimo = db.Column(db.Numeric(15, 3), default=0.000)
-
-
 
     # Valor de venda padrão (quando não usar tabela de preço)
 
@@ -1975,23 +1662,15 @@ class Produto(db.Model):
 
     valor_custo = db.Column(db.Numeric(15, 2), default=0.00)
 
-
-
     ativo = db.Column(db.Boolean, default=True)
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<Produto {self.codigo_interno} - {self.descricao_resumida}>'
-
-
-
-
 
 class Servico(db.Model):
 
@@ -2005,21 +1684,15 @@ class Servico(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='servicos')
 
-
-
     filial_id = db.Column(db.Integer, db.ForeignKey('filiais.id'), nullable=True, index=True)
 
     filial = db.relationship('Filial', foreign_keys=[filial_id])
-
-
 
     codigo_interno = db.Column(db.String(50), nullable=False, index=True)
 
@@ -2033,23 +1706,15 @@ class Servico(db.Model):
 
     indicador_incidencia = db.Column(db.String(30))
 
-
-
     ativo = db.Column(db.Boolean, default=True)
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<Servico {self.codigo_interno} - {self.descricao}>'
-
-
-
-
 
 class EstoqueMovimento(db.Model):
 
@@ -2063,27 +1728,19 @@ class EstoqueMovimento(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='estoque_movimentos')
 
-
-
     filial_id = db.Column(db.Integer, db.ForeignKey('filiais.id'), nullable=True, index=True)
 
     filial = db.relationship('Filial', foreign_keys=[filial_id])
 
-
-
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False, index=True)
 
     produto = db.relationship('Produto', backref='movimentos_estoque')
-
-
 
     tipo_movimento = db.Column(db.String(10), nullable=False)  # entrada, saida, ajuste
 
@@ -2097,27 +1754,17 @@ class EstoqueMovimento(db.Model):
 
     data_movimento = db.Column(db.Date, nullable=False, index=True)
 
-
-
     criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
-
-
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<EstoqueMovimento {self.id} produto={self.produto_id} {self.tipo_movimento}>'
-
-
-
-
 
 class CompraNFManual(db.Model):
 
@@ -2125,33 +1772,23 @@ class CompraNFManual(db.Model):
 
     __tablename__ = 'compras_nf_manual'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='compras_nf_manual')
 
-
-
     filial_id = db.Column(db.Integer, db.ForeignKey('filiais.id'), nullable=True, index=True)
 
     filial = db.relationship('Filial', foreign_keys=[filial_id])
-
-
 
     fornecedor_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=False, index=True)
 
     fornecedor = db.relationship('Entidade', foreign_keys=[fornecedor_id])
 
-
-
     lancamento_id = db.Column(db.Integer, db.ForeignKey('lancamentos.id'), nullable=True, index=True)
 
     lancamento = db.relationship('Lancamento', foreign_keys=[lancamento_id])
-
-
 
     numero_documento = db.Column(db.String(50), nullable=False, index=True)
 
@@ -2167,27 +1804,17 @@ class CompraNFManual(db.Model):
 
     status = db.Column(db.String(20), default='registrada')
 
-
-
     criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
-
-
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<CompraNFManual {self.numero_documento}>'
-
-
-
-
 
 class CompraNFItem(db.Model):
 
@@ -2195,27 +1822,19 @@ class CompraNFItem(db.Model):
 
     __tablename__ = 'compras_nf_itens'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='compras_nf_itens')
 
-
-
     compra_id = db.Column(db.Integer, db.ForeignKey('compras_nf_manual.id', ondelete='CASCADE'), nullable=False, index=True)
 
     compra = db.relationship('CompraNFManual', backref=db.backref('itens', cascade='all, delete-orphan', passive_deletes=True))
 
-
-
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True, index=True)
 
     produto = db.relationship('Produto', foreign_keys=[produto_id])
-
-
 
     descricao_livre = db.Column(db.String(200))
 
@@ -2225,8 +1844,6 @@ class CompraNFItem(db.Model):
 
     total_item = db.Column(db.Numeric(15, 2), nullable=False)
 
-
-
     ncm = db.Column(db.String(10))
 
     cfop = db.Column(db.String(10))
@@ -2235,21 +1852,13 @@ class CompraNFItem(db.Model):
 
     csosn = db.Column(db.String(5))
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<CompraNFItem {self.id} compra={self.compra_id}>'
-
-
-
-
 
 class CompraNFLancamento(db.Model):
 
@@ -2263,27 +1872,19 @@ class CompraNFLancamento(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='compras_nf_lancamentos')
 
-
-
     compra_id = db.Column(db.Integer, db.ForeignKey('compras_nf_manual.id', ondelete='CASCADE'), nullable=False, index=True)
 
     compra = db.relationship('CompraNFManual', backref=db.backref('lancamentos', cascade='all, delete-orphan', passive_deletes=True))
 
-
-
     lancamento_id = db.Column(db.Integer, db.ForeignKey('lancamentos.id'), nullable=False, index=True)
 
     lancamento = db.relationship('Lancamento', foreign_keys=[lancamento_id])
-
-
 
     parcela_numero = db.Column(db.Integer, nullable=False)
 
@@ -2293,20 +1894,13 @@ class CompraNFLancamento(db.Model):
 
     data_vencimento = db.Column(db.Date, nullable=False, index=True)
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<CompraNFLancamento compra={self.compra_id} parcela={self.parcela_numero}/{self.parcela_total}>'
-
-
-
 
 class CompraNFXMLImport(db.Model):
 
@@ -2314,21 +1908,15 @@ class CompraNFXMLImport(db.Model):
 
     __tablename__ = 'compras_nf_xml_import'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='compras_nf_xml_import')
 
-
-
     fornecedor_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=True, index=True)
 
     fornecedor = db.relationship('Entidade', foreign_keys=[fornecedor_id])
-
-
 
     xml_original = db.Column(db.Text, nullable=False)
 
@@ -2340,20 +1928,13 @@ class CompraNFXMLImport(db.Model):
 
     criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<CompraNFXMLImport id={self.id} status={self.status}>'
-
-
-
 
 class CompraNFXMLItem(db.Model):
 
@@ -2361,47 +1942,31 @@ class CompraNFXMLItem(db.Model):
 
     __tablename__ = 'compras_nf_xml_itens'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='compras_nf_xml_itens')
 
-
-
     import_id = db.Column(db.Integer, db.ForeignKey('compras_nf_xml_import.id', ondelete='CASCADE'), nullable=False, index=True)
 
     importacao = db.relationship('CompraNFXMLImport', backref=db.backref('itens', cascade='all, delete-orphan', passive_deletes=True))
-
-
 
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True, index=True)
 
     produto = db.relationship('Produto', foreign_keys=[produto_id])
 
-
-
     dados_item = db.Column(db.JSON, nullable=False)
 
     confirmado = db.Column(db.Boolean, default=False)
-
-
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<CompraNFXMLItem import_id={self.import_id} confirmado={self.confirmado}>'
-
-
-
-
 
 class DocumentoVenda(db.Model):
 
@@ -2409,33 +1974,23 @@ class DocumentoVenda(db.Model):
 
     __tablename__ = 'documentos_venda'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='documentos_venda')
 
-
-
     filial_id = db.Column(db.Integer, db.ForeignKey('filiais.id'), nullable=True, index=True)
 
     filial = db.relationship('Filial', foreign_keys=[filial_id])
-
-
 
     cliente_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=False, index=True)
 
     cliente = db.relationship('Entidade', foreign_keys=[cliente_id])
 
-
-
     lancamento_id = db.Column(db.Integer, db.ForeignKey('lancamentos.id'), nullable=True, index=True)
 
     lancamento = db.relationship('Lancamento', foreign_keys=[lancamento_id])
-
-
 
     numero_documento = db.Column(db.String(50), nullable=False, index=True)
 
@@ -2451,33 +2006,17 @@ class DocumentoVenda(db.Model):
 
     status = db.Column(db.String(20), default='emitido')
 
-    # Referência ao pedido de venda de origem
-    pedido_id = db.Column(db.Integer, nullable=True)
-
-    # Tipo de origem ('PEDIDO', 'MANUAL')
-    origem_tipo = db.Column(db.String(10), nullable=True)
-
-
-
     criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
-
-
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<DocumentoVenda {self.numero_documento}>'
-
-
-
-
 
 class DocumentoVendaItem(db.Model):
 
@@ -2485,21 +2024,15 @@ class DocumentoVendaItem(db.Model):
 
     __tablename__ = 'documentos_venda_itens'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='documentos_venda_itens')
 
-
-
     documento_id = db.Column(db.Integer, db.ForeignKey('documentos_venda.id', ondelete='CASCADE'), nullable=False, index=True)
 
     documento = db.relationship('DocumentoVenda', backref=db.backref('itens', cascade='all, delete-orphan', passive_deletes=True))
-
-
 
     tipo_item = db.Column(db.String(1), nullable=False)  # P produto, S servico
 
@@ -2511,8 +2044,6 @@ class DocumentoVendaItem(db.Model):
 
     servico = db.relationship('Servico', foreign_keys=[servico_id])
 
-
-
     descricao = db.Column(db.String(200))
 
     quantidade = db.Column(db.Numeric(15, 3), nullable=False)
@@ -2521,21 +2052,13 @@ class DocumentoVendaItem(db.Model):
 
     total_item = db.Column(db.Numeric(15, 2), nullable=False)
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<DocumentoVendaItem {self.id} doc={self.documento_id}>'
-
-
-
-
 
 class NfseNacionalConfiguracao(db.Model):
 
@@ -2547,15 +2070,11 @@ class NfseNacionalConfiguracao(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='nfse_nacional_configuracoes')
-
-
 
     ambiente = db.Column(db.String(20), nullable=False, default='homologacao', index=True)
 
@@ -2579,10 +2098,6 @@ class NfseNacionalConfiguracao(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
-
-
 class NfseNacionalCertificado(db.Model):
 
     __tablename__ = 'nfse_nacional_certificados'
@@ -2593,15 +2108,11 @@ class NfseNacionalCertificado(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='nfse_nacional_certificados')
-
-
 
     ambiente = db.Column(db.String(20), nullable=False, default='homologacao', index=True)
 
@@ -2631,10 +2142,6 @@ class NfseNacionalCertificado(db.Model):
 
     removed_at = db.Column(db.DateTime, nullable=True)
 
-
-
-
-
 class NfseNacionalIntegracaoOrigem(db.Model):
 
     __tablename__ = 'nfse_nacional_integracoes_origem'
@@ -2645,15 +2152,11 @@ class NfseNacionalIntegracaoOrigem(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='nfse_nacional_integracoes_origem')
-
-
 
     origem_tipo = db.Column(db.String(40), nullable=False, index=True)
 
@@ -2671,10 +2174,6 @@ class NfseNacionalIntegracaoOrigem(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
-
-
 class NfseNacionalEmissao(db.Model):
 
     __tablename__ = 'nfse_nacional_emissoes'
@@ -2691,15 +2190,11 @@ class NfseNacionalEmissao(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='nfse_nacional_emissoes')
-
-
 
     configuracao_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_configuracoes.id'), nullable=True, index=True)
 
@@ -2709,8 +2204,6 @@ class NfseNacionalEmissao(db.Model):
 
     certificado = db.relationship('NfseNacionalCertificado', foreign_keys=[certificado_id])
 
-
-
     tomador_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=False, index=True)
 
     tomador = db.relationship('Entidade', foreign_keys=[tomador_id])
@@ -2719,19 +2212,13 @@ class NfseNacionalEmissao(db.Model):
 
     servico = db.relationship('Servico', foreign_keys=[servico_id])
 
-
-
     integracao_origem_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_integracoes_origem.id'), nullable=True, index=True)
 
     integracao_origem = db.relationship('NfseNacionalIntegracaoOrigem', foreign_keys=[integracao_origem_id])
 
-
-
     lancamento_id = db.Column(db.Integer, db.ForeignKey('lancamentos.id'), nullable=True, index=True)
 
     lancamento = db.relationship('Lancamento', foreign_keys=[lancamento_id])
-
-
 
     ambiente = db.Column(db.String(20), nullable=False, default='homologacao', index=True)
 
@@ -2746,25 +2233,34 @@ class NfseNacionalEmissao(db.Model):
     protocolo = db.Column(db.String(80), nullable=True, index=True)
 
     # Campos de cancelamento
+
     protocolo_cancelamento = db.Column(db.String(80), nullable=True)
+
     motivo_cancelamento = db.Column(db.Text, nullable=True)
+
     cancelado_em = db.Column(db.DateTime, nullable=True)
+
     cancelado_por_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+
     cancelado_por = db.relationship('User', foreign_keys=[cancelado_por_id])
+
     payload_cancelamento = db.Column(db.Text, nullable=True)
 
     # Campos adicionais para impressão do DANFS-e
+
     tomador_endereco = db.Column(db.String(255), nullable=True)
+
     regime_tributacao = db.Column(db.String(10), nullable=True)
+
     codigo_tributacao_nacional = db.Column(db.String(10), nullable=True)
+
     codigo_tributacao_municipal = db.Column(db.String(10), nullable=True)
+
     local_prestacao = db.Column(db.String(10), nullable=True)
 
     status_processamento = db.Column(db.String(30), nullable=False, default='RASCUNHO', index=True)
 
     situacao_fiscal = db.Column(db.String(30), nullable=False, default='PENDENTE', index=True)
-
-
 
     valor_servico = db.Column(db.Numeric(15, 2), nullable=False)
 
@@ -2775,8 +2271,6 @@ class NfseNacionalEmissao(db.Model):
     servico_local_prestacao = db.Column(db.String(20), nullable=False, default='emitente')
 
     tp_ret_issqn = db.Column(db.String(2), nullable=False, default='1')
-
-
 
     observacoes = db.Column(db.Text)
 
@@ -2792,8 +2286,6 @@ class NfseNacionalEmissao(db.Model):
 
     erro_retorno = db.Column(db.Text)
 
-
-
     hash_idempotencia = db.Column(db.String(80), nullable=False, index=True)
 
     versao_layout = db.Column(db.String(30), default='1.0')
@@ -2804,32 +2296,19 @@ class NfseNacionalEmissao(db.Model):
 
     origem_referencia = db.Column(db.String(120), nullable=True, index=True)
 
-    # Referência ao pedido de venda de origem
-    pedido_id = db.Column(db.Integer, nullable=True)
-
     canal_origem = db.Column(db.String(40), nullable=False, default='manual', index=True)
-
-
 
     criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
 
     criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow, index=True)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<NfseNacionalEmissao {self.numero_interno} status={self.status_processamento}>'
-
-
-
-
 
 class NfseNacionalFila(db.Model):
 
@@ -2843,21 +2322,15 @@ class NfseNacionalFila(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='nfse_nacional_fila')
 
-
-
     emissao_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_emissoes.id', ondelete='CASCADE'), nullable=False, index=True)
 
     emissao = db.relationship('NfseNacionalEmissao', foreign_keys=[emissao_id], backref=db.backref('fila', cascade='all, delete-orphan', passive_deletes=True))
-
-
 
     status_fila = db.Column(db.String(30), nullable=False, default='PENDENTE', index=True)
 
@@ -2875,10 +2348,6 @@ class NfseNacionalFila(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
-
-
 class NfseNacionalEvento(db.Model):
 
     __tablename__ = 'nfse_nacional_eventos'
@@ -2891,21 +2360,15 @@ class NfseNacionalEvento(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='nfse_nacional_eventos')
 
-
-
     emissao_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_emissoes.id', ondelete='CASCADE'), nullable=False, index=True)
 
     emissao = db.relationship('NfseNacionalEmissao', foreign_keys=[emissao_id], backref=db.backref('eventos', cascade='all, delete-orphan', passive_deletes=True))
-
-
 
     tipo_evento = db.Column(db.String(40), nullable=False, index=True)
 
@@ -2927,10 +2390,6 @@ class NfseNacionalEvento(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
-
-
 # =============================================================================
 
 # TABELAS DE PREÇO
@@ -2949,15 +2408,11 @@ class TabelaPreco(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='tabelas_preco')
-
-
 
     codigo = db.Column(db.String(20), nullable=False, index=True)
 
@@ -2965,27 +2420,19 @@ class TabelaPreco(db.Model):
 
     descricao = db.Column(db.Text)
 
-
-
     # Vigência
 
     data_inicio = db.Column(db.Date, nullable=False)
 
     data_fim = db.Column(db.Date, nullable=True)
 
-
-
     # Tipo de tabela: 'venda', 'custo', 'atacado', 'promocional'
 
     tipo = db.Column(db.String(20), nullable=False, default='venda')
 
-
-
     # Markup padrão (percentual sobre o custo)
 
     markup_padrao = db.Column(db.Numeric(5, 2), default=0.00)
-
-
 
     ativo = db.Column(db.Boolean, default=True)
 
@@ -2993,15 +2440,9 @@ class TabelaPreco(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<TabelaPreco {self.codigo} - {self.nome}>'
-
-
-
-
 
 class TabelaPrecoItem(db.Model):
 
@@ -3019,21 +2460,15 @@ class TabelaPrecoItem(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='tabelas_preco_itens')
 
-
-
     tabela_preco_id = db.Column(db.Integer, db.ForeignKey('tabelas_preco.id', ondelete='CASCADE'), nullable=False, index=True)
 
     tabela_preco = db.relationship('TabelaPreco', backref=db.backref('itens', cascade='all, delete-orphan', passive_deletes=True))
-
-
 
     # Produto ou Serviço (um dos dois deve ser preenchido)
 
@@ -3045,8 +2480,6 @@ class TabelaPrecoItem(db.Model):
 
     servico = db.relationship('Servico', foreign_keys=[servico_id])
 
-
-
     # Preços
 
     preco_custo = db.Column(db.Numeric(15, 4), default=0.0000)
@@ -3055,13 +2488,9 @@ class TabelaPrecoItem(db.Model):
 
     markup = db.Column(db.Numeric(5, 2), default=0.00)  # Percentual de markup aplicado
 
-
-
     # Desconto máximo permitido
 
     desconto_maximo = db.Column(db.Numeric(5, 2), default=0.00)
-
-
 
     ativo = db.Column(db.Boolean, default=True)
 
@@ -3069,15 +2498,9 @@ class TabelaPrecoItem(db.Model):
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<TabelaPrecoItem {self.id} tabela={self.tabela_preco_id}>'
-
-
-
-
 
 # =============================================================================
 
@@ -3101,21 +2524,15 @@ class Orcamento(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='orcamentos')
 
-
-
     filial_id = db.Column(db.Integer, db.ForeignKey('filiais.id'), nullable=True, index=True)
 
     filial = db.relationship('Filial', foreign_keys=[filial_id])
-
-
 
     # Numeração
 
@@ -3123,23 +2540,17 @@ class Orcamento(db.Model):
 
     serie = db.Column(db.String(10), default='1')
 
-
-
     # Cliente
 
     cliente_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=False, index=True)
 
     cliente = db.relationship('Entidade', foreign_keys=[cliente_id])
 
-
-
     # Vendedor
 
     vendedor_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=True, index=True)
 
     vendedor = db.relationship('Entidade', foreign_keys=[vendedor_id])
-
-
 
     # Datas
 
@@ -3149,21 +2560,15 @@ class Orcamento(db.Model):
 
     data_aprovacao = db.Column(db.Date, nullable=True)
 
-
-
     # Status: 'emitido', 'aprovado', 'rejeitado', 'convertido', 'expirado', 'cancelado'
 
     status = db.Column(db.String(20), nullable=False, default='emitido', index=True)
-
-
 
     # Tabela de preço utilizada
 
     tabela_preco_id = db.Column(db.Integer, db.ForeignKey('tabelas_preco.id'), nullable=True)
 
     tabela_preco = db.relationship('TabelaPreco', foreign_keys=[tabela_preco_id])
-
-
 
     # Valores
 
@@ -3175,15 +2580,11 @@ class Orcamento(db.Model):
 
     valor_total = db.Column(db.Numeric(15, 2), nullable=False)
 
-
-
     # Observações
 
     observacoes = db.Column(db.Text)
 
     observacoes_internas = db.Column(db.Text)
-
-
 
     # Termos da proposta (variáveis)
 
@@ -3195,33 +2596,21 @@ class Orcamento(db.Model):
 
     detalhes_tecnicos = db.Column(db.Text)
 
-
-
     # Referência ao pedido gerado (quando convertido)
 
     pedido_id = db.Column(db.Integer, nullable=True, index=True)
-
-
 
     criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<Orcamento {self.numero} - {self.cliente.nome if self.cliente else "-"}>'
-
-
-
-
 
 class OrcamentoItem(db.Model):
 
@@ -3229,21 +2618,15 @@ class OrcamentoItem(db.Model):
 
     __tablename__ = 'orcamentos_itens'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='orcamentos_itens')
 
-
-
     orcamento_id = db.Column(db.Integer, db.ForeignKey('orcamentos.id', ondelete='CASCADE'), nullable=False, index=True)
 
     orcamento = db.relationship('Orcamento', backref=db.backref('itens', cascade='all, delete-orphan', passive_deletes=True))
-
-
 
     # Produto ou Serviço
 
@@ -3257,13 +2640,9 @@ class OrcamentoItem(db.Model):
 
     servico = db.relationship('Servico', foreign_keys=[servico_id])
 
-
-
     # Descrição (pode ser diferente do cadastro)
 
     descricao = db.Column(db.String(200), nullable=False)
-
-
 
     # Quantidade e preço
 
@@ -3277,21 +2656,13 @@ class OrcamentoItem(db.Model):
 
     valor_total = db.Column(db.Numeric(15, 2), nullable=False)
 
-
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<OrcamentoItem {self.id} orc={self.orcamento_id}>'
-
-
-
-
 
 # =============================================================================
 
@@ -3315,21 +2686,15 @@ class PedidoVenda(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='pedidos_venda')
 
-
-
     filial_id = db.Column(db.Integer, db.ForeignKey('filiais.id'), nullable=True, index=True)
 
     filial = db.relationship('Filial', foreign_keys=[filial_id])
-
-
 
     # Numeração
 
@@ -3337,15 +2702,11 @@ class PedidoVenda(db.Model):
 
     serie = db.Column(db.String(10), default='1')
 
-
-
     # Orçamento de origem (se houver)
 
     orcamento_id = db.Column(db.Integer, db.ForeignKey('orcamentos.id'), nullable=True)
 
     orcamento = db.relationship('Orcamento', foreign_keys=[orcamento_id])
-
-
 
     # Cliente
 
@@ -3353,15 +2714,11 @@ class PedidoVenda(db.Model):
 
     cliente = db.relationship('Entidade', foreign_keys=[cliente_id])
 
-
-
     # Vendedor
 
     vendedor_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=True, index=True)
 
     vendedor = db.relationship('Entidade', foreign_keys=[vendedor_id])
-
-
 
     # Datas
 
@@ -3371,13 +2728,9 @@ class PedidoVenda(db.Model):
 
     data_faturamento = db.Column(db.Date, nullable=True)
 
-
-
     # Status: 'aprovado', 'em_producao', 'pronto', 'faturado', 'entregue', 'cancelado'
 
     status = db.Column(db.String(20), nullable=False, default='aprovado', index=True)
-
-
 
     # Valores
 
@@ -3391,15 +2744,11 @@ class PedidoVenda(db.Model):
 
     valor_total = db.Column(db.Numeric(15, 2), nullable=False)
 
-
-
     # Observações
 
     observacoes = db.Column(db.Text)
 
     observacoes_faturamento = db.Column(db.Text)
-
-
 
     # Referência ao documento faturado
 
@@ -3407,33 +2756,17 @@ class PedidoVenda(db.Model):
 
     documento_venda = db.relationship('DocumentoVenda', foreign_keys=[documento_venda_id])
 
-    # Referência à NFS-e gerada (para itens de serviço)
-    documento_nfse_id = db.Column(db.Integer, nullable=True)
-
-    # Referência à NF-e gerada (para itens de produto - futuro)
-    documento_nfe_id = db.Column(db.Integer, nullable=True)
-
-
-
     criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
-
-
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<PedidoVenda {self.numero} - {self.cliente.nome if self.cliente else "-"}>'
-
-
-
-
 
 class PedidoVendaItem(db.Model):
 
@@ -3441,27 +2774,19 @@ class PedidoVendaItem(db.Model):
 
     __tablename__ = 'pedidos_venda_itens'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='pedidos_venda_itens')
 
-
-
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos_venda.id', ondelete='CASCADE'), nullable=False, index=True)
 
     pedido = db.relationship('PedidoVenda', backref=db.backref('itens', cascade='all, delete-orphan', passive_deletes=True))
 
-
-
     # Orçamento item de origem (se houver)
 
     orcamento_item_id = db.Column(db.Integer, nullable=True)
-
-
 
     # Produto ou Serviço
 
@@ -3475,13 +2800,9 @@ class PedidoVendaItem(db.Model):
 
     servico = db.relationship('Servico', foreign_keys=[servico_id])
 
-
-
     # Descrição
 
     descricao = db.Column(db.String(200), nullable=False)
-
-
 
     # Quantidade e preço
 
@@ -3497,25 +2818,13 @@ class PedidoVendaItem(db.Model):
 
     valor_total = db.Column(db.Numeric(15, 2), nullable=False)
 
-    # Referência ao item do documento gerado (após faturamento)
-    documento_item_id = db.Column(db.Integer, nullable=True)
-
-    # Tipo de documento gerado ('VENDA', 'NFSE', 'NFE')
-    tipo_documento = db.Column(db.String(10), nullable=True)
-
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<PedidoVendaItem {self.id} ped={self.pedido_id}>'
-
-
-
-
 
 # =============================================================================
 
@@ -3537,21 +2846,15 @@ class PDVSessao(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='pdv_sessoes')
 
-
-
     filial_id = db.Column(db.Integer, db.ForeignKey('filiais.id'), nullable=True, index=True)
 
     filial = db.relationship('Filial', foreign_keys=[filial_id])
-
-
 
     # Operador
 
@@ -3559,15 +2862,11 @@ class PDVSessao(db.Model):
 
     operador = db.relationship('User', foreign_keys=[user_id])
 
-
-
     # Identificação
 
     numero = db.Column(db.String(20), nullable=False)
 
     pdv_nome = db.Column(db.String(50), default='PDV Principal')
-
-
 
     # Datas
 
@@ -3575,19 +2874,13 @@ class PDVSessao(db.Model):
 
     data_fechamento = db.Column(db.DateTime, nullable=True)
 
-
-
     # Status: 'aberto', 'fechado', 'suspenso'
 
     status = db.Column(db.String(20), nullable=False, default='aberto', index=True)
 
-
-
     # Valores de abertura
 
     valor_abertura = db.Column(db.Numeric(15, 2), default=0.00)  # Dinheiro inicial no caixa
-
-
 
     # Valores movimentados
 
@@ -3599,25 +2892,15 @@ class PDVSessao(db.Model):
 
     valor_fechamento = db.Column(db.Numeric(15, 2), nullable=True)  # Dinheiro contado no fechamento
 
-
-
     observacoes = db.Column(db.Text)
-
-
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<PDVSessao {self.numero} - {self.pdv_nome}>'
-
-
-
-
 
 class PDVVenda(db.Model):
 
@@ -3637,21 +2920,15 @@ class PDVVenda(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='pdv_vendas')
 
-
-
     filial_id = db.Column(db.Integer, db.ForeignKey('filiais.id'), nullable=True, index=True)
 
     filial = db.relationship('Filial', foreign_keys=[filial_id])
-
-
 
     # Sessão do PDV
 
@@ -3659,13 +2936,9 @@ class PDVVenda(db.Model):
 
     sessao = db.relationship('PDVSessao', backref='vendas')
 
-
-
     # Numeração
 
     numero = db.Column(db.String(30), nullable=False, index=True)
-
-
 
     # Cliente (opcional no PDV - pode ser consumidor)
 
@@ -3673,19 +2946,13 @@ class PDVVenda(db.Model):
 
     cliente = db.relationship('Entidade', foreign_keys=[cliente_id])
 
-
-
     # Datas
 
     data_venda = db.Column(db.DateTime, nullable=False, default=_utcnow, index=True)
 
-
-
     # Status: 'em_andamento', 'concluida', 'cancelada', 'estornada'
 
     status = db.Column(db.String(20), nullable=False, default='em_andamento', index=True)
-
-
 
     # Valores
 
@@ -3694,8 +2961,6 @@ class PDVVenda(db.Model):
     valor_desconto = db.Column(db.Numeric(15, 2), default=0.00)
 
     valor_total = db.Column(db.Numeric(15, 2), nullable=False)
-
-
 
     # Totais por forma de pagamento
 
@@ -3711,15 +2976,11 @@ class PDVVenda(db.Model):
 
     valor_outros = db.Column(db.Numeric(15, 2), default=0.00)
 
-
-
     # Troco (quando pagamento em dinheiro)
 
     valor_recebido = db.Column(db.Numeric(15, 2), default=0.00)
 
     valor_troco = db.Column(db.Numeric(15, 2), default=0.00)
-
-
 
     # Cupom fiscal (quando implementar NFC-e)
 
@@ -3729,11 +2990,7 @@ class PDVVenda(db.Model):
 
     situacao_cupom = db.Column(db.String(20), default='pendente')  # pendente, emitido, cancelado, contingencia
 
-
-
     observacoes = db.Column(db.Text)
-
-
 
     # Referência ao documento gerado
 
@@ -3741,27 +2998,17 @@ class PDVVenda(db.Model):
 
     documento_venda = db.relationship('DocumentoVenda', foreign_keys=[documento_venda_id])
 
-
-
     criado_por_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     criado_por = db.relationship('User', foreign_keys=[criado_por_user_id])
-
-
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<PDVVenda {self.numero} - R$ {self.valor_total}>'
-
-
-
-
 
 class PDVItem(db.Model):
 
@@ -3769,27 +3016,19 @@ class PDVItem(db.Model):
 
     __tablename__ = 'pdv_itens'
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
 
     empresa = db.relationship('Empresa', backref='pdv_itens')
 
-
-
     venda_id = db.Column(db.Integer, db.ForeignKey('pdv_vendas.id', ondelete='CASCADE'), nullable=False, index=True)
 
     venda = db.relationship('PDVVenda', backref=db.backref('itens', cascade='all, delete-orphan', passive_deletes=True))
 
-
-
     # Sequência do item
 
     sequencia = db.Column(db.Integer, nullable=False, default=1)
-
-
 
     # Produto ou Serviço
 
@@ -3803,15 +3042,11 @@ class PDVItem(db.Model):
 
     servico = db.relationship('Servico', foreign_keys=[servico_id])
 
-
-
     # Código e descrição (cópia no momento da venda)
 
     codigo = db.Column(db.String(50))
 
     descricao = db.Column(db.String(200), nullable=False)
-
-
 
     # Quantidade e preço
 
@@ -3825,25 +3060,17 @@ class PDVItem(db.Model):
 
     valor_total = db.Column(db.Numeric(15, 2), nullable=False)
 
-
-
     # Código de barras lido
 
     codigo_barras = db.Column(db.String(60))
-
-
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
 
     atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-
     def __repr__(self):
 
         return f'<PDVItem {self.id} venda={self.venda_id} seq={self.sequencia}>'
-
-
 
 class PasswordResetCode(db.Model):
 
@@ -3861,8 +3088,6 @@ class PasswordResetCode(db.Model):
 
     )
 
-
-
     id = db.Column(db.Integer, primary_key=True)
 
     email = db.Column(db.String(120), nullable=False, index=True)
@@ -3876,8 +3101,6 @@ class PasswordResetCode(db.Model):
     used_at = db.Column(db.DateTime)
 
     created_at = db.Column(db.DateTime, default=_utcnow, nullable=False)
-
-
 
     def is_valid(self):
 
@@ -3893,8 +3116,6 @@ class PasswordResetCode(db.Model):
 
         )
 
-
-
     def mark_as_used(self):
 
         """Marca o código como usado."""
@@ -3905,11 +3126,7 @@ class PasswordResetCode(db.Model):
 
         self.used_at = datetime.utcnow()
 
-
-
     def __repr__(self):
 
         return f'<PasswordResetCode {self.code} for {self.email}>'
-
-
 

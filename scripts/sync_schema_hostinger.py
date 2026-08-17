@@ -39,10 +39,7 @@ DBNAME = os.environ.get("DB_NAME", "u951548013_LS_Comercial")
 def build_engine():
     if not PASSWORD:
         raise SystemExit("ERRO: variável de ambiente DB_PASSWORD não definida (senha do MySQL Hostinger).")
-    from urllib.parse import quote_plus
-    url = "mysql+pymysql://{}:{}@{}:{}/{}?charset=utf8mb4".format(
-        quote_plus(USER), quote_plus(PASSWORD), HOST, PORT, quote_plus(DBNAME)
-    )
+    url = f"mysql+pymysql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?charset=utf8mb4"
     return create_engine(url, pool_pre_ping=True, pool_recycle=1800)
 
 
@@ -60,7 +57,7 @@ def inventario_modelo():
                 "nullable": bool(c.nullable),
                 "default": None if c.server_default is None else str(c.server_default.arg).strip(),
                 "primary_key": bool(c.primary_key),
-                "autoincrement": c.autoincrement is True,
+                "autoincrement": bool(c.autoincrement),
                 "index": bool(c.index),
                 "unique": bool(c.unique),
             }
@@ -158,29 +155,29 @@ def comparar(engine, expected):
             relatorio["colunas_faltando"][t] = falt
     return relatorio
 def exibir_relatorio(rel):
-    print("=" * 70)
-    print("RELATÓRIO DE COMPARAÇÃO — LOCAL/MODELO vs HOSTINGER")
-    print("=" * 70)
-    print(f"Tabelas faltando no Hostinger  : {len(rel['tabelas_faltando'])}")
+    print("= - sync_schema_hostinger.py:158" * 70)
+    print("RELATÓRIO DE COMPARAÇÃO  LOCAL/MODELO vs HOSTINGER - sync_schema_hostinger.py:159")
+    print("= - sync_schema_hostinger.py:160" * 70)
+    print(f"Tabelas faltando no Hostinger  : {len(rel['tabelas_faltando'])} - sync_schema_hostinger.py:161")
     for t in rel["tabelas_faltando"]:
-        print(f"   + {t}")
-    print(f"Tabelas extras no Hostinger    : {len(rel['tabelas_extras'])}")
+        print(f"+ {t} - sync_schema_hostinger.py:163")
+    print(f"Tabelas extras no Hostinger    : {len(rel['tabelas_extras'])} - sync_schema_hostinger.py:164")
     for t in rel["tabelas_extras"]:
-        print(f"   - {t}")
-    print(f"Tabelas comuns                 : {len(rel['tabelas_comuns'])}")
+        print(f"{t} - sync_schema_hostinger.py:166")
+    print(f"Tabelas comuns                 : {len(rel['tabelas_comuns'])} - sync_schema_hostinger.py:167")
     total_cols = sum(len(v) for v in rel["colunas_faltando"].values())
-    print(f"Colunas faltando em tabelas existentes: {total_cols}")
+    print(f"Colunas faltando em tabelas existentes: {total_cols} - sync_schema_hostinger.py:169")
     for t, cols in rel["colunas_faltando"].items():
-        print(f"   {t}: {', '.join(cols)}")
-    print("=" * 70)
+        print(f"{t}: {', '.join(cols)} - sync_schema_hostinger.py:171")
+    print("= - sync_schema_hostinger.py:172" * 70)
 
 
 def aplicar(engine, expected, rel):
-    print("\n[1/3] Criando tabelas ausentes via db.metadata.create_all() ...")
+    print("\n[1/3] Criando tabelas ausentes via db.metadata.create_all() ... - sync_schema_hostinger.py:176")
     db.metadata.create_all(engine)
-    print("      OK - create_all concluído (cria apenas tabelas que não existem).\n")
+    print("OK  create_all concluído (cria apenas tabelas que não existem).\n - sync_schema_hostinger.py:178")
 
-    print("[2/3] Adicionando colunas faltantes em tabelas existentes ...")
+    print("[2/3] Adicionando colunas faltantes em tabelas existentes ... - sync_schema_hostinger.py:180")
     mudancas = 0
     for t, cols in sorted(rel["colunas_faltando"].items()):
         if t not in expected:
@@ -188,33 +185,33 @@ def aplicar(engine, expected, rel):
         for col_name in cols:
             meta = expected[t][col_name]
             if meta.get("primary_key") or meta.get("autoincrement"):
-                print(f"      - {t}.{col_name} é PK/autoincrement — requer recriação, ignorado.")
+                print(f"{t}.{col_name} é PK/autoincrement  requer recriação, ignorado. - sync_schema_hostinger.py:188")
                 continue
             ddl = "ALTER TABLE `%s` ADD COLUMN %s" % (t, interpreta_para_mysql(col_name, meta))
             try:
                 with engine.begin() as conn:
                     conn.execute(text(ddl))
-                print(f"      OK  ALTER {t}.{col_name}")
+                print(f"OK  ALTER {t}.{col_name} - sync_schema_hostinger.py:194")
                 mudancas += 1
             except Exception as e:
                 er = str(e)
                 if "Duplicate column" in er or "already exists" in er:
-                    print(f"      --  {t}.{col_name} já existia (ignorado)")
+                    print(f"{t}.{col_name} já existia (ignorado) - sync_schema_hostinger.py:199")
                 else:
-                    print(f"      !! Erro {t}.{col_name}: {er[:120]}")
-    print(f"      {mudancas} alterações de coluna aplicadas.\n")
+                    print(f"!! Erro {t}.{col_name}: {er[:120]} - sync_schema_hostinger.py:201")
+    print(f"{mudancas} alterações de coluna aplicadas.\n - sync_schema_hostinger.py:202")
 
-    print("[3/3] Verificando integridade final ...")
+    print("[3/3] Verificando integridade final ... - sync_schema_hostinger.py:204")
     atualizado = comparar(engine, expected)
-    print(f"      Tabelas ainda faltando   : {len(atualizado['tabelas_faltando'])}")
-    print(f"      Colunas ainda faltando   : {sum(len(v) for v in atualizado['colunas_faltando'].values())}")
+    print(f"Tabelas ainda faltando   : {len(atualizado['tabelas_faltando'])} - sync_schema_hostinger.py:206")
+    print(f"Colunas ainda faltando   : {sum(len(v) for v in atualizado['colunas_faltando'].values())} - sync_schema_hostinger.py:207")
     if not atualizado["tabelas_faltando"] and not atualizado["colunas_faltando"]:
-        print("      OK  Schema do Hostinger alinhado com o código-fonte!\n")
+        print("OK  Schema do Hostinger alinhado com o códigofonte!\n - sync_schema_hostinger.py:209")
     else:
         for t in atualizado["tabelas_faltando"]:
-            print(f"        /* tabela ausente */ {t}")
+            print(f"/* tabela ausente */ {t} - sync_schema_hostinger.py:212")
         for t, cols in atualizado["colunas_faltando"].items():
-            print(f"        /* colunas pendentes */ {t}: {', '.join(cols)}")
+            print(f"/* colunas pendentes */ {t}: {', '.join(cols)} - sync_schema_hostinger.py:214")
 
 
 def main():
@@ -223,9 +220,9 @@ def main():
 
     engine = build_engine()
     expected = inventario_modelo()
-    print(f"Conectando em {HOST}:{PORT}/{DBNAME} como {USER} ...")
+    print(f"Conectando em {HOST}:{PORT}/{DBNAME} como {USER} ... - sync_schema_hostinger.py:223")
     with engine.connect():
-        print("Conexão OK!")
+        print("Conexão OK! - sync_schema_hostinger.py:225")
 
     rel = comparar(engine, expected)
     exibir_relatorio(rel)
@@ -233,12 +230,12 @@ def main():
     out = BASE_DIR / "_relatorio_hostinger.json"
     with open(out, "w", encoding="utf-8") as fp:
         json.dump(rel, fp, ensure_ascii=False, indent=1, sort_keys=True)
-    print(f"Relatório salvo em {out}")
+    print(f"Relatório salvo em {out} - sync_schema_hostinger.py:233")
 
     if "--apply" in sys.argv:
         aplicar(engine, expected, rel)
     else:
-        print("\n(Nenhuma alteração foi aplicada. Use --apply para aplicar.)")
+        print("\n(Nenhuma alteração foi aplicada. Use apply para aplicar.) - sync_schema_hostinger.py:238")
 
 
 if __name__ == "__main__":

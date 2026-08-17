@@ -20,13 +20,13 @@ DB_CONFIG = {
 def force_clean_database():
     """Dropa todas as tabelas do banco de dados, exceto plano de fluxo de caixa."""
     try:
-        print(f"Conectando ao banco {DB_CONFIG['database']}...")
+        print(f"Conectando ao banco {DB_CONFIG['database']}... - force_clean_hostinger.py:23")
         connection = pymysql.connect(**DB_CONFIG)
         cursor = connection.cursor()
         
         # Desabilitar verificação de chaves estrangeiras
         cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
-        print("✓ Foreign key checks desabilitados")
+        print("✓ Foreign key checks desabilitados - force_clean_hostinger.py:29")
         
         # Listar todas as tabelas
         cursor.execute("SHOW TABLES")
@@ -36,51 +36,51 @@ def force_clean_database():
         PRESERVE_TABLES = ['fluxo_conta_model']
         
         if not tables:
-            print("Nenhuma tabela encontrada no banco.")
+            print("Nenhuma tabela encontrada no banco. - force_clean_hostinger.py:39")
         else:
-            print(f"Encontradas {len(tables)} tabelas:")
+            print(f"Encontradas {len(tables)} tabelas: - force_clean_hostinger.py:41")
             for table in tables:
                 table_name = table[0]
                 status = "PRESERVAR" if table_name in PRESERVE_TABLES else "DROPAR"
-                print(f"  - {table_name} [{status}]")
+                print(f"{table_name} [{status}] - force_clean_hostinger.py:45")
             
             # Dropar todas as tabelas exceto as preservadas
             for table in tables:
                 table_name = table[0]
                 if table_name in PRESERVE_TABLES:
-                    print(f"⊘ Tabela {table_name} preservada")
+                    print(f"⊘ Tabela {table_name} preservada - force_clean_hostinger.py:51")
                     continue
                 try:
                     cursor.execute(f"DROP TABLE IF EXISTS `{table_name}`")
-                    print(f"✓ Tabela {table_name} dropada")
+                    print(f"✓ Tabela {table_name} dropada - force_clean_hostinger.py:55")
                 except Exception as e:
-                    print(f"✗ Erro ao dropar tabela {table_name}: {e}")
+                    print(f"✗ Erro ao dropar tabela {table_name}: {e} - force_clean_hostinger.py:57")
         
         # Reabilitar verificação de chaves estrangeiras
         cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
-        print("✓ Foreign key checks reabilitados")
+        print("✓ Foreign key checks reabilitados - force_clean_hostinger.py:61")
         
         # Commit
         connection.commit()
-        print("\n✓ Banco de dados limpo com sucesso (plano de fluxo de caixa preservado)!")
+        print("\n✓ Banco de dados limpo com sucesso (plano de fluxo de caixa preservado)! - force_clean_hostinger.py:65")
         
     except Exception as e:
-        print(f"\n✗ Erro: {e}")
+        print(f"\n✗ Erro: {e} - force_clean_hostinger.py:68")
         sys.exit(1)
     finally:
         if 'connection' in locals():
             connection.close()
-            print("Conexão fechada.")
+            print("Conexão fechada. - force_clean_hostinger.py:73")
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("LIMPEZA AGRESSIVA DO BANCO DE DADOS HOSTINGER")
-    print("=" * 60)
+    print("= - force_clean_hostinger.py:76" * 60)
+    print("LIMPEZA AGRESSIVA DO BANCO DE DADOS HOSTINGER - force_clean_hostinger.py:77")
+    print("= - force_clean_hostinger.py:78" * 60)
     print()
     
     confirm = input("Tem certeza que deseja dropar TODAS as tabelas? (s/N): ")
     if confirm.lower() != 's':
-        print("Operação cancelada.")
+        print("Operação cancelada. - force_clean_hostinger.py:83")
         sys.exit(0)
     
     force_clean_database()

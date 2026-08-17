@@ -60,7 +60,7 @@ PLANO_PADRAO = [
 def create_fluxo_contas_table():
     """Cria a tabela fluxo_contas_modelo e insere o plano padrão."""
     try:
-        print(f"Conectando ao banco {DB_CONFIG['database']}...")
+        print(f"Conectando ao banco {DB_CONFIG['database']}... - recreate_fluxo_contas.py:63")
         connection = pymysql.connect(**DB_CONFIG)
         cursor = connection.cursor()
         
@@ -85,7 +85,7 @@ def create_fluxo_contas_table():
         """
         
         cursor.execute(create_table_sql)
-        print("✓ Tabela fluxo_contas_modelo criada")
+        print("✓ Tabela fluxo_contas_modelo criada - recreate_fluxo_contas.py:88")
         
         # Inserir plano padrão (empresa_id será NULL, será preenchido ao criar empresa)
         insert_sql = """
@@ -96,24 +96,24 @@ def create_fluxo_contas_table():
         
         # Primeiro precisamos de uma empresa_id, vamos usar NULL temporariamente
         # O plano será inserido para cada empresa quando ela for criada
-        print("⚠ Tabela criada, mas o plano padrão será inserido automaticamente")
-        print("  quando uma nova empresa for cadastrada (via rota /auth/register).")
+        print("⚠ Tabela criada, mas o plano padrão será inserido automaticamente - recreate_fluxo_contas.py:99")
+        print("quando uma nova empresa for cadastrada (via rota /auth/register). - recreate_fluxo_contas.py:100")
         
         connection.commit()
-        print("\n✓ Tabela fluxo_contas_modelo recriada com sucesso!")
+        print("\n✓ Tabela fluxo_contas_modelo recriada com sucesso! - recreate_fluxo_contas.py:103")
         
     except Exception as e:
-        print(f"\n✗ Erro: {e}")
+        print(f"\n✗ Erro: {e} - recreate_fluxo_contas.py:106")
         sys.exit(1)
     finally:
         if 'connection' in locals():
             connection.close()
-            print("Conexão fechada.")
+            print("Conexão fechada. - recreate_fluxo_contas.py:111")
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("RECRIAÇÃO DA TABELA FLUXO_CONTAS_MODELO")
-    print("=" * 60)
+    print("= - recreate_fluxo_contas.py:114" * 60)
+    print("RECRIAÇÃO DA TABELA FLUXO_CONTAS_MODELO - recreate_fluxo_contas.py:115")
+    print("= - recreate_fluxo_contas.py:116" * 60)
     print()
     
     create_fluxo_contas_table()

@@ -114,51 +114,6 @@ def _to_brl(value: Decimal | float | int | None) -> str:
     return txt.replace(',', 'X').replace('.', ',').replace('X', '.')
 
 
-def _dias_restantes_exclusao(data_exclusao) -> int:
-    """Dias restantes até a purga definitiva dos dados (60 dias a partir da exclusão)."""
-    if not data_exclusao:
-        return 0
-    limite = data_exclusao + timedelta(days=RETENCAO_EXCLUSAO_DIAS)
-    restantes = (limite - datetime.utcnow()).days
-    return max(restantes, 0)
-
-
-def _purge_expired_exclusions():
-    """Remove definitivamente (hard delete) dados de empresas excluídas há mais de 60 dias."""
-    from sqlalchemy import inspect as _inspect
-    limite = datetime.utcnow() - timedelta(days=RETENCAO_EXCLUSAO_DIAS)
-    expiradas = (
-        AssinaturaEmpresa.query
-        .filter(AssinaturaEmpresa.status == 'excluida')
-        .filter(AssinaturaEmpresa.data_exclusao != None)  # noqa: E711
-        .filter(AssinaturaEmpresa.data_exclusao < limite)
-        .all()
-    )
-    for assinatura in expiradas:
-        empresa_id = assinatura.empresa_id
-        try:
-            inspector = _inspect(db.engine)
-            tables = [
-                t for t in inspector.get_table_names()
-                if 'empresa_id' in {c['name'] for c in inspector.get_columns(t)}
-            ]
-            conn = db.session.connection()
-            if db.engine.dialect.name == 'mysql':
-                conn.execute(text('SET FOREIGN_KEY_CHECKS=0'))
-            for table in tables:
-                conn.execute(
-                    text(f'DELETE FROM {table} WHERE empresa_id = :empresa_id'),
-                    {'empresa_id': empresa_id},
-                )
-            conn.execute(text('DELETE FROM empresas WHERE id = :empresa_id'), {'empresa_id': empresa_id})
-            if db.engine.dialect.name == 'mysql':
-                conn.execute(text('SET FOREIGN_KEY_CHECKS=1'))
-            db.session.commit()
-        except Exception as exc:  # noqa: BLE001
-            db.session.rollback()
-            current_app.logger.error(f'Erro na purga de empresa {empresa_id}: {exc}')
-
-
 @admin_comercial_bp.route('/', methods=['GET'])
 @login_required
 @require_role('admin')
@@ -166,9 +121,6 @@ def index():
     gate = _require_backoffice_access()
     if gate:
         return gate
-
-    # Purga definitiva de empresas excluídas há mais de 60 dias (retenção).
-    _purge_expired_exclusions()
 
     assinaturas = AssinaturaEmpresa.query.all()
     empresa_ids = [a.empresa_id for a in assinaturas]
@@ -214,7 +166,6 @@ def index():
         rows.append({
             'empresa_id': empresa.id,
             'empresa_nome': empresa.nome,
-            'empresa': empresa,
             'plano': get_plan_label(assinatura.plano_codigo),
             'plano_codigo': normalize_plan(assinatura.plano_codigo),
             'proximo_plano_codigo': normalize_plan(assinatura.proximo_plano_codigo) if assinatura.proximo_plano_codigo else None,
@@ -228,16 +179,6 @@ def index():
             'volume_dados': data_volume,
             'atraso_qtd': atraso_info['qtd'],
             'atraso_valor': atraso_info['valor'],
-            'modulos': {
-                key: bool(getattr(empresa, f'atividade_{key}', False))
-                for key in ALL_MODULE_LABELS
-            },
-            'data_exclusao': assinatura.data_exclusao,
-            'dias_restantes_exclusao': _dias_restantes_exclusao(assinatura.data_exclusao),
-            'data_purga_exclusao': (
-                assinatura.data_exclusao + timedelta(days=RETENCAO_EXCLUSAO_DIAS)
-                if assinatura.data_exclusao else None
-            ),
         })
 
     rows.sort(key=lambda item: item['empresa_nome'].lower())
@@ -281,8 +222,6 @@ def index():
         erro_eventos=erro_eventos,
         ofertas=ofertas,
         planos_disponiveis=PLAN_CHOICES,
-        module_labels=ALL_MODULE_LABELS,
-        retencao_dias=RETENCAO_EXCLUSAO_DIAS,
         to_brl=_to_brl,
     )
 
@@ -370,12 +309,6 @@ def atualizar_plano_assinatura(empresa_id: int):
     assinatura.mudanca_plano_efetivar_em = efetivado_em
     assinatura.motivo_status = f'Mudança de plano efetivada imediatamente no backoffice em {efetivado_em.strftime("%d/%m/%Y %H:%M")}.'
 
-    # Sincroniza os módulos liberados conforme a assinatura/plano escolhido.
-    empresa = Empresa.query.get(empresa_id)
-    if empresa is not None:
-        empresa.plano = novo_plano
-        sync_empresa_modules(empresa, novo_plano)
-
     historico = HistoricoMudancaPlano(
         empresa_id=assinatura.empresa_id,
         assinatura_id=assinatura.id,
@@ -426,30 +359,6 @@ def atualizar_preco_catalogo():
     return redirect(url_for('admin_comercial.index'))
 
 
-@admin_comercial_bp.route('/empresa/<int:empresa_id>/modulos', methods=['POST'])
-@login_required
-@require_role('admin')
-def atualizar_modulos(empresa_id: int):
-    gate = _require_backoffice_access()
-    if gate:
-        return gate
-
-    empresa = Empresa.query.get(empresa_id)
-    if not empresa:
-        flash('Empresa não encontrada.', 'warning')
-        return redirect(url_for('admin_comercial.index'))
-
-    # Estes switches passam a ser controlados pelo backoffice comercial,
-    # liberando o acesso da empresa conforme a assinatura escolhida.
-    for module_key in ALL_MODULE_LABELS:
-        checkbox_name = f'modulo_{module_key}'
-        setattr(empresa, f'atividade_{module_key}', checkbox_name in request.form)
-
-    db.session.commit()
-    flash(f'Módulos da empresa "{empresa.nome}" atualizados com sucesso.', 'success')
-    return redirect(url_for('admin_comercial.index'))
-
-
 @admin_comercial_bp.route('/empresa/<int:empresa_id>/delete', methods=['POST'])
 @login_required
 @require_role('admin')
@@ -472,40 +381,30 @@ def excluir_empresa(empresa_id: int):
         flash('Empresa não encontrada.', 'warning')
         return redirect(url_for('admin_comercial.index'))
 
-    assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
-    if assinatura:
-        # Exclusão lógica: remove o acesso imediatamente e mantém os dados por
-        # `RETENCAO_EXCLUSAO_DIAS` (60 dias) a contar de hoje.
-        data_exclusao = datetime.utcnow()
-        assinatura.status = 'excluida'
-        assinatura.bloqueio_nivel = 'total'
-        assinatura.bloqueado_desde = data_exclusao
-        assinatura.data_exclusao = data_exclusao
-        assinatura.motivo_status = (
-            f'Empresa excluída em {data_exclusao.strftime("%d/%m/%Y %H:%M")}. '
-            f'Dados mantidos por {RETENCAO_EXCLUSAO_DIAS} dias para retenção.'
-        )
-    else:
-        nova = AssinaturaEmpresa(
-            empresa_id=empresa_id,
-            plano_codigo=normalize_plan(empresa.plano),
-            status='excluida',
-            bloqueio_nivel='total',
-            bloqueado_desde=datetime.utcnow(),
-            data_exclusao=datetime.utcnow(),
-            data_inicio=datetime.utcnow().date(),
-            data_vencimento=datetime.utcnow().date(),
-            motivo_status=f'Empresa excluída. Dados mantidos por {RETENCAO_EXCLUSAO_DIAS} dias.',
-        )
-        db.session.add(nova)
+    try:
+        inspector = inspect(db.engine)
+        tables = []
+        for table in inspector.get_table_names():
+            columns = {col['name'] for col in inspector.get_columns(table)}
+            if 'empresa_id' in columns:
+                tables.append(table)
 
-    # Remove imediatamente as contas de acesso (usuários), encerrando a sessão.
-    User.query.filter_by(empresa_id=empresa_id).update({'is_active': False})
+        conn = db.session.connection()
+        if db.engine.dialect.name == 'mysql':
+            conn.execute(text('SET FOREIGN_KEY_CHECKS=0'))
 
-    db.session.commit()
-    flash(
-        f'Empresa "{empresa.nome}" excluída. O acesso foi removido e os dados serão '
-        f'mantidos por {RETENCAO_EXCLUSAO_DIAS} dias antes da remoção definitiva.',
-        'success',
-    )
+        for table in tables:
+            conn.execute(text(f'DELETE FROM {table} WHERE empresa_id = :empresa_id'), {'empresa_id': empresa_id})
+
+        conn.execute(text('DELETE FROM empresas WHERE id = :empresa_id'), {'empresa_id': empresa_id})
+
+        if db.engine.dialect.name == 'mysql':
+            conn.execute(text('SET FOREIGN_KEY_CHECKS=1'))
+
+        db.session.commit()
+        flash('Empresa e dados relacionados removidos com sucesso.', 'success')
+    except Exception as exc:
+        db.session.rollback()
+        flash(f'Erro ao excluir empresa: {exc}', 'danger')
+
     return redirect(url_for('admin_comercial.index'))

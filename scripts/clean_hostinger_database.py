@@ -100,7 +100,7 @@ TABLES = [
 def clean_database():
     """Remove todas as tabelas do banco de dados"""
     try:
-        print(f"Conectando ao banco de dados...")
+        print(f"Conectando ao banco de dados... - clean_hostinger_database.py:103")
         connection = pymysql.connect(
             host=DB_HOST,
             port=DB_PORT,
@@ -110,50 +110,50 @@ def clean_database():
             connect_timeout=10
         )
         
-        print("✅ Conexão bem-sucedida!")
+        print("✅ Conexão bemsucedida! - clean_hostinger_database.py:113")
         print()
         
         # Desabilitar verificação de chaves estrangeiras
         with connection.cursor() as cursor:
             cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
-            print("✅ Verificação de chaves estrangeiras desabilitada")
+            print("✅ Verificação de chaves estrangeiras desabilitada - clean_hostinger_database.py:119")
         
         # Dropar tabelas
         with connection.cursor() as cursor:
             for table in TABLES:
                 try:
                     cursor.execute(f"DROP TABLE IF EXISTS {table}")
-                    print(f"✅ Tabela '{table}' removida")
+                    print(f"✅ Tabela '{table}' removida - clean_hostinger_database.py:126")
                 except MySQLError as e:
-                    print(f"⚠️  Erro ao remover '{table}': {e.args[1]}")
+                    print(f"⚠️  Erro ao remover '{table}': {e.args[1]} - clean_hostinger_database.py:128")
         
         # Reabilitar verificação de chaves estrangeiras
         with connection.cursor() as cursor:
             cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
-            print("✅ Verificação de chaves estrangeiras reabilitada")
+            print("✅ Verificação de chaves estrangeiras reabilitada - clean_hostinger_database.py:133")
         
         connection.commit()
         connection.close()
         
         print()
-        print("✅ Limpeza concluída com sucesso!")
-        print(f"Total de tabelas processadas: {len(TABLES)}")
+        print("✅ Limpeza concluída com sucesso! - clean_hostinger_database.py:139")
+        print(f"Total de tabelas processadas: {len(TABLES)} - clean_hostinger_database.py:140")
         return True
         
     except MySQLError as e:
-        print(f"❌ Erro ao conectar ao banco de dados:")
-        print(f"   Código: {e.args[0]}")
-        print(f"   Mensagem: {e.args[1]}")
+        print(f"❌ Erro ao conectar ao banco de dados: - clean_hostinger_database.py:144")
+        print(f"Código: {e.args[0]} - clean_hostinger_database.py:145")
+        print(f"Mensagem: {e.args[1]} - clean_hostinger_database.py:146")
         return False
     except Exception as e:
-        print(f"❌ Erro inesperado:")
-        print(f"   {str(e)}")
+        print(f"❌ Erro inesperado: - clean_hostinger_database.py:149")
+        print(f"{str(e)} - clean_hostinger_database.py:150")
         return False
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("LIMPEZA DO BANCO DE DADOS - HOSTINGER")
-    print("=" * 60)
+    print("= - clean_hostinger_database.py:154" * 60)
+    print("LIMPEZA DO BANCO DE DADOS  HOSTINGER - clean_hostinger_database.py:155")
+    print("= - clean_hostinger_database.py:156" * 60)
     print()
     
     confirm = input("⚠️  ATENÇÃO: Isso removerá TODAS as tabelas do banco!\nDeseja continuar? (s/N): ")
@@ -161,4 +161,4 @@ if __name__ == "__main__":
     if confirm.lower() == 's':
         clean_database()
     else:
-        print("❌ Operação cancelada pelo usuário.")
+        print("❌ Operação cancelada pelo usuário. - clean_hostinger_database.py:164")

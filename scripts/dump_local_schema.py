@@ -32,8 +32,8 @@ def main():
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_local_schema.json")
     with open(out, "w", encoding="utf-8") as fp:
         json.dump(schema, fp, ensure_ascii=False, indent=1, sort_keys=True)
-    print(f"LOCAL TABLES: {len(tables)}")
-    print(f"OK arquivo: {out}")
+    print(f"LOCAL TABLES: {len(tables)} - dump_local_schema.py:35")
+    print(f"OK arquivo: {out} - dump_local_schema.py:36")
 
 
 if __name__ == "__main__":

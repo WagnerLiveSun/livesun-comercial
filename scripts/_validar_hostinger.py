@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 """Validação pós-ajuste do banco Hostinger (apenas leitura)."""
-import os
 import pymysql
 
 CONN = dict(
-    host=os.environ.get("DB_HOST", "195.35.61.111"),
-    port=int(os.environ.get("DB_PORT", 3306)),
-    user=os.environ.get("DB_USER", "u951548013_LS_Comercial"),
-    password=os.environ.get("DB_PASSWORD", ""),
-    database=os.environ.get("DB_NAME", "u951548013_LS_Comercial"),
+    host="195.35.61.111",
+    port=3306,
+    user="u951548013_LS_Comercial",
+    password="quemsabe123!A",
+    database="u951548013_LS_Comercial",
     charset="utf8mb4",
     connect_timeout=10,
 )
@@ -17,15 +16,15 @@ CONN = dict(
 def main():
     c = pymysql.connect(**CONN)
     cur = c.cursor()
-    print("== Contagens (dados preservados) ==")
+    print("== Contagens (dados preservados) == - _validar_hostinger.py:19")
     for t in [
         "empresas", "users", "entidades", "orcamentos", "pedidos_venda",
         "nfse_nacional_emissoes", "documentos_venda", "produtos", "lancamentos",
     ]:
         cur.execute(f"SELECT COUNT(*) FROM `{t}`")
-        print(f"  {t}: {cur.fetchone()[0]}")
+        print(f"{t}: {cur.fetchone()[0]} - _validar_hostinger.py:25")
 
-    print("\n== Colunas recém-adicionadas ==")
+    print("\n== Colunas recémadicionadas == - _validar_hostinger.py:27")
     checks = [
         ("pedidos_venda", "documento_nfse_id"),
         ("pedidos_venda", "documento_nfe_id"),
@@ -41,7 +40,7 @@ def main():
             "WHERE table_schema=%s AND table_name=%s AND column_name=%s",
             (CONN["database"], t, col),
         )
-        print(f"  {t}.{col}: {'OK' if cur.fetchone()[0] else 'FALTA!'}")
+        print(f"{t}.{col}: {'OK' if cur.fetchone()[0] else 'FALTA!'} - _validar_hostinger.py:43")
 
     c.close()
 
