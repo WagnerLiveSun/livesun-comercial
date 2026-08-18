@@ -104,7 +104,7 @@
 
 <div class="ls-card">
     <div class="table-responsive">
-        <table class="table table-hover mb-0" style="border-color: rgba(10, 237, 82, 0.783); color: #e5e7eb;">
+        <table class="table table-hover mb-0" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
             <thead style="border-bottom: 1px solid rgba(148, 163, 184, 0.25);">
                 <tr>
                     <th>Data</th>
@@ -123,7 +123,7 @@
                 {% for linha in resultado.linhas %}
                     {% if ns.data_atual != linha.data %}
                         {% set ns.data_atual = linha.data %}
-                        <tr style="background-color: rgba(46, 168, 150, 0.25);">
+                        <tr style="background-color: rgba(30,41,59,0.25);">
                             <td colspan="9" class="fw-semibold">{{ linha.data }}</td>
                         </tr>
                     {% endif %}
@@ -201,11 +201,11 @@
             options: {
                 responsive: true,
                 plugins: {
-                    legend: { labels: { color: '#ea580c' } }
+                    legend: { labels: { color: '#e5e7eb' } }
                 },
                 scales: {
-                    x: { ticks: { color: '#ea580c' }, grid: { color: 'rgba(234,88,12,0.3)' } },
-                    y: { ticks: { color: '#ea580c' }, grid: { color: 'rgba(234,88,12,0.3)' } }
+                    x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,0.15)' } },
+                    y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,0.15)' } }
                 }
             }
         });

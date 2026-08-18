@@ -3,21 +3,20 @@
 
 import pymysql
 from pymysql import MySQLError
-import os
 
-# Credenciais do banco LOCAL (via variáveis de ambiente)
-LOCAL_DB_HOST = os.environ.get("LOCAL_DB_HOST", "localhost")
-LOCAL_DB_PORT = int(os.environ.get("LOCAL_DB_PORT", 3306))
-LOCAL_DB_USER = os.environ.get("LOCAL_DB_USER", "root")
-LOCAL_DB_PASSWORD = os.environ.get("LOCAL_DB_PASSWORD", "")
-LOCAL_DB_NAME = os.environ.get("LOCAL_DB_NAME", "comercial")
+# Credenciais do banco LOCAL
+LOCAL_DB_HOST = "localhost"
+LOCAL_DB_PORT = 3306
+LOCAL_DB_USER = "root"
+LOCAL_DB_PASSWORD = "livesun"
+LOCAL_DB_NAME = "comercial"
 
-# Credenciais do banco HOSTINGER (via variáveis de ambiente)
-HOSTINGER_DB_HOST = os.environ.get("DB_HOST", "195.35.61.111")
-HOSTINGER_DB_PORT = int(os.environ.get("DB_PORT", 3306))
-HOSTINGER_DB_USER = os.environ.get("DB_USER", "u951548013_LS_Comercial")
-HOSTINGER_DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
-HOSTINGER_DB_NAME = os.environ.get("DB_NAME", "u951548013_LS_Comercial")
+# Credenciais do banco HOSTINGER
+HOSTINGER_DB_HOST = "195.35.61.111"
+HOSTINGER_DB_PORT = 3306
+HOSTINGER_DB_USER = "u951548013_LS_Comercial"
+HOSTINGER_DB_PASSWORD = "quemsabe123!A"
+HOSTINGER_DB_NAME = "u951548013_LS_Comercial"
 
 # Tabelas de referência para sincronizar
 REFERENCE_TABLES = [
@@ -49,9 +48,9 @@ def get_row_count(host, port, user, password, database, table):
         return count
         
     except MySQLError as e:
-        print(f"❌ Erro ao contar registros da tabela {table}: - sync_reference_tables.py:52")
-        print(f"Código: {e.args[0]} - sync_reference_tables.py:53")
-        print(f"Mensagem: {e.args[1]} - sync_reference_tables.py:54")
+        print(f"❌ Erro ao contar registros da tabela {table}:")
+        print(f"   Código: {e.args[0]}")
+        print(f"   Mensagem: {e.args[1]}")
         return -1
 
 def get_table_columns(host, port, user, password, database, table):
@@ -74,9 +73,9 @@ def get_table_columns(host, port, user, password, database, table):
         return columns
         
     except MySQLError as e:
-        print(f"❌ Erro ao obter colunas da tabela {table}: - sync_reference_tables.py:77")
-        print(f"Código: {e.args[0]} - sync_reference_tables.py:78")
-        print(f"Mensagem: {e.args[1]} - sync_reference_tables.py:79")
+        print(f"❌ Erro ao obter colunas da tabela {table}:")
+        print(f"   Código: {e.args[0]}")
+        print(f"   Mensagem: {e.args[1]}")
         return []
 
 def copy_table_data(source_host, source_port, source_user, source_password, source_database,
@@ -111,7 +110,7 @@ def copy_table_data(source_host, source_port, source_user, source_password, sour
         common_columns = [col for col in source_columns if col in target_columns]
         
         if not common_columns:
-            print(f"❌ Nenhuma coluna em comum entre as tabelas - sync_reference_tables.py:114")
+            print(f"❌ Nenhuma coluna em comum entre as tabelas")
             return -1
         
         # Ler dados da origem (apenas colunas comuns)
@@ -141,69 +140,69 @@ def copy_table_data(source_host, source_port, source_user, source_password, sour
         return len(rows)
         
     except MySQLError as e:
-        print(f"❌ Erro ao copiar dados da tabela {table}: - sync_reference_tables.py:144")
-        print(f"Código: {e.args[0]} - sync_reference_tables.py:145")
-        print(f"Mensagem: {e.args[1]} - sync_reference_tables.py:146")
+        print(f"❌ Erro ao copiar dados da tabela {table}:")
+        print(f"   Código: {e.args[0]}")
+        print(f"   Mensagem: {e.args[1]}")
         return -1
 
 def compare_and_sync():
     """Compara e sincroniza tabelas de referência"""
-    print("= - sync_reference_tables.py:151" * 60)
-    print("COMPARAÇÃO E SINCRONIZAÇÃO DE TABELAS DE REFERÊNCIA - sync_reference_tables.py:152")
-    print("= - sync_reference_tables.py:153" * 60)
+    print("=" * 60)
+    print("COMPARAÇÃO E SINCRONIZAÇÃO DE TABELAS DE REFERÊNCIA")
+    print("=" * 60)
     print()
     
     tables_to_sync = []
     
     for table in REFERENCE_TABLES:
-        print(f"📊 Tabela: {table} - sync_reference_tables.py:159")
+        print(f"📊 Tabela: {table}")
         
         # Contar registros no local
         local_count = get_row_count(LOCAL_DB_HOST, LOCAL_DB_PORT, LOCAL_DB_USER, 
                                    LOCAL_DB_PASSWORD, LOCAL_DB_NAME, table)
-        print(f"Local:     {local_count:,} registros - sync_reference_tables.py:164" if local_count >= 0 else "   Local:     ERRO")
+        print(f"   Local:     {local_count:,} registros" if local_count >= 0 else "   Local:     ERRO")
         
         # Contar registros na Hostinger
         hostinger_count = get_row_count(HOSTINGER_DB_HOST, HOSTINGER_DB_PORT, HOSTINGER_DB_USER,
                                        HOSTINGER_DB_PASSWORD, HOSTINGER_DB_NAME, table)
-        print(f"Hostinger: {hostinger_count:,} registros - sync_reference_tables.py:169" if hostinger_count >= 0 else "   Hostinger: ERRO")
+        print(f"   Hostinger: {hostinger_count:,} registros" if hostinger_count >= 0 else "   Hostinger: ERRO")
         
         # Verificar se precisa sincronizar
         if local_count > hostinger_count:
             diff = local_count - hostinger_count
-            print(f"⚠️  Diferença: {diff:,} registros faltando na Hostinger - sync_reference_tables.py:174")
+            print(f"   ⚠️  Diferença: {diff:,} registros faltando na Hostinger")
             tables_to_sync.append((table, local_count, hostinger_count))
         elif local_count == hostinger_count:
-            print(f"✅ Sincronizada - sync_reference_tables.py:177")
+            print(f"   ✅ Sincronizada")
         else:
-            print(f"⚠️  Hostinger tem mais registros que o local - sync_reference_tables.py:179")
+            print(f"   ⚠️  Hostinger tem mais registros que o local")
         
         print()
     
     if not tables_to_sync:
-        print("✅ Todas as tabelas estão sincronizadas! - sync_reference_tables.py:184")
+        print("✅ Todas as tabelas estão sincronizadas!")
         return
     
     # Perguntar se deseja sincronizar
-    print("= - sync_reference_tables.py:188" * 60)
-    print(f"Tabelas para sincronizar: {len(tables_to_sync)} - sync_reference_tables.py:189")
-    print("= - sync_reference_tables.py:190" * 60)
+    print("=" * 60)
+    print(f"Tabelas para sincronizar: {len(tables_to_sync)}")
+    print("=" * 60)
     for table, local, hostinger in tables_to_sync:
-        print(f"{table}: Local ({local:,}) → Hostinger ({hostinger:,}) - sync_reference_tables.py:192")
+        print(f"   - {table}: Local ({local:,}) → Hostinger ({hostinger:,})")
     print()
     
     confirm = input("Deseja sincronizar estas tabelas? (s/N): ")
     
     if confirm.lower() != 's':
-        print("❌ Operação cancelada pelo usuário. - sync_reference_tables.py:198")
+        print("❌ Operação cancelada pelo usuário.")
         return
     
     print()
-    print("🔄 Iniciando sincronização... - sync_reference_tables.py:202")
+    print("🔄 Iniciando sincronização...")
     print()
     
     for table, local_count, hostinger_count in tables_to_sync:
-        print(f"📥 Copiando {table}... - sync_reference_tables.py:206")
+        print(f"📥 Copiando {table}...")
         copied = copy_table_data(
             LOCAL_DB_HOST, LOCAL_DB_PORT, LOCAL_DB_USER, LOCAL_DB_PASSWORD, LOCAL_DB_NAME,
             HOSTINGER_DB_HOST, HOSTINGER_DB_PORT, HOSTINGER_DB_USER, HOSTINGER_DB_PASSWORD, HOSTINGER_DB_NAME,
@@ -211,14 +210,14 @@ def compare_and_sync():
         )
         
         if copied >= 0:
-            print(f"✅ {copied:,} registros copiados - sync_reference_tables.py:214")
+            print(f"   ✅ {copied:,} registros copiados")
         else:
-            print(f"❌ Erro ao copiar tabela - sync_reference_tables.py:216")
+            print(f"   ❌ Erro ao copiar tabela")
         print()
     
-    print("= - sync_reference_tables.py:219" * 60)
-    print("✅ Sincronização concluída! - sync_reference_tables.py:220")
-    print("= - sync_reference_tables.py:221" * 60)
+    print("=" * 60)
+    print("✅ Sincronização concluída!")
+    print("=" * 60)
 
 if __name__ == "__main__":
     compare_and_sync()

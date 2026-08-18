@@ -14,8 +14,8 @@ CREATE DATABASE IF NOT EXISTS controller
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
--- OWNER (usuário dono do schema, local - defina a senha via variável de ambiente)
-CREATE USER IF NOT EXISTS 'controller_owner'@'localhost' IDENTIFIED BY 'MUDE_A_SENHA_AQUI';
+-- OWNER (usuário dono do schema, local)
+CREATE USER IF NOT EXISTS 'controller_owner'@'localhost' IDENTIFIED BY 'Controller@2026!';
 GRANT ALL PRIVILEGES ON controller.* TO 'controller_owner'@'localhost';
 FLUSH PRIVILEGES;
 

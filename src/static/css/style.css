@@ -1,46 +1,168 @@
-/* style.css básico para evitar erro 404 e permitir customização futura */
-
+/* Tema Dark (padrão) */
 body {
-
     background-color: #0f172a;
-
     color: #e5e7eb;
-
     font-family: 'Segoe UI', Arial, sans-serif;
-
 }
-
 .ls-card {
-
     background: #1e293b;
-
     border-radius: 12px;
-
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-
     border: 1px solid #334155;
-
 }
-
 .table {
-
     color: #e5e7eb;
-
 }
-
 .btn-primary {
-
     background: #2563eb;
-
     border: none;
-
+    color: #ffffff;
 }
-
+.btn-secondary {
+    background: #475569;
+    border: none;
+    color: #ffffff;
+}
 .btn-success {
-
     background: #22c55e;
-
     border: none;
-
+    color: #ffffff;
+}
+.ls-btn-primary {
+    background: #2563eb;
+    border: none;
+    color: #ffffff;
+}
+.ls-btn-secondary {
+    background: #475569;
+    border: none;
+    color: #ffffff;
+}
+.ls-theme-control {
+    background: #1e293b;
+    color: #e5e7eb;
+    border: 1px solid #334155;
+}
+.ls-theme-control:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
 }
 
+/* Tema BlueMetal */
+body.theme-bluemetal {
+    --bm-bg: #f6f8fb;
+    --bm-surface: #ffffff;
+    --bm-surface-2: #e9eef3;
+    --bm-primary: #4a7fb0;
+    --bm-primary-dark: #35658e;
+    --bm-primary-light: #dce9f6;
+    --bm-text: #1f2a33;
+    --bm-text-soft: #5f7386;
+    --bm-border: #cfd8e3;
+    --bm-hover: #eef4fa;
+    --bm-shadow: 0 8px 24px rgba(31, 42, 51, 0.08);
+    --bm-radius: 12px;
+    
+    background: var(--bm-bg);
+    color: var(--bm-text);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+body.theme-bluemetal .ls-card {
+    background: var(--bm-surface);
+    color: var(--bm-text);
+    border: 1px solid var(--bm-border);
+    border-radius: var(--bm-radius);
+    box-shadow: var(--bm-shadow);
+}
+
+body.theme-bluemetal .table {
+    background: var(--bm-surface);
+    color: var(--bm-text);
+    border-collapse: collapse;
+    width: 100%;
+}
+
+body.theme-bluemetal th {
+    background: var(--bm-surface-2);
+    color: var(--bm-text);
+    border-bottom: 1px solid var(--bm-border);
+}
+
+body.theme-bluemetal td {
+    border-bottom: 1px solid #edf1f5;
+}
+
+body.theme-bluemetal .btn-primary,
+body.theme-bluemetal .ls-btn-primary {
+    background: linear-gradient(180deg, var(--bm-primary) 0%, var(--bm-primary-dark) 100%);
+    color: #ffffff;
+    border: 1px solid var(--bm-primary-dark);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(74, 127, 176, 0.18);
+}
+
+body.theme-bluemetal .btn-primary:hover,
+body.theme-bluemetal .ls-btn-primary:hover {
+    background: linear-gradient(180deg, var(--bm-primary-dark) 0%, #2f587c 100%);
+}
+
+body.theme-bluemetal .btn-secondary,
+body.theme-bluemetal .ls-btn-secondary {
+    background: var(--bm-surface-2);
+    color: var(--bm-text);
+    border: 1px solid var(--bm-border);
+}
+
+body.theme-bluemetal .ls-theme-control,
+body.theme-bluemetal input,
+body.theme-bluemetal select,
+body.theme-bluemetal textarea {
+    background: #ffffff;
+    color: var(--bm-text);
+    border: 1px solid var(--bm-border);
+    border-radius: 10px;
+}
+
+body.theme-bluemetal .ls-theme-control:focus,
+body.theme-bluemetal input:focus,
+body.theme-bluemetal select:focus,
+body.theme-bluemetal textarea:focus {
+    outline: none;
+    border-color: var(--bm-primary);
+    box-shadow: 0 0 0 3px rgba(74, 127, 176, 0.15);
+}
+
+body.theme-bluemetal a {
+    color: var(--bm-primary);
+    text-decoration: none;
+}
+
+body.theme-bluemetal a:hover {
+    color: var(--bm-primary-dark);
+}
+
+body.theme-bluemetal .alert-success {
+    background: #eaf6ef;
+    color: #1f6b3b;
+    border: 1px solid #c9e7d3;
+}
+
+body.theme-bluemetal .alert-warning {
+    background: #fff7e6;
+    color: #8a5a00;
+    border: 1px solid #f1dfb0;
+}
+
+body.theme-bluemetal .alert-danger {
+    background: #fdecec;
+    color: #8b2c2c;
+    border: 1px solid #f4c6c6;
+}
+
+body.theme-bluemetal .alert-info {
+    background: #eaf3fb;
+    color: #1f4f75;
+    border: 1px solid #cfe2f3;
+}

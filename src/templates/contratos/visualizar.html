@@ -38,7 +38,6 @@
     </a>
     {% if contrato.status == 'aguardando_assinatura' %}
     <form method="POST" action="{{ url_for('contratos.assinar', id=contrato.id) }}" class="d-inline">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <button type="submit" class="btn btn-success" onclick="return confirm('Confirmar assinatura do contrato?')">
             <i class="fas fa-signature me-2"></i>Assinar
         </button>
@@ -46,7 +45,6 @@
     {% endif %}
     {% if contrato.status in ['rascunho', 'aguardando_assinatura'] %}
     <form method="POST" action="{{ url_for('contratos.cancelar', id=contrato.id) }}" class="d-inline">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <button type="submit" class="btn btn-danger" onclick="return confirm('Confirmar cancelamento do contrato?')">
             <i class="fas fa-times me-2"></i>Cancelar
         </button>
@@ -130,7 +128,7 @@
 <!-- Cláusulas do Contrato -->
 <div class="ls-card p-4 mb-4">
     <h5 class="border-bottom pb-2 mb-3">Cláusulas do Contrato</h5>
-
+    
     {% for clausula in contrato.clausulas|sort(attribute='ordem') %}
     <div class="mb-4">
         <h6 class="fw-bold">{{ clausula.ordem }}. {{ clausula.titulo }}</h6>
@@ -140,7 +138,7 @@
     </div>
     <hr>
     {% endfor %}
-
+    
     {% if not contrato.clausulas %}
     <p class="text-muted">Nenhuma cláusula adicionada.</p>
     {% endif %}

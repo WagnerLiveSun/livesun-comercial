@@ -84,24 +84,9 @@ def index():
             link_pagamento=link_pagamento,
         )
     except Exception as e:
-        # Tabelas/colunas ausentes ou sem dados: abre o painel com indicadores zerados.
-        db.session.rollback()
-        logging.error('Erro no dashboard geral (render com zeros): %s\n%s', e, traceback.format_exc())
-        return render_template(
-            'dashboard_geral.html',
-            fornecedores=0,
-            clientes=0,
-            vendedores=0,
-            total_usuarios=0,
-            total_produtos=0,
-            total_servicos=0,
-            plano='N/A',
-            vencimento=None,
-            status='N/A',
-            add_ons=[],
-            tipo_cobranca='N/A',
-            link_pagamento=None,
-        )
+        logging.error('Erro no dashboard geral: %s\n%s', e, traceback.format_exc())
+        from flask import abort
+        abort(500)
 
 
 @dashboard_bp.route('/comercial')
@@ -146,22 +131,9 @@ def comercial():
             valor_total_pedidos=valor_total_pedidos,
         )
     except Exception as e:
-        # Tabelas/colunas ausentes ou sem dados: abre o painel com indicadores zerados,
-        # sem erro 500 e sem mensagens sobre o schema do banco.
-        db.session.rollback()
-        logging.error('Erro no dashboard comercial (render com zeros): %s\n%s', e, traceback.format_exc())
-        return render_template(
-            'dashboard_comercial.html',
-            total_orcamentos=0,
-            orcamentos_aprovados=0,
-            orcamentos_emitidos=0,
-            orcamentos_convertidos=0,
-            total_pedidos=0,
-            pedidos_pendentes=0,
-            pedidos_faturados=0,
-            valor_total_orcamentos=Decimal('0.00'),
-            valor_total_pedidos=Decimal('0.00'),
-        )
+        logging.error('Erro no dashboard comercial: %s\n%s', e, traceback.format_exc())
+        from flask import abort
+        abort(500)
 
 
 @dashboard_bp.route('/financeiro')
@@ -350,30 +322,9 @@ def financeiro():
             total_recebido_mes=total_recebido_mes,
         )
     except Exception as e:
-        # Tabelas/colunas ausentes ou sem dados: abre o painel com indicadores zerados.
-        db.session.rollback()
-        logging.error('Erro no dashboard financeiro (render com zeros): %s\n%s', e, traceback.format_exc())
-        return render_template(
-            'dashboard_financeiro.html',
-            contas_pagar_aberto=0,
-            contas_receber_aberto=0,
-            total_contas_banco=0,
-            saldo_total=Decimal('0.00'),
-            pagar_previsto_hoje=Decimal('0.00'),
-            receber_previsto_hoje=Decimal('0.00'),
-            disponibilidade_hoje=Decimal('0.00'),
-            grafico_labels=[],
-            grafico_entradas_previsto=[],
-            grafico_entradas_realizado=[],
-            grafico_saidas_previsto=[],
-            grafico_saidas_realizado=[],
-            ultimos_lancamentos=[],
-            resultado_por_dia=[],
-            previsto_a_receber=Decimal('0.00'),
-            previsto_a_pagar=Decimal('0.00'),
-            total_pago_mes=Decimal('0.00'),
-            total_recebido_mes=Decimal('0.00'),
-        )
+        logging.error('Erro no dashboard financeiro: %s\n%s', e, traceback.format_exc())
+        from flask import abort
+        abort(500)
 
 
 @dashboard_bp.route('/locacao')
@@ -424,21 +375,9 @@ def locacao():
             taxa_ocupacao=round(taxa_ocupacao, 1),
         )
     except Exception as e:
-        # Tabelas/colunas ausentes ou sem dados: abre o painel com indicadores zerados,
-        # sem erro 500 e sem mensagens sobre o schema do banco.
-        db.session.rollback()
-        logging.error('Erro no dashboard locação (render com zeros): %s\n%s', e, traceback.format_exc())
-        return render_template(
-            'dashboard_locacao.html',
-            total_pecas=0,
-            pecas_disponiveis=0,
-            pecas_manutencao=0,
-            contratos_ativos=0,
-            orcamentos_pendentes=0,
-            retiradas_pendentes=0,
-            devolucoes_pendentes=0,
-            taxa_ocupacao=0,
-        )
+        logging.error('Erro no dashboard locação: %s\n%s', e, traceback.format_exc())
+        from flask import abort
+        abort(500)
 
 
 @dashboard_bp.route('/propostas')
@@ -492,22 +431,9 @@ def propostas():
             taxa_aprovacao=round(taxa_aprovacao, 1),
         )
     except Exception as e:
-        # Tabelas/colunas ausentes ou sem dados: abre o painel com indicadores zerados.
-        db.session.rollback()
-        logging.error('Erro no dashboard propostas (render com zeros): %s\n%s', e, traceback.format_exc())
-        return render_template(
-            'dashboard_propostas.html',
-            total_propostas=0,
-            propostas_emitidas=0,
-            propostas_aprovadas=0,
-            propostas_reprovadas=0,
-            propostas_convertidas=0,
-            valor_total_emitido=Decimal('0.00'),
-            valor_total_aprovado=Decimal('0.00'),
-            valor_total_convertido=Decimal('0.00'),
-            taxa_conversao=0,
-            taxa_aprovacao=0,
-        )
+        logging.error('Erro no dashboard propostas: %s\n%s', e, traceback.format_exc())
+        from flask import abort
+        abort(500)
 
 
 @dashboard_bp.route('/fiscal')
@@ -598,23 +524,7 @@ def fiscal():
             ultimas_nfse=ultimas_nfse,
         )
     except Exception as e:
-        # Tabelas/colunas ausentes ou sem dados: abre o painel com indicadores zerados.
-        db.session.rollback()
-        logging.error('Erro no dashboard fiscal (render com zeros): %s\n%s', e, traceback.format_exc())
-        return render_template(
-            'dashboard_fiscal.html',
-            nfse_emitidas_mes=0,
-            valor_total_mes=Decimal('0.00'),
-            nfse_canceladas_mes=0,
-            iss_total_mes=Decimal('0.00'),
-            status_autorizadas=0,
-            status_canceladas=0,
-            status_pendentes=0,
-            status_rejeitadas=0,
-            percent_autorizadas=0,
-            percent_canceladas=0,
-            percent_pendentes=0,
-            percent_rejeitadas=0,
-            ultimas_nfse=[],
-        )
+        logging.error('Erro no dashboard fiscal: %s\n%s', e, traceback.format_exc())
+        from flask import abort
+        abort(500)
 

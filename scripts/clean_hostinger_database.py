@@ -3,14 +3,13 @@
 
 import pymysql
 from pymysql import MySQLError
-import os
 
-# Credenciais do banco de dados na Hostinger (via variáveis de ambiente)
-DB_HOST = os.environ.get("DB_HOST", "195.35.61.111")
-DB_PORT = int(os.environ.get("DB_PORT", 3306))
-DB_USER = os.environ.get("DB_USER", "u951548013_LS_Comercial")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
-DB_NAME = os.environ.get("DB_NAME", "u951548013_LS_Comercial")
+# Credenciais do banco de dados na Hostinger
+DB_HOST = "195.35.61.111"
+DB_PORT = 3306
+DB_USER = "u951548013_LS_Comercial"
+DB_PASSWORD = "quemsabe123!A"
+DB_NAME = "u951548013_LS_Comercial"
 
 # Lista de tabelas para dropar (ordem não importa com FKs desabilitadas)
 TABLES = [
@@ -100,7 +99,7 @@ TABLES = [
 def clean_database():
     """Remove todas as tabelas do banco de dados"""
     try:
-        print(f"Conectando ao banco de dados... - clean_hostinger_database.py:103")
+        print(f"Conectando ao banco de dados...")
         connection = pymysql.connect(
             host=DB_HOST,
             port=DB_PORT,
@@ -110,50 +109,50 @@ def clean_database():
             connect_timeout=10
         )
         
-        print("✅ Conexão bemsucedida! - clean_hostinger_database.py:113")
+        print("✅ Conexão bem-sucedida!")
         print()
         
         # Desabilitar verificação de chaves estrangeiras
         with connection.cursor() as cursor:
             cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
-            print("✅ Verificação de chaves estrangeiras desabilitada - clean_hostinger_database.py:119")
+            print("✅ Verificação de chaves estrangeiras desabilitada")
         
         # Dropar tabelas
         with connection.cursor() as cursor:
             for table in TABLES:
                 try:
                     cursor.execute(f"DROP TABLE IF EXISTS {table}")
-                    print(f"✅ Tabela '{table}' removida - clean_hostinger_database.py:126")
+                    print(f"✅ Tabela '{table}' removida")
                 except MySQLError as e:
-                    print(f"⚠️  Erro ao remover '{table}': {e.args[1]} - clean_hostinger_database.py:128")
+                    print(f"⚠️  Erro ao remover '{table}': {e.args[1]}")
         
         # Reabilitar verificação de chaves estrangeiras
         with connection.cursor() as cursor:
             cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
-            print("✅ Verificação de chaves estrangeiras reabilitada - clean_hostinger_database.py:133")
+            print("✅ Verificação de chaves estrangeiras reabilitada")
         
         connection.commit()
         connection.close()
         
         print()
-        print("✅ Limpeza concluída com sucesso! - clean_hostinger_database.py:139")
-        print(f"Total de tabelas processadas: {len(TABLES)} - clean_hostinger_database.py:140")
+        print("✅ Limpeza concluída com sucesso!")
+        print(f"Total de tabelas processadas: {len(TABLES)}")
         return True
         
     except MySQLError as e:
-        print(f"❌ Erro ao conectar ao banco de dados: - clean_hostinger_database.py:144")
-        print(f"Código: {e.args[0]} - clean_hostinger_database.py:145")
-        print(f"Mensagem: {e.args[1]} - clean_hostinger_database.py:146")
+        print(f"❌ Erro ao conectar ao banco de dados:")
+        print(f"   Código: {e.args[0]}")
+        print(f"   Mensagem: {e.args[1]}")
         return False
     except Exception as e:
-        print(f"❌ Erro inesperado: - clean_hostinger_database.py:149")
-        print(f"{str(e)} - clean_hostinger_database.py:150")
+        print(f"❌ Erro inesperado:")
+        print(f"   {str(e)}")
         return False
 
 if __name__ == "__main__":
-    print("= - clean_hostinger_database.py:154" * 60)
-    print("LIMPEZA DO BANCO DE DADOS  HOSTINGER - clean_hostinger_database.py:155")
-    print("= - clean_hostinger_database.py:156" * 60)
+    print("=" * 60)
+    print("LIMPEZA DO BANCO DE DADOS - HOSTINGER")
+    print("=" * 60)
     print()
     
     confirm = input("⚠️  ATENÇÃO: Isso removerá TODAS as tabelas do banco!\nDeseja continuar? (s/N): ")
@@ -161,4 +160,4 @@ if __name__ == "__main__":
     if confirm.lower() == 's':
         clean_database()
     else:
-        print("❌ Operação cancelada pelo usuário. - clean_hostinger_database.py:164")
+        print("❌ Operação cancelada pelo usuário.")

@@ -781,13 +781,7 @@ def exportar_pdf(id):
 
         # Gerar PDF em memória
         buffer = io.BytesIO()
-        pdf_output = pdf.output(dest='S')
-        
-        # FPDF pode retornar bytes ou string dependendo da versão
-        if isinstance(pdf_output, bytes):
-            pdf_bytes = pdf_output
-        else:
-            pdf_bytes = pdf_output.encode('latin-1')
+        pdf_bytes = pdf.output(dest='S').encode('latin-1')
         buffer.write(pdf_bytes)
         buffer.seek(0)
 
