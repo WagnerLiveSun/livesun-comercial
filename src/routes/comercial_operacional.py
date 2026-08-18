@@ -3746,7 +3746,13 @@ def orcamentos_exportar_pdf(orcamento_id):
 
         buffer = io.BytesIO()
 
-        pdf_bytes = pdf.output(dest='S').encode('latin-1')
+        pdf_output = pdf.output(dest='S')
+        
+        # FPDF pode retornar bytes ou string dependendo da versão
+        if isinstance(pdf_output, bytes):
+            pdf_bytes = pdf_output
+        else:
+            pdf_bytes = pdf_output.encode('latin-1')
 
         buffer.write(pdf_bytes)
 
@@ -4068,15 +4074,15 @@ def orcamentos_exportar_pdf_resumido(orcamento_id):
 
         y = pdf.get_y()
 
-        w_codigo = 26
+        w_codigo = 30
 
-        w_desc = 84
+        w_desc = 80
 
-        w_qtd = 18
+        w_qtd = 20
 
-        w_unit = 28
+        w_unit = 30
 
-        w_total = 32
+        w_total = 30
 
         h_head = 8
 
@@ -4192,7 +4198,13 @@ def orcamentos_exportar_pdf_resumido(orcamento_id):
 
         buffer = io.BytesIO()
 
-        pdf_bytes = pdf.output(dest='S').encode('latin-1')
+        pdf_output = pdf.output(dest='S')
+        
+        # FPDF pode retornar bytes ou string dependendo da versão
+        if isinstance(pdf_output, bytes):
+            pdf_bytes = pdf_output
+        else:
+            pdf_bytes = pdf_output.encode('latin-1')
 
         buffer.write(pdf_bytes)
 
