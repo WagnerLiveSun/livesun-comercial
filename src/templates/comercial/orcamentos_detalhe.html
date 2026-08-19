@@ -30,12 +30,15 @@
             <i class="fas fa-file-contract"></i> Gerar Contrato
         </button>
         {% endif %}
-        <a href="{{ url_for('comercial_operacional.orcamentos_exportar_pdf', orcamento_id=orcamento.id) }}" class="btn btn-outline-danger">
-            <i class="fas fa-file-pdf"></i> Exportar Completo
-        </a>
-        <a href="{{ url_for('comercial_operacional.orcamentos_exportar_pdf_resumido', orcamento_id=orcamento.id) }}" class="btn btn-outline-primary">
-            <i class="fas fa-file-pdf"></i> Exportar Resumido
-        </a>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Exportar PDF">
+                <i class="fas fa-print"></i> PDF
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{{ url_for('comercial_operacional.orcamentos_exportar_pdf', orcamento_id=orcamento.id) }}"><i class="fas fa-file-pdf me-2 text-danger"></i>Completo</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('comercial_operacional.orcamentos_exportar_pdf_resumido', orcamento_id=orcamento.id) }}"><i class="fas fa-file-lines me-2 text-primary"></i>Resumido</a></li>
+            </ul>
+        </div>
     </div>
 </div>
 

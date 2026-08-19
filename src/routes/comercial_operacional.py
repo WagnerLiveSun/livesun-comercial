@@ -2085,6 +2085,16 @@ def orcamentos_exportar_pdf(orcamento_id):
             total = (qtd * vu) - desconto
             return total if total > 0 else Decimal("0.00")
 
+        def dados_contato_cliente(cliente_obj, vendedor_obj):
+            """Retorna o contato do cliente (nome + email) para o cabeçalho do PDF."""
+            contato = vendedor_obj if vendedor_obj else cliente_obj
+            nome_contato = txt(getattr(contato, "nome", None)) or "Contato"
+            email = txt(getattr(contato, "email", None) or getattr(cliente_obj, "email", None))
+            linhas = [nome_contato]
+            if email:
+                linhas.append(email)
+            return linhas
+
         def texto_valido(s):
             s = txt(s).strip()
             return s and s not in {"-", "1.1", "Detalhes Técnicos Itens"}
@@ -2107,7 +2117,8 @@ def orcamentos_exportar_pdf(orcamento_id):
             def __init__(self):
                 super().__init__(orientation="P", unit="mm", format="A4")
                 self.set_auto_page_break(auto=True, margin=12)
-                self.set_margins(14, 10, 14)
+                self.set_margins(14, 10, 8)
+                self.alias_nb_pages()
                 self.logo = localizar_logo()
                 self.azul = (59, 83, 116)
                 self.texto = (92, 104, 121)
@@ -2117,7 +2128,7 @@ def orcamentos_exportar_pdf(orcamento_id):
                 self.set_y(-8)
                 self.set_font("Helvetica", "", 8)
                 self.set_text_color(150, 150, 150)
-                self.cell(0, 4, f"Página {self.page_no()}", 0, 0, "R")
+                self.cell(0, 4, f"Página {self.page_no()}/{self.str_alias_nb_pages}", 0, 0, "R")
 
             def box(self, x, y, w, h):
                 self.set_draw_color(*self.borda)
@@ -2191,11 +2202,11 @@ def orcamentos_exportar_pdf(orcamento_id):
         vendedor = getattr(orcamento, "vendedor", None)
 
         pdf.write_lines(left_x, top_y, left_w, [txt(getattr(cliente, "nome", None), "-")] + endereco_bloco(cliente), True, 6, pdf.azul)
-        pdf.write_lines(right_x, top_y, right_w, [txt(getattr(empresa, "nome", None), "LiveSun Comercial")] + endereco_bloco(empresa), True, 6, pdf.azul)
+        pdf.write_lines(right_x, top_y, right_w, dados_contato_cliente(cliente, vendedor), True, 6, pdf.azul)
 
         # Calcular altura ocupada pelos endereços para evitar sobreposição
         endereco_cliente = [txt(getattr(cliente, "nome", None), "-")] + endereco_bloco(cliente)
-        endereco_empresa = [txt(getattr(empresa, "nome", None), "LiveSun Comercial")] + endereco_bloco(empresa)
+        endereco_empresa = dados_contato_cliente(cliente, vendedor)
         max_linhas = max(len(endereco_cliente), len(endereco_empresa))
         contact_y = top_y + (max_linhas * 6) + 6
 
@@ -2235,9 +2246,11 @@ def orcamentos_exportar_pdf(orcamento_id):
         h_resumo_t = 9
         h_resumo_l = 11
 
+        pdf.set_line_width(0.5)
         pdf.rect(x0, table_y, w_desc, h_header)
         pdf.rect(x0 + w_desc, table_y, w_qtd, h_header)
         pdf.rect(x0 + w_desc + w_qtd, table_y, w_preco, h_header)
+        pdf.set_line_width(0.2)
 
         pdf.set_xy(x0 + 2, table_y + 2.5)
         pdf.set_font("Helvetica", "B", 10)
@@ -2269,10 +2282,12 @@ def orcamentos_exportar_pdf(orcamento_id):
                 table_y = 20
                 item_y = table_y
 
-            # Desenhar os retângulos do item (quadros mantidos)
+            # Desenhar os retângulos do item (quadros mantidos, mais finos)
+            pdf.set_line_width(0.25)
             pdf.rect(x0, item_y, w_desc, h_row)
             pdf.rect(x0 + w_desc, item_y, w_qtd, h_row)
             pdf.rect(x0 + w_desc + w_qtd, item_y, w_preco, h_row)
+            pdf.set_line_width(0.2)
 
             # Descrição do item
             pdf.set_xy(x0 + 4, item_y + 4)
@@ -2292,6 +2307,7 @@ def orcamentos_exportar_pdf(orcamento_id):
 
         # --- Seção RESUMO (após todos os itens) ---
         resumo_y = item_y + 4
+        pdf.set_line_width(0.5)
         pdf.rect(x0, resumo_y, w_desc + w_qtd + w_preco, h_resumo_t)
         pdf.set_xy(x0 + 2, resumo_y + 2)
         pdf.set_font("Helvetica", "B", 10)
@@ -2301,6 +2317,7 @@ def orcamentos_exportar_pdf(orcamento_id):
         resumo2_y = resumo_y + h_resumo_t
         pdf.rect(x0, resumo2_y, w_desc + w_qtd, h_resumo_l)
         pdf.rect(x0 + w_desc + w_qtd, resumo2_y, w_preco, h_resumo_l)
+        pdf.set_line_width(0.2)
 
         pdf.set_xy(x0 + 2, resumo2_y + 3)
         pdf.set_font("Helvetica", "", 10)
@@ -2316,8 +2333,10 @@ def orcamentos_exportar_pdf(orcamento_id):
         final_w_value = 48
         final_h = 12
 
+        pdf.set_line_width(0.5)
         pdf.rect(final_x, final_y, final_w_label, final_h)
         pdf.rect(final_x + final_w_label, final_y, final_w_value, final_h)
+        pdf.set_line_width(0.2)
         pdf.set_xy(final_x, final_y + 3)
         pdf.set_font("Helvetica", "B", 12)
         pdf.set_text_color(*pdf.azul)
@@ -2465,7 +2484,7 @@ def orcamentos_exportar_pdf(orcamento_id):
             pdf.section_title(20, pdf.get_y(), "Informações Técnicas")
             y = pdf.get_y() + 10
 
-            titulo_item = item_descricao(primeiro_item) if primeiro_item else ""
+            titulo_item = item_descricao(itens_lista[0]) if itens_lista else ""
             if titulo_item and titulo_item != "-":
                 pdf.set_x(20)
                 pdf.set_font("Helvetica", "B", 10.5)
@@ -2519,10 +2538,12 @@ def orcamentos_exportar_pdf(orcamento_id):
             "A quebra de sigilo poderá acarretar em processos administrativos quando cabíveis.")
         y = pdf.get_y() + 8
 
-        # Verificar espaço antes de adicionar termo de aceite
-        if y + 40 > 280:
+        # Termo de aceite, Local e data e Assinaturas SEMPRE na MESMA página
+        if y + 70 > 280:
             pdf.add_page()
             y = 28
+
+        # Termo de aceite
         pdf.set_xy(20, y)
         pdf.set_font("Helvetica", "B", 12)
         pdf.set_text_color(*pdf.azul)
@@ -2531,24 +2552,23 @@ def orcamentos_exportar_pdf(orcamento_id):
         pdf.set_xy(20, y)
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(*pdf.texto)
-        pdf.multi_cell(166, 5.8, "Estamos de acordo com a presente proposta conforme descrita neste documento o qual dou aceite abaixo.")
+        pdf.multi_cell(166, 5.8, "Estamos de acordo com a presente proposta conforme descrita neste documento, o qual dou aceite abaixo.")
         y = pdf.get_y() + 10
 
-        # Verificar espaço para o campo de assinatura
-        if y + 50 > 280:
-            pdf.add_page()
-            y = 28
-
+        # Local e data (continua na MESMA página do Termo de aceite)
         pdf.set_x(20)
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(*pdf.texto)
         pdf.cell(110, 6, "Local e data: ____________________________________________", 0, 1, "L")
         pdf.ln(18)
 
+        # Assinaturas (continua na MESMA página)
         y_ass = pdf.get_y()
         pdf.set_draw_color(*pdf.borda)
+        pdf.set_line_width(0.5)
         pdf.line(20, y_ass, 92, y_ass)
         pdf.line(114, y_ass, 186, y_ass)
+        pdf.set_line_width(0.2)
 
         pdf.set_xy(20, y_ass + 3)
         pdf.cell(72, 6, "Cliente / Responsável", 0, 0, "C")
@@ -2682,13 +2702,14 @@ def orcamentos_exportar_pdf_resumido(orcamento_id):
             def __init__(self):
                 super().__init__(orientation="P", unit="mm", format="A4")
                 self.set_auto_page_break(auto=True, margin=15)
-                self.set_margins(16, 16, 16)
+                self.set_margins(16, 16, 10)
+                self.alias_nb_pages()
 
             def footer(self):
                 self.set_y(-10)
                 self.set_font("Helvetica", "", 8)
                 self.set_text_color(150, 150, 150)
-                self.cell(0, 5, f"Página {self.page_no()}", 0, 0, "R")
+                self.cell(0, 5, f"Página {self.page_no()}/{self.str_alias_nb_pages}", 0, 0, "R")
 
         pdf = PDFResumido()
         pdf.add_page()
@@ -2757,11 +2778,13 @@ def orcamentos_exportar_pdf_resumido(orcamento_id):
         pdf.set_font("Helvetica", "", 10.5)
         pdf.set_draw_color(60, 60, 60)
 
+        pdf.set_line_width(0.5)
         pdf.rect(x, y, w_codigo, h_head)
         pdf.rect(x + w_codigo, y, w_desc, h_head)
         pdf.rect(x + w_codigo + w_desc, y, w_qtd, h_head)
         pdf.rect(x + w_codigo + w_desc + w_qtd, y, w_unit, h_head)
         pdf.rect(x + w_codigo + w_desc + w_qtd + w_unit, y, w_total, h_head)
+        pdf.set_line_width(0.2)
 
         pdf.set_xy(x, y + 2)
         pdf.cell(w_codigo, 4, "Código", 0, 0, "L")
@@ -2791,11 +2814,13 @@ def orcamentos_exportar_pdf_resumido(orcamento_id):
             linhas_desc = max(1, len(descricao) // 45 + 1)
             h_row = max(8, linhas_desc * 5.5)
 
+            pdf.set_line_width(0.25)
             pdf.rect(x, y, w_codigo, h_row)
             pdf.rect(x + w_codigo, y, w_desc, h_row)
             pdf.rect(x + w_codigo + w_desc, y, w_qtd, h_row)
             pdf.rect(x + w_codigo + w_desc + w_qtd, y, w_unit, h_row)
             pdf.rect(x + w_codigo + w_desc + w_qtd + w_unit, y, w_total, h_row)
+            pdf.set_line_width(0.2)
 
             pdf.set_xy(x + 1, y + 2)
             pdf.cell(w_codigo - 2, 4, codigo, 0, 0, "L")
