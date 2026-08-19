@@ -2250,28 +2250,48 @@ def orcamentos_exportar_pdf(orcamento_id):
         pdf.set_xy(x0 + w_desc + w_qtd, table_y + 2.5)
         pdf.cell(w_preco - 2, 5, "PREÇO", 0, 0, "R")
 
-        primeiro_item = orcamento.itens[0] if orcamento.itens else None
-        desc = item_descricao(primeiro_item) if primeiro_item else "-"
-        qtd = qtd_fmt(getattr(primeiro_item, "quantidade", 0) if primeiro_item else 0)
-        preco = brl(item_total(primeiro_item) if primeiro_item else total_geral)
-
+        # --- Renderizar TODOS os itens do orçamento ---
         item_y = table_y + h_header
-        pdf.rect(x0, item_y, w_desc, h_item)
-        pdf.rect(x0 + w_desc, item_y, w_qtd, h_item)
-        pdf.rect(x0 + w_desc + w_qtd, item_y, w_preco, h_item)
+        itens_lista = list(getattr(orcamento, "itens", [])) or []
 
-        pdf.set_xy(x0 + 4, item_y + 6)
-        pdf.set_font("Helvetica", "", 9.6)
-        pdf.set_text_color(*pdf.texto)
-        pdf.multi_cell(w_desc - 8, 6.5, desc)
+        for item in itens_lista:
+            desc = item_descricao(item)
+            qtd = qtd_fmt(getattr(item, "quantidade", 0) or 0)
+            preco = brl(item_total(item))
 
-        pdf.set_xy(x0 + w_desc, item_y + 9)
-        pdf.cell(w_qtd, 6, qtd, 0, 0, "C")
+            # Altura dinâmica baseada no tamanho da descrição (evita espaços vazios)
+            linhas_desc = max(1, len(desc) // 40 + 1)
+            h_row = max(10, linhas_desc * 6.5 + 4)
 
-        pdf.set_xy(x0 + w_desc + w_qtd + 2, item_y + 9)
-        pdf.cell(w_preco - 4, 6, preco, 0, 0, "R")
+            # Page break se o item não couber na página atual
+            if item_y + h_row > 278:
+                pdf.add_page()
+                table_y = 20
+                item_y = table_y
 
-        resumo_y = item_y + h_item
+            # Desenhar os retângulos do item (quadros mantidos)
+            pdf.rect(x0, item_y, w_desc, h_row)
+            pdf.rect(x0 + w_desc, item_y, w_qtd, h_row)
+            pdf.rect(x0 + w_desc + w_qtd, item_y, w_preco, h_row)
+
+            # Descrição do item
+            pdf.set_xy(x0 + 4, item_y + 4)
+            pdf.set_font("Helvetica", "", 9.6)
+            pdf.set_text_color(*pdf.texto)
+            pdf.multi_cell(w_desc - 8, 6.5, desc)
+
+            # Quantidade e Preço (centralizados verticalmente no row)
+            val_y = item_y + (h_row - 6) / 2
+            pdf.set_xy(x0 + w_desc, val_y)
+            pdf.cell(w_qtd, 6, qtd, 0, 0, "C")
+
+            pdf.set_xy(x0 + w_desc + w_qtd + 2, val_y)
+            pdf.cell(w_preco - 4, 6, preco, 0, 0, "R")
+
+            item_y += h_row
+
+        # --- Seção RESUMO (após todos os itens) ---
+        resumo_y = item_y + 4
         pdf.rect(x0, resumo_y, w_desc + w_qtd + w_preco, h_resumo_t)
         pdf.set_xy(x0 + 2, resumo_y + 2)
         pdf.set_font("Helvetica", "B", 10)
