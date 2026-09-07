@@ -174,11 +174,21 @@
 
         /* Switches por tema */
             .form-check-input {
-                width: 2.4em !important;
-                height: 1.15em !important;
                 cursor: pointer !important;
                 transition: all 0.2s ease-in-out !important;
                 box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04) !important;
+            }
+
+            /* Checkboxes com tamanho padrao do Bootstrap (nao esticar) */
+            .form-check-input[type="checkbox"]:not([role="switch"]) {
+                width: 1.25em !important;
+                height: 1.25em !important;
+            }
+
+            /* Switches (toggles) maiores */
+            .form-switch .form-check-input {
+                width: 3em !important;
+                height: 1.5em !important;
             }
 
             .form-check-input:focus {
@@ -218,11 +228,11 @@
                 border-color: #024580 !important;
             }
 
-            /* Bolinha interna menor */
+            /* Bolinha interna proporcional ao switch maior */
             .form-switch .form-check-input {
-                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='0.5' fill='%23ffffff'/%3e%3c/svg%3e") !important;
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='1.4' fill='%23ffffff'/%3e%3c/svg%3e") !important;
                 background-repeat: no-repeat !important;
-                background-size: 0.6em 0.6em !important;
+                background-size: 1.1em 1.1em !important;
                 background-position: left center !important;
             }
 
