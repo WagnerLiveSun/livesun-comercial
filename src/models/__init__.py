@@ -1548,6 +1548,9 @@ class AssinaturaEmpresa(db.Model):
     bonus_liberado = db.Column(db.Boolean, nullable=False, default=False, index=True)
     bonus_motivo = db.Column(db.String(255), nullable=True)
     bonus_concedido_em = db.Column(db.DateTime, nullable=True)
+    # 'ilimitado' (sem prazo) ou 'trial' (prazo determinado em bonus_dias)
+    bonus_tipo = db.Column(db.String(20), nullable=True)
+    bonus_dias = db.Column(db.Integer, nullable=True)
 
 
 

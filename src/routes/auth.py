@@ -533,7 +533,10 @@ def login():
                     from src.models import AssinaturaEmpresa
                     _assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=user.empresa_id).first()
                     # Bonificação: acesso liberado independentemente do status da assinatura.
-                    if _assinatura and not getattr(_assinatura, 'bonus_liberado', False) \
+                    # No trial bonificado expirado (bonus_tipo='trial'), volta a bloquear.
+                    _bonus_ilimitado = _assinatura.bonus_liberado and \
+                        (_assinatura.bonus_tipo or 'ilimitado') != 'trial'
+                    if _assinatura and not _bonus_ilimitado \
                             and _assinatura.status in {'suspensa', 'cancelada', 'excluida'}:
                         import logging
                         logging.info(

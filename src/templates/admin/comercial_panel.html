@@ -70,9 +70,18 @@
                             <span class="badge bg-secondary text-capitalize">{{ st }}</span>
                         {% endif %}
                         {% if r.bonus_liberado %}
-                            <span class="badge bg-info text-dark" title="{{ r.bonus_motivo or '' }}">
-                                <i class="fas fa-gift me-1"></i>Bonificação
-                            </span>
+                            {% if r.bonus_tipo == 'trial' %}
+                                <span class="badge bg-primary" title="{{ r.bonus_motivo or '' }}">
+                                    <i class="fas fa-gift me-1"></i>Trial {{ r.bonus_dias }} dia(s)
+                                </span>
+                                {% if r.bonus_fim %}
+                                <small class="text-muted d-block">até {{ r.bonus_fim.strftime('%d/%m/%Y') }}</small>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-info text-dark" title="{{ r.bonus_motivo or '' }}">
+                                    <i class="fas fa-gift me-1"></i>Bonificação
+                                </span>
+                            {% endif %}
                         {% endif %}
                         {% if st == 'excluida' %}
                             <div class="mt-2">
@@ -124,13 +133,19 @@
                             </form>
                             {% else %}
                             <form method="POST" action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}"
-                                  class="d-flex gap-1">
+                                  class="d-flex flex-wrap gap-1">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="acao" value="conceder">
+                                <select name="bonus_tipo" class="form-select form-select-sm" style="max-width:130px;">
+                                    <option value="ilimitado">Ilimitado</option>
+                                    <option value="trial">Trial (dias)</option>
+                                </select>
+                                <input type="number" name="bonus_dias" min="1" class="form-control form-control-sm"
+                                       style="max-width:90px;" placeholder="Dias">
                                 <input type="text" name="motivo" class="form-control form-control-sm"
-                                       placeholder="Motivo da bonificação (opcional)">
+                                       placeholder="Motivo (opcional)">
                                 <button type="submit" class="btn btn-sm btn-info text-nowrap"
-                                        title="Libera o acesso da empresa sem limite de dias, sem passar pelo processo de assinatura">
+                                        title="Libera o acesso da empresa — ilimitado ou por trial com dias determinados">
                                     <i class="fas fa-gift me-1"></i>Bonificar
                                 </button>
                             </form>

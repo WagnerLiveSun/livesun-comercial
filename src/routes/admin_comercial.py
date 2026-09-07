@@ -241,6 +241,15 @@ def index():
             'bonus_liberado': bool(assinatura.bonus_liberado),
             'bonus_motivo': assinatura.bonus_motivo,
             'bonus_concedido_em': assinatura.bonus_concedido_em,
+            'bonus_tipo': assinatura.bonus_tipo or ('ilimitado' if assinatura.bonus_liberado else None),
+            'bonus_dias': assinatura.bonus_dias,
+            'bonus_fim': (
+                assinatura.bonus_concedido_em.date() + timedelta(days=int(assinatura.bonus_dias))
+                if assinatura.bonus_liberado
+                and (assinatura.bonus_tipo or 'ilimitado') == 'trial'
+                and assinatura.bonus_dias
+                else None
+            ),
         })
 
     rows.sort(key=lambda item: item['empresa_nome'].lower())
@@ -352,17 +361,46 @@ def atualizar_bonus_assinatura(empresa_id: int):
 
     if acao == 'conceder':
         motivo = (request.form.get('motivo') or '').strip() or 'Bonificação concedida pelo backoffice.'
+        tipo_bonus = (request.form.get('bonus_tipo') or 'ilimitado').strip().lower()
+        bonus_dias = None
+        if tipo_bonus not in ('ilimitado', 'trial'):
+            flash('Tipo de bonificação inválido. Use "ilimitado" ou "trial".', 'warning')
+            return redirect(url_for('admin_comercial.index'))
+        if tipo_bonus == 'trial':
+            try:
+                bonus_dias = int(request.form.get('bonus_dias') or 0)
+            except (TypeError, ValueError):
+                bonus_dias = 0
+            if bonus_dias <= 0:
+                flash('Informe a quantidade de dias do trial bonificado.', 'warning')
+                return redirect(url_for('admin_comercial.index'))
+
         assinatura.bonus_liberado = True
+        assinatura.bonus_tipo = tipo_bonus
+        assinatura.bonus_dias = bonus_dias
         assinatura.bonus_motivo = motivo[:255]
         assinatura.bonus_concedido_em = datetime.utcnow()
-        assinatura.status = 'ativa'
-        assinatura.bloqueio_nivel = 'nenhum'
-        assinatura.bloqueado_desde = None
-        assinatura.motivo_status = 'Acesso liberado por bonificacao (sem limite de dias).'
+        if tipo_bonus == 'trial':
+            fim = assinatura.bonus_concedido_em.date() + timedelta(days=bonus_dias)
+            assinatura.status = 'trial'
+            assinatura.data_fim_trial = fim
+            assinatura.bloqueio_nivel = 'nenhum'
+            assinatura.bloqueado_desde = None
+            assinatura.motivo_status = f'Trial bonificado ate {fim.strftime("%d/%m/%Y")} ({bonus_dias} dias).'
+            flash(
+                f'Trial bonificado de {bonus_dias} dia(s) concedido (válido até '
+                f'{fim.strftime("%d/%m/%Y")}). Acesso liberado nesse período.',
+                'success',
+            )
+        else:
+            assinatura.status = 'ativa'
+            assinatura.bloqueio_nivel = 'nenhum'
+            assinatura.bloqueado_desde = None
+            assinatura.motivo_status = 'Acesso liberado por bonificacao (sem limite de dias).'
+            flash('Bonificação ilimitada concedida. Acesso liberado sem limite de dias.', 'success')
         # Reativa o acesso dos usuários da empresa caso tenham sido desativados.
         User.query.filter_by(empresa_id=empresa_id).update({'is_active': True})
         db.session.commit()
-        flash(f'Bonificação concedida para "{empresa_id}". Acesso liberado sem limite de dias.', 'success')
     elif acao == 'revogar':
         assinatura.bonus_liberado = False
         assinatura.bonus_motivo = None

@@ -392,16 +392,34 @@ class ServicoAssinatura:
         if assinatura.status == ServicoAssinatura.STATUS_CANCELADA:
             return assinatura
 
-        # Bonificação: acesso liberado manualmente pelo backoffice, sem limite
-        # de dias. Ignora vencimento/carencia e mantem o uso desbloqueado.
-        if getattr(assinatura, 'bonus_liberado', False):
-            assinatura.status = ServicoAssinatura.STATUS_ATIVA
-            assinatura.bloqueio_nivel = ServicoAssinatura.BLOQUEIO_NENHUM
-            assinatura.bloqueado_desde = None
-            assinatura.motivo_status = 'Acesso liberado por bonificacao (sem limite de dias).'
-            return assinatura
-
         hoje = referencia or _today()
+
+        # Bonificação: acesso liberado manualmente pelo backoffice.
+        # - 'ilimitado': sem prazo, sempre desbloqueado.
+        # - 'trial': liberado por bonus_dias a contar da concessao; expirado,
+        #   volta a valer o fluxo normal de vencimento/carencia.
+        if getattr(assinatura, 'bonus_liberado', False):
+            tipo_bonus = (getattr(assinatura, 'bonus_tipo', None) or 'ilimitado').strip().lower()
+            if tipo_bonus == 'trial' and getattr(assinatura, 'bonus_dias', None):
+                base = assinatura.bonus_concedido_em.date() if assinatura.bonus_concedido_em else hoje
+                fim_trial = base + timedelta(days=int(assinatura.bonus_dias))
+                if hoje <= fim_trial:
+                    assinatura.status = ServicoAssinatura.STATUS_TRIAL
+                    assinatura.bloqueio_nivel = ServicoAssinatura.BLOQUEIO_NENHUM
+                    assinatura.bloqueado_desde = None
+                    assinatura.motivo_status = (
+                        f'Trial bonificado ate {fim_trial.strftime("%d/%m/%Y")} '
+                        f'({assinatura.bonus_dias} dias).'
+                    )
+                    return assinatura
+                # Trial expirado: segue o fluxo normal (vencimento/carencia) abaixo.
+            else:
+                assinatura.status = ServicoAssinatura.STATUS_ATIVA
+                assinatura.bloqueio_nivel = ServicoAssinatura.BLOQUEIO_NENHUM
+                assinatura.bloqueado_desde = None
+                assinatura.motivo_status = 'Acesso liberado por bonificacao (sem limite de dias).'
+                return assinatura
+
         vencimento = assinatura.data_vencimento
         if not vencimento:
             return assinatura
