@@ -1543,6 +1543,12 @@ class AssinaturaEmpresa(db.Model):
     # Retenção de dados pós-exclusão (60 dias a contar de data_exclusao)
     data_exclusao = db.Column(db.DateTime, nullable=True, index=True)
 
+    # Bonificação: acesso liberado independente do processo de assinatura,
+    # sem limite de dias (concedido manualmente pelo backoffice comercial).
+    bonus_liberado = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    bonus_motivo = db.Column(db.String(255), nullable=True)
+    bonus_concedido_em = db.Column(db.DateTime, nullable=True)
+
 
 
     politica_efetivacao_dias = db.Column(db.Integer, nullable=False, default=30)

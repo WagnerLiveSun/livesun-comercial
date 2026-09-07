@@ -392,6 +392,15 @@ class ServicoAssinatura:
         if assinatura.status == ServicoAssinatura.STATUS_CANCELADA:
             return assinatura
 
+        # Bonificação: acesso liberado manualmente pelo backoffice, sem limite
+        # de dias. Ignora vencimento/carencia e mantem o uso desbloqueado.
+        if getattr(assinatura, 'bonus_liberado', False):
+            assinatura.status = ServicoAssinatura.STATUS_ATIVA
+            assinatura.bloqueio_nivel = ServicoAssinatura.BLOQUEIO_NENHUM
+            assinatura.bloqueado_desde = None
+            assinatura.motivo_status = 'Acesso liberado por bonificacao (sem limite de dias).'
+            return assinatura
+
         hoje = referencia or _today()
         vencimento = assinatura.data_vencimento
         if not vencimento:

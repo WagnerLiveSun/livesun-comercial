@@ -69,6 +69,11 @@
                         {% else %}
                             <span class="badge bg-secondary text-capitalize">{{ st }}</span>
                         {% endif %}
+                        {% if r.bonus_liberado %}
+                            <span class="badge bg-info text-dark" title="{{ r.bonus_motivo or '' }}">
+                                <i class="fas fa-gift me-1"></i>Bonificação
+                            </span>
+                        {% endif %}
                         {% if st == 'excluida' %}
                             <div class="mt-2">
                                 <small class="text-danger fw-bold">
@@ -107,6 +112,35 @@
                             <button type="submit" class="btn btn-sm btn-outline-info">Efetivar agora</button>
                         </form>
                         <small class="text-muted d-block mb-2">A troca de plano no backoffice é aplicada imediatamente.</small>
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            {% if r.bonus_liberado %}
+                            <form method="POST" action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="acao" value="revogar">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                        title="Remover a bonificação e voltar ao fluxo normal de assinatura">
+                                    Remover bonificação
+                                </button>
+                            </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}"
+                                  class="d-flex gap-1">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="acao" value="conceder">
+                                <input type="text" name="motivo" class="form-control form-control-sm"
+                                       placeholder="Motivo da bonificação (opcional)">
+                                <button type="submit" class="btn btn-sm btn-info text-nowrap"
+                                        title="Libera o acesso da empresa sem limite de dias, sem passar pelo processo de assinatura">
+                                    <i class="fas fa-gift me-1"></i>Bonificar
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% if r.bonus_liberado and r.bonus_concedido_em %}
+                        <small class="text-muted d-block mb-2">
+                            Concedida em {{ r.bonus_concedido_em.strftime('%d/%m/%Y %H:%M') }} — sem limite de dias.
+                        </small>
+                        {% endif %}
                         <div class="d-flex flex-wrap gap-1 mb-2">
                             {% for action in ['ativar','suspender','cancelar','reativar'] %}
                             <form method="POST" action="{{ url_for('admin_comercial.atualizar_status_assinatura', empresa_id=r.empresa_id) }}">

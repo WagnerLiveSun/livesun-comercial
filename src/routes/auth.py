@@ -532,7 +532,9 @@ def login():
                 if user.empresa_id is not None:
                     from src.models import AssinaturaEmpresa
                     _assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=user.empresa_id).first()
-                    if _assinatura and _assinatura.status in {'suspensa', 'cancelada', 'excluida'}:
+                    # Bonificação: acesso liberado independentemente do status da assinatura.
+                    if _assinatura and not getattr(_assinatura, 'bonus_liberado', False) \
+                            and _assinatura.status in {'suspensa', 'cancelada', 'excluida'}:
                         import logging
                         logging.info(
                             f'Login bloqueado por assinatura {_assinatura.status}: '
@@ -563,7 +565,8 @@ def login():
                 # Garante existencia da assinatura comercial e provisionamento no gateway quando habilitado.
                 assinatura = ServicoAssinatura.obter_ou_criar_assinatura(empresa.id)
 
-                if user.is_admin and not assinatura.gateway_subscription_id:
+                # Bonificação: uso liberado sem exigir o processo de assinatura/gateway.
+                if user.is_admin and not assinatura.bonus_liberado and not assinatura.gateway_subscription_id:
                     login_user(user, remember=request.form.get('remember'))
                     flash('Finalize os dados comerciais da assinatura para visualizar preço, trial e meios de pagamento.', 'warning')
                     return redirect(url_for('auth.assinatura'))

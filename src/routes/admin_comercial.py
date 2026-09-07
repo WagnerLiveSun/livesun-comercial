@@ -238,6 +238,9 @@ def index():
                 assinatura.data_exclusao + timedelta(days=RETENCAO_EXCLUSAO_DIAS)
                 if assinatura.data_exclusao else None
             ),
+            'bonus_liberado': bool(assinatura.bonus_liberado),
+            'bonus_motivo': assinatura.bonus_motivo,
+            'bonus_concedido_em': assinatura.bonus_concedido_em,
         })
 
     rows.sort(key=lambda item: item['empresa_nome'].lower())
@@ -327,6 +330,49 @@ def atualizar_status_assinatura(empresa_id: int):
 
     db.session.commit()
     flash('Status da assinatura atualizado com sucesso.', 'success')
+    return redirect(url_for('admin_comercial.index'))
+
+
+@admin_comercial_bp.route('/assinatura/<int:empresa_id>/bonus', methods=['POST'])
+@login_required
+@require_role('admin')
+def atualizar_bonus_assinatura(empresa_id: int):
+    """Concede/revoga bonificacao: acesso liberado sem limite de dias,
+    independente do processo de assinatura/cobranca."""
+    gate = _require_backoffice_access()
+    if gate:
+        return gate
+
+    assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
+    if not assinatura:
+        flash('Assinatura da empresa não encontrada.', 'warning')
+        return redirect(url_for('admin_comercial.index'))
+
+    acao = (request.form.get('acao') or '').strip().lower()
+
+    if acao == 'conceder':
+        motivo = (request.form.get('motivo') or '').strip() or 'Bonificação concedida pelo backoffice.'
+        assinatura.bonus_liberado = True
+        assinatura.bonus_motivo = motivo[:255]
+        assinatura.bonus_concedido_em = datetime.utcnow()
+        assinatura.status = 'ativa'
+        assinatura.bloqueio_nivel = 'nenhum'
+        assinatura.bloqueado_desde = None
+        assinatura.motivo_status = 'Acesso liberado por bonificacao (sem limite de dias).'
+        # Reativa o acesso dos usuários da empresa caso tenham sido desativados.
+        User.query.filter_by(empresa_id=empresa_id).update({'is_active': True})
+        db.session.commit()
+        flash(f'Bonificação concedida para "{empresa_id}". Acesso liberado sem limite de dias.', 'success')
+    elif acao == 'revogar':
+        assinatura.bonus_liberado = False
+        assinatura.bonus_motivo = None
+        assinatura.bonus_concedido_em = None
+        assinatura.motivo_status = 'Bonificação revogada pelo backoffice.'
+        db.session.commit()
+        flash('Bonificação revogada. A assinatura volta a seguir o fluxo normal de cobrança.', 'success')
+    else:
+        flash('Ação de bonificação inválida.', 'warning')
+
     return redirect(url_for('admin_comercial.index'))
 
 
