@@ -134,7 +134,7 @@
                     <thead>
                         <tr>
                             <th>Data</th>
-                            <th>Descrição</th>
+                            <th>Entidade / Documento</th>
                             <th>Tipo</th>
                             <th>Valor</th>
                             <th>Status</th>
@@ -144,7 +144,12 @@
                         {% for lancamento in ultimos_lancamentos %}
                         <tr>
                             <td>{{ lancamento.data_evento.strftime('%d/%m/%Y') }}</td>
-                            <td>{{ lancamento.descricao }}</td>
+                            <td>
+                                {{ lancamento.entidade.nome if lancamento.entidade else '-' }}
+                                {% if lancamento.numero_documento %}
+                                    <small class="text-muted d-block">Doc: {{ lancamento.numero_documento }}</small>
+                                {% endif %}
+                            </td>
                             <td>
                                 <span class="badge bg-{{ 'danger' if lancamento.fluxo_conta and lancamento.fluxo_conta.is_pagamento() else 'success' }}">
                                     {{ 'Pagamento' if lancamento.fluxo_conta and lancamento.fluxo_conta.is_pagamento() else 'Recebimento' }}
