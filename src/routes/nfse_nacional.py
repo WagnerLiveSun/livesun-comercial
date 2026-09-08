@@ -778,7 +778,7 @@ def configuracoes():
                         caminho_arquivo=caminho_arquivo,
                         senha=senha_certificado,
                         validade_em=validade_em,
-                        emissor_ativo=True,
+                        ativo=True,
                         observacoes=certificado_status,
                     )
                     db.session.add(certificado)
