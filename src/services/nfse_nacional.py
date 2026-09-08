@@ -343,10 +343,39 @@ def resolve_certificate_settings(
                 pfx_path = cert.caminho_arquivo.strip() or None
             if getattr(cert, "senha", None) is not None:
                 pfx_pass = cert.senha.strip() if isinstance(cert.senha, str) else cert.senha
+
+            # SaaS: se o arquivo nao existe em disco (disco efemero), materializa
+            # o binario armazenado no banco (por empresa/ambiente) em arquivo temporario.
+            if pfx_path and not os.path.isfile(pfx_path):
+                pfx_path = _materializar_pfx_de_binario(cert) or pfx_path
+            elif not pfx_path:
+                pfx_path = _materializar_pfx_de_binario(cert)
     except Exception:
         pass
 
     return pfx_path, pfx_pass
+
+
+def _materializar_pfx_de_binario(cert) -> str | None:
+    """Grava o binario do certificado (coluna arquivo_binario) em arquivo temporario
+    e retorna o caminho, pois assinatura XML e mTLS leem o PFX de um caminho."""
+    if cert is None:
+        return None
+    dados = getattr(cert, "arquivo_binario", None)
+    if not dados:
+        return None
+    try:
+        empresa = getattr(cert, "empresa_id", None) or "x"
+        ambiente = getattr(cert, "ambiente", None) or "x"
+        pasta = os.path.join(tempfile.gettempdir(), "nfse_certificados", str(empresa), str(ambiente))
+        os.makedirs(pasta, exist_ok=True)
+        destino = os.path.join(pasta, f"cert_{empresa}_{ambiente}.pfx")
+        with open(destino, "wb") as arquivo:
+            arquivo.write(dados)
+        return destino
+    except Exception:
+        logging.exception("Falha ao materializar certificado do banco em arquivo temporario")
+        return None
 
 
 def resolvecertificatesettings(
@@ -773,6 +802,8 @@ def validateandsignxml(
         "errors": errors or None,
         "signedxml": signed_xml,
     }
+# Compatibilidade com scripts/ferramentas antigas que usavam validate_and_sign
+validate_and_sign = validateandsignxml
 
 
 def build_emissao_json_payload(payload: dict, dps_xml_assinado: str) -> dict:

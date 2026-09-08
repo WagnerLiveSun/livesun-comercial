@@ -4,6 +4,7 @@ import os
 import json
 import logging
 import re
+import tempfile
 from datetime import datetime, date
 from decimal import Decimal
 from pathlib import Path
@@ -154,7 +155,7 @@ def _resolve_certificate_path(certificado: NfseNacionalCertificado | None) -> st
     return (getattr(certificado, "caminho_arquivo", None) or "").strip() or None
 
 
-def _save_certificate_upload(uploaded_file, empresa_id: int, ambiente: str) -> tuple[str, str]:
+def _save_certificate_upload(uploaded_file, empresa_id: int, ambiente: str) -> tuple[str, str, bytes]:
     filename = secure_filename(uploaded_file.filename or "")
     if not filename:
         raise ValueError("Envie um arquivo .pfx válido.")
@@ -163,33 +164,75 @@ def _save_certificate_upload(uploaded_file, empresa_id: int, ambiente: str) -> t
     if extension not in {".pfx", ".p12"}:
         raise ValueError("O certificado deve ser um arquivo .pfx ou .p12.")
 
+    data = uploaded_file.read()
+    if not data:
+        raise ValueError("O arquivo do certificado está vazio.")
+
+    # Em SaaS, o arquivo e persistido no banco (por empresa). O arquivo em disco
+    # e mantido apenas como conveniencia local (ambientes com disco estavel).
     base_folder = Path(current_app.config["UPLOAD_FOLDER"]) / "nfse_certificados" / str(empresa_id) / ambiente
-    base_folder.mkdir(parents=True, exist_ok=True)
-    stored_name = f"{Path(filename).stem}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}{extension}"
-    file_path = base_folder / stored_name
-    uploaded_file.save(file_path)
-    return str(file_path), filename
+    try:
+        base_folder.mkdir(parents=True, exist_ok=True)
+        stored_name = f"{Path(filename).stem}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}{extension}"
+        file_path = base_folder / stored_name
+        file_path.write_bytes(data)
+        return str(file_path), filename, data
+    except OSError:
+        # Disco nao persistente/indisponivel: apenas o banco sera usado
+        logging.warning("Upload de certificado: falha ao gravar em disco, sera usado armazenamento em banco.")
+        return "", filename, data
+
+
+def _materializar_pfx_de_binario(certificado: NfseNacionalCertificado | None, binario: bytes | None = None) -> str | None:
+    """Grava o binario do certificado (armazenado no banco) em arquivo temporario
+    e retorna o caminho. Necessario pois as bibliotecas de assinatura/mTLS leem
+    o PFX de um caminho em disco."""
+    dados = binario or (getattr(certificado, "arquivo_binario", None) if certificado is not None else None)
+    if not dados:
+        return None
+    try:
+        empresa = getattr(certificado, "empresa_id", None) or "x"
+        ambiente = getattr(certificado, "ambiente", None) or "x"
+        pasta = Path(tempfile.gettempdir()) / "nfse_certificados" / str(empresa) / str(ambiente)
+        pasta.mkdir(parents=True, exist_ok=True)
+        destino = pasta / f"cert_{empresa}_{ambiente}.pfx"
+        destino.write_bytes(dados)
+        return str(destino)
+    except Exception:
+        logging.exception("Falha ao materializar certificado do banco em arquivo temporario")
+        return None
 
 
 def _inspect_certificate(
     certificado: NfseNacionalCertificado | None,
     pfx_path: str | None = None,
     senha: str | None = None,
+    binario: bytes | None = None,
 ) -> tuple[date | None, str]:
     pfx_path = (pfx_path or _resolve_certificate_path(certificado) or "").strip()
-    if not pfx_path:
-        return None, "Certificado inválido: upload não configurado."
+    conteudo: bytes | None = binario or None
 
-    caminho = Path(pfx_path)
-    if not caminho.exists():
-        return None, f"Certificado inválido: arquivo não encontrado em {pfx_path}."
+    if not conteudo:
+        caminho = Path(pfx_path) if pfx_path else None
+        if caminho and caminho.exists():
+            with caminho.open("rb") as arquivo:
+                conteudo = arquivo.read()
+        else:
+            # Fallback: busca o binario gravado no banco (armazenamento por empresa)
+            pfx_path = _materializar_pfx_de_binario(certificado, binario)
+            if not pfx_path:
+                if not caminho:
+                    return None, "Certificado inválido: upload não configurado."
+                return None, f"Certificado inválido: arquivo não encontrado em {caminho}."
+            with Path(pfx_path).open("rb") as arquivo:
+                conteudo = arquivo.read()
+
+    if not pfx_path:
+        return None, "Certificado inválido: conteúdo do certificado não disponível."
 
     senha = (senha if senha is not None else os.environ.get("NFS_PFX_PASS") or getattr(certificado, "senha", None) or "").strip()
 
     try:
-        with caminho.open("rb") as arquivo:
-            conteudo = arquivo.read()
-
         private_key, x509_cert, _ = load_key_and_certificates(
             conteudo,
             senha.encode("utf-8") if senha else None,
@@ -787,10 +830,12 @@ def configuracoes():
             senha_certificado = (request.form.get("certificado_senha") or (certificado.senha if certificado else None) or "").strip() or None
 
             if arquivo_upload and arquivo_upload.filename:
-                caminho_arquivo, arquivo_nome_real = _save_certificate_upload(arquivo_upload, empresa_id, ambiente)
+                caminho_arquivo, arquivo_nome_real, certificado_binario = _save_certificate_upload(arquivo_upload, empresa_id, ambiente)
                 arquivo_nome = arquivo_nome_real
+            else:
+                certificado_binario = None
 
-            validade_em, certificado_status = _inspect_certificate(certificado, caminho_arquivo, senha_certificado)
+            validade_em, certificado_status = _inspect_certificate(certificado, caminho_arquivo, senha_certificado, certificado_binario)
 
             if "remover_certificado" in request.form:
                 if certificado is None:
@@ -805,6 +850,7 @@ def configuracoes():
 
                         certificado.ativo = False
                         certificado.senha = None
+                        certificado.arquivo_binario = None
                         certificado.caminho_arquivo = None
                         certificado.validade_em = None
                         certificado.observacoes = "Certificado removido pelo usuário."
@@ -831,16 +877,20 @@ def configuracoes():
                         empresa_id=empresa_id,
                         ambiente=ambiente,
                         arquivo_nome=arquivo_nome or "certificado.pfx",
-                        caminho_arquivo=caminho_arquivo,
+                        caminho_arquivo=caminho_arquivo or None,
                         senha=senha_certificado,
                         validade_em=validade_em,
                         ativo=True,
                         observacoes=certificado_status,
                     )
+                    if certificado_binario:
+                        certificado.arquivo_binario = certificado_binario
                     db.session.add(certificado)
                 else:
                     certificado.arquivo_nome = arquivo_nome or certificado.arquivo_nome
                     certificado.caminho_arquivo = caminho_arquivo or certificado.caminho_arquivo
+                    if certificado_binario:
+                        certificado.arquivo_binario = certificado_binario
                     certificado.senha = senha_certificado or certificado.senha
                     certificado.validade_em = validade_em
                     certificado.ativo = True

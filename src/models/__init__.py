@@ -2624,6 +2624,11 @@ class NfseNacionalCertificado(db.Model):
 
     senha = db.Column(db.String(512), nullable=True)
 
+    # Binario do arquivo .pfx/.p12 armazenado no banco (permite SaaS multi-empresa
+    # sem depender de disco local/persistente do provedor)
+
+    arquivo_binario = db.Column(db.LargeBinary, nullable=True)
+
     ativo = db.Column(db.Boolean, default=True)
 
     observacoes = db.Column(db.Text)
