@@ -22,6 +22,7 @@ from src.models import (
     Entidade,
     ImportacaoNFSe,
     Lancamento,
+    NfseNacionalEmissao,
     Orcamento,
     PedidoVenda,
     Produto,
@@ -606,35 +607,75 @@ def fluxo_categorias():
 @login_required
 @require_permission('relatorios')
 def nfse():
-    """NFS-e importadas por período, status, tomador e serviço."""
+    """Notas de saída NFS-e (emitidas pelo sistema) e importadas, por período,
+    status, tomador e serviço."""
     eid = _empresa_id()
-    query = ImportacaoNFSe.query.filter_by(empresa_id=eid)
     status_f = (request.args.get('status') or '').strip()
     d_ini = _parse_date(request.args.get('data_inicio'))
     d_fim = _parse_date(request.args.get('data_fim'))
-    if status_f:
-        query = query.filter(ImportacaoNFSe.status_importacao == status_f)
+    origem_f = (request.args.get('origem') or '').strip()
+
+    rows = []
+    valor_total = Decimal('0')
+
+    # --- NFS-e emitidas pelo sistema (saída) ---
+    q_emi = NfseNacionalEmissao.query.filter_by(empresa_id=eid)
     if d_ini:
-        query = query.filter(ImportacaoNFSe.data_emissao >= d_ini)
+        q_emi = q_emi.filter(NfseNacionalEmissao.criado_em >= datetime.combine(d_ini, datetime.min.time()))
     if d_fim:
-        query = query.filter(ImportacaoNFSe.data_emissao <= d_fim)
+        q_emi = q_emi.filter(NfseNacionalEmissao.criado_em <= datetime.combine(d_fim, datetime.max.time()))
+    for e in q_emi.order_by(NfseNacionalEmissao.criado_em.desc()).all():
+        if origem_f and origem_f != 'emitida':
+            continue
+        status_emi = (e.situacao_fiscal or e.status_processamento or '').replace('_', ' ').capitalize()
+        if status_f and status_f.lower() != status_emi.lower():
+            continue
+        nfse_numero = e.numero_nfse or e.numero_interno
+        tomador_nome = e.tomador.nome if e.tomador else getattr(e, 'tomador_id', None)
+        desc = (e.servico.descricao if e.servico else '')[:80] or '-'
+        valor = _numero(e.valor_servico)
+        valor_total += valor
+        rows.append([
+            nfse_numero,
+            _datad(e.criado_em.date() if e.criado_em else None),
+            tomador_nome,
+            desc,
+            _brl(valor),
+            status_emi,
+            'Emitida',
+        ])
 
-    notas = query.order_by(ImportacaoNFSe.data_emissao.desc()).all()
+    # --- NFS-e importadas ---
+    q_imp = ImportacaoNFSe.query.filter_by(empresa_id=eid)
+    if d_ini:
+        q_imp = q_imp.filter(ImportacaoNFSe.data_emissao >= d_ini)
+    if d_fim:
+        q_imp = q_imp.filter(ImportacaoNFSe.data_emissao <= d_fim)
+    for n in q_imp.order_by(ImportacaoNFSe.data_emissao.desc()).all():
+        if origem_f and origem_f != 'importada':
+            continue
+        status_imp = (n.status_importacao or 'sucesso').replace('_', ' ').capitalize()
+        if status_f and status_f.lower() != status_imp.lower():
+            continue
+        valor = _numero(n.valor_bruto)
+        valor_total += valor
+        rows.append([
+            n.numero_nota,
+            _datad(n.data_emissao),
+            n.entidade.nome if n.entidade else (n.cnpj_tomador or '-'),
+            (n.descricao_servico or '-')[:80],
+            _brl(valor),
+            status_imp,
+            'Importada',
+        ])
+
+    rows.sort(key=lambda r: r[1] or '', reverse=True)
+
     headers = ['N° Nota', 'Emissão', 'Tomador', 'Serviço', 'Valor Bruto',
-               'Status', 'Importada em']
-    rows = [[
-        n.numero_nota,
-        _datad(n.data_emissao),
-        n.entidade.nome if n.entidade else (n.cnpj_tomador or '-'),
-        (n.descricao_servico or '-')[:80],
-        _brl(n.valor_bruto),
-        (n.status_importacao or 'sucesso').replace('_', ' ').capitalize(),
-        _datad(n.data_importacao.date() if n.data_importacao else None),
-    ] for n in notas]
-
+               'Status', 'Origem']
     totals = [
-        ('Notas', str(len(notas))),
-        ('Valor total', _brl(sum((_numero(n.valor_bruto) for n in notas), Decimal('0')))),
+        ('Notas', str(len(rows))),
+        ('Valor total', _brl(valor_total)),
     ]
     fields = [
         {'name': 'data_inicio', 'label': 'De', 'type': 'date',
@@ -643,11 +684,15 @@ def nfse():
          'value': request.args.get('data_fim', '')},
         {'name': 'status', 'label': 'Status', 'type': 'select',
          'value': status_f, 'options': [
-             ('', 'Todos'), ('sucesso', 'Sucesso'),
-             ('pendente', 'Pendente'), ('erro', 'Erro')]},
+             ('', 'Todos'), ('Sucesso', 'Sucesso'),
+             ('Pendente', 'Pendente'), ('Erro', 'Erro'),
+             ('Autorizada', 'Autorizada'), ('Rejeitada', 'Rejeitada')]},
+        {'name': 'origem', 'label': 'Origem', 'type': 'select',
+         'value': origem_f, 'options': [
+             ('', 'Todas'), ('emitida', 'Emitida'), ('importada', 'Importada')]},
     ]
-    return _render('nfse', 'Relatório — NFS-e Importadas',
-                   'Fiscal/Serviços · Por período, status, tomador e serviço.',
+    return _render('nfse', 'Relatório — NFS-e (Importadas e Emitidas)',
+                   'Notas de saída · Por período, status, tomador e serviço.',
                    headers, rows, fields, totals)
 
 
