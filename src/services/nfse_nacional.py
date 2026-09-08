@@ -686,8 +686,61 @@ def builddpsxml(payload: dict) -> str:
             ET.SubElement(toma, q("CPF")).text = tomador_doc
         elif tomador_doc:
             ET.SubElement(toma, q("CNPJ")).text = tomador_doc.zfill(14)[-14:]
+        tomador_im = only_digits(
+            payload.get("tomador_inscricao_municipal")
+            or payload.get("inscricao_municipal_tomador")
+            or payload.get("tomador_im")
+            or ""
+        )
+        if tomador_im:
+            ET.SubElement(toma, q("IM")).text = tomador_im
         if tomador_nome:
             ET.SubElement(toma, q("xNome")).text = limpar_texto_xml(tomador_nome)
+
+        # Identificacao completa do tomador (endereco, telefone, email) para que
+        # a NFS-e/DANFSe nao exiba 'Destinatario nao identificado'.
+        tomador_rua = str(payload.get("tomador_endereco_rua") or payload.get("tomadorenderecorua") or "").strip()
+        tomador_numero = str(payload.get("tomador_endereco_numero") or payload.get("tomadorendereconumero") or "").strip()
+        tomador_complemento = str(payload.get("tomador_endereco_complemento") or payload.get("tomadorenderecocomplemento") or "").strip()
+        tomador_bairro = str(payload.get("tomador_endereco_bairro") or payload.get("tomadorenderecobairro") or "").strip()
+        tomador_cep = only_digits(payload.get("tomador_endereco_cep") or payload.get("tomadorenderecocep") or "")
+        tomador_cidade = str(payload.get("tomador_endereco_cidade") or payload.get("tomadorenderecocidade") or "").strip()
+        tomador_uf = str(payload.get("tomador_endereco_uf") or payload.get("tomadorenderecouf") or "").strip()
+        tomador_codmun = only_digits(payload.get("tomador_codigo_municipio_ibge") or payload.get("tomadorcodigomunicipioibge") or "")
+        tomador_email = str(payload.get("tomador_email") or payload.get("email_tomador") or payload.get("tomadoremail") or "").strip()
+        tomador_fone = only_digits(
+            payload.get("tomador_telefone") or payload.get("telefone_tomador") or payload.get("tomadortelefone") or ""
+        )
+
+        if not tomador_codmun and tomador_cidade:
+            try:
+                tomador_codmun = resolve_municipio_codigo_ibge(tomador_codmun, tomador_cidade, tomador_uf) or ""
+            except Exception:
+                tomador_codmun = ""
+
+        # endNac exige cMun E CEP (ambos obrigatorios no XSD); so emite se ambos
+        # forem validos (cMun 7 digitos, CEP 8 digitos).
+        tomador_codmun = tomador_codmun.zfill(7)[-7:] if len(tomador_codmun) >= 7 else ""
+        tomador_cep_ok = tomador_cep if len(tomador_cep) == 8 else ""
+
+        if tomador_rua or tomador_bairro or tomador_codmun:
+            end = ET.SubElement(toma, q("end"))
+            if tomador_codmun and tomador_cep_ok:
+                endnac = ET.SubElement(end, q("endNac"))
+                ET.SubElement(endnac, q("cMun")).text = tomador_codmun
+                ET.SubElement(endnac, q("CEP")).text = tomador_cep_ok
+            if tomador_rua:
+                ET.SubElement(end, q("xLgr")).text = limpar_texto_xml(tomador_rua)
+            if tomador_numero:
+                ET.SubElement(end, q("nro")).text = tomador_numero
+            if tomador_complemento:
+                ET.SubElement(end, q("xCpl")).text = limpar_texto_xml(tomador_complemento)
+            if tomador_bairro:
+                ET.SubElement(end, q("xBairro")).text = limpar_texto_xml(tomador_bairro)
+        if tomador_fone:
+            ET.SubElement(toma, q("fone")).text = tomador_fone
+        if tomador_email:
+            ET.SubElement(toma, q("email")).text = limpar_texto_xml(tomador_email)
 
     serv = ET.SubElement(inf, q("serv"))
     loc = ET.SubElement(serv, q("locPrest"))
