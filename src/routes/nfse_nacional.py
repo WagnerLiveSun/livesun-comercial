@@ -554,6 +554,43 @@ def _validar_emissao_nfse(
     return True, ""
 
 
+def _extrair_ndps_xml(xml: str):
+    m = re.search(r"<nDPS>(\d+)</nDPS>", xml or "")
+    return int(m.group(1)) if m else None
+
+
+def _proximo_ndps(empresa_id: int, ambiente: str, fallback_id: int) -> str:
+    """Calcula o próximo nDPS com base no maior número já usado no histórico
+    (evita E0014 - duplicidade de Série/Número/Município/CNPJ na SEFIN).
+    Pode ser semeado via variável de ambiente NFS_NDPS_INICIAL."""
+    max_ndps = 0
+    try:
+        registros = (
+            db.session.query(NfseNacionalEmissao.xml_dps)
+            .filter(
+                NfseNacionalEmissao.empresa_id == empresa_id,
+                NfseNacionalEmissao.ambiente == ambiente,
+                NfseNacionalEmissao.xml_dps.isnot(None),
+            )
+            .order_by(NfseNacionalEmissao.id.desc())
+            .limit(1000)
+            .all()
+        )
+        for (xml,) in registros:
+            n = _extrair_ndps_xml(xml)
+            if n and n > max_ndps:
+                max_ndps = n
+    except Exception:
+        logging.exception("Falha ao calcular proximo nDPS a partir do historico")
+
+    try:
+        seed = int(os.environ.get("NFS_NDPS_INICIAL", "0") or 0)
+    except ValueError:
+        seed = 0
+
+    return str(max(max_ndps, seed, int(fallback_id or 0)) + 1)
+
+
 def _build_payload(
     empresa: Empresa,
     configuracao: NfseNacionalConfiguracao,
@@ -1134,7 +1171,7 @@ def emissoes():
             "origem_referencia": origem_referencia,
             "canal_origem": canal_origem,
             "observacoes": observacoes,
-            "numero_nfse_sugerido": str(emissao.id),
+            "numero_nfse_sugerido": _proximo_ndps(empresa_id, ambiente, emissao.id),
             "codigo_servico": servico.codigo_servico,  # Usar sempre o código do serviço
             "servico_codigo_nacional": servico.codigo_servico,  # Usar sempre o código do serviço
             "nbs": payload_validacao.get("nbs") or data.get("nbs") or servico.nbs,
@@ -1155,6 +1192,27 @@ def emissoes():
         db.session.add(fila)
 
         resultado = transmitiremissao(payload, configuracao)
+
+        # Retentativa automatica em caso de duplicidade de nDPS (erro E0014 da SEFIN):
+        # recalcula o numero com base no historico e reenvia ate 10 vezes.
+        tentativas_duplicidade = 0
+        while not resultado.get("sucesso") and tentativas_duplicidade < 10:
+            erros_retorno = resultado.get("errors") or []
+            texto_erros = json.dumps(erros_retorno, ensure_ascii=False, default=str) if not isinstance(erros_retorno, str) else erros_retorno
+            if "E0014" not in texto_erros:
+                break
+            tentativas_duplicidade += 1
+            try:
+                ndps_atual = _extrair_ndps_xml(emissao.xml_dps) or 0
+            except Exception:
+                ndps_atual = 0
+            novo_ndps = str(ndps_atual + tentativas_duplicidade)
+            logging.warning(f"E0014 detectado: reenviando DPS com nDPS={novo_ndps} (tentativa {tentativas_duplicidade})")
+            payload["numero_nfse_sugerido"] = novo_ndps
+            novo_xml = builddpsxml(payload)
+            payload["xml_dps"] = novo_xml
+            emissao.xml_dps = novo_xml
+            resultado = transmitiremissao(payload, configuracao)
 
         emissao.status_processamento = resultado.get("status") or "ERRO"
         emissao.situacao_fiscal = resultado.get("situacao_fiscal") or "REJEITADA"
