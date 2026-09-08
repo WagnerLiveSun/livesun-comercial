@@ -948,18 +948,49 @@ def transmitiremissao(payload: dict, configuracao=None) -> dict:
             retorno.get("raw") if isinstance(retorno, dict) else retorno
         )
 
+        # A resposta da SEFIN pode vir como {response_body: {...}} (mapeado no
+        # payload_retorno) ou com os campos no topo (quando a API já simplifica).
+        # Normaliza para leitura consistente.
+        corpo = retorno
+        if isinstance(corpo, dict) and isinstance(corpo.get("response_body"), dict):
+            corpo = corpo["response_body"]
+
+        numero_nfse = None
+        if isinstance(corpo, dict):
+            numero_nfse = corpo.get("numero_nfse") or corpo.get("nNFSe") or corpo.get("numero")
+            # Se a SEFIN nao retorna o numero explicitamente, deriva do idDps/chave
+            # apenas pelo trecho de numero padronizado (ex.: idDps NFS33045572227907386000176000000000008326095468355911
+            # traz o numero da NFS-e nos digitos logo apos serie). Como decodificar
+            # posicionalmente e fragil, usamos aqui a chave Apenas se tiver 50 digitos:
+            if not numero_nfse:
+                chave = str(corpo.get("chaveAcesso") or corpo.get("idDps") or "")
+                dig = "".join(c for c in chave if c.isdigit())
+                if len(dig) >= 50:
+                    # Numero da NFS-e nacional (chave de 50 digitos):
+                    # [0:2]cUF [2:6]AAMM [6:20]CNPJ [20:22]tpEmis/modelo [22:27]serie
+                    # [27:36]NUMERO(9) [36:]resto/DV
+                    numero_nfse = str(int(dig[27:36] or 0))
+
+        chave_acesso = corpo.get("chaveAcesso") if isinstance(corpo, dict) else None
+        if not chave_acesso and isinstance(retorno, dict):
+            chave_acesso = retorno.get("chaveAcesso")
+
+        codigo_verificacao = corpo.get("codigoVerificacao") or corpo.get("codigo_verificacao") if isinstance(corpo, dict) else None
+
         return {
             "sucesso": response.ok,
             "status": (
-                retorno.get("status") if isinstance(retorno, dict) else None
-            ) or ("PROCESSADA" if response.ok else "ERRO_API"),
+                corpo.get("status") if isinstance(corpo, dict) else None
+            ) or (retorno.get("status") if isinstance(retorno, dict) else None)
+            or ("PROCESSADA" if response.ok else "ERRO_API"),
             "situacao_fiscal": (
-                retorno.get("situacao_fiscal") if isinstance(retorno, dict) else None
-            ) or ("AUTORIZADA" if response.ok else "REJEITADA"),
-            "protocolo": retorno.get("protocolo") if isinstance(retorno, dict) else None,
-            "numero_nfse": retorno.get("numero_nfse") if isinstance(retorno, dict) else None,
-            "codigo_verificacao": retorno.get("codigo_verificacao") if isinstance(retorno, dict) else None,
-            "chave_nfse": retorno.get("chaveAcesso") if isinstance(retorno, dict) else None,
+                corpo.get("situacao_fiscal") if isinstance(corpo, dict) else None
+            ) or (retorno.get("situacao_fiscal") if isinstance(retorno, dict) else None)
+            or ("AUTORIZADA" if response.ok else "REJEITADA"),
+            "protocolo": (corpo.get("protocolo") if isinstance(corpo, dict) else None) or (retorno.get("protocolo") if isinstance(retorno, dict) else None),
+            "numero_nfse": numero_nfse,
+            "codigo_verificacao": codigo_verificacao,
+            "chave_nfse": chave_acesso,
             "xml_nfse": response.text if str(response.text or "").lstrip().startswith("<") else None,
             "payload_retorno": {
                 "request_url": request_url,
