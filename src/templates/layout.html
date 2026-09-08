@@ -812,6 +812,12 @@
                     {% if show_lancamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('lancamentos.') %}active{% endif %}" href="{{ url_for('lancamentos.index') }}"><i class="fas fa-receipt"></i> Lançamentos</a></li>{% endif %}
                     {% if show_import_ofx %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.import_ofx'%}active{% endif %}" href="{{ url_for('importacoes.importar_ofx') }}"><i class="fas fa-file-upload"></i> Importar OFX</a></li>{% endif %}
                     {% if show_conciliacao %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('conciliacao.') %}active{% endif %}" href="{{ url_for('conciliacao.index') }}"><i class="fas fa-receipt"></i> Conciliação Bancária</a></li>{% endif %}
+                    {% if show_comissoes %}
+                    <li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comissoes') and request.endpoint != 'comissoes.apurar' and request.endpoint != 'comissoes.relatorio' and request.endpoint != 'comissoes.parametros' %}active{% endif %}" href="{{ url_for('comissoes.listar') }}"><i class="fas fa-list"></i> Comissões</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'comissoes.apurar' %}active{% endif %}" href="{{ url_for('comissoes.apurar') }}"><i class="fas fa-calculator"></i> Apuração de Comissões</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'comissoes.relatorio' %}active{% endif %}" href="{{ url_for('comissoes.relatorio') }}"><i class="fas fa-chart-line"></i> Listagem de Comissões</a></li>
+                    <li><a class="ls-sidebar-link {% if request.endpoint == 'comissoes.parametros' %}active{% endif %}" href="{{ url_for('comissoes.parametros') }}"><i class="fas fa-sliders-h"></i> Parâmetros de Comissão</a></li>
+                    {% endif %}
                     {% if show_relatorios %}
                         {% if plan_allows_endpoint('relatorio_fluxo.index') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorio_fluxo.index' %}active{% endif %}" href="{{ url_for('relatorio_fluxo.index') }}"><i class="fas fa-chart-line"></i> Fluxo de Caixa</a></li>{% endif %}
                         <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_lancamentos' %}active{% endif %}" href="{{ url_for('relatorios.listagem_lancamentos') }}"><i class="fas fa-list"></i> Listagem de Lançamentos</a></li>
