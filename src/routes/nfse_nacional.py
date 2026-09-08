@@ -559,11 +559,25 @@ def _extrair_ndps_xml(xml: str):
     return int(m.group(1)) if m else None
 
 
-def _proximo_ndps(empresa_id: int, ambiente: str, fallback_id: int) -> str:
-    """Calcula o próximo nDPS com base no maior número já usado no histórico
-    (evita E0014 - duplicidade de Série/Número/Município/CNPJ na SEFIN).
-    Pode ser semeado via variável de ambiente NFS_NDPS_INICIAL."""
-    max_ndps = 0
+NDFS_TAMANHO_MAXIMO = 15
+
+
+def _gerar_ndps(empresa_id: int, ambiente: str, sequencial_offset: int = 0) -> str:
+    """Gera o nDPS no padrao: empresa_id || dia || mes || ano || hora || sequencial.
+
+    Unico por empresa (cada empresa_id tem sua sequencia), respeitando o limite
+    de 15 digitos do leiaute da DPS. O sequencial e calculado a partir do
+    historico da propria empresa para o mesmo prefixo (dia/hora).
+    """
+    agora = datetime.utcnow()
+    prefixo = f"{empresa_id}{agora:%d%m%Y%H}"
+    # Se a empresa_id for grande demais, usa ano com 2 digitos para sobrar espaco ao sequencial
+    if len(prefixo) > NDFS_TAMANHO_MAXIMO - 2:
+        prefixo = f"{empresa_id}{agora:%d%m%y%H}"
+
+    digitos_seq = max(NDFS_TAMANHO_MAXIMO - len(prefixo), 2)
+
+    max_seq = 0
     try:
         registros = (
             db.session.query(NfseNacionalEmissao.xml_dps)
@@ -576,19 +590,24 @@ def _proximo_ndps(empresa_id: int, ambiente: str, fallback_id: int) -> str:
             .limit(1000)
             .all()
         )
+        padrao = re.compile(rf"<nDPS>{re.escape(prefixo)}(\d+)</nDPS>")
         for (xml,) in registros:
-            n = _extrair_ndps_xml(xml)
-            if n and n > max_ndps:
-                max_ndps = n
+            m = padrao.search(xml or "")
+            if m:
+                max_seq = max(max_seq, int(m.group(1)))
     except Exception:
-        logging.exception("Falha ao calcular proximo nDPS a partir do historico")
+        logging.exception("Falha ao calcular sequencial do nDPS a partir do historico")
 
-    try:
-        seed = int(os.environ.get("NFS_NDPS_INICIAL", "0") or 0)
-    except ValueError:
-        seed = 0
+    sequencial = max(max_seq, 0) + 1 + sequencial_offset
+    limite = (10 ** digitos_seq) - 1
+    if sequencial > limite:
+        sequencial = sequencial % limite or 1
+    return f"{prefixo}{str(sequencial).zfill(digitos_seq)}"
 
-    return str(max(max_ndps, seed, int(fallback_id or 0)) + 1)
+
+def _proximo_ndps(empresa_id: int, ambiente: str, fallback_id: int) -> str:
+    """Compatibilidade: retorna o nDPS no padrao empresa||data||hora||sequencial."""
+    return _gerar_ndps(empresa_id, ambiente)
 
 
 def _build_payload(
@@ -1202,11 +1221,7 @@ def emissoes():
             if "E0014" not in texto_erros:
                 break
             tentativas_duplicidade += 1
-            try:
-                ndps_atual = _extrair_ndps_xml(emissao.xml_dps) or 0
-            except Exception:
-                ndps_atual = 0
-            novo_ndps = str(ndps_atual + tentativas_duplicidade)
+            novo_ndps = _gerar_ndps(empresa_id, ambiente, sequencial_offset=tentativas_duplicidade)
             logging.warning(f"E0014 detectado: reenviando DPS com nDPS={novo_ndps} (tentativa {tentativas_duplicidade})")
             payload["numero_nfse_sugerido"] = novo_ndps
             novo_xml = builddpsxml(payload)
