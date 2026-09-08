@@ -309,7 +309,7 @@
                 <p style="font-size: 8px; margin-top: 5px;">QRCode para consulta</p>
                 <script>
                     (function() {
-                        var url = "{{ qr_code_url }}";
+                        var url = "{{ qr_code_url|safe }}";
                         document.getElementById('qrcode-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(url);
                     })();
                 </script>
