@@ -654,9 +654,9 @@ def builddpsxml(payload: dict) -> str:
         end_nac = ET.SubElement(end, q("endNac"))
         ET.SubElement(end_nac, q("cMun")).text = cmun7
         ET.SubElement(end_nac, q("CEP")).text = only_digits(prestador["CEP"]).zfill(8)[-8:]
-        ET.SubElement(end, q("xLgr")).text = limpar_texto_xml(prestador["Rua"])
-        ET.SubElement(end, q("nro")).text = str(prestador["Numero"]).strip()
-        ET.SubElement(end, q("xBairro")).text = limpar_texto_xml(prestador["Bairro"])
+        ET.SubElement(end_nac, q("xLgr")).text = limpar_texto_xml(prestador["Rua"])
+        ET.SubElement(end_nac, q("nro")).text = str(prestador["Numero"]).strip()
+        ET.SubElement(end_nac, q("xBairro")).text = limpar_texto_xml(prestador["Bairro"])
         logging.info(f"[DEBUG] Endereço do prestador adicionado (tpEmit={tp_emit})")
     else:
         logging.info(f"[DEBUG] Endereço do prestador NÃO adicionado (tpEmit=1 - prestador é emitente)")
@@ -718,25 +718,32 @@ def builddpsxml(payload: dict) -> str:
             except Exception:
                 tomador_codmun = ""
 
-        # endNac exige cMun E CEP (ambos obrigatorios no XSD); so emite se ambos
-        # forem validos (cMun 7 digitos, CEP 8 digitos).
+        # endNac exige cMun e CEP (ambos obrigatorios no XSD atual do Sefin);
+        # so se emite o bloco <end> quando ha um endNac valido, anidando os
+        # campos de endereco dentro de <endNac> (o Sefin rejeita filho direto).
         tomador_codmun = tomador_codmun.zfill(7)[-7:] if len(tomador_codmun) >= 7 else ""
         tomador_cep_ok = tomador_cep if len(tomador_cep) == 8 else ""
 
-        if tomador_rua or tomador_bairro or tomador_codmun:
+        if tomador_codmun and tomador_cep_ok:
             end = ET.SubElement(toma, q("end"))
-            if tomador_codmun and tomador_cep_ok:
-                endnac = ET.SubElement(end, q("endNac"))
-                ET.SubElement(endnac, q("cMun")).text = tomador_codmun
-                ET.SubElement(endnac, q("CEP")).text = tomador_cep_ok
+            endnac = ET.SubElement(end, q("endNac"))
+            ET.SubElement(endnac, q("cMun")).text = tomador_codmun
+            ET.SubElement(endnac, q("CEP")).text = tomador_cep_ok
             if tomador_rua:
-                ET.SubElement(end, q("xLgr")).text = limpar_texto_xml(tomador_rua)
+                ET.SubElement(endnac, q("xLgr")).text = limpar_texto_xml(tomador_rua)
             if tomador_numero:
-                ET.SubElement(end, q("nro")).text = tomador_numero
+                ET.SubElement(endnac, q("nro")).text = tomador_numero
             if tomador_complemento:
-                ET.SubElement(end, q("xCpl")).text = limpar_texto_xml(tomador_complemento)
+                ET.SubElement(endnac, q("xCpl")).text = limpar_texto_xml(tomador_complemento)
             if tomador_bairro:
-                ET.SubElement(end, q("xBairro")).text = limpar_texto_xml(tomador_bairro)
+                ET.SubElement(endnac, q("xBairro")).text = limpar_texto_xml(tomador_bairro)
+        elif tomador_rua or tomador_bairro:
+            # Endereço incompleto do tomador (falta município e/ou CEP): não se
+            # pode montar um endNac válido, se omite o bloco <end> para não
+            # gerar um XML que o Sefin rejeite por esquema.
+            logging.warning(
+                "[NFS-e] Tomador sem endereço completo (falta municipio/CEP); se omite bloco <end> do tomador."
+            )
         if tomador_fone:
             ET.SubElement(toma, q("fone")).text = tomador_fone
         if tomador_email:

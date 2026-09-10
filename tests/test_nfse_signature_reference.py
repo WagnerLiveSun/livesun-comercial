@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import patch
 
-from src.services.nfse_nacional import validate_and_sign
+from src.services.nfse_nacional import validateandsignxml
 
 
 class NfseSignatureReferenceTestCase(unittest.TestCase):
-    def test_validate_and_sign_uses_infdps_reference_uri(self):
+    def test_validateandsignxml_uses_infdps_reference_uri(self):
         xml = (
             '<?xml version="1.0" encoding="utf-8"?>'
             '<DPS xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">'
@@ -15,17 +15,20 @@ class NfseSignatureReferenceTestCase(unittest.TestCase):
             '</DPS>'
         )
 
-        with patch('src.services.nfse_nacional.validate_xml', return_value=(True, [])), \
-             patch('src.services.nfse_nacional._resolve_certificate_settings', return_value=('cert.pfx', 'senha')), \
+        with patch('src.services.nfse_nacional.run_xsd_validation', return_value=(True, [])), \
+             patch('src.services.nfse_nacional.resolve_certificate_settings', return_value=('cert.pfx', 'senha')), \
              patch('src.services.nfse_nacional.sign_xml_enveloped', return_value='<signed/>') as mock_sign:
 
-            result = validate_and_sign(xml, kind='dps', empresa_id=1, ambiente='homologacao')
+            result = validateandsignxml(xml, kind='dps', empresa_id=1, ambiente='homologacao')
 
         self.assertTrue(result['valid'])
-        self.assertEqual(result['errors'], [])
-        self.assertEqual(result['signed_xml'], '<signed/>')
+        self.assertEqual(result['errors'], None)
+        self.assertEqual(result['signedxml'], '<signed/>')
         mock_sign.assert_called_once()
-        self.assertEqual(mock_sign.call_args.kwargs['reference_uri'], '#DPS12345678901234567890123456789012345678901234')
+        self.assertEqual(
+            mock_sign.call_args.kwargs['reference_uri'],
+            '#DPS12345678901234567890123456789012345678901234'
+        )
 
 
 if __name__ == '__main__':
