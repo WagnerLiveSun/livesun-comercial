@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import io
+import base64
 import json
 import logging
 import re
@@ -43,6 +45,7 @@ from src.services.nfse_nacional import (
     consultar_nfse,
     transmitireventocancelamentosubstituicao,
 )
+from src.services.brevo import brevo_service
 from src.tenant import scoped_get_or_404, scoped_query, tenant_id
 
 nfse_nacional_bp = Blueprint("nfse_nacional", __name__, url_prefix="/nfse-nacional")
@@ -83,6 +86,187 @@ def _date_from_request(value):
         return None
 
 
+MENSAJE_PADRAO_NFSE = "Prezado cliente, segue em anexo nossa NFS-e Nº {numero} emitida em {fecha}."
+
+
+def _texto_pdf(value):
+    """Sanea texto para el PDF (fpdf 1.7 no soporta UTF-8, solo latin-1)."""
+    if value is None:
+        return ""
+    return str(value).encode("latin1", errors="replace").decode("latin1")
+
+
+def _resolver_logo_path(empresa):
+    """Resuelve el logo de la empresa a un archivo local si está disponible."""
+    logo_url = getattr(empresa, "logo_caminho", None)
+    if logo_url and str(logo_url).startswith("/uploads/"):
+        upload_folder = current_app.config.get("UPLOAD_FOLDER", "")
+        ruta = os.path.join(upload_folder, str(logo_url).replace("/uploads/", ""))
+        if os.path.isfile(ruta):
+            return ruta
+    return None
+
+
+def _generar_danfs_pdf(emissao, empresa):
+    """
+    Genera el PDF del DANFSe de una NFS-e emitida/autorizada usando fpdf.
+
+    Returns:
+        bytes: contenido del PDF.
+    """
+    from fpdf import FPDF
+
+    pdf = FPDF(orientation="P", unit="mm", format="A4")
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_margins(12, 12, 12)
+    pdf.add_page()
+
+    ancho = pdf.w - 24
+
+    # ---------- Encabezado ----------
+    nombre_empresa = _texto_pdf(empresa.nome_fantasia or empresa.nome or "LiveSun Comercial")
+    pdf.set_fill_color(232, 232, 232)
+    pdf.set_font("Arial", "B", 13)
+    pdf.cell(ancho, 9, nombre_empresa, 1, 1, "C", fill=True)
+
+    logo_path = _resolver_logo_path(empresa)
+    if logo_path:
+        try:
+            pdf.ln(2)
+            pdf.image(logo_path, x=(pdf.w / 2) - 40, y=pdf.get_y(), w=80)
+            pdf.ln(12)
+        except Exception:
+            pass
+
+    pdf.set_draw_color(0, 0, 0)
+    pdf.set_font("Arial", "B", 12)
+    pdf.ln(4)
+    pdf.cell(ancho, 8, "DOCUMENTO AUXILIAR DA NFS-e (DANFSe V1.0)", 1, 1, "C", fill=True)
+
+    def fila(label, valor):
+        label_txt = _texto_pdf(label)
+        valor_txt = _texto_pdf(valor) or "-"
+        pdf.set_font("Arial", "B", 9)
+        pdf.cell(55, 6, label_txt, 1)
+        pdf.set_font("Arial", "", 9)
+        pdf.cell(ancho - 55, 6, valor_txt, 1, 1)
+        pdf.set_font("Arial", "", 8)
+# ---------- Datos de la NFS-e ----------
+    pdf.set_font("Arial", "B", 9)
+    pdf.set_fill_color(224, 224, 224)
+    pdf.cell(ancho, 6, "DATOS DA NFS-e", 1, 1, "L", fill=True)
+    fila("Número NFS-e", emissao.numero_nfse or emissao.numero_interno or emissao.id)
+    fecha = emissao.criado_em.strftime("%d/%m/%Y") if emissao.criado_em else ""
+    fila("Data de Emissão", fecha)
+    fila("Chave de Acesso", emissao.chave_nfse)
+    fila("Ambiente", "Produção" if emissao.ambiente == "producao" else "Homologação")
+
+    # ---------- Prestador ----------
+    pdf.set_font("Arial", "B", 9)
+    pdf.cell(ancho, 6, "PRESTADOR DOS SERVIZOS", 1, 1, "L", fill=True)
+    fila("Nome", nombre_empresa)
+    cnpj_empresa = _texto_pdf(getattr(empresa, "cnpj", "") or "")
+    fila("CNPJ/CPF", cnpj_empresa)
+    endereco_empresa = " ".join([
+        _texto_pdf(getattr(empresa, "endereco_rua", "") or ""),
+        _texto_pdf(getattr(empresa, "endereco_numero", "") or ""),
+        _texto_pdf(getattr(empresa, "endereco_cidade", "") or ""),
+        _texto_pdf(getattr(empresa, "endereco_uf", "") or ""),
+    ]).strip()
+    fila("Endereço", endereco_empresa)
+
+    # ---------- Tomador ----------
+    pdf.set_font("Arial", "B", 9)
+    pdf.cell(ancho, 6, "TOMADOR", 1, 1, "L", fill=True)
+    tomador = emissao.tomador
+    fila("Nome", tomador.nome if tomador else "")
+    fila("CNPJ/CPF", tomador.cnpj_cpf if tomador else "")
+    fila("Email", tomador.email if tomador and tomador.email else "")
+    fila("Endereço", emissao.tomador_endereco or "")
+
+    # ---------- Discriminação dos serviços ----------
+    pdf.set_font("Arial", "B", 9)
+    pdf.cell(ancho, 6, "DISCRIMINAÇÃO DOS SERVIZOS", 1, 1, "L", fill=True)
+    descricao = emissao.servico.descricao if emissao.servico and emissao.servico.descricao else (emissao.observacoes or "-")
+    fila("Descrição", descricao)
+    fila("Cód. Nacional", emissao.codigo_tributacao_nacional)
+    fila("Cód. Municipal", emissao.codigo_tributacao_municipal)
+
+    # ---------- Valores ----------
+    pdf.set_font("Arial", "B", 9)
+    pdf.cell(ancho, 6, "VALORES", 1, 1, "L", fill=True)
+    valor_servicio = float(emissao.valor_servico or 0)
+    valor_deducciones = float(emissao.valor_deducoes or 0)
+    valor_iss = float(emissao.valor_iss or 0)
+    fila("Valor do Servizio", f"R$ {valor_servicio:,.2f}")
+    fila("Valor Deduções", f"R$ {valor_deducciones:,.2f}")
+    fila("Base de Cálculo", f"R$ {valor_servicio - valor_deducciones:,.2f}")
+    fila("Valor ISS", f"R$ {valor_iss:,.2f}")
+    fila("Valor Total", f"R$ {valor_servicio:,.2f}")
+
+    # ---------- Observações ----------
+    if emissao.observacoes:
+        pdf.set_font("Arial", "B", 9)
+        pdf.cell(ancho, 6, "OBSERVAÇÕES", 1, 1, "L", fill=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.multi_cell(ancho, 5, _texto_pdf(emissao.observacoes), 1)
+
+    # ---------- Pie de página ----------
+    pdf.ln(6)
+    pdf.set_font("Arial", "", 8)
+    pdf.multi_cell(
+        ancho, 5,
+        "Documento emitido por LiveSun em conformidade com o padrão NFS-e Nacional.",
+        align="C",
+    )
+
+    contenido = pdf.output(dest="S")
+    if isinstance(contenido, bytes):
+        return contenido
+    return contenido.encode("latin1", errors="replace")
+
+
+def _construir_html_email(mensaje, empresa):
+    """
+    Construye el cuerpo HTML del email con el mensaje, el logo de la empresa
+    (embebido en base64 si el archivo existe) y la firma 'Equipe LiveSun'.
+    """
+    from markupsafe import escape
+
+    nombre_empresa = escape(empresa.nome_fantasia or empresa.nome or "LiveSun Comercial")
+    cuerpo = str(escape(mensaje)).replace("\n", "<br>\n")
+
+    logo_html = ""
+    logo_path = _resolver_logo_path(empresa)
+    if logo_path:
+        ext = os.path.splitext(logo_path)[1].lower()
+        mime = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+            ".svg": "image/svg+xml",
+        }.get(ext, "image/png")
+        try:
+            with open(logo_path, "rb") as f:
+                logo_b64 = base64.b64encode(f.read()).decode("ascii")
+            logo_html = (
+                '<div style="text-align:center;margin:24px 0;">'
+                f'<img src="data:{mime};base64,{logo_b64}" alt="{nombre_empresa}" '
+                'style="max-height:80px;max-width:220px;"/></div>'
+            )
+        except Exception:
+            logo_html = ""
+
+    return (
+        '<div style="font-family:Arial,Helvetica,sans-serif;color:#222;'
+        'font-size:14px;line-height:1.5;">'
+        f"<p>{cuerpo}</p>"
+        f"{logo_html}"
+        '<p style="margin-top:8px;">— <strong>Equipe LiveSun</strong></p>'
+        "</div>"
+    )
 # Códigos de tributação nacional que exigem local de incidência = local de prestação
 CODIGOS_INCIDENCIA_PRESTACAO = [
     "030401", "030402", "030403", "030501",
@@ -2036,21 +2220,78 @@ def visualizar(id):
 @login_required
 def enviar_email(id):
     """
-    Rota para enviar NFS-e por email para o cliente.
+    Enviar por email ou DANFSe (PDF) da NFS-e processada e autorizada ao cliente.
+
+    Usa o email do cadastro do cliente (entidade) como padrão, mas permite editar
+    o destino e o texto da mensagem. O corpo do email é montado no padrão Brevo
+    usado no fluxo "esqueci a senha", e inclui logo da empresa (si configurado)
+    e a assinatura "Equipe LiveSun".
     """
     emissao = scoped_get_or_404(NfseNacionalEmissao, id)
-    
+
+    empresa = current_user.empresa or emissao.empresa
+    try:
+        db.session.refresh(empresa)
+    except Exception:
+        pass
+
     email_cliente = request.form.get("email_cliente", "").strip()
-    mensagem = request.form.get("mensagem", "").strip()
-    
+    mensaje = request.form.get("mensagem", "").strip()
+
     if not email_cliente:
         flash("Informe o email do cliente.", "danger")
         return redirect(url_for("nfse_nacional.visualizar", id=id))
-    
-    # TODO: Implementar envio de email
-    # Por enquanto, apenas simular
-    flash(f"Email enviado para {email_cliente} (funcionalidade a ser implementada).", "success")
-    
+
+    # Somente NFS-e processadas e autorizadas podem ser enviadas
+    autorizada = (
+        emissao.status_processamento == "AUTORIZADA"
+        or emissao.situacao_fiscal == "AUTORIZADA"
+    )
+    if not autorizada:
+        flash("Sólo é possível enviar por email NFS-e processadas e autorizadas.", "warning")
+        return redirect(url_for("nfse_nacional.listagem"))
+
+    numero = emissao.numero_nfse or emissao.numero_interno or str(emissao.id)
+    fecha = emissao.criado_em.strftime("%d/%m/%Y") if emissao.criado_em else ""
+
+    if not mensaje:
+        mensaje = MENSAJE_PADRAO_NFSE.format(numero=numero, fecha=fecha)
+
+    # Gerar PDF do DANFSe
+    try:
+        pdf_bytes = _generar_danfs_pdf(emissao, empresa)
+    except Exception as exc:
+        logging.exception("Erro ao generar el PDF do DANFSe")
+        flash(f"Erro ao generar el PDF do DANFSe: {exc}", "danger")
+        return redirect(url_for("nfse_nacional.visualizar", id=id))
+
+    nome_empresa = empresa.nome_fantasia or empresa.nome or "LiveSun Comercial"
+    asunto = f"NFS-e Nº {numero} - {nome_empresa}"
+    html_cuerpo = _construir_html_email(mensaje, empresa)
+    nome_cliente = emissao.tomador.nome if emissao.tomador else email_cliente
+
+    attachment = {
+        "name": f"danfse_{numero}.pdf",
+        "content": pdf_bytes,
+    }
+
+    if brevo_service.send_transactional_email(
+        email_cliente,
+        nome_cliente,
+        asunto,
+        html_cuerpo,
+        attachment=attachment,
+    ):
+        flash(
+            f"Email enviado a {email_cliente} com o DANFSe da NFS-e Nº {numero}.",
+            "success",
+        )
+    else:
+        flash(
+            "Erro ao enviar o email. Verifique la configuración de Brevo e intente novamente.",
+            "danger",
+        )
+
     return redirect(url_for("nfse_nacional.listagem"))
 
 

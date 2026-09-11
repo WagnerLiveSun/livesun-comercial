@@ -168,7 +168,11 @@
                             <a href="{{ url_for('nfse_nacional.emissao_download_nfse', emissao_id=emissao.id) }}" class="btn btn-sm btn-outline-secondary action-btn" title="Baixar XML">
                                 <i class="fas fa-download"></i>
                             </a>
-                            <button onclick="abrirModalEmail({{ emissao.id }})" class="btn btn-sm btn-outline-secondary action-btn" title="Enviar por Email">
+                            <button onclick="abrirModalEmail(this, {{ emissao.id }})"
+                                    data-email="{{ (emissao.tomador.email if emissao.tomador and emissao.tomador.email else '') }}"
+                                    data-numero="{{ (emissao.numero_nfse or emissao.numero_interno or '') }}"
+                                    data-fecha="{{ (emissao.criado_em.strftime('%d/%m/%Y') if emissao.criado_em else '') }}"
+                                    class="btn btn-sm btn-outline-secondary action-btn" title="Enviar por Email">
                                 <i class="fas fa-envelope"></i>
                             </button>
                         </div>
@@ -233,8 +237,8 @@
                         <input type="email" name="email_cliente" class="form-control" id="emailCliente" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Mensagem (opcional)</label>
-                        <textarea name="mensagem" class="form-control" rows="3" placeholder="Adicione uma mensagem personalizada..."></textarea>
+                        <label class="form-label">Mensagem (editable)</label>
+                        <textarea name="mensagem" id="mensagemEmail" class="form-control" rows="3" placeholder="Adicione uma mensagem personalizada..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -247,9 +251,14 @@
 </div>
 
 <script>
-function abrirModalEmail(id) {
+function abrirModalEmail(btn, id) {
+    var email = (btn && btn.getAttribute('data-email')) || '';
+    var numero = (btn && btn.getAttribute('data-numero')) || '';
+    var fecha = (btn && btn.getAttribute('data-fecha')) || '';
+
     document.getElementById('formEmail').action = "{{ url_for('nfse_nacional.enviar_email', id=0) }}".replace('0', id);
-    document.getElementById('emailCliente').value = '';
+    document.getElementById('emailCliente').value = email;
+    document.getElementById('mensagemEmail').value = "Prezado cliente, segue em anexo nossa NFS-e N\u00ba " + numero + " emitida em " + fecha + ".";
     var modal = new bootstrap.Modal(document.getElementById('modalEmail'));
     modal.show();
 }
