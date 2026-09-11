@@ -303,9 +303,14 @@
                 <p><strong>Chave de Acesso:</strong> {{ emissao.chave_nfse or '-' }}</p>
                 <p>Documento emitido por LiveSun em conformidade com o padrão NFS-e Nacional</p>
             </div>
-            {% if qr_code_url %}
+            {% if qr_img_url %}
             <div style="text-align: center;">
-                <img id="qrcode-img" src="" alt="QRCode" style="border: 1px solid #000;" />
+                <img id="qrcode-img" src="{{ qr_img_url }}" alt="QRCode" style="border: 1px solid #000;" />
+                <p style="font-size: 8px; margin-top: 5px;">QRCode para consulta</p>
+            </div>
+            {% elif qr_code_url %}
+            <div style="text-align: center;">
+                <img id="qrcode-img" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ qr_code_url | urlencode }}" alt="QRCode" style="border: 1px solid #000;" />
                 <p style="font-size: 8px; margin-top: 5px;">QRCode para consulta</p>
                 <script>
                     (function() {
