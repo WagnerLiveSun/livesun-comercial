@@ -2227,25 +2227,26 @@ def orcamentos_exportar_pdf(orcamento_id):
         if total_geral <= 0:
             total_geral = sum((item_total(i) for i in orcamento.itens), Decimal("0.00"))
 
-        #top_total_y = ref_y + 28
-        #pdf.set_xy(left_x, top_total_y)
-        #pdf.set_font("Helvetica", "B", 12)
-        #pdf.set_text_color(*pdf.azul)
-        #pdf.cell(35, 8, "Total", 0, 0, "L")
-        #pdf.cell(65, 8, brl(total_geral), 0, 1, "R")
-        #pdf.set_draw_color(*pdf.borda)
-        #pdf.line(left_x, top_total_y + 8, left_x + 92, top_total_y + 8)
+        top_total_y = ref_y + 28
+        pdf.set_xy(left_x, top_total_y)
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_text_color(*pdf.azul)
+        pdf.cell(35, 8, "Total", 0, 0, "L")
+        pdf.cell(65, 8, brl(total_geral), 0, 1, "R")
+        pdf.set_draw_color(*pdf.borda)
+        pdf.line(left_x, top_total_y + 8, left_x + 92, top_total_y + 8)
 
-        #table_y = top_total_y + 14
-        table_y = ref_y + 28
+        table_y = top_total_y + 14
         x0 = 14
         w_desc = 124
         w_qtd = 22
         w_preco = 36
         h_header = 8
         h_item = 36
+        h_resumo_t = 7
+        h_resumo_l = 9
 
-        pdf.set_line_width(0.25)
+        pdf.set_line_width(0.5)
         pdf.rect(x0, table_y, w_desc, h_header)
         pdf.rect(x0 + w_desc, table_y, w_qtd, h_header)
         pdf.rect(x0 + w_desc + w_qtd, table_y, w_preco, h_header)
@@ -2289,8 +2290,7 @@ def orcamentos_exportar_pdf(orcamento_id):
             pdf.set_line_width(0.2)
 
             # Descrição do item
-            #pdf.set_xy(x0 + 4, item_y + 4)
-            pdf.set_xy(x0 + 4, item_y + ((h_row - 6.5) / 2))
+            pdf.set_xy(x0 + 4, item_y + 4)
             pdf.set_font("Helvetica", "", 9.6)
             pdf.set_text_color(*pdf.texto)
             pdf.multi_cell(w_desc - 8, 6.5, desc)
@@ -2312,7 +2312,7 @@ def orcamentos_exportar_pdf(orcamento_id):
         final_w_value = 42
         final_h = 10
 
-        pdf.set_line_width(0.25)
+        pdf.set_line_width(0.5)
         pdf.rect(final_x, final_y, final_w_label, final_h)
         pdf.rect(final_x + final_w_label, final_y, final_w_value, final_h)
         pdf.set_line_width(0.2)

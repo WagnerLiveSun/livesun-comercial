@@ -221,7 +221,7 @@ class ComissoesImportacoesTestCase(unittest.TestCase):
             date(2026, 3, 31),
         )
 
-        response = self.client.get('/comissoes/exportar-csv', follow_redirects=True)
+        response = self.client.get('/comissoes/exportar-csv?data_inicio=2026-03-01&data_fim=2026-03-31', follow_redirects=True)
 
         self.assertEqual(response.status_code, 200)
         texto = response.data.decode('utf-8-sig')

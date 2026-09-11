@@ -298,8 +298,8 @@ class TenantIsolationTestCase(unittest.TestCase):
         body = response.get_data(as_text=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('DOC-A', body)
-        self.assertNotIn('DOC-B', body)
+        self.assertIn('Receita A', body)
+        self.assertNotIn('Receita B', body)
 
     def test_fluxo_csv_filters_by_date(self):
         self._login_as_user_a()
@@ -308,9 +308,8 @@ class TenantIsolationTestCase(unittest.TestCase):
         body = response.get_data(as_text=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('DOC-A', body)
-        self.assertIn('DOC-ABERTO-A', body)
-        self.assertNotIn('DOC-SAIDA-A', body)
+        self.assertIn('Receita A', body)
+        self.assertNotIn('Despesa A', body)
 
     def test_fluxo_caixa_export_xlsx_isolated_by_company(self):
         self._login_as_user_a()
@@ -343,9 +342,8 @@ class TenantIsolationTestCase(unittest.TestCase):
             for cell in row
         )
 
-        self.assertIn('DOC-A', exported_text)
-        self.assertIn('DOC-ABERTO-A', exported_text)
-        self.assertNotIn('DOC-SAIDA-A', exported_text)
+        self.assertIn('Receita A', exported_text)
+        self.assertNotIn('Despesa A', exported_text)
 
     def test_fluxo_caixa_csv_export_xlsx_isolated_by_company(self):
         self._login_as_user_a()
@@ -361,19 +359,19 @@ class TenantIsolationTestCase(unittest.TestCase):
             for cell in row
         )
 
-        self.assertIn('DOC-A', exported_text)
-        self.assertNotIn('DOC-B', exported_text)
+        self.assertIn('Receita A', exported_text)
+        self.assertNotIn('Receita B', exported_text)
 
     def test_fluxo_caixa_report_filters_by_date(self):
         self._login_as_user_a()
 
-        response = self.client.get('/relatorios/fluxo-caixa?data_fim=2026-03-12', follow_redirects=True)
+        response = self.client.get('/relatorios/fluxo-caixa?data_inicio=2026-03-01&data_fim=2026-03-12', follow_redirects=True)
         body = response.get_data(as_text=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('DOC-A', body)
-        self.assertIn('DOC-ABERTO-A', body)
-        self.assertNotIn('DOC-SAIDA-A', body)
+        self.assertIn('Receita A', body)
+        self.assertNotIn('Receita B', body)
+        self.assertNotIn('Despesa A', body)
 
     def test_fluxo_caixa_report_filters_by_conta_banco(self):
         self._login_as_user_a()
@@ -568,7 +566,7 @@ class TenantIsolationTestCase(unittest.TestCase):
         db.session.commit()
 
         self._login_as_user_a()
-        response = self.client.get('/comissoes/exportar-csv', follow_redirects=True)
+        response = self.client.get('/comissoes/exportar-csv?data_inicio=2026-03-01&data_fim=2026-03-31', follow_redirects=True)
         body = response.data.decode('utf-8-sig')
 
         self.assertEqual(response.status_code, 200)

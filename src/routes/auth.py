@@ -507,23 +507,23 @@ def login():
                     ).first()
                     import logging
                     if user:
-                        logging.info(f'Login: usuário sem empresa encontrado: {user.username} (empresa_id={user.empresa_id})')
+                        logging.info(f'Login: usuário sem empresa encontrado: {user.username} (empresa_id={user.empresa_id}) - auth.py:510')
 
                 if user is None:
                     import logging
-                    logging.warning(f'Login falhou: usuário não encontrado - username={username}, cnpj={empresa_cnpj}')
+                    logging.warning(f'Login falhou: usuário não encontrado  username={username}, cnpj={empresa_cnpj} - auth.py:514')
                     flash('Empresa, usuário ou senha inválidos', 'danger')
                     return redirect(url_for('auth.login'))
                     
                 if not user.check_password(password):
                     import logging
-                    logging.warning(f'Login falhou: senha incorreta - username={username}')
+                    logging.warning(f'Login falhou: senha incorreta  username={username} - auth.py:520')
                     flash('Empresa, usuário ou senha inválidos', 'danger')
                     return redirect(url_for('auth.login'))
                     
                 if not user.is_active:
                     import logging
-                    logging.warning(f'Login falhou: usuário inativo - username={username}')
+                    logging.warning(f'Login falhou: usuário inativo  username={username} - auth.py:526')
                     flash('Empresa, usuário ou senha inválidos', 'danger')
                     return redirect(url_for('auth.login'))
 
@@ -533,10 +533,7 @@ def login():
                     from src.models import AssinaturaEmpresa
                     _assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=user.empresa_id).first()
                     # Bonificação: acesso liberado independentemente do status da assinatura.
-                    # No trial bonificado expirado (bonus_tipo='trial'), volta a bloquear.
-                    _bonus_ilimitado = _assinatura.bonus_liberado and \
-                        (_assinatura.bonus_tipo or 'ilimitado') != 'trial'
-                    if _assinatura and not _bonus_ilimitado \
+                    if _assinatura and not getattr(_assinatura, 'bonus_liberado', False) \
                             and _assinatura.status in {'suspensa', 'cancelada', 'excluida'}:
                         import logging
                         logging.info(
@@ -556,20 +553,19 @@ def login():
                         return redirect(url_for('auth.login'))
 
                 import logging
-                logging.info(f'Login sucesso: username={username}, empresa_id={user.empresa_id}, role={user.role}')
+                logging.info(f'Login sucesso: username={username}, empresa_id={user.empresa_id}, role={user.role} - auth.py:556')
 
                 # Usuário LiveSun (sem empresa) vai direto para backoffice
                 if user.empresa_id is None and user.role == 'admin':
                     login_user(user, remember=request.form.get('remember'))
-                    logging.info(f'Redirecionando para backoffice: {user.username}')
+                    logging.info(f'Redirecionando para backoffice: {user.username} - auth.py:561')
                     flash(f'Bem-vindo, {user.full_name or user.username}!', 'success')
                     return redirect(url_for('admin_comercial.index'))
 
                 # Garante existencia da assinatura comercial e provisionamento no gateway quando habilitado.
                 assinatura = ServicoAssinatura.obter_ou_criar_assinatura(empresa.id)
 
-                # Bonificação: uso liberado sem exigir o processo de assinatura/gateway.
-                if user.is_admin and not assinatura.bonus_liberado and not assinatura.gateway_subscription_id:
+                if user.is_admin and not assinatura.gateway_subscription_id:
                     login_user(user, remember=request.form.get('remember'))
                     flash('Finalize os dados comerciais da assinatura para visualizar preço, trial e meios de pagamento.', 'warning')
                     return redirect(url_for('auth.assinatura'))
@@ -580,7 +576,7 @@ def login():
                 return redirect(next_page) if next_page else redirect(url_for('dashboard.index'))
             except Exception as e:
                 import logging, traceback
-                logging.error('Erro ao processar login: %s\n%s', e, traceback.format_exc())
+                logging.error('Erro ao processar login: %s\n%s - auth.py:579', e, traceback.format_exc())
                 flash('Erro interno ao processar login. Tente novamente ou contate o suporte.', 'danger')
                 return redirect(url_for('auth.login'))
     
@@ -619,7 +615,7 @@ def register():
                 if empresa_existente:
                     usuario_existente = User.query.filter_by(empresa_id=empresa_existente.id, is_admin=True).first()
                     import logging
-                    logging.warning(f"empresa_existente: {empresa_existente}, usuario_existente: {usuario_existente}")
+                    logging.warning(f"empresa_existente: {empresa_existente}, usuario_existente: {usuario_existente} - auth.py:618")
                     if usuario_existente:
                         flash(f'Já existe uma empresa cadastrada com este CPF/CNPJ. Usuário administrador responsável: {usuario_existente.username} (e-mail: {usuario_existente.email}). Caso não lembre o acesso, contate o suporte.', 'danger')
                     else:
@@ -627,7 +623,7 @@ def register():
                     return redirect(url_for('auth.register'))
             except Exception as e:
                 import logging, traceback
-                logging.error(f"Erro ao verificar empresa existente: {e}\n{traceback.format_exc()}")
+                logging.error(f"Erro ao verificar empresa existente: {e}\n{traceback.format_exc()} - auth.py:626")
                 flash('Erro interno ao verificar empresa existente. Tente novamente ou contate o suporte.', 'danger')
                 return redirect(url_for('auth.register'))
 
@@ -751,7 +747,7 @@ def register():
         except Exception as e:
             import logging, traceback
             db.session.rollback()
-            logging.error('Erro no cadastro de empresa/usuário: %s\n%s', e, traceback.format_exc())
+            logging.error('Erro no cadastro de empresa/usuário: %s\n%s - auth.py:750', e, traceback.format_exc())
             flash('Erro interno ao cadastrar empresa/usuário. Tente novamente ou contate o suporte.', 'danger')
             return redirect(url_for('auth.register'))
 
@@ -1183,7 +1179,7 @@ def editar_empresa():
 
     if request.method == 'POST':
         try:
-            print(f'[DEBUG] Form data received: {dict(request.form)}')
+            print(f'[DEBUG] Form data received: {dict(request.form)} - auth.py:1182')
             
             # Fiscal actions (add/set primary/delete) from the Fiscal tab
             # These are handled separately and don't affect address fields
@@ -1261,10 +1257,10 @@ def editar_empresa():
             empresa.endereco_bairro = (request.form.get('endereco_bairro') or '').strip()
             municipio_ref = (request.form.get('municipio_ref') or '').strip()
             
-            print(f'[DEBUG] municipio_ref: {municipio_ref}')
-            print(f'[DEBUG] endereco_rua: {empresa.endereco_rua}')
-            print(f'[DEBUG] endereco_numero: {empresa.endereco_numero}')
-            print(f'[DEBUG] endereco_bairro: {empresa.endereco_bairro}')
+            print(f'[DEBUG] municipio_ref: {municipio_ref} - auth.py:1260')
+            print(f'[DEBUG] endereco_rua: {empresa.endereco_rua} - auth.py:1261')
+            print(f'[DEBUG] endereco_numero: {empresa.endereco_numero} - auth.py:1262')
+            print(f'[DEBUG] endereco_bairro: {empresa.endereco_bairro} - auth.py:1263')
             
             from src.models import NfseMunicipioReferencia
             municipio = NfseMunicipioReferencia.query.filter_by(codigo_ibge=municipio_ref, ativo=True).first() if municipio_ref else None

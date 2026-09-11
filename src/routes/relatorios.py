@@ -678,148 +678,17 @@ def fluxo_caixa_realizado():
 @relatorios_bp.route('/fluxo-caixa-legacy')
 @login_required
 def fluxo_caixa():
-    data_inicio = request.args.get('data_inicio', '')
-    data_fim = request.args.get('data_fim', '')
-    conta_banco_id = request.args.get('conta_banco_id', '', type=int)
-    conta_fluxo_id = request.args.get('conta_fluxo_id', '', type=int)
+    """Rota legada: encaminha para o relatorio de fluxo de caixa atual."""
+    filtros = {k: v for k, v in request.args.items()
+               if k in ('data_inicio', 'data_fim', 'conta_banco_id', 'conta_fluxo_id', 'entidade_id', 'tipo', 'agrupar_por')}
+    return redirect(url_for('relatorio_fluxo.index', **filtros), code=302)
 
-    def get_saldo_inicial_por_conta():
-        if conta_banco_id:
-            contas = ContaBanco.query.filter(
-                ContaBanco.empresa_id == current_user.empresa_id,
-                ContaBanco.id == conta_banco_id
-            ).all()
-        else:
-            contas = ContaBanco.query.filter_by(empresa_id=current_user.empresa_id, ativo=True).all()
-        return {c.id: Decimal(str(c.saldo_inicial or 0)) for c in contas}
 
-    def get_saldo_inicial_total():
-        return sum(get_saldo_inicial_por_conta().values(), Decimal('0.00'))
-
-    def build_fluxo_rows(lancamentos, saldo_inicial_por_conta, use_valor_real):
-        saldo_atual_por_conta = saldo_inicial_por_conta.copy()
-        rows = []
-        for lancamento in lancamentos:
-            conta_id = lancamento.conta_banco_id
-            saldo_anterior = saldo_atual_por_conta.get(conta_id, Decimal('0.00'))
-            valor_base = lancamento.valor_real if use_valor_real else lancamento.valor_pago
-            valor = Decimal(str(valor_base or 0))
-            if lancamento.fluxo_conta and lancamento.fluxo_conta.is_pagamento():
-                saldo_atual = saldo_anterior - valor
-            else:
-                saldo_atual = saldo_anterior + valor
-            saldo_atual_por_conta[conta_id] = saldo_atual
-            rows.append(SimpleNamespace(
-                lancamento=lancamento,
-                saldo_anterior=saldo_anterior,
-                saldo_atual=saldo_atual
-            ))
-        return rows
-
-    def build_daily_rows(lancamentos, saldo_inicial, use_valor_real, date_attr):
-        totals = defaultdict(lambda: {'pagar': Decimal('0.00'), 'receber': Decimal('0.00')})
-        for lancamento in lancamentos:
-            data_ref = getattr(lancamento, date_attr)
-            if not data_ref:
-                continue
-            valor_base = lancamento.valor_real if use_valor_real else lancamento.valor_pago
-            valor = Decimal(str(valor_base or 0))
-            if lancamento.fluxo_conta and lancamento.fluxo_conta.is_pagamento():
-                totals[data_ref]['pagar'] += valor
-            else:
-                totals[data_ref]['receber'] += valor
-
-        rows = []
-        saldo_anterior = saldo_inicial
-        for data in sorted(totals.keys()):
-            pagamentos = totals[data]['pagar']
-            recebimentos = totals[data]['receber']
-            saldo_atual = saldo_anterior - pagamentos + recebimentos
-            rows.append(SimpleNamespace(
-                data=data,
-                saldo_anterior=saldo_anterior,
-                pagamentos=pagamentos,
-                recebimentos=recebimentos,
-                saldo_atual=saldo_atual
-            ))
-            saldo_anterior = saldo_atual
-        return rows
-
-    saldo_inicial_por_conta = get_saldo_inicial_por_conta()
-    saldo_inicial_total = get_saldo_inicial_total()
-
-    query_realizado = Lancamento.query.filter(
-        Lancamento.empresa_id == current_user.empresa_id,
-        Lancamento.status == 'pago'
-    )
-    if data_inicio:
-        data_inicio_dt = datetime.strptime(data_inicio, '%Y-%m-%d').date()
-        query_realizado = query_realizado.filter(Lancamento.data_pagamento >= data_inicio_dt)
-    if data_fim:
-        data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d').date()
-        query_realizado = query_realizado.filter(Lancamento.data_pagamento <= data_fim_dt)
-    if conta_banco_id:
-        query_realizado = query_realizado.filter(Lancamento.conta_banco_id == conta_banco_id)
-    if conta_fluxo_id:
-        query_realizado = query_realizado.filter(Lancamento.fluxo_conta_id == conta_fluxo_id)
-    query_realizado = query_realizado.outerjoin(FluxoContaModel, Lancamento.fluxo_conta_id == FluxoContaModel.id)
-    lancamentos_realizado = query_realizado.order_by(
-        FluxoContaModel.descricao.asc(),
-        Lancamento.data_pagamento.asc(),
-        Lancamento.id.asc()
-    ).all()
-
-    query_previsto = Lancamento.query.filter_by(empresa_id=current_user.empresa_id)
-    if data_inicio:
-        query_previsto = query_previsto.filter(Lancamento.data_vencimento >= data_inicio_dt)
-    if data_fim:
-        query_previsto = query_previsto.filter(Lancamento.data_vencimento <= data_fim_dt)
-    if conta_banco_id:
-        query_previsto = query_previsto.filter(Lancamento.conta_banco_id == conta_banco_id)
-    if conta_fluxo_id:
-        query_previsto = query_previsto.filter(Lancamento.fluxo_conta_id == conta_fluxo_id)
-    query_previsto = query_previsto.outerjoin(FluxoContaModel, Lancamento.fluxo_conta_id == FluxoContaModel.id)
-    lancamentos_previsto = query_previsto.order_by(
-        FluxoContaModel.descricao.asc(),
-        Lancamento.data_vencimento.asc(),
-        Lancamento.id.asc()
-    ).all()
-
-    resumo_diario_realizado = build_daily_rows(
-        lancamentos_realizado,
-        saldo_inicial_total,
-        use_valor_real=False,
-        date_attr='data_pagamento'
-    )
-
-    resumo_diario_previsto = build_daily_rows(
-        lancamentos_previsto,
-        saldo_inicial_total,
-        use_valor_real=True,
-        date_attr='data_vencimento'
-    )
-
-    consolidado_realizado = _build_consolidado_por_fluxo(lancamentos_realizado)
-    consolidado_previsto = _build_consolidado_por_fluxo(lancamentos_previsto)
-
-    contas_banco = ContaBanco.query.filter_by(empresa_id=current_user.empresa_id, ativo=True).all()
-    contas_fluxo = FluxoContaModel.query.filter_by(empresa_id=current_user.empresa_id, ativo=True).all()
-
-    return render_template(
-        'relatorios/fluxo_caixa.html',
-        lancamentos_realizado=build_fluxo_rows(lancamentos_realizado, saldo_inicial_por_conta, use_valor_real=False),
-        lancamentos_previsto=build_fluxo_rows(lancamentos_previsto, saldo_inicial_por_conta, use_valor_real=True),
-        consolidado_realizado=consolidado_realizado,
-        consolidado_previsto=consolidado_previsto,
-        resumo_diario_realizado=resumo_diario_realizado,
-        resumo_diario_previsto=resumo_diario_previsto,
-        contas_banco=contas_banco,
-        contas_fluxo=contas_fluxo,
-        data_inicio=data_inicio,
-        data_fim=data_fim,
-        conta_banco_id=conta_banco_id,
-        conta_fluxo_id=conta_fluxo_id
-    )
+@relatorios_bp.route('/fluxo-caixa/export')
+@login_required
+def export_fluxo_caixa_xlsx():
+    """Alias de exportacao do fluxo de caixa (antiga URL /relatorios/fluxo-caixa/export)."""
+    return export_fluxo_caixa()
 
 
 @relatorios_bp.route('/fluxo-caixa/export-legacy')

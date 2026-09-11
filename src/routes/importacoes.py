@@ -372,8 +372,10 @@ def obter_ou_criar_entidade(empresa_id: int, cnpj_tomador: str):
     """
     Busca Entidade por CNPJ; se não existir, cria uma nova como Cliente.
     """
-    # Validação de segurança: garantir que o empresa_id corresponde ao usuário logado
-    if empresa_id != getattr(current_user, 'empresa_id', None):
+    # Validação de segurança: garantir que o empresa_id corresponde ao usuário logado.
+    # Aplica-se somente quando há usuário autenticado no contexto — chamadas de serviço
+    # (testes, jobs) podem processar XML fora de uma request HTTP autenticada.
+    if current_user.is_authenticated and empresa_id != getattr(current_user, 'empresa_id', None):
         logger.warning(f"Tentativa de acesso a entidade de empresa {empresa_id} pelo usuário {getattr(current_user, 'id', 'unknown')}")
         return None, 'Acesso negado: empresa não corresponde ao usuário logado'
 

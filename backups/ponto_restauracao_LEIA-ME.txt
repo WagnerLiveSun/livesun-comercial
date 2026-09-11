@@ -1,0 +1,18 @@
+PONTO DE RESTAURACAO - 07/09/2026 16:05
+============================================================
+Arquivos:
+  backups\ponto_restauracao_hostinger_destino_20260907_1601.sql
+  backups\ponto_restauracao_hostinger_destino_20260907_1602.sql
+  backups\ponto_restauracao_hostinger_origem_gfinanceiro_20260907_1601.sql
+  backups\ponto_restauracao_hostinger_origem_gfinanceiro_20260907_1602.sql
+  backups\ponto_restauracao_local_comercial_20260907_1601.sql
+
+RESTAURAR (exemplo):
+  mysql -h HOST -u USER -p NOMEDOBANCO < arquivo.sql
+
+Codigos:
+  local_comercial        -> banco local 'comercial'
+  hostinger_destino      -> 'u951548013_LS_Comercial' (destino atual do sistema)
+  hostinger_origem_gfinanceiro -> 'u951548013_gfinanceiro' (origem da migracao)
+
+Estado do codigo: commit 2fb1bc5 (tag ponto-restauracao no Git)
