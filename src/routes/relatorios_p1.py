@@ -616,6 +616,19 @@ def nfse():
     d_ini = _parse_date(request.args.get('data_inicio'))
     d_fim = _parse_date(request.args.get('data_fim'))
     origem_f = (request.args.get('origem') or '').strip()
+    # Validade: 'validas' mantém só as NFS-e válidas; 'invalidas', o contrário.
+    # Mesmas regras já usadas nos cards do dashboard: emitida vale quando
+    # situacao_fiscal == 'AUTORIZADA' (situacao_fiscal é o critério confiável,
+    # pois status_processamento grava variações como AUTORIZADA_LOCALMENTE) e
+    # importada vale quando status_importacao == 'sucesso'.
+    validade_f = (request.args.get('validade') or '').strip()
+
+    def _eh_valida(situacao_fiscal=None, status_importacao=None):
+        if validade_f == 'validas':
+            return situacao_fiscal == 'AUTORIZADA' or status_importacao == 'sucesso'
+        if validade_f == 'invalidas':
+            return not (situacao_fiscal == 'AUTORIZADA' or status_importacao == 'sucesso')
+        return True
 
     rows = []
     valor_total = Decimal('0')
@@ -631,6 +644,8 @@ def nfse():
             continue
         status_emi = (e.situacao_fiscal or e.status_processamento or '').replace('_', ' ').capitalize()
         if status_set and status_emi.lower() not in status_set:
+            continue
+        if not _eh_valida(situacao_fiscal=e.situacao_fiscal):
             continue
         nfse_numero = e.numero_nfse or e.numero_interno
         tomador_nome = e.tomador.nome if e.tomador else getattr(e, 'tomador_id', None)
@@ -658,6 +673,8 @@ def nfse():
             continue
         status_imp = (n.status_importacao or 'sucesso').replace('_', ' ').capitalize()
         if status_set and status_imp.lower() not in status_set:
+            continue
+        if not _eh_valida(status_importacao=n.status_importacao):
             continue
         valor = _numero(n.valor_bruto)
         valor_total += valor
@@ -693,6 +710,10 @@ def nfse():
         {'name': 'origem', 'label': 'Origem', 'type': 'select',
          'value': origem_f, 'options': [
              ('', 'Todas'), ('emitida', 'Emitida'), ('importada', 'Importada')]},
+        {'name': 'validade', 'label': 'Validade', 'type': 'select',
+         'value': validade_f, 'options': [
+             ('', 'Todas'), ('validas', 'Somente válidas'),
+             ('invalidas', 'Somente inválidas')]},
     ]
     return _render('nfse', 'Relatório — NFS-e (Importadas e Emitidas)',
                    'Notas de saída · Por período, status, tomador e serviço.',
