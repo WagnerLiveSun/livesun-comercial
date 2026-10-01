@@ -50,6 +50,11 @@ from src.tenant import scoped_get_or_404, scoped_query, tenant_id
 
 nfse_nacional_bp = Blueprint("nfse_nacional", __name__, url_prefix="/nfse-nacional")
 
+INFO_COMPLEMENTAR_PADRAO = (
+    "Totais aproximados dos Tributos cfe. Lei n° 12.741/2012: "
+    "Federais: -; Estaduais: -; Municipais: -;"
+)
+
 
 def _decimal(value, default: Decimal = Decimal("0.00")) -> Decimal:
     if value is None:
@@ -75,6 +80,20 @@ def _json_safe(obj):
     if isinstance(obj, tuple):
         return tuple(_json_safe(v) for v in obj)
     return obj
+
+
+def _formatar_data_xml(value, include_time=True):
+    if not value:
+        return ""
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return parsed.strftime("%d/%m/%Y %H:%M:%S" if include_time else "%d/%m/%Y")
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _descricao_codigo(valor, mapa, padrao="-"):
+    return mapa.get(str(valor or "").strip(), padrao)
 
 
 def _date_from_request(value):
@@ -213,24 +232,29 @@ def _authorized_nfse_data(xml: str, chave_acesso: str = "") -> dict:
     inf_dps = node(dps, "infDPS")
     valores = node(inf, "valores")
     reg_trib = node(prest, "regTrib") or node(inf, "regTrib")
+    trib_issqn = text(trib_mun, "tribISSQN")
+    tp_ret_issqn = text(trib_mun, "tpRetISSQN")
+    op_simp_nac = text(reg_trib, "opSimpNac")
+    reg_ap_trib_sn = text(reg_trib, "regApTribSN")
 
     return {
         "numero_nfse": text(inf, "nNFSe"),
         "codigo_verificacao": text(inf, "cNFSe") or text(inf, "codigoVerificacao"),
-        "data_emissao": text(inf, "dhEmi") or text(inf, "dhProc"),
-        "data_processamento": text(inf, "dhProc"),
+        "data_emissao": _formatar_data_xml(text(inf, "dhProc") or text(inf, "dhEmi")),
+        "data_processamento": _formatar_data_xml(text(inf, "dhProc")),
         "chave_acesso": chave_acesso,
-        "competencia": text(inf, "dCompet"),
-        "ambiente_gerador": text(inf, "tpAmb") or text(root, "tpAmb"),
-        "tipo_ambiente": text(inf, "tpAmb"),
+        "competencia": _formatar_data_xml(text(inf, "dCompet"), include_time=False),
+        "municipio_gerador": text(inf, "xLocEmi"),
+        "ambiente_gerador": text(inf, "ambGer") or "-",
+        "tipo_ambiente": text(inf, "tpEmis") or "-",
         "situacao": text(inf, "xMotivo") or text(inf, "sitNFSe") or "NFS-e Gerada",
         "finalidade": text(inf, "finNFSe"),
         "numero_dps": text(inf_dps, "nDPS") or text(inf, "nDPS"),
         "serie_dps": text(inf_dps, "serie") or text(inf, "serie"),
-        "data_emissao_dps": text(inf_dps, "dhEmi"),
-        "tipo_emitente": text(inf_dps, "tpEmit") or text(inf, "tpEmit"),
-        "simples_nacional": text(reg_trib, "opSimpNac"),
-        "regime_apuracao": text(reg_trib, "regApTribSN"),
+        "data_emissao_dps": _formatar_data_xml(text(inf_dps, "dhEmi")),
+        "tipo_emitente": _descricao_codigo(text(inf_dps, "tpEmit") or text(inf, "tpEmit"), {"1": "Prestador", "2": "Tomador", "3": "Intermediário"}),
+        "simples_nacional": _descricao_codigo(op_simp_nac, {"1": "Não optante", "2": "MEI", "3": "Optante - Microempresa ou Empresa de Pequeno Porte"}),
+        "regime_apuracao": _descricao_codigo(reg_ap_trib_sn, {"1": "Regime de apuração dos tributos federais e municipal pelo Simples Nacional", "2": "Regime de apuração do Simples Nacional com ISSQN fora do Simples Nacional", "3": "Regime de apuração fora do Simples Nacional"}),
         "cnpj_prestador": text(prest, "CNPJ"),
         "cpf_prestador": text(prest, "CPF"),
         "nome_prestador": text(prest, "xNome") or text(inf, "xNome"),
@@ -257,19 +281,21 @@ def _authorized_nfse_data(xml: str, chave_acesso: str = "") -> dict:
         "telefone_tomador": text(toma, "fone"),
         "email_tomador": text(toma, "email"),
         "codigo_tributacao_nacional": text(cserv, "cTribNac"),
+        "descricao_tributacao_nacional": text(inf, "xTribNac"),
         "codigo_tributacao_municipal": text(cserv, "cTribMun"),
+        "descricao_tributacao_municipal": text(inf, "xTribMun"),
         "nbs": text(cserv, "cNBS"),
         "descricao_servico": text(cserv, "xDescServ"),
-        "local_prestacao": text(serv, "cLocPrestacao"),
+        "local_prestacao": text(inf, "xLocPrestacao") or text(serv, "cLocPrestacao"),
         "municipio_incidencia_iss": text(trib_mun, "cMun"),
-        "municipio_incidencia_nome": text(trib_mun, "xMun"),
+        "municipio_incidencia_nome": text(inf, "xLocIncid") or text(trib_mun, "xMun"),
         "uf_incidencia_iss": text(trib_mun, "UF"),
-        "tipo_tributacao_iss": text(trib_mun, "tribISSQN"),
+        "tipo_tributacao_iss": _descricao_codigo(trib_issqn, {"1": "Operação Tributável", "2": "Imunidade", "3": "Exportação", "4": "Não Incidência"}),
         "base_calculo_iss": text(trib_mun, "vBC"),
         "aliquota_iss": text(trib_mun, "pAliq"),
-        "retencao_iss": text(trib_mun, "tpRetISSQN"),
+        "retencao_iss": _descricao_codigo(tp_ret_issqn, {"1": "Não Retido", "2": "Retido pelo Tomador", "3": "Retido pelo Intermediário"}),
         "valor_iss_apurado": text(trib_mun, "vISSQN") or text(trib, "vISSQN"),
-        "informacoes_complementares": text(serv, "xInfComp"),
+        "informacoes_complementares": text(serv, "xInfComp") or INFO_COMPLEMENTAR_PADRAO,
         "irrf": text(trib_fed, "vIRRF"),
         "contribuicao_previdenciaria": text(trib_fed, "vCP"),
         "contribuicoes_sociais": text(trib_fed, "vCSLL") or text(trib_fed, "vPIS") or text(trib_fed, "vCOFINS"),

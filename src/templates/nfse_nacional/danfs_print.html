@@ -262,7 +262,7 @@
         <div class="portal-header-title">DANFSe v2.0<br><span style="font-size: 8px; font-weight: normal;">Documento Auxiliar da NFS-e</span></div>
         <div class="portal-header-meta">
             <img src="{{ url_for('static', filename='images/logo-nfs-e-vertical.png') }}" alt="Logo NFS-e" class="header-logo-nfse" />
-            <strong>Município: {{ danfse_data.get('cidade_prestador') or '-' }} - {{ danfse_data.get('uf_prestador') or '-' }}</strong>
+            <strong>Município: {{ danfse_data.get('municipio_gerador') or '-' }}</strong>
             Ambiente Gerador: {{ danfse_data.get('ambiente_gerador') or '-' }}<br>
             Tipo de Ambiente: {{ danfse_data.get('tipo_ambiente') or '-' }}
         </div>
@@ -308,7 +308,7 @@
         <div><strong>Razão Social:</strong> {{ danfse_data.get('nome_prestador') or '-' }}</div>
         <div><strong>CNPJ/CPF:</strong> {{ (danfse_data.get('cnpj_prestador') or danfse_data.get('cpf_prestador'))|documento }}</div>
         <div><strong>Inscrição Municipal:</strong> {{ danfse_data.get('inscricao_municipal_prestador') or '-' }}</div>
-        <div><strong>Município / UF:</strong> {{ danfse_data.get('cidade_prestador') or '-' }} - {{ danfse_data.get('uf_prestador') or '-' }}</div>
+        <div><strong>Município / UF:</strong> {{ danfse_data.get('cidade_prestador') or danfse_data.get('municipio_gerador') or '-' }} - {{ danfse_data.get('uf_prestador') or '-' }}</div>
         <div><strong>Código IBGE / CEP:</strong> {{ danfse_data.get('codigo_municipio_prestador') or '-' }} / {{ danfse_data.get('cep_prestador') or '-' }}</div>
         <div><strong>Telefone:</strong> {{ danfse_data.get('telefone_prestador') or '-' }}</div>
         <div><strong>E-mail:</strong> {{ danfse_data.get('email_prestador') or '-' }}</div>
@@ -343,8 +343,8 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{ emissao.codigo_tributacao_nacional or '-' }}</td>
-                <td>{{ emissao.codigo_tributacao_municipal or '-' }}</td>
+                <td>{{ emissao.codigo_tributacao_nacional or '-' }}<br><small>{{ danfse_data.get('descricao_tributacao_nacional') or '-' }}</small></td>
+                <td>{{ emissao.codigo_tributacao_municipal or '-' }}<br><small>{{ danfse_data.get('descricao_tributacao_municipal') or '-' }}</small></td>
                 <td>{{ danfse_data.get('nbs') or '-' }}</td>
                 <td>{{ (danfse_data.get('descricao_servico') if danfse_data else '') or (emissao.servico.descricao if emissao.servico else '-') }}</td>
                 <td class="right">R$ {{ emissao.valor_servico|brl }}</td>
@@ -410,13 +410,13 @@
     <div class="section-title">DADOS COMPLEMENTARES</div>
     <div class="info-grid">
         <div><strong>Regime Tributação:</strong> {{ emissao.regime_tributacao or '-' }}</div>
-        <div><strong>Local de Prestação:</strong> {{ emissao.local_prestacao or '-' }}</div>
+        <div><strong>Local de Prestação:</strong> {{ danfse_data.get('local_prestacao') or emissao.local_prestacao or '-' }}</div>
         <div><strong>Valor líquido:</strong> R$ {{ (danfse_data.get('valor_liquido') or 0)|brl }}</div>
         <div><strong>Total IBS/CBS:</strong> R$ {{ (danfse_data.get('total_ibs_cbs') or 0)|brl }}</div>
     </div>
     <div class="observacoes">
         <strong>Observações:</strong><br>
-        {{ emissao.observacoes or 'Não informado.' }}
+        {{ danfse_data.get('informacoes_complementares') or emissao.observacoes or 'Não informado.' }}
     </div>
 
     <div class="footer">
