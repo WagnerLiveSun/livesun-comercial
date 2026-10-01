@@ -60,6 +60,9 @@
                 <div>
                     <p class="text-muted mb-2">ISS Total (Mês)</p>
                     <h2 class="fw-bold" style="color: #f59e0b;">{{ iss_total_mes|brl }}</h2>
+                    <div class="mt-1" style="font-size: 0.7rem; color: #64748b;">
+                        Estimativa 6,8% sobre {{ base_iss_mes|brl }}
+                    </div>
                 </div>
                 <div style="font-size: 28px; color: #f59e0b; opacity: 0.6;">
                     <i class="fas fa-percentage"></i>
@@ -67,7 +70,39 @@
             </div>
         </div>
     </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">XML NFS-e Importadas (Mês)</p>
+                    <h2 class="fw-bold" style="color: #a855f7;">{{ importadas_mes }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #a855f7; opacity: 0.6;">
+                    <i class="fas fa-file-import"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Total NFS-e no Mês</p>
+                    <h2 class="fw-bold" style="color: #0ea5e9;">{{ total_notas_mes }}</h2>
+                    <div class="mt-1" style="font-size: 0.7rem; color: #64748b;">
+                        {{ nfse_emitidas_mes }} emitidas + {{ importadas_mes }} importadas
+                    </div>
+                </div>
+                <div style="font-size: 28px; color: #0ea5e9; opacity: 0.6;">
+                    <i class="fas fa-calculator"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
 
 <!-- KPIs Acumulados -->
 <div class="row mb-4">
@@ -94,6 +129,63 @@
                 </div>
                 <div style="font-size: 28px; color: #6366f1; opacity: 0.6;">
                     <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+<div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">XML NFS-e Importadas (Acumulado)</p>
+                    <h2 class="fw-bold" style="color: #a855f7;">{{ importadas_total }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #a855f7; opacity: 0.6;">
+                    <i class="fas fa-file-arrow-down"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Total NFS-e (Acumulado)</p>
+                    <h2 class="fw-bold" style="color: #0ea5e9;">{{ total_notas_acumulado }}</h2>
+                    <div class="mt-1" style="font-size: 0.7rem; color: #64748b;">
+                        {{ nfse_emitidas_total }} emitidas + {{ importadas_total }} importadas
+                    </div>
+                </div>
+                <div style="font-size: 28px; color: #0ea5e9; opacity: 0.6;">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+<div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Valor NFS-e no Mês</p>
+                    <h2 class="fw-bold" style="color: #0ea5e9;">{{ valor_total_notas_mes|brl }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #0ea5e9; opacity: 0.6;">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="ls-card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="text-muted mb-2">Valor NFS-e (Acumulado)</p>
+                    <h2 class="fw-bold" style="color: #0ea5e9;">{{ valor_total_notas_acumulado|brl }}</h2>
+                </div>
+                <div style="font-size: 28px; color: #0ea5e9; opacity: 0.6;">
+                    <i class="fas fa-sack-dollar"></i>
                 </div>
             </div>
         </div>

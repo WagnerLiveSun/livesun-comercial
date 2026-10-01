@@ -23,6 +23,7 @@ from src.models import (
     Empresa,
     AssinaturaEmpresa,
     NfseNacionalEmissao,
+    ImportacaoNFSe,
 )
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -473,10 +474,11 @@ def fiscal():
             )
         ).count()
 
-        # ISS total no mês
-        iss_total_mes = db.session.query(func.sum(NfseNacionalEmissao.valor_iss)).filter(
-            filtro_emitidas
-        ).scalar() or Decimal('0')
+        # ISS do mês.
+        # O campo valor_iss não é preenchido na emissão das NFS-e, então o
+        # indicador é estimado aplicando a alíquota padrão sobre o valor bruto
+        # consolidado (emitidas + importadas). O cálculo é finalizado abaixo,
+        # após o total consolidado estar definido.
 
         # Status das NFS-e (todas)
         total_nfse = NfseNacionalEmissao.query.filter_by(empresa_id=empresa_id).count()
@@ -519,14 +521,58 @@ def fiscal():
             NfseNacionalEmissao.situacao_fiscal == 'AUTORIZADA',
         ).scalar() or Decimal('0')
 
+        # NFS-e importadas de XML (próprias e de terceiros).
+        # A importação só grava o registro quando o processamento tem sucesso,
+        # então status_importacao diferente de 'sucesso' é desconsiderado.
+        filtro_importadas_validas = db.and_(
+            ImportacaoNFSe.empresa_id == empresa_id,
+            ImportacaoNFSe.status_importacao == 'sucesso',
+        )
+
+        importadas_mes = ImportacaoNFSe.query.filter(
+            filtro_importadas_validas,
+            ImportacaoNFSe.data_emissao >= primeiro_dia_mes,
+        ).count()
+
+        valor_importado_mes = db.session.query(func.sum(ImportacaoNFSe.valor_bruto)).filter(
+            filtro_importadas_validas,
+            ImportacaoNFSe.data_emissao >= primeiro_dia_mes,
+        ).scalar() or Decimal('0')
+
+        importadas_total = ImportacaoNFSe.query.filter(filtro_importadas_validas).count()
+
+        valor_importado_total = db.session.query(func.sum(ImportacaoNFSe.valor_bruto)).filter(
+            filtro_importadas_validas
+        ).scalar() or Decimal('0')
+
+        # Total consolidado: emitidas pelo sistema + importadas de XML.
+        total_notas_mes = nfse_emitidas_mes + importadas_mes
+        valor_total_notas_mes = (valor_total_mes or Decimal('0')) + (valor_importado_mes or Decimal('0'))
+        total_notas_acumulado = nfse_emitidas_total + importadas_total
+        valor_total_notas_acumulado = (valor_total_acumulado or Decimal('0')) + (valor_importado_total or Decimal('0'))
+
+        # ISS estimado: 6,8% sobre o valor bruto consolidado do mês.
+        ALIQUOTA_ISS_PADRAO = Decimal('6.8')
+        base_iss_mes = valor_total_notas_mes
+        iss_total_mes = (base_iss_mes * ALIQUOTA_ISS_PADRAO / Decimal('100')).quantize(Decimal('0.01'))
+
         return render_template(
             'dashboard_fiscal.html',
             nfse_emitidas_mes=nfse_emitidas_mes,
             nfse_emitidas_total=nfse_emitidas_total,
             valor_total_mes=valor_total_mes,
             valor_total_acumulado=valor_total_acumulado,
+            importadas_mes=importadas_mes,
+            valor_importado_mes=valor_importado_mes,
+            importadas_total=importadas_total,
+            valor_importado_total=valor_importado_total,
+            total_notas_mes=total_notas_mes,
+            valor_total_notas_mes=valor_total_notas_mes,
+            total_notas_acumulado=total_notas_acumulado,
+            valor_total_notas_acumulado=valor_total_notas_acumulado,
             nfse_canceladas_mes=nfse_canceladas_mes,
             iss_total_mes=iss_total_mes,
+            base_iss_mes=base_iss_mes,
             status_autorizadas=status_autorizadas,
             status_canceladas=status_canceladas,
             status_pendentes=status_pendentes,
