@@ -161,6 +161,33 @@
         table th:nth-child(3), table td:nth-child(3) { width: 12%; }
         table th:nth-child(4), table td:nth-child(4) { width: 58%; }
         table th:nth-child(5), table td:nth-child(5) { width: 12%; }
+        .service-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1.8fr 1.1fr 1.8fr;
+            border: 1px solid #999;
+            margin: 2px 0;
+        }
+        .service-cell {
+            min-width: 0;
+            padding: 3px 4px;
+            border-right: 1px solid #999;
+            font-size: 7px;
+            overflow-wrap: anywhere;
+        }
+        .service-cell:last-child { border-right: 0; }
+        .service-cell strong, .service-description strong {
+            display: block;
+            font-size: 6.5px;
+            margin-bottom: 1px;
+        }
+        .service-description {
+            border: 1px solid #999;
+            border-top: 0;
+            padding: 3px 4px;
+            font-size: 7px;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+        }
         table th {
             background: #e0e0e0;
             font-weight: bold;
@@ -331,26 +358,17 @@
     </div>
 
     <div class="section-title">DISCRIMINAÇÃO DOS SERVIÇOS</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Cód. Nacional</th>
-                <th>Cód. Municipal</th>
-                <th>NBS</th>
-                <th>Descrição</th>
-                <th class="right">Valor (R$)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>{{ emissao.codigo_tributacao_nacional or '-' }}</td>
-                <td>{{ emissao.codigo_tributacao_municipal or '-' }}</td>
-                <td>{{ danfse_data.get('nbs') or '-' }}</td>
-                <td>{{ (danfse_data.get('descricao_servico') if danfse_data else '') or (emissao.servico.descricao if emissao.servico else '-') }}</td>
-                <td class="right">R$ {{ emissao.valor_servico|brl }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="service-grid">
+        <div class="service-cell"><strong>SERVIÇO PRESTADO</strong>{{ danfse_data.get('descricao_tributacao_nacional') or '-' }}</div>
+        <div class="service-cell"><strong>Código de Tributação Nacional/Municipal</strong>{{ emissao.codigo_tributacao_nacional or '-' }} / {{ emissao.codigo_tributacao_municipal or '-' }}</div>
+        <div class="service-cell"><strong>Código da NBS</strong>{{ danfse_data.get('nbs') or '-' }}</div>
+        <div class="service-cell"><strong>Local da Prestação / Sigla UF / País</strong>{{ danfse_data.get('local_prestacao') or '-' }} / {{ danfse_data.get('uf_prestador') or '-' }} / -</div>
+    </div>
+    <div class="service-description">
+        <strong>{{ danfse_data.get('descricao_tributacao_municipal') or '-' }}</strong>
+        <strong>Descrição do Serviço</strong>
+        {{ (danfse_data.get('descricao_servico') if danfse_data else '') or (emissao.servico.descricao if emissao.servico else '-') }}
+    </div>
 
     <div class="section-title">VALORES</div>
     <div class="totals">
