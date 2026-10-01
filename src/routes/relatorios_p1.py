@@ -688,7 +688,8 @@ def nfse():
          'selected': status_sel, 'options': [
              ('Sucesso', 'Sucesso'),
              ('Pendente', 'Pendente'), ('Erro', 'Erro'),
-             ('Autorizada', 'Autorizada'), ('Rejeitada', 'Rejeitada')]},
+             ('Autorizada', 'Autorizada'), ('Rejeitada', 'Rejeitada'),
+             ('Cancelada', 'Cancelada')]},
         {'name': 'origem', 'label': 'Origem', 'type': 'select',
          'value': origem_f, 'options': [
              ('', 'Todas'), ('emitida', 'Emitida'), ('importada', 'Importada')]},
