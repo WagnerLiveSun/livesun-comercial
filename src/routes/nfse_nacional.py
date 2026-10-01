@@ -2530,6 +2530,63 @@ def listagem():
     )
 
 
+@nfse_nacional_bp.route("/listagem/<int:id>/replicar", methods=["GET"])
+@login_required
+def replicar_emissao(id):
+    """Abre uma nova emissão preenchida com os dados da nota original.
+
+    Mantém tomador, serviço e demais configurações; zera apenas o valor e a
+    data de emissão para que o usuário revise antes de transmitir.
+    """
+    emissao_origem = scoped_get_or_404(NfseNacionalEmissao, id)
+    empresa_id = tenant_id()
+
+    empresa = Empresa.query.get_or_404(empresa_id)
+    configuracoes = NfseNacionalConfiguracao.query.filter_by(
+        empresa_id=empresa_id
+    ).order_by(NfseNacionalConfiguracao.ambiente.asc()).all()
+
+    ambiente_q = (request.args.get("ambiente") or "").strip().lower()
+    if ambiente_q:
+        ambiente_selecionado = ambiente_q
+    else:
+        ativo_cfg = next((c for c in configuracoes if c.emissor_ativo), None)
+        if ativo_cfg:
+            ambiente_selecionado = (ativo_cfg.ambiente or "homologacao").strip().lower()
+        else:
+            ambiente_selecionado = (
+                configuracoes[0].ambiente if configuracoes else "homologacao"
+            )
+
+    servico = emissao_origem.servico
+    fiscal_defaults = {
+        "codigo_servico": (
+            getattr(servico, "codigo_servico", None)
+            or empresa.fiscal_principal_valor("codigo_servico")
+        ),
+        "nbs": getattr(servico, "nbs", None) or empresa.fiscal_principal_valor("nbs"),
+        "codigo_servico_opcoes": empresa.fiscal_valores_por_tipo("codigo_servico"),
+        "nbs_opcoes": empresa.fiscal_valores_por_tipo("nbs"),
+    }
+
+    return render_template(
+        "nfse_nacional/emissoes.html",
+        emissoes=[],
+        tomadores=scoped_query(Entidade).filter(
+            Entidade.tipo == "C", Entidade.ativo.is_(True)
+        ).order_by(Entidade.nome.asc()).all(),
+        servicos=scoped_query(Servico).filter(Servico.ativo.is_(True)).order_by(
+            Servico.descricao.asc()
+        ).all(),
+        configuracoes=configuracoes,
+        ambiente_selecionado=ambiente_selecionado,
+        filtro_status="",
+        filtro_busca="",
+        fiscal_defaults=fiscal_defaults,
+        replicar=emissao_origem,
+    )
+
+
 @nfse_nacional_bp.route("/listagem/<int:id>/visualizar", methods=["GET"])
 @login_required
 def visualizar(id):

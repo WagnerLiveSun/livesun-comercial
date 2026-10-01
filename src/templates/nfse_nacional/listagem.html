@@ -175,6 +175,11 @@
                                     class="btn btn-sm btn-outline-secondary action-btn" title="Enviar por E-mail">
                                 <i class="fas fa-envelope"></i>
                             </button>
+                            <a href="{{ url_for('nfse_nacional.replicar_emissao', id=emissao.id) }}"
+                               class="btn btn-sm btn-outline-secondary action-btn"
+                               title="Replicar nota para nova emissão">
+                                <i class="fas fa-copy"></i>
+                            </a>
                         </div>
                     </td>
                 </tr>

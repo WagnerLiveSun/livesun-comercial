@@ -3,6 +3,7 @@
 {% block title %}Emissões NFS-e{% endblock %}
 
 {% block content %}
+{% set replicar = replicar if replicar is defined else None %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold ls-page-title mb-1">Emissões</h2>
@@ -68,6 +69,13 @@
     <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
         <div>
             <h5 class="ls-page-title mb-2">Nova emissão</h5>
+            {% if replicar %}
+            <div class="alert alert-info mb-2 py-2">
+                <strong>Replicando a NFS-e nº {{ replicar.numero_nfse or replicar.numero_interno }}</strong>
+                (tomador: {{ replicar.tomador.nome if replicar.tomador else '-' }}).
+                Os dados já vieram preenchidos; revise o <strong>valor</strong> e a <strong>data de emissão</strong> antes de emitir.
+            </div>
+            {% endif %}
             <div class="helper-box rounded-3 px-3 py-2">
                 Antes de emitir, o tomador precisa estar completo em <a href="{{ url_for('entidades.index') }}">Entidades</a> com Tipo, CNPJ/CPF, Nome/Razão Social, Rua, Número, Bairro, Cidade, UF, CEP e E-mail.
             </div>
@@ -102,7 +110,8 @@
                     <option
                         value="{{ tomador.id }}"
                         data-nome="{{ tomador.nome|e }}"
-                        data-documento="{{ tomador.cnpj_cpf|e }}">
+                        data-documento="{{ tomador.cnpj_cpf|e }}"
+                        {% if replicar and replicar.tomador_id == tomador.id %}selected{% endif %}>
                         {{ tomador.nome }} - {{ tomador.cnpj_cpf }}
                     </option>
                     {% endfor %}
@@ -118,7 +127,8 @@
                         data-codigo-interno="{{ servico.codigo_interno|e }}"
                         data-descricao="{{ servico.descricao|e }}"
                         data-codigo-servico="{{ servico.codigo_servico|e }}"
-                        data-nbs="{{ servico.nbs|e }}">
+                        data-nbs="{{ servico.nbs|e }}"
+                        {% if replicar and replicar.servico_id == servico.id %}selected{% endif %}>
                         {{ servico.codigo_interno }} - {{ servico.descricao }}
                     </option>
                     {% endfor %}
@@ -166,24 +176,24 @@
             <!-- CAMPO CTRIBMUN ADICIONADO -->
             <div class="col-md-4">
                 <label class="form-label">Cód. tributação municipal (cTribMun)</label>
-                <input type="text" name="cTribMun" id="cTribMun" class="form-control ls-theme-control" placeholder="Ex: 01.01.01">
+                <input type="text" name="cTribMun" id="cTribMun" class="form-control ls-theme-control" placeholder="Ex: 01.01.01" value="{{ replicar.codigo_tributacao_municipal or '' if replicar else '' }}">
                 <div class="form-text">Exigido para Rio de Janeiro e Belo Horizonte.</div>
             </div>
             <!-- FIM CAMPO CTRIBMUN -->
             <div class="col-md-4">
                 <label class="form-label">Local da prestação</label>
                 <select name="servico_local_prestacao" class="form-select ls-theme-control">
-                    <option value="emitente" selected>Município do emitente</option>
-                    <option value="tomador">Município do tomador</option>
+                    <option value="emitente" {% if replicar is none or replicar.servico_local_prestacao == 'emitente' %}selected{% endif %}>Município do emitente</option>
+                    <option value="tomador" {% if replicar and replicar.servico_local_prestacao == 'tomador' %}selected{% endif %}>Município do tomador</option>
                 </select>
                 <div class="form-text">Padrão: município do emitente.</div>
             </div>
             <div class="col-md-4">
                 <label class="form-label">ISS retido?</label>
                 <select name="tpRetISSQN" class="form-select ls-theme-control">
-                    <option value="1" selected>Não retido</option>
-                    <option value="2">Retido pelo tomador</option>
-                    <option value="3">Retido pelo intermediário</option>
+                    <option value="1" {% if replicar is none or replicar.tp_ret_issqn == '1' %}selected{% endif %}>Não retido</option>
+                    <option value="2" {% if replicar and replicar.tp_ret_issqn == '2' %}selected{% endif %}>Retido pelo tomador</option>
+                    <option value="3" {% if replicar and replicar.tp_ret_issqn == '3' %}selected{% endif %}>Retido pelo intermediário</option>
                 </select>
                 <div class="form-text">Padrão: não retido.</div>
             </div>
@@ -224,7 +234,7 @@
             </div>
             <div class="col-12">
                 <label class="form-label">Observações</label>
-                <textarea name="observacoes" class="form-control ls-theme-control" rows="3"></textarea>
+                <textarea name="observacoes" class="form-control ls-theme-control" rows="3">{{ replicar.observacoes or '' if replicar else '' }}</textarea>
             </div>
 
             <div class="col-12 d-grid">
