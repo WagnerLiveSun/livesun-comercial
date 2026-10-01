@@ -343,8 +343,8 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{ emissao.codigo_tributacao_nacional or '-' }}<br><small>{{ danfse_data.get('descricao_tributacao_nacional') or '-' }}</small></td>
-                <td>{{ emissao.codigo_tributacao_municipal or '-' }}<br><small>{{ danfse_data.get('descricao_tributacao_municipal') or '-' }}</small></td>
+                <td>{{ emissao.codigo_tributacao_nacional or '-' }}</td>
+                <td>{{ emissao.codigo_tributacao_municipal or '-' }}</td>
                 <td>{{ danfse_data.get('nbs') or '-' }}</td>
                 <td>{{ (danfse_data.get('descricao_servico') if danfse_data else '') or (emissao.servico.descricao if emissao.servico else '-') }}</td>
                 <td class="right">R$ {{ emissao.valor_servico|brl }}</td>
