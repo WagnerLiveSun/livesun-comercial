@@ -412,8 +412,17 @@ def _qr_code_base64(chave_nfse):
         import io
         import qrcode
 
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=2,
+            border=2,
+        )
+        qr.add_data(url)
+        qr.make(fit=True)
+
         buffer = io.BytesIO()
-        qrcode.make(url).save(buffer, format="PNG")
+        qr.make_image(fill_color="black", back_color="white").save(buffer, format="PNG")
         return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
     except ImportError:
         # Sem a lib qrcode o template usa a imagem externa (api.qrserver.com).

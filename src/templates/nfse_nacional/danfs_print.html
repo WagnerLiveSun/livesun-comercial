@@ -227,6 +227,27 @@
             font-size: 6.5px;
             color: #333;
             text-align: center;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .qrcode-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 0 0 auto;
+        }
+        .qrcode-box img {
+            width: 72px;
+            height: 72px;
+            max-width: 72px;
+            max-height: 72px;
+            border: 1px solid #000;
+            object-fit: contain;
+        }
+        .qrcode-box p {
+            font-size: 6.5px;
+            margin: 0;
+            text-align: left;
         }
         .codigo-verificacao {
             background: #fff;
@@ -446,20 +467,14 @@
                 <p>Documento emitido por LiveSun em conformidade com o padrão NFS-e Nacional</p>
             </div>
             {% if qr_img_url %}
-            <div style="text-align: center;">
-                <img id="qrcode-img" src="{{ qr_img_url }}" alt="QRCode" style="border: 1px solid #000;" />
-                <p style="font-size: 8px; margin-top: 5px;">QRCode para consulta</p>
+            <div class="qrcode-box">
+                <img id="qrcode-img" src="{{ qr_img_url }}" alt="QRCode" />
+                <p>QRCode para<br>consulta</p>
             </div>
             {% elif qr_code_url %}
-            <div style="text-align: center;">
-                <img id="qrcode-img" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ qr_code_url | urlencode }}" alt="QRCode" style="border: 1px solid #000;" />
-                <p style="font-size: 8px; margin-top: 5px;">QRCode para consulta</p>
-                <script>
-                    (function() {
-                        var url = "{{ qr_code_url|safe }}";
-                        document.getElementById('qrcode-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' + encodeURIComponent(url);
-                    })();
-                </script>
+            <div class="qrcode-box">
+                <img id="qrcode-img" src="https://api.qrserver.com/v1/create-qr-code/?size=144x144&data={{ qr_code_url | urlencode }}" alt="QRCode" />
+                <p>QRCode para<br>consulta</p>
             </div>
             {% else %}
             <div style="text-align: center;">
