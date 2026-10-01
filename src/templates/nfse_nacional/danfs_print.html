@@ -432,7 +432,7 @@
     </div>
     <div class="observacoes">
         <strong>Observações:</strong><br>
-        {{ danfse_data.get('informacoes_complementares') or emissao.observacoes or 'Não informado.' }}
+        {{ emissao.observacoes or danfse_data.get('informacoes_complementares') or 'Não informado.' }}
     </div>
 
     <div class="footer">
