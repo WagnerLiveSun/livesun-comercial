@@ -610,7 +610,9 @@ def nfse():
     """Notas de saída NFS-e (emitidas pelo sistema) e importadas, por período,
     status, tomador e serviço."""
     eid = _empresa_id()
-    status_f = (request.args.get('status') or '').strip()
+    # Status: seleção múltipla (?status=A&status=B). Sem marcação = todos.
+    status_sel = [s.strip() for s in request.args.getlist('status') if s.strip()]
+    status_set = {s.lower() for s in status_sel}
     d_ini = _parse_date(request.args.get('data_inicio'))
     d_fim = _parse_date(request.args.get('data_fim'))
     origem_f = (request.args.get('origem') or '').strip()
@@ -628,7 +630,7 @@ def nfse():
         if origem_f and origem_f != 'emitida':
             continue
         status_emi = (e.situacao_fiscal or e.status_processamento or '').replace('_', ' ').capitalize()
-        if status_f and status_f.lower() != status_emi.lower():
+        if status_set and status_emi.lower() not in status_set:
             continue
         nfse_numero = e.numero_nfse or e.numero_interno
         tomador_nome = e.tomador.nome if e.tomador else getattr(e, 'tomador_id', None)
@@ -655,7 +657,7 @@ def nfse():
         if origem_f and origem_f != 'importada':
             continue
         status_imp = (n.status_importacao or 'sucesso').replace('_', ' ').capitalize()
-        if status_f and status_f.lower() != status_imp.lower():
+        if status_set and status_imp.lower() not in status_set:
             continue
         valor = _numero(n.valor_bruto)
         valor_total += valor
@@ -682,9 +684,9 @@ def nfse():
          'value': request.args.get('data_inicio', '')},
         {'name': 'data_fim', 'label': 'Até', 'type': 'date',
          'value': request.args.get('data_fim', '')},
-        {'name': 'status', 'label': 'Status', 'type': 'select',
-         'value': status_f, 'options': [
-             ('', 'Todos'), ('Sucesso', 'Sucesso'),
+        {'name': 'status', 'label': 'Status', 'type': 'multiselect',
+         'selected': status_sel, 'options': [
+             ('Sucesso', 'Sucesso'),
              ('Pendente', 'Pendente'), ('Erro', 'Erro'),
              ('Autorizada', 'Autorizada'), ('Rejeitada', 'Rejeitada')]},
         {'name': 'origem', 'label': 'Origem', 'type': 'select',
