@@ -2257,21 +2257,57 @@ def visualizar(id):
 @login_required
 def enviar_email(id):
     """
-    Rota para enviar NFS-e por email para o cliente.
+    Envia o DANFS-e autorizado por email ao cliente.
     """
     emissao = scoped_get_or_404(NfseNacionalEmissao, id)
-    
+
     email_cliente = request.form.get("email_cliente", "").strip()
     mensagem = request.form.get("mensagem", "").strip()
-    
+
     if not email_cliente:
         flash("Informe o email do cliente.", "danger")
         return redirect(url_for("nfse_nacional.visualizar", id=id))
-    
-    # TODO: Implementar envio de email
-    # Por enquanto, apenas simular
-    flash(f"Email enviado para {email_cliente} (funcionalidade a ser implementada).", "success")
-    
+
+    autorizada = (
+        emissao.status_processamento == "AUTORIZADA"
+        or emissao.situacao_fiscal == "AUTORIZADA"
+    )
+    if not autorizada:
+        flash("Somente NFS-e autorizada pode ser enviada por email.", "warning")
+        return redirect(url_for("nfse_nacional.listagem"))
+
+    numero = emissao.numero_nfse or emissao.numero_interno or str(emissao.id)
+    data_emissao = emissao.criado_em.strftime("%d/%m/%Y") if emissao.criado_em else ""
+    mensagem = mensagem or MENSAGEM_PADRAO_NFSE.format(
+        numero=numero,
+        data_emissao=data_emissao,
+    )
+
+    try:
+        pdf_bytes = _generar_danfs_pdf(emissao)
+        empresa = current_user.empresa or emissao.empresa
+        nome_cliente = emissao.tomador.nome if emissao.tomador else email_cliente
+        enviado = brevo_service.send_transactional_email(
+            email_cliente,
+            nome_cliente,
+            f"NFS-e Nº {numero} - {empresa.nome_fantasia or empresa.nome}",
+            _construir_html_email(mensagem, empresa),
+            attachment={
+                "name": f"danfse_{numero}.pdf",
+                "content": pdf_bytes,
+                "content_type": "application/pdf",
+            },
+        )
+    except Exception as exc:
+        logging.exception("Erro ao gerar ou enviar DANFS-e por email")
+        flash(f"Erro ao enviar DANFS-e por email: {exc}", "danger")
+        return redirect(url_for("nfse_nacional.listagem"))
+
+    if enviado:
+        flash(f"DANFS-e enviado para {email_cliente}.", "success")
+    else:
+        flash("Brevo não confirmou o envio do DANFS-e. Verifique a API e o remetente.", "danger")
+
     return redirect(url_for("nfse_nacional.listagem"))
 
 
