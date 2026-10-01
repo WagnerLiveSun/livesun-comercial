@@ -366,9 +366,6 @@
     <div class="service-description">
         <strong>Descrição do Serviço</strong>
         {{ (danfse_data.get('descricao_servico') if danfse_data else '') or (emissao.servico.descricao if emissao.servico else '-') }}
-        {% if danfse_data.get('descricao_tributacao_municipal') and danfse_data.get('descricao_tributacao_municipal') != danfse_data.get('descricao_tributacao_nacional') and danfse_data.get('descricao_tributacao_municipal') != danfse_data.get('descricao_servico') %}
-        <br><strong>Descrição da tributação municipal</strong>{{ danfse_data.get('descricao_tributacao_municipal') }}
-        {% endif %}
     </div>
 
     <div class="section-title">VALORES</div>
