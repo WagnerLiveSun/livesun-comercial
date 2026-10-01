@@ -431,8 +431,12 @@
         <div><strong>Total IBS/CBS:</strong> R$ {{ (danfse_data.get('total_ibs_cbs') or 0)|brl }}</div>
     </div>
     <div class="observacoes">
+        <strong>Informações Complementares:</strong><br>
+        {{ danfse_data.get('informacoes_complementares') or 'Não informado.' }}
+    </div>
+    <div class="observacoes">
         <strong>Observações:</strong><br>
-        {{ emissao.observacoes or danfse_data.get('informacoes_complementares') or 'Não informado.' }}
+        {{ emissao.observacoes or 'Não informado.' }}
     </div>
 
     <div class="footer">
