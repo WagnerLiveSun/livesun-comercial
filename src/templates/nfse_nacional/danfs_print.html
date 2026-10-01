@@ -255,7 +255,7 @@
             <img src="{{ get_empresa_logo(empresa) }}" alt="Logo da empresa" class="company-logo" />
             <div>
                 <strong>{{ empresa.nome_fantasia or empresa.nome }}</strong>
-                <span>CNPJ: {{ empresa.cnpj or '-' }}</span>
+                <span>CNPJ: {{ empresa.cnpj|documento }}</span>
                 <span>{{ empresa.endereco_cidade or '-' }} - {{ empresa.endereco_uf or '-' }}</span>
             </div>
         </div>
@@ -270,7 +270,7 @@
 
     <div class="nfse-info">
         <div class="wide"><strong>Chave de Acesso da NFS-e:</strong> {{ danfse_data.get('chave_acesso') or emissao.chave_nfse or '-' }}</div>
-        <div><strong>Numero da NFS-e:</strong> {{ emissao.numero_nfse or '-' }}</div>
+        <div><strong>Numero da NFS-e:</strong> {{ emissao.numero_nfse|numero_nfse }}</div>
         <div><strong>Competencia:</strong> {{ danfse_data.get('competencia') or '-' }}</div>
         <div><strong>Ambiente:</strong> {{ danfse_data.get('ambiente_gerador') or '-' }}</div>
     </div>
@@ -290,7 +290,7 @@
 
     <div class="nfse-info">
         <div>
-            <strong>Nº NFS-e:</strong> {{ emissao.numero_nfse or emissao.numero_interno or '-' }}
+            <strong>Nº NFS-e:</strong> {{ emissao.numero_nfse|numero_nfse }}
         </div>
         <div>
             <strong>Data de Emissão:</strong> {{ (danfse_data.get('data_emissao') if danfse_data else '') or (emissao.criado_em.strftime('%d/%m/%Y %H:%M:%S') if emissao.criado_em else '-') }}
@@ -306,7 +306,7 @@
     <div class="section-title">DADOS DO PRESTADOR</div>
     <div class="info-grid">
         <div><strong>Razão Social:</strong> {{ danfse_data.get('nome_prestador') or '-' }}</div>
-        <div><strong>CNPJ/CPF:</strong> {{ danfse_data.get('cnpj_prestador') or danfse_data.get('cpf_prestador') or '-' }}</div>
+        <div><strong>CNPJ/CPF:</strong> {{ (danfse_data.get('cnpj_prestador') or danfse_data.get('cpf_prestador'))|documento }}</div>
         <div><strong>Inscrição Municipal:</strong> {{ danfse_data.get('inscricao_municipal_prestador') or '-' }}</div>
         <div><strong>Município / UF:</strong> {{ danfse_data.get('cidade_prestador') or '-' }} - {{ danfse_data.get('uf_prestador') or '-' }}</div>
         <div><strong>Código IBGE / CEP:</strong> {{ danfse_data.get('codigo_municipio_prestador') or '-' }} / {{ danfse_data.get('cep_prestador') or '-' }}</div>
@@ -320,7 +320,7 @@
     <div class="section-title">DADOS DO TOMADOR</div>
     <div class="info-grid">
         <div><strong>Razão Social/Nome:</strong> {{ (danfse_data.get('nome_tomador') if danfse_data else '') or (emissao.tomador.nome if emissao.tomador else '-') }}</div>
-        <div><strong>CNPJ/CPF:</strong> {{ (danfse_data.get('cnpj_tomador') or danfse_data.get('cpf_tomador') if danfse_data else '') or (emissao.tomador.cnpj_cpf if emissao.tomador else '-') }}</div>
+        <div><strong>CNPJ/CPF:</strong> {{ ((danfse_data.get('cnpj_tomador') or danfse_data.get('cpf_tomador')) if danfse_data else (emissao.tomador.cnpj_cpf if emissao.tomador else ''))|documento }}</div>
         <div><strong>Inscrição Municipal:</strong> {{ emissao.tomador.inscricao_municipal or '-' }}</div>
         <div><strong>Município:</strong> {{ (danfse_data.get('cidade_tomador') if danfse_data else '') or (emissao.tomador.endereco_cidade if emissao.tomador else '-') }}{% if danfse_data and danfse_data.get('uf_tomador') %} - {{ danfse_data.get('uf_tomador') }}{% endif %}</div>
         <div><strong>CEP:</strong> {{ (danfse_data.get('cep_tomador') if danfse_data else '') or '-' }}</div>
@@ -347,7 +347,7 @@
                 <td>{{ emissao.codigo_tributacao_municipal or '-' }}</td>
                 <td>{{ danfse_data.get('nbs') or '-' }}</td>
                 <td>{{ (danfse_data.get('descricao_servico') if danfse_data else '') or (emissao.servico.descricao if emissao.servico else '-') }}</td>
-                <td class="right">{{ '%.2f'|format(emissao.valor_servico or 0) }}</td>
+                <td class="right">R$ {{ emissao.valor_servico|brl }}</td>
             </tr>
         </tbody>
     </table>
@@ -356,23 +356,23 @@
     <div class="totals">
         <div class="totals-row">
             <span>Valor do Serviço:</span>
-            <span>R$ {{ '%.2f'|format(emissao.valor_servico or 0) }}</span>
+            <span>R$ {{ emissao.valor_servico|brl }}</span>
         </div>
         <div class="totals-row">
             <span>Valor Deduções:</span>
-            <span>R$ {{ '%.2f'|format(emissao.valor_deducoes or 0) }}</span>
+            <span>R$ {{ emissao.valor_deducoes|brl }}</span>
         </div>
         <div class="totals-row">
             <span>Base de Cálculo:</span>
-            <span>R$ {{ '%.2f'|format((emissao.valor_servico or 0) - (emissao.valor_deducoes or 0)) }}</span>
+            <span>R$ {{ ((emissao.valor_servico or 0) - (emissao.valor_deducoes or 0))|brl }}</span>
         </div>
         <div class="totals-row">
             <span>Valor ISS:</span>
-            <span>R$ {{ '%.2f'|format(emissao.valor_iss or 0) }}</span>
+            <span>R$ {{ emissao.valor_iss|brl }}</span>
         </div>
         <div class="totals-row" style="border-top: 2px solid #000; padding-top: 5px; margin-top: 8px;">
             <strong><span>Valor Total:</span></strong>
-            <strong><span>R$ {{ '%.2f'|format(emissao.valor_servico or 0) }}</span></strong>
+            <strong><span>R$ {{ emissao.valor_servico|brl }}</span></strong>
         </div>
     </div>
 
@@ -380,10 +380,10 @@
     <div class="info-grid">
         <div><strong>Tipo de tributação:</strong> {{ danfse_data.get('tipo_tributacao_iss') or '-' }}</div>
         <div><strong>Município de incidência:</strong> {{ danfse_data.get('municipio_incidencia_nome') or danfse_data.get('municipio_incidencia_iss') or '-' }} - {{ danfse_data.get('uf_incidencia_iss') or '-' }}</div>
-        <div><strong>Base de cálculo:</strong> R$ {{ danfse_data.get('base_calculo_iss') or '0,00' }}</div>
+        <div><strong>Base de cálculo:</strong> R$ {{ (danfse_data.get('base_calculo_iss') or 0)|brl }}</div>
         <div><strong>Alíquota aplicada:</strong> {{ danfse_data.get('aliquota_iss') or '-' }}</div>
         <div><strong>Retenção do ISSQN:</strong> {{ danfse_data.get('retencao_iss') or '-' }}</div>
-        <div><strong>ISSQN apurado:</strong> R$ {{ danfse_data.get('valor_iss_apurado') or '0,00' }}</div>
+        <div><strong>ISSQN apurado:</strong> R$ {{ (danfse_data.get('valor_iss_apurado') or 0)|brl }}</div>
     </div>
 
     <div class="section-title">TRIBUTAÇÃO FEDERAL (EXCETO CBS)</div>
@@ -411,8 +411,8 @@
     <div class="info-grid">
         <div><strong>Regime Tributação:</strong> {{ emissao.regime_tributacao or '-' }}</div>
         <div><strong>Local de Prestação:</strong> {{ emissao.local_prestacao or '-' }}</div>
-        <div><strong>Valor líquido:</strong> R$ {{ danfse_data.get('valor_liquido') or '0,00' }}</div>
-        <div><strong>Total IBS/CBS:</strong> R$ {{ danfse_data.get('total_ibs_cbs') or '0,00' }}</div>
+        <div><strong>Valor líquido:</strong> R$ {{ (danfse_data.get('valor_liquido') or 0)|brl }}</div>
+        <div><strong>Total IBS/CBS:</strong> R$ {{ (danfse_data.get('total_ibs_cbs') or 0)|brl }}</div>
     </div>
     <div class="observacoes">
         <strong>Observações:</strong><br>

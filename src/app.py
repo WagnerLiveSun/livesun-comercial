@@ -284,6 +284,20 @@ def create_app(config_name=None):
         formatted = f"{num:,.2f}"
         return formatted.replace(',', 'X').replace('.', ',').replace('X', '.')
 
+    @app.template_filter('documento')
+    def format_documento(value):
+        digits = ''.join(ch for ch in str(value or '') if ch.isdigit())
+        if len(digits) == 11:
+            return f'{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}'
+        if len(digits) == 14:
+            return f'{digits[:2]}.{digits[2:5]}.{digits[5:8]}/{digits[8:12]}-{digits[12:]}'
+        return str(value or '-')
+
+    @app.template_filter('numero_nfse')
+    def format_numero_nfse(value):
+        digits = ''.join(ch for ch in str(value or '') if ch.isdigit())
+        return digits.zfill(9) if digits else '-'
+
     @app.template_filter('nl2br')
     def nl2br(value):
         """Convert newlines to <br> tags."""
