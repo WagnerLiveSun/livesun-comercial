@@ -556,6 +556,11 @@ def fiscal():
         base_iss_mes = valor_total_notas_mes
         iss_total_mes = (base_iss_mes * ALIQUOTA_ISS_PADRAO / Decimal('100')).quantize(Decimal('0.01'))
 
+        base_iss_acumulado = valor_total_notas_acumulado
+        iss_total_acumulado = (
+            base_iss_acumulado * ALIQUOTA_ISS_PADRAO / Decimal('100')
+        ).quantize(Decimal('0.01'))
+
         return render_template(
             'dashboard_fiscal.html',
             nfse_emitidas_mes=nfse_emitidas_mes,
@@ -573,6 +578,8 @@ def fiscal():
             nfse_canceladas_mes=nfse_canceladas_mes,
             iss_total_mes=iss_total_mes,
             base_iss_mes=base_iss_mes,
+            iss_total_acumulado=iss_total_acumulado,
+            base_iss_acumulado=base_iss_acumulado,
             status_autorizadas=status_autorizadas,
             status_canceladas=status_canceladas,
             status_pendentes=status_pendentes,
