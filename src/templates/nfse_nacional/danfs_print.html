@@ -26,15 +26,36 @@
             align-items: center;
             justify-content: space-between;
             gap: 8px;
-            height: 48px;
+            min-height: 50px;
             margin-bottom: 3px;
             border-bottom: 1px solid #000;
             padding: 3px 5px;
             background: #f8f8f8;
         }
+        .company-brand {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            width: 31%;
+            min-width: 0;
+        }
+        .company-logo {
+            width: 70px;
+            max-height: 35px;
+            object-fit: contain;
+        }
+        .company-brand strong {
+            display: block;
+            font-size: 8px;
+        }
+        .company-brand span {
+            display: block;
+            font-size: 6px;
+            line-height: 1.1;
+        }
         .header-logo {
             height: 36px;
-            max-width: 110px;
+            max-width: 105px;
             object-fit: contain;
         }
         .header-logo-nfse {
@@ -42,13 +63,13 @@
             object-fit: contain;
         }
         .portal-header-title {
-            flex: 1;
+            width: 38%;
             text-align: center;
             font-size: 11px;
             font-weight: bold;
         }
         .portal-header-meta {
-            min-width: 150px;
+            width: 31%;
             text-align: right;
             font-size: 7px;
         }
@@ -74,8 +95,8 @@
             border: 1px solid #000;
         }
         .nfse-info {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 5px;
             margin: 3px 0;
             padding: 3px 5px;
@@ -83,9 +104,12 @@
             border: 1px solid #999;
         }
         .nfse-info div {
-            flex: 1;
             min-width: 0;
             font-size: 7px;
+            overflow-wrap: anywhere;
+        }
+        .nfse-info .wide {
+            grid-column: span 2;
         }
         .nfse-info strong {
             display: block;
@@ -130,7 +154,13 @@
             border: 1px solid #999;
             padding: 3px;
             text-align: left;
+            overflow-wrap: anywhere;
         }
+        table th:nth-child(1), table td:nth-child(1) { width: 9%; }
+        table th:nth-child(2), table td:nth-child(2) { width: 9%; }
+        table th:nth-child(3), table td:nth-child(3) { width: 12%; }
+        table th:nth-child(4), table td:nth-child(4) { width: 58%; }
+        table th:nth-child(5), table td:nth-child(5) { width: 12%; }
         table th {
             background: #e0e0e0;
             font-weight: bold;
@@ -221,9 +251,17 @@
 {% endif %}
 <div class="danfs">
     <div class="header">
-        <img src="{{ url_for('static', filename='images/logo-nfs-e-vertical.png') }}" alt="Logo NFS-e" class="header-logo-nfse" />
+        <div class="company-brand">
+            <img src="{{ get_empresa_logo(empresa) }}" alt="Logo da empresa" class="company-logo" />
+            <div>
+                <strong>{{ empresa.nome_fantasia or empresa.nome }}</strong>
+                <span>CNPJ: {{ empresa.cnpj or '-' }}</span>
+                <span>{{ empresa.endereco_cidade or '-' }} - {{ empresa.endereco_uf or '-' }}</span>
+            </div>
+        </div>
         <div class="portal-header-title">DANFSe v2.0<br><span style="font-size: 8px; font-weight: normal;">Documento Auxiliar da NFS-e</span></div>
         <div class="portal-header-meta">
+            <img src="{{ url_for('static', filename='images/logo-nfs-e-vertical.png') }}" alt="Logo NFS-e" class="header-logo-nfse" />
             <strong>Município: {{ danfse_data.get('cidade_prestador') or '-' }} - {{ danfse_data.get('uf_prestador') or '-' }}</strong>
             Ambiente Gerador: {{ danfse_data.get('ambiente_gerador') or '-' }}<br>
             Tipo de Ambiente: {{ danfse_data.get('tipo_ambiente') or '-' }}
@@ -231,7 +269,7 @@
     </div>
 
     <div class="nfse-info">
-        <div><strong>Chave de Acesso da NFS-e:</strong> {{ danfse_data.get('chave_acesso') or emissao.chave_nfse or '-' }}</div>
+        <div class="wide"><strong>Chave de Acesso da NFS-e:</strong> {{ danfse_data.get('chave_acesso') or emissao.chave_nfse or '-' }}</div>
         <div><strong>Numero da NFS-e:</strong> {{ emissao.numero_nfse or '-' }}</div>
         <div><strong>Competencia:</strong> {{ danfse_data.get('competencia') or '-' }}</div>
         <div><strong>Ambiente:</strong> {{ danfse_data.get('ambiente_gerador') or '-' }}</div>
