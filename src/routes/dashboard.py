@@ -446,31 +446,36 @@ def fiscal():
         primeiro_dia_mes = hoje.replace(day=1)
         empresa_id = current_user.empresa_id
 
-        # NFS-e emitidas no mês
-        nfse_emitidas_mes = NfseNacionalEmissao.query.filter(
+        # NFS-e emitidas no mês.
+        # Uma nota vale como emitida quando está autorizada fiscalmente.
+        # O status_processamento grava variações como AUTORIZADA_LOCALMENTE,
+        # por isso a situacao_fiscal é o critério confiável.
+        filtro_emitidas = db.and_(
             NfseNacionalEmissao.empresa_id == empresa_id,
             NfseNacionalEmissao.criado_em >= primeiro_dia_mes,
-            NfseNacionalEmissao.status_processamento == 'AUTORIZADA'
-        ).count()
+            NfseNacionalEmissao.situacao_fiscal == 'AUTORIZADA',
+        )
+
+        nfse_emitidas_mes = NfseNacionalEmissao.query.filter(filtro_emitidas).count()
 
         # Valor total emitido no mês
         valor_total_mes = db.session.query(func.sum(NfseNacionalEmissao.valor_servico)).filter(
-            NfseNacionalEmissao.empresa_id == empresa_id,
-            NfseNacionalEmissao.criado_em >= primeiro_dia_mes,
-            NfseNacionalEmissao.status_processamento == 'AUTORIZADA'
+            filtro_emitidas
         ).scalar() or Decimal('0')
 
         # NFS-e canceladas no mês
         nfse_canceladas_mes = NfseNacionalEmissao.query.filter(
             NfseNacionalEmissao.empresa_id == empresa_id,
-            NfseNacionalEmissao.cancelado_em >= primeiro_dia_mes
+            NfseNacionalEmissao.situacao_fiscal == 'CANCELADA',
+            db.or_(
+                NfseNacionalEmissao.cancelado_em >= primeiro_dia_mes,
+                NfseNacionalEmissao.criado_em >= primeiro_dia_mes,
+            )
         ).count()
 
         # ISS total no mês
         iss_total_mes = db.session.query(func.sum(NfseNacionalEmissao.valor_iss)).filter(
-            NfseNacionalEmissao.empresa_id == empresa_id,
-            NfseNacionalEmissao.criado_em >= primeiro_dia_mes,
-            NfseNacionalEmissao.status_processamento == 'AUTORIZADA'
+            filtro_emitidas
         ).scalar() or Decimal('0')
 
         # Status das NFS-e (todas)
@@ -507,10 +512,19 @@ def fiscal():
             NfseNacionalEmissao.criado_em.desc()
         ).limit(5).all()
 
+        # Totais acumulados (histórico completo)
+        nfse_emitidas_total = status_autorizadas
+        valor_total_acumulado = db.session.query(func.sum(NfseNacionalEmissao.valor_servico)).filter(
+            NfseNacionalEmissao.empresa_id == empresa_id,
+            NfseNacionalEmissao.situacao_fiscal == 'AUTORIZADA',
+        ).scalar() or Decimal('0')
+
         return render_template(
             'dashboard_fiscal.html',
             nfse_emitidas_mes=nfse_emitidas_mes,
+            nfse_emitidas_total=nfse_emitidas_total,
             valor_total_mes=valor_total_mes,
+            valor_total_acumulado=valor_total_acumulado,
             nfse_canceladas_mes=nfse_canceladas_mes,
             iss_total_mes=iss_total_mes,
             status_autorizadas=status_autorizadas,
