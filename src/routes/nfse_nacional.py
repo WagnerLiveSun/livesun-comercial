@@ -140,31 +140,313 @@ def _construir_html_email(mensagem, empresa):
     )
 
 
-def _generar_danfs_pdf(emissao):
+def _extrair_xml_nfse_do_payload(payload_retorno):
+    """Recupera o XML da NFS-e do payload de retorno da transmissão.
+
+    O retorno da ADN entrega o XML em três formatos possiveis: texto puro,
+    base64 ou (padrão oficial) `nfseXmlGZipB64`, que é base64 de um gzip.
+    """
+    import gzip
+
+    if not payload_retorno:
+        return ""
+
+    if isinstance(payload_retorno, str):
+        try:
+            payload_retorno = json.loads(payload_retorno)
+        except (TypeError, ValueError):
+            return ""
+
+    if not isinstance(payload_retorno, dict):
+        return ""
+
+    candidatos = []
+    response_body = payload_retorno.get("response_body")
+    if isinstance(response_body, dict):
+        candidatos.extend([
+            response_body.get("nfseXmlGZipB64"),
+            response_body.get("nfseXml"),
+            response_body.get("xml"),
+        ])
+    candidatos.extend([
+        payload_retorno.get("xml_nfse"),
+        payload_retorno.get("nfseXmlGZipB64"),
+        payload_retorno.get("nfseXml"),
+    ])
+
+    for candidato in candidatos:
+        texto = candidato.strip() if isinstance(candidato, str) else ""
+        if not texto:
+            continue
+        if _is_authorized_nfse_xml(texto):
+            return texto
+        # Descomprime o formato gzip+base64 da ADN.
+        try:
+            bruto = base64.b64decode(texto, validate=True)
+            if bruto[:2] == b"\x1f\x8b":
+                bruto = gzip.decompress(bruto)
+            decodificado = bruto.decode("utf-8", "ignore")
+            if _is_authorized_nfse_xml(decodificado):
+                return decodificado
+        except Exception:
+            continue
+    return ""
+
+
+def _obter_xml_nfse_autorizado(emissao, consultar_api=True):
+    """Retorna o XML autorizado da NFS-e usando as mesmas fontes da rota de impressão.
+
+    Ordem das fontes: campo xml_nfse, payload de retorno (gzip/base64) e,
+    por fim, consulta direta na API nacional.
+    """
+    if _is_authorized_nfse_xml(emissao.xml_nfse or ""):
+        return emissao.xml_nfse
+
+    xml_nfse = _extrair_xml_nfse_do_payload(emissao.payload_retorno)
+    if xml_nfse:
+        return xml_nfse
+
+    if consultar_api and emissao.chave_nfse:
+        try:
+            resultado = consultar_nfse(
+                chave_acesso=emissao.chave_nfse,
+                configuracao=emissao.configuracao,
+            )
+            candidato = resultado.get("xml_nfse") if resultado.get("sucesso") else None
+            if _is_authorized_nfse_xml(candidato or ""):
+                return candidato
+        except Exception as exc:
+            logging.warning("Falha ao consultar o XML da NFS-e %s: %s", emissao.chave_nfse, exc)
+    return ""
+
+
+def _dados_da_dps(emissao):
+    """Dados da DPS (XML sempre armazenado na emissão) para complementar o DANFS-e."""
+    import xml.etree.ElementTree as ET
+
+    dados = {}
+    xml_dps = (emissao.xml_dps or "").strip()
+    if not xml_dps.startswith("<"):
+        return dados
+    try:
+        root = ET.fromstring(xml_dps)
+    except Exception:
+        return dados
+
+    def texto(tag):
+        node = next((item for item in root.iter() if item.tag.rsplit("}", 1)[-1] == tag), None)
+        return (node.text or "").strip() if node is not None else ""
+
+    mapa = {
+        "numero_dps": "nDPS",
+        "serie_dps": "serie",
+        "competencia": "dCompet",
+        "data_emissao_dps": "dhEmi",
+        "codigo_tributacao_nacional": "cTribNac",
+        "codigo_tributacao_municipal": "cTribMun",
+        "nbs": "cNBS",
+        "descricao_servico": "xDescServ",
+        "local_prestacao": "cLocPrestacao",
+        "descricao_tributacao_nacional": "xTribNac",
+        "descricao_tributacao_municipal": "xTribMun",
+        "informacoes_complementares": "xInfComp",
+        "base_calculo_iss": "vBC",
+        "aliquota_iss": "pAliq",
+        "valor_iss_apurado": "vISSQN",
+        "valor_servico": "vServ",
+        "valor_deducoes": "vDed",
+    }
+    for chave, tag in mapa.items():
+        valor = texto(tag)
+        if valor:
+            dados[chave] = valor
+
+    trib_issqn = texto("tribISSQN")
+    if trib_issqn:
+        dados["tipo_tributacao_iss"] = _descricao_codigo(trib_issqn, {
+            "1": "Operação Tributável",
+            "2": "Imunidade",
+            "3": "Exportação",
+            "4": "Não Incidência",
+        })
+    tp_ret = texto("tpRetISSQN")
+    if tp_ret:
+        dados["retencao_iss"] = _descricao_codigo(tp_ret, {
+            "1": "Não Retido",
+            "2": "Retido pelo Tomador",
+            "3": "Retido pelo Intermediário",
+        })
+    return dados
+
+
+def _snapshot_emissao(emissao):
+    """Monta o DANFS-e a partir do snapshot da emissão quando o XML não está disponível.
+
+    Garante que o anexo do e-mail tenha o mesmo conteúdo do DANFS-e impresso,
+    usando os dados já gravados no banco (emissão, DPS, prestador e tomador).
+    """
+    empresa = emissao.empresa
+    tomador = emissao.tomador
+    servico = emissao.servico
+
+    def primeiro(*valores):
+        for valor in valores:
+            if valor not in (None, ""):
+                return valor
+        return ""
+
+    dados = {
+        "numero_nfse": emissao.numero_nfse or emissao.numero_interno or "",
+        "codigo_verificacao": emissao.codigo_verificacao or "",
+        "chave_acesso": emissao.chave_nfse or "",
+        "data_emissao": emissao.criado_em.strftime("%d/%m/%Y %H:%M:%S") if emissao.criado_em else "",
+        "data_processamento": emissao.criado_em.strftime("%d/%m/%Y %H:%M:%S") if emissao.criado_em else "",
+        "competencia": emissao.criado_em.strftime("%d/%m/%Y") if emissao.criado_em else "",
+        "municipio_gerador": primeiro(
+            getattr(empresa, "codigo_municipio_ibge", None),
+            getattr(empresa, "endereco_cidade", None),
+        ),
+        "ambiente_gerador": emissao.ambiente or "-",
+        "tipo_ambiente": emissao.ambiente or "-",
+        "tipo_emitente": "Prestador",
+        "situacao": emissao.situacao_fiscal or "AUTORIZADA",
+        "finalidade": "",
+        "nome_prestador": primeiro(getattr(empresa, "nome_fantasia", None), getattr(empresa, "nome", None)),
+        "cnpj_prestador": getattr(empresa, "cnpj", "") or "",
+        "inscricao_municipal_prestador": getattr(empresa, "inscricao_municipal", "") or "",
+        "endereco_prestador": getattr(empresa, "endereco_rua", "") or "",
+        "numero_prestador": getattr(empresa, "endereco_numero", "") or "",
+        "bairro_prestador": getattr(empresa, "endereco_bairro", "") or "",
+        "cidade_prestador": getattr(empresa, "endereco_cidade", "") or "",
+        "uf_prestador": getattr(empresa, "endereco_uf", "") or "",
+        "cep_prestador": getattr(empresa, "endereco_cep", "") or "",
+        "codigo_municipio_prestador": getattr(empresa, "codigo_municipio_ibge", "") or "",
+        "telefone_prestador": getattr(empresa, "telefone", "") or "",
+        "email_prestador": getattr(empresa, "email", "") or "",
+        "simples_nacional": _descricao_codigo(str(getattr(empresa, "op_simp_nac", "") or ""), {
+            "1": "Não optante", "2": "MEI", "3": "Optante - Microempresa ou Empresa de Pequeno Porte",
+        }, padrao=""),
+        "regime_apuracao": _descricao_codigo(str(getattr(empresa, "reg_ap_trib_sn", "") or ""), {
+            "1": "Regime de apuração dos tributos federais e municipal pelo Simples Nacional",
+            "2": "Regime de apuração do Simples Nacional com ISSQN fora do Simples Nacional",
+            "3": "Regime de apuração fora do Simples Nacional",
+        }, padrao=""),
+        "nome_tomador": primeiro(getattr(tomador, "nome_fantasia", None), getattr(tomador, "nome", None)),
+        "cnpj_tomador": getattr(tomador, "cnpj_cpf", "") or "",
+        "cpf_tomador": "",
+        "endereco_tomador": primeiro(emissao.tomador_endereco, getattr(tomador, "endereco_rua", None)),
+        "numero_tomador": getattr(tomador, "endereco_numero", "") or "",
+        "bairro_tomador": getattr(tomador, "endereco_bairro", "") or "",
+        "cidade_tomador": getattr(tomador, "endereco_cidade", "") or "",
+        "uf_tomador": getattr(tomador, "endereco_uf", "") or "",
+        "cep_tomador": getattr(tomador, "endereco_cep", "") or "",
+        "codigo_municipio_tomador": getattr(tomador, "codigo_municipio_ibge", "") or "",
+        "telefone_tomador": getattr(tomador, "telefone", "") or "",
+        "email_tomador": getattr(tomador, "email", "") or "",
+        # Serviço
+        "descricao_servico": primeiro(getattr(servico, "descricao", None), emissao.observacoes),
+        "descricao_tributacao_nacional": getattr(servico, "natureza_servico", "") or "",
+        "codigo_tributacao_nacional": emissao.codigo_tributacao_nacional or "",
+        "codigo_tributacao_municipal": emissao.codigo_tributacao_municipal or "",
+        "nbs": getattr(servico, "nbs", "") or "",
+        "local_prestacao": primeiro(
+            emissao.local_prestacao,
+            getattr(empresa, "codigo_municipio_ibge", None),
+        ),
+        # Valores
+        "valor_servico": format(_decimal(emissao.valor_servico), "0.2f"),
+        "valor_deducoes": format(_decimal(emissao.valor_deducoes), "0.2f"),
+        "valor_iss": format(_decimal(emissao.valor_iss), "0.2f"),
+        "base_calculo_iss": format(_decimal(emissao.valor_servico) - _decimal(emissao.valor_deducoes), "0.2f"),
+        "valor_liquido": format(_decimal(emissao.valor_servico) - _decimal(emissao.valor_deducoes), "0.2f"),
+        "valor_total": format(_decimal(emissao.valor_servico), "0.2f"),
+        "valor_iss_apurado": format(_decimal(emissao.valor_iss), "0.2f"),
+        "retencao_iss": _descricao_codigo(str(emissao.tp_ret_issqn or ""), {
+            "1": "Não Retido", "2": "Retido pelo Tomador", "3": "Retido pelo Intermediário",
+        }),
+        # Demais tribulações
+        "irrf": "",
+        "contribuicao_previdenciaria": "",
+        "contribuicoes_sociais": "",
+        "total_ibs_cbs": "",
+        "ibs_cbs": {},
+        "is": {},
+        "informacoes_complementares": primeiro(emissao.observacoes, INFO_COMPLEMENTAR_PADRAO),
+    }
+
+    # Complementa com os dados já transmitidos na DPS, quando disponíveis.
+    for chave, valor in _dados_da_dps(emissao).items():
+        if valor not in (None, "", {}):
+            dados[chave] = valor
+
+    return dados
+
+
+def _preparar_danfse(emissao):
+    """Devolve os dados do DANFS-e da emissão, usando o XML autorizado ou o snapshot local.
+
+    É a mesma base usada pela rota de impressão, garantindo que o PDF anexado ao
+    e-mail seja idêntico ao DANFS-e impresso.
+    """
+    xml_nfse = _obter_xml_nfse_autorizado(emissao)
+    if xml_nfse:
+        try:
+            return _authorized_nfse_data(xml_nfse, emissao.chave_nfse or "")
+        except Exception as exc:
+            logging.warning(
+                "XML autorizado da NFS-e %s nao pode ser interpretado (%s); usando snapshot da emissao.",
+                emissao.numero_interno or emissao.id,
+                exc,
+            )
+    return _snapshot_emissao(emissao)
+
+
+def _qr_code_base64(chave_nfse):
+    """Gera a imagem do QRCode da chave de acesso como data URI (base64)."""
+    chave = str(chave_nfse or "").strip()
+    if len(chave) != 50 or not chave.isdigit():
+        return ""
+
+    url = f"https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave={chave}"
+    try:
+        import io
+        import qrcode
+
+        buffer = io.BytesIO()
+        qrcode.make(url).save(buffer, format="PNG")
+        return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+    except ImportError:
+        # Sem a lib qrcode o template usa a imagem externa (api.qrserver.com).
+        return ""
+    except Exception as exc:
+        logging.warning("Falha ao gerar o QRCode da chave %s: %s", chave, exc)
+        return ""
+
+
+def _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data):
+    """Renderiza o DANFS-e em PDF usando o mesmo template da impressão."""
     try:
         from weasyprint import HTML
     except ImportError as exc:
         raise RuntimeError("Biblioteca 'weasyprint' não encontrada no servidor.") from exc
 
-    xml_nfse = emissao.xml_nfse if _is_authorized_nfse_xml(emissao.xml_nfse or "") else ""
-    if not xml_nfse and emissao.chave_nfse:
-        resultado = consultar_nfse(chave_acesso=emissao.chave_nfse, configuracao=emissao.configuracao)
-        candidato = resultado.get("xml_nfse") if resultado.get("sucesso") else None
-        if _is_authorized_nfse_xml(candidato or ""):
-            xml_nfse = candidato
-    if not xml_nfse:
-        raise ValueError("XML autorizado da NFS-e não disponível.")
+    chave = str(danfse_data.get("chave_acesso") or emissao.chave_nfse or "").strip()
+    qr_code_url = (
+        f"https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave={chave}"
+        if len(chave) == 50 and chave.isdigit()
+        else ""
+    )
 
-    dados_autorizados = _authorized_nfse_data(xml_nfse, emissao.chave_nfse or "")
     html = render_template(
         "nfse_nacional/danfs_print.html",
         emissao=emissao,
-        empresa=emissao.empresa,
-        danfse_data=dados_autorizados,
-        qr_code_url=emissao.chave_nfse or "",
-        qr_img_url="",
+        empresa=empresa,
+        danfse_data=danfse_data,
+        qr_code_url=qr_code_url,
+        qr_img_url=_qr_code_base64(chave),
     )
     return HTML(string=html, base_url=request.url_root or "").write_pdf()
+
 
 
 def _find_first(parent, *paths, namespaces=None):
@@ -2284,8 +2566,12 @@ def enviar_email(id):
     )
 
     try:
-        pdf_bytes = _generar_danfs_pdf(emissao)
+        # O PDF anexado usa exatamente o mesmo template e os mesmos dados do
+        # DANFS-e gerado na impressão; quando o XML autorizado não existe,
+        # o documento é montado a partir dos dados já gravados na emissão.
+        danfse_data = _preparar_danfse(emissao)
         empresa = current_user.empresa or emissao.empresa
+        pdf_bytes = _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data)
         nome_cliente = emissao.tomador.nome if emissao.tomador else email_cliente
         enviado = brevo_service.send_transactional_email(
             email_cliente,
@@ -2293,7 +2579,7 @@ def enviar_email(id):
             f"NFS-e Nº {numero} - {empresa.nome_fantasia or empresa.nome}",
             _construir_html_email(mensagem, empresa),
             attachment={
-                "name": f"danfse_{numero}.pdf",
+                "name": f"DANFSe_{numero}.pdf",
                 "content": pdf_bytes,
                 "content_type": "application/pdf",
             },
