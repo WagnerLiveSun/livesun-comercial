@@ -11,6 +11,16 @@ def tenant_id() -> int | None:
     return getattr(current_user, 'empresa_id', None)
 
 
+def get_current_empresa_id() -> int:
+    from src.core.tenant_context import get_current_empresa_id as _get
+    return _get()
+
+
+def tenant_sql_session():
+    from src.core.tenant_context import tenant_sql_session as _session
+    return _session()
+
+
 def scoped_query(model):
     """Return a query scoped to the current tenant (empresa)."""
     tid = tenant_id()

@@ -1,7 +1,12 @@
 import os
 from datetime import timedelta
 from pathlib import Path
-from urllib.parse import quote_plus
+
+from src.core.database_config import (
+    build_database_uri,
+    get_db_engine,
+    sqlalchemy_engine_options,
+)
 
 BASE_DIR = Path(__file__).parent.parent
 
@@ -26,27 +31,16 @@ class Config:
     UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     
-    # Database
-    # Configuração para Render e Hostinger - Suporte MySQL e PostgreSQL
-    DB_TYPE = os.environ.get('DB_TYPE', 'mysql')
-    DB_HOST = os.environ.get('DB_HOST', 'localhost')
-    DB_PORT = int(os.environ.get('DB_PORT', 3306))
-    DB_USER = os.environ.get('DB_USER', 'root')
-    DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
-    DB_NAME = os.environ.get('DB_NAME', 'comercial')
-    
-    # Build database URI based on DB_TYPE
-    _DB_USER_ESCAPED = quote_plus(DB_USER)
-    _DB_PASSWORD_ESCAPED = quote_plus(DB_PASSWORD)
-    
-    if DB_TYPE.lower() == 'postgresql' or DB_TYPE.lower() == 'postgres':
-        # PostgreSQL connection string
-        if DB_PORT == 3306:  # Default MySQL port, change to PostgreSQL default
-            DB_PORT = 5432
-        SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{_DB_USER_ESCAPED}:{_DB_PASSWORD_ESCAPED}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
-    else:
-        # MySQL connection string (default)
-        SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{_DB_USER_ESCAPED}:{_DB_PASSWORD_ESCAPED}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+    # Database (URI centralizada; DB_ENGINE ou DB_TYPE. Alias MYSQL_*/POSTGRES_*/DB_*)
+    DB_TYPE = os.environ.get('DB_ENGINE', os.environ.get('DB_TYPE', 'mysql'))
+    DB_HOST = os.environ.get('DB_HOST', os.environ.get('MYSQL_HOST', os.environ.get('POSTGRES_HOST', 'localhost')))
+    DB_PORT = int(os.environ.get('DB_PORT', os.environ.get('MYSQL_PORT', os.environ.get('POSTGRES_PORT', '3306'))))
+    DB_USER = os.environ.get('DB_USER', os.environ.get('MYSQL_USER', os.environ.get('POSTGRES_USER', 'root')))
+    DB_PASSWORD = os.environ.get('DB_PASSWORD', os.environ.get('MYSQL_PASSWORD', os.environ.get('POSTGRES_PASSWORD', '')))
+    DB_NAME = os.environ.get('DB_NAME', os.environ.get('MYSQL_DATABASE', os.environ.get('POSTGRES_DATABASE', 'comercial')))
+    SQLALCHEMY_DATABASE_URI = build_database_uri()
+    SQLALCHEMY_ENGINE_OPTIONS = sqlalchemy_engine_options(SQLALCHEMY_DATABASE_URI)
+    DB_ENGINE = get_db_engine()
     
     # Server
     SERVER_HOST = os.environ.get('SERVER_HOST', '0.0.0.0')
@@ -92,6 +86,9 @@ class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+    }
 
 # Config dictionary
 config = {

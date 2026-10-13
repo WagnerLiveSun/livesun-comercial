@@ -172,8 +172,9 @@ def _validate_production_settings(config_name: str):
     if config_name != 'production':
         return
 
-    required_env = ['SECRET_KEY', 'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME']
-    missing = [name for name in required_env if not os.getenv(name)]
+    from src.core.database_config import missing_production_env
+
+    missing = missing_production_env()
     if missing:
         raise RuntimeError(
             'Configuracao insegura para producao. Variaveis ausentes: '
@@ -198,20 +199,29 @@ def create_app(config_name=None):
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
     # Initialize extensions
-    # Add SQLAlchemy engine options to improve resilience against dropped MySQL connections
+    from src.core.database_config import sqlalchemy_engine_options
+
     app.config.setdefault('SQLALCHEMY_ENGINE_OPTIONS', {})
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'].update({
-        'pool_pre_ping': True,
-        'pool_recycle': int(os.getenv('DB_POOL_RECYCLE', '1800')),
-    })
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'].update(
+        sqlalchemy_engine_options(app.config.get('SQLALCHEMY_DATABASE_URI', ''))
+    )
     app.config.setdefault('RATELIMIT_ENABLED', config_name != 'testing')
 
     db.init_app(app)
+
+    from src.core.tenant_context import register_tenant_session_events
+    register_tenant_session_events()
     
     # Initialize Flask-WTF CSRF Protection
     from src.extensions import csrf
     csrf.init_app(app)
     
+    @app.before_request
+    def apply_tenant_rls_from_session():
+        """Aplica RLS a partir da sessao autenticada, antes do user_loader."""
+        from src.core.tenant_context import apply_postgres_tenant_context
+        apply_postgres_tenant_context()
+
     # Initialize Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -339,6 +349,12 @@ def create_app(config_name=None):
 
     @app.before_request
     def enforce_process_permissions():
+        from src.core.tenant_context import apply_postgres_tenant_context, persist_auth_tenant_session
+
+        if current_user.is_authenticated:
+            persist_auth_tenant_session(current_user)
+            apply_postgres_tenant_context()
+
         if not current_user.is_authenticated:
             return None
 
@@ -415,11 +431,27 @@ def create_app(config_name=None):
             os.makedirs(directory, exist_ok=True)
             logger.info(f'Directory ensured: {directory}')
         
-        db.create_all()
-        _ensure_schema_compatibility()
+        from src.core.database_config import is_postgresql_configured
+        if is_postgresql_configured():
+            logger.info('PostgreSQL runtime: pulando db.create_all() e _ensure_schema_compatibility() (DDL via owner/migrations; livesun_api sem CREATE).')
+        else:
+            db.create_all()
+            _ensure_schema_compatibility()
+            logger.info('Database tables created successfully')
         _bootstrap_admin_user()
-        _bootstrap_livesun_admin()
-        logger.info('Database tables created successfully')
+        try:
+            _bootstrap_livesun_admin(platform_context=True)
+        except Exception as exc:
+            from sqlalchemy.exc import SQLAlchemyError
+
+            db.session.rollback()
+            if is_postgresql_configured() and isinstance(exc, SQLAlchemyError):
+                logger.warning(
+                    'Bootstrap livesun admin ignorado no PostgreSQL (RLS/policy do owner?): %s',
+                    exc,
+                )
+            else:
+                raise
         # Cache cleared - function renamed from _bootstrap_backoffice_admin to _bootstrap_livesun_admin
     
     # Error handlers
@@ -438,6 +470,12 @@ def create_app(config_name=None):
         db.session.rollback()
         mensagem = "Ocorreu um erro inesperado. Nossa equipe já foi notificada. Tente novamente ou entre em contato com o suporte."
         return render_template('errors/500.html', mensagem=mensagem), 500
+
+    @app.teardown_request
+    def _teardown_db_session(exc):
+        if exc is not None:
+            db.session.rollback()
+        db.session.remove()
     
     # Shell context for flask shell
     @app.shell_context_processor
@@ -512,7 +550,7 @@ def _bootstrap_admin_user():
         db.session.rollback()
 
 
-def _bootstrap_livesun_admin():
+def _bootstrap_livesun_admin(platform_context=False):
     """Cria usuário admin da LiveSun (sem empresa) para acesso ao backoffice.
     
     Configurável via variáveis de ambiente (.env):
@@ -542,6 +580,9 @@ def _bootstrap_livesun_admin():
         return
 
     # Verifica se usuário já existe sem empresa
+    # Sem contexto de plataforma aqui: a policy de login/bootstrap permite
+    # SELECT/INSERT sem app.empresa_id (pre-autenticacao). Definir '0' aqui
+    # quebraria o WITH CHECK atual (users: NULL = '0' e falso).
     livesun_user = User.query.filter_by(username=livesun_username, empresa_id=None).first()
     if livesun_user:
         logger.info(f'Bootstrap livesun admin: usuário {livesun_username} já existe (sem empresa)')

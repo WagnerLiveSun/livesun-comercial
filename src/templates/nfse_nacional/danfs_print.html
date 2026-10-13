@@ -352,14 +352,14 @@
 
     <div class="section-title">DADOS DO PRESTADOR</div>
     <div class="info-grid">
-        <div><strong>Razão Social:</strong> {{ danfse_data.get('nome_prestador') or '-' }}</div>
-        <div><strong>CNPJ/CPF:</strong> {{ (danfse_data.get('cnpj_prestador') or danfse_data.get('cpf_prestador'))|documento }}</div>
-        <div><strong>Inscrição Municipal:</strong> {{ danfse_data.get('inscricao_municipal_prestador') or '-' }}</div>
-        <div><strong>Município / UF:</strong> {{ danfse_data.get('cidade_prestador') or danfse_data.get('municipio_gerador') or '-' }} - {{ danfse_data.get('uf_prestador') or empresa.endereco_uf or '-' }}</div>
-        <div><strong>Código IBGE / CEP:</strong> {{ danfse_data.get('codigo_municipio_prestador') or '-' }} / {{ danfse_data.get('cep_prestador') or '-' }}</div>
-        <div><strong>Telefone:</strong> {{ danfse_data.get('telefone_prestador') or '-' }}</div>
-        <div><strong>E-mail:</strong> {{ danfse_data.get('email_prestador') or '-' }}</div>
-        <div><strong>Endereço:</strong> {{ danfse_data.get('endereco_prestador') or '-' }}, {{ danfse_data.get('numero_prestador') or '-' }} - {{ danfse_data.get('bairro_prestador') or '-' }}</div>
+        <div><strong>Razão Social:</strong> {{ danfse_data.get('nome_prestador') or empresa.nome_fantasia or empresa.nome or '-' }}</div>
+        <div><strong>CNPJ/CPF:</strong> {{ (danfse_data.get('cnpj_prestador') or danfse_data.get('cpf_prestador') or empresa.cnpj)|documento }}</div>
+        <div><strong>Inscrição Municipal:</strong> {{ danfse_data.get('inscricao_municipal_prestador') or empresa.inscricao_municipal or '-' }}</div>
+        <div><strong>Município / UF:</strong> {{ danfse_data.get('cidade_prestador') or danfse_data.get('municipio_gerador') or empresa.endereco_cidade or '-' }} - {{ danfse_data.get('uf_prestador') or empresa.endereco_uf or '-' }}</div>
+        <div><strong>Código IBGE / CEP:</strong> {{ danfse_data.get('codigo_municipio_prestador') or empresa.codigo_municipio_ibge or '-' }} / {{ danfse_data.get('cep_prestador') or empresa.endereco_cep or '-' }}</div>
+        <div><strong>Telefone:</strong> {{ danfse_data.get('telefone_prestador') or empresa.telefone or '-' }}</div>
+        <div><strong>E-mail:</strong> {{ danfse_data.get('email_prestador') or empresa.email or '-' }}</div>
+        <div><strong>Endereço:</strong> {{ danfse_data.get('endereco_prestador') or empresa.endereco_rua or '-' }}, {{ danfse_data.get('numero_prestador') or empresa.endereco_numero or '-' }} - {{ danfse_data.get('bairro_prestador') or empresa.endereco_bairro or '-' }}</div>
         <div><strong>Simples Nacional:</strong> {{ danfse_data.get('simples_nacional') or '-' }}</div>
         <div><strong>Regime de apuração:</strong> {{ danfse_data.get('regime_apuracao') or emissao.regime_tributacao or '-' }}</div>
     </div>

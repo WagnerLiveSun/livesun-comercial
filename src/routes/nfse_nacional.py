@@ -146,8 +146,6 @@ def _extrair_xml_nfse_do_payload(payload_retorno):
     O retorno da ADN entrega o XML em três formatos possiveis: texto puro,
     base64 ou (padrão oficial) `nfseXmlGZipB64`, que é base64 de um gzip.
     """
-    import gzip
-
     if not payload_retorno:
         return ""
 
@@ -277,184 +275,6 @@ def _dados_da_dps(emissao):
             "3": "Retido pelo Intermediário",
         })
     return dados
-
-
-def _snapshot_emissao(emissao):
-    """Monta o DANFS-e a partir do snapshot da emissão quando o XML não está disponível.
-
-    Garante que o anexo do e-mail tenha o mesmo conteúdo do DANFS-e impresso,
-    usando os dados já gravados no banco (emissão, DPS, prestador e tomador).
-    """
-    empresa = emissao.empresa
-    tomador = emissao.tomador
-    servico = emissao.servico
-
-    def primeiro(*valores):
-        for valor in valores:
-            if valor not in (None, ""):
-                return valor
-        return ""
-
-    dados = {
-        "numero_nfse": emissao.numero_nfse or emissao.numero_interno or "",
-        "codigo_verificacao": emissao.codigo_verificacao or "",
-        "chave_acesso": emissao.chave_nfse or "",
-        "data_emissao": emissao.criado_em.strftime("%d/%m/%Y %H:%M:%S") if emissao.criado_em else "",
-        "data_processamento": emissao.criado_em.strftime("%d/%m/%Y %H:%M:%S") if emissao.criado_em else "",
-        "competencia": emissao.criado_em.strftime("%d/%m/%Y") if emissao.criado_em else "",
-        "municipio_gerador": primeiro(
-            getattr(empresa, "codigo_municipio_ibge", None),
-            getattr(empresa, "endereco_cidade", None),
-        ),
-        "ambiente_gerador": emissao.ambiente or "-",
-        "tipo_ambiente": emissao.ambiente or "-",
-        "tipo_emitente": "Prestador",
-        "situacao": emissao.situacao_fiscal or "AUTORIZADA",
-        "finalidade": "",
-        "nome_prestador": primeiro(getattr(empresa, "nome_fantasia", None), getattr(empresa, "nome", None)),
-        "cnpj_prestador": getattr(empresa, "cnpj", "") or "",
-        "inscricao_municipal_prestador": getattr(empresa, "inscricao_municipal", "") or "",
-        "endereco_prestador": getattr(empresa, "endereco_rua", "") or "",
-        "numero_prestador": getattr(empresa, "endereco_numero", "") or "",
-        "bairro_prestador": getattr(empresa, "endereco_bairro", "") or "",
-        "cidade_prestador": getattr(empresa, "endereco_cidade", "") or "",
-        "uf_prestador": getattr(empresa, "endereco_uf", "") or "",
-        "cep_prestador": getattr(empresa, "endereco_cep", "") or "",
-        "codigo_municipio_prestador": getattr(empresa, "codigo_municipio_ibge", "") or "",
-        "telefone_prestador": getattr(empresa, "telefone", "") or "",
-        "email_prestador": getattr(empresa, "email", "") or "",
-        "simples_nacional": _descricao_codigo(str(getattr(empresa, "op_simp_nac", "") or ""), {
-            "1": "Não optante", "2": "MEI", "3": "Optante - Microempresa ou Empresa de Pequeno Porte",
-        }, padrao=""),
-        "regime_apuracao": _descricao_codigo(str(getattr(empresa, "reg_ap_trib_sn", "") or ""), {
-            "1": "Regime de apuração dos tributos federais e municipal pelo Simples Nacional",
-            "2": "Regime de apuração do Simples Nacional com ISSQN fora do Simples Nacional",
-            "3": "Regime de apuração fora do Simples Nacional",
-        }, padrao=""),
-        "nome_tomador": primeiro(getattr(tomador, "nome_fantasia", None), getattr(tomador, "nome", None)),
-        "cnpj_tomador": getattr(tomador, "cnpj_cpf", "") or "",
-        "cpf_tomador": "",
-        "endereco_tomador": primeiro(emissao.tomador_endereco, getattr(tomador, "endereco_rua", None)),
-        "numero_tomador": getattr(tomador, "endereco_numero", "") or "",
-        "bairro_tomador": getattr(tomador, "endereco_bairro", "") or "",
-        "cidade_tomador": getattr(tomador, "endereco_cidade", "") or "",
-        "uf_tomador": getattr(tomador, "endereco_uf", "") or "",
-        "cep_tomador": getattr(tomador, "endereco_cep", "") or "",
-        "codigo_municipio_tomador": getattr(tomador, "codigo_municipio_ibge", "") or "",
-        "telefone_tomador": getattr(tomador, "telefone", "") or "",
-        "email_tomador": getattr(tomador, "email", "") or "",
-        # Serviço
-        "descricao_servico": primeiro(getattr(servico, "descricao", None), emissao.observacoes),
-        "descricao_tributacao_nacional": getattr(servico, "natureza_servico", "") or "",
-        "codigo_tributacao_nacional": emissao.codigo_tributacao_nacional or "",
-        "codigo_tributacao_municipal": emissao.codigo_tributacao_municipal or "",
-        "nbs": getattr(servico, "nbs", "") or "",
-        "local_prestacao": primeiro(
-            emissao.local_prestacao,
-            getattr(empresa, "codigo_municipio_ibge", None),
-        ),
-        # Valores
-        "valor_servico": format(_decimal(emissao.valor_servico), "0.2f"),
-        "valor_deducoes": format(_decimal(emissao.valor_deducoes), "0.2f"),
-        "valor_iss": format(_decimal(emissao.valor_iss), "0.2f"),
-        "base_calculo_iss": format(_decimal(emissao.valor_servico) - _decimal(emissao.valor_deducoes), "0.2f"),
-        "valor_liquido": format(_decimal(emissao.valor_servico) - _decimal(emissao.valor_deducoes), "0.2f"),
-        "valor_total": format(_decimal(emissao.valor_servico), "0.2f"),
-        "valor_iss_apurado": format(_decimal(emissao.valor_iss), "0.2f"),
-        "retencao_iss": _descricao_codigo(str(emissao.tp_ret_issqn or ""), {
-            "1": "Não Retido", "2": "Retido pelo Tomador", "3": "Retido pelo Intermediário",
-        }),
-        # Demais tribulações
-        "irrf": "",
-        "contribuicao_previdenciaria": "",
-        "contribuicoes_sociais": "",
-        "total_ibs_cbs": "",
-        "ibs_cbs": {},
-        "is": {},
-        "informacoes_complementares": primeiro(emissao.observacoes, INFO_COMPLEMENTAR_PADRAO),
-    }
-
-    # Complementa com os dados já transmitidos na DPS, quando disponíveis.
-    for chave, valor in _dados_da_dps(emissao).items():
-        if valor not in (None, "", {}):
-            dados[chave] = valor
-
-    return dados
-
-
-def _preparar_danfse(emissao):
-    """Devolve os dados do DANFS-e da emissão, usando o XML autorizado ou o snapshot local.
-
-    É a mesma base usada pela rota de impressão, garantindo que o PDF anexado ao
-    e-mail seja idêntico ao DANFS-e impresso.
-    """
-    xml_nfse = _obter_xml_nfse_autorizado(emissao)
-    if xml_nfse:
-        try:
-            return _authorized_nfse_data(xml_nfse, emissao.chave_nfse or "")
-        except Exception as exc:
-            logging.warning(
-                "XML autorizado da NFS-e %s nao pode ser interpretado (%s); usando snapshot da emissao.",
-                emissao.numero_interno or emissao.id,
-                exc,
-            )
-    return _snapshot_emissao(emissao)
-
-
-def _qr_code_base64(chave_nfse):
-    """Gera a imagem do QRCode da chave de acesso como data URI (base64)."""
-    chave = str(chave_nfse or "").strip()
-    if len(chave) != 50 or not chave.isdigit():
-        return ""
-
-    url = f"https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave={chave}"
-    try:
-        import io
-        import qrcode
-
-        qr = qrcode.QRCode(
-            version=None,
-            error_correction=qrcode.constants.ERROR_CORRECT_M,
-            box_size=2,
-            border=2,
-        )
-        qr.add_data(url)
-        qr.make(fit=True)
-
-        buffer = io.BytesIO()
-        qr.make_image(fill_color="black", back_color="white").save(buffer, format="PNG")
-        return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
-    except ImportError:
-        # Sem a lib qrcode o template usa a imagem externa (api.qrserver.com).
-        return ""
-    except Exception as exc:
-        logging.warning("Falha ao gerar o QRCode da chave %s: %s", chave, exc)
-        return ""
-
-
-def _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data):
-    """Renderiza o DANFS-e em PDF usando o mesmo template da impressão."""
-    try:
-        from weasyprint import HTML
-    except ImportError as exc:
-        raise RuntimeError("Biblioteca 'weasyprint' não encontrada no servidor.") from exc
-
-    chave = str(danfse_data.get("chave_acesso") or emissao.chave_nfse or "").strip()
-    qr_code_url = (
-        f"https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave={chave}"
-        if len(chave) == 50 and chave.isdigit()
-        else ""
-    )
-
-    html = render_template(
-        "nfse_nacional/danfs_print.html",
-        emissao=emissao,
-        empresa=empresa,
-        danfse_data=danfse_data,
-        qr_code_url=qr_code_url,
-        qr_img_url=_qr_code_base64(chave),
-    )
-    return HTML(string=html, base_url=request.url_root or "").write_pdf()
 
 
 
@@ -794,6 +614,94 @@ def _mensagem_campos_obrigatorios_tomador(entidade: Entidade, faltantes: list[st
     nome = entidade.nome or "a entidade selecionada"
     lista = ", ".join(faltantes)
     return f"Para emitir NFS-e, complete o cadastro de {nome} com os campos obrigatórios: {lista}."
+
+
+def _extrair_mensagem_erro_xml(payload_retorno) -> str:
+    """Extrai mensagens de erro do XML de retorno para exibição amigável na tela."""
+    if not payload_retorno:
+        return ""
+
+    if isinstance(payload_retorno, str):
+        try:
+            payload_retorno = json.loads(payload_retorno)
+        except (TypeError, ValueError):
+            return ""
+
+    if not isinstance(payload_retorno, dict):
+        return ""
+
+    # Tentar extrair do response_body
+    response_body = payload_retorno.get("response_body", {})
+    if isinstance(response_body, dict):
+        # Verificar campos comuns de erro
+        for campo in ["mensagem", "erro", "error", "motivo", "xMotivo", "descricao"]:
+            if response_body.get(campo):
+                return str(response_body[campo])
+
+    # Verificar campos no payload principal
+    for campo in ["mensagem", "erro", "error", "motivo", "xMotivo", "descricao"]:
+        if payload_retorno.get(campo):
+            return str(payload_retorno[campo])
+
+    # Tentar extrair do XML se presente
+    xml_content = payload_retorno.get("xml_nfse") or payload_retorno.get("nfseXml") or payload_retorno.get("xml")
+    if xml_content and isinstance(xml_content, str):
+        try:
+            import xml.etree.ElementTree as ET
+            # Descomprimir se necessário
+            if len(xml_content) > 100:
+                try:
+                    import gzip
+                    import base64
+                    xml_comprimido = base64.b64decode(xml_content)
+                    if xml_comprimido[:2] == b"\x1f\x8b":
+                        xml_content = gzip.decompress(xml_comprimido).decode("utf-8")
+                except Exception:
+                    pass
+
+            root = ET.fromstring(xml_content)
+            # Tentar diferentes namespaces
+            namespaces = [
+                {'nfse': 'http://www.sped.fazenda.gov.br/nfse'},
+                {'nfse': 'http://www.abrasf.org.br/nfse'},
+                {'': ''}
+            ]
+
+            for ns in namespaces:
+                # Procurar campos de erro
+                for tag in ["mensagem", "erro", "motivo", "xMotivo", "descricao", "cStat", "xMotivo"]:
+                    node = root.find(f'.//{tag}', ns)
+                    if node is None:
+                        node = root.find(f'.//nfse:{tag}', ns)
+                    if node is not None and node.text:
+                        return node.text.strip()
+        except Exception:
+            pass
+
+    return ""
+
+
+def _formatar_mensagem_erro(resultado: dict) -> str:
+    """Formata mensagem de erro para exibição amigável na tela."""
+    mensagem = resultado.get("mensagem", "")
+    if not mensagem:
+        mensagem = resultado.get("error", "")
+
+    # Extrair erro do XML de retorno
+    payload_retorno = resultado.get("payload_retorno", {})
+    erro_xml = _extrair_mensagem_erro_xml(payload_retorno)
+    if erro_xml:
+        mensagem = f"{mensagem}: {erro_xml}" if mensagem else erro_xml
+
+    # Verificar erros específicos de endereço/tomador
+    if "endereco" in mensagem.lower() or "endereço" in mensagem.lower():
+        mensagem = "Erro no endereço do tomador: verifique se Rua, Número, Bairro, Cidade, UF e CEP estão corretos no cadastro da entidade."
+    elif "tomador" in mensagem.lower():
+        mensagem = "Erro nos dados do tomador: verifique se Nome, CNPJ/CPF e endereço estão completos no cadastro da entidade."
+    elif "cnpj" in mensagem.lower() or "cpf" in mensagem.lower():
+        mensagem = "Erro no documento do tomador: verifique se CNPJ/CPF está correto no cadastro da entidade."
+
+    return mensagem
 
 
 def _get_or_create_fluxo_recebimento(empresa_id: int) -> int | None:
@@ -1514,6 +1422,7 @@ def emissoes():
     empresa = Empresa.query.get_or_404(empresa_id)
     filtro_status = (request.args.get("status") or "").strip()
     filtro_busca = (request.args.get("busca") or "").strip()
+    replicar_id = (request.args.get("replicar_id") or "").strip()
 
     if request.method == "GET":
         query = scoped_query(NfseNacionalEmissao).order_by(NfseNacionalEmissao.criado_em.desc())
@@ -1551,6 +1460,15 @@ def emissoes():
             "nbs_opcoes": empresa.fiscal_valores_por_tipo("nbs"),
         }
 
+        # Carregar emissão para replicação se o parâmetro foi informado
+        replicar = None
+        if replicar_id:
+            try:
+                replicar_id_int = int(replicar_id)
+                replicar = scoped_query(NfseNacionalEmissao).filter_by(id=replicar_id_int).first()
+            except (ValueError, TypeError):
+                pass
+
         return render_template(
             "nfse_nacional/emissoes.html",
             emissoes=emissoes_list,
@@ -1561,6 +1479,7 @@ def emissoes():
             filtro_status=filtro_status,
             filtro_busca=filtro_busca,
             fiscal_defaults=fiscal_defaults,
+            replicar=replicar,
         )
 
     data = request.get_json(silent=True) if request.is_json else request.form
@@ -1571,15 +1490,15 @@ def emissoes():
 
         if ativo_cfg:
             ambiente = ativo_cfg.ambiente
-            logging.info(f"Ambiente da configuração ativa: {ambiente} - nfse_nacional.py:1128")
+            logging.info(f"Ambiente da configuração ativa: {ambiente} - nfse_nacional.py:1394")
         elif ambiente_payload:
             ambiente = ambiente_payload
-            logging.info(f"Ambiente do payload: {ambiente} - nfse_nacional.py:1131")
+            logging.info(f"Ambiente do payload: {ambiente} - nfse_nacional.py:1397")
         else:
             ambiente = "homologacao"
-            logging.info("Usando ambiente padrão: homologacao - nfse_nacional.py:1134")
+            logging.info("Usando ambiente padrão: homologacao - nfse_nacional.py:1400")
 
-        logging.info(f"Ambiente final usado: {ambiente} - nfse_nacional.py:1136")
+        logging.info(f"Ambiente final usado: {ambiente} - nfse_nacional.py:1402")
 
         configuracao = _get_or_create_config(empresa_id, ambiente)
         versao_layout = normalizar_versao_layout(configuracao.versao_layout)
@@ -1705,9 +1624,9 @@ def emissoes():
 
         # Validar pré-condições fiscais antes de gerar XML
         # Debug: logar todos os dados recebidos do formulário
-        logging.info(f"Dados recebidos do formulário: {list(data.keys())} - nfse_nacional.py:1258")
-        logging.info(f"Valor de cTribMun no formulário: '{data.get('cTribMun')}' - nfse_nacional.py:1259")
-        logging.info(f"Valor de codigo_tributacao_municipal no formulário: '{data.get('codigo_tributacao_municipal')}' - nfse_nacional.py:1260")
+        logging.info(f"Dados recebidos do formulário: {list(data.keys())} - nfse_nacional.py:1528")
+        logging.info(f"Valor de cTribMun no formulário: '{data.get('cTribMun')}' - nfse_nacional.py:1529")
+        logging.info(f"Valor de codigo_tributacao_municipal no formulário: '{data.get('codigo_tributacao_municipal')}' - nfse_nacional.py:1530")
         
         ctribmun_raw = data.get("cTribMun") or data.get("codigo_tributacao_municipal") or ""
         ctribmun_clean = str(ctribmun_raw).strip()
@@ -1733,7 +1652,7 @@ def emissoes():
             return redirect(url_for("nfse_nacional.emissoes", ambiente=ambiente, status=filtro_status, busca=filtro_busca))
         
         # Log para verificar os valores atualizados no payload_validacao
-        logging.info(f"Após validação  codigo_servico: '{payload_validacao.get('codigo_servico')}', servico_codigo_nacional: '{payload_validacao.get('servico_codigo_nacional')}', cTribMun: '{payload_validacao.get('cTribMun')}' - nfse_nacional.py:1286")
+        logging.info(f"Após validação  codigo_servico: '{payload_validacao.get('codigo_servico')}', servico_codigo_nacional: '{payload_validacao.get('servico_codigo_nacional')}', cTribMun: '{payload_validacao.get('cTribMun')}' - nfse_nacional.py:1556")
 
         dados_emissao = {
             **dict(data),
@@ -1797,7 +1716,7 @@ def emissoes():
         # Atualizar número do documento no lançamento financeiro com o número da NFS-e
         if emissao.lancamento and emissao.numero_nfse:
             emissao.lancamento.numero_documento = emissao.numero_nfse
-            logging.info(f"Lançamento {emissao.lancamento.id} atualizado com número da NFSe: {emissao.numero_nfse} - nfse_nacional.py:1346")
+            logging.info(f"Lançamento {emissao.lancamento.id} atualizado com número da NFSe: {emissao.numero_nfse} - nfse_nacional.py:1620")
 
         emissao.log_tecnico = resultado.get("mensagem")
         if resultado.get("errors"):
@@ -1871,12 +1790,15 @@ def emissoes():
         }
 
         if request.is_json:
+            if not resultado.get("sucesso"):
+                resposta["error"] = _formatar_mensagem_erro(resultado)
             return jsonify(_json_safe(resposta)), 201 if resultado.get("sucesso") else 202
 
-        flash(
-            "Emissão processada com sucesso." if resultado.get("sucesso") else "Emissão registrada com ressalvas.",
-            "success" if resultado.get("sucesso") else "warning",
-        )
+        if resultado.get("sucesso"):
+            flash("Emissão processada com sucesso.", "success")
+        else:
+            mensagem_erro = _formatar_mensagem_erro(resultado)
+            flash(mensagem_erro, "danger")
         return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
 
     except Exception as exc:
@@ -1892,6 +1814,17 @@ def emissoes():
 def emissao_detalhe(emissao_id: int):
     emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
     return render_template("nfse_nacional/emissao_detalhe.html", emissao=emissao)
+
+
+@nfse_nacional_bp.route("/emissoes/<int:id>/replicar", methods=["GET"])
+@login_required
+def replicar_emissao(id: int):
+    """
+    Redireciona para a página de emissões com os dados da NFS-e replicada preenchidos no formulário.
+    Não cria nem emite automaticamente - apenas preenche o formulário para revisão do usuário.
+    """
+    emissao = scoped_get_or_404(NfseNacionalEmissao, id)
+    return redirect(url_for("nfse_nacional.emissoes", replicar_id=id))
 
 
 @nfse_nacional_bp.route("/emissoes/<int:emissao_id>/download/dps", methods=["GET"])
@@ -2014,7 +1947,7 @@ def emissao_imprimir_danfs(emissao_id: int):
             
             # Debug: verificar se o XML tem o campo nNFSe
             import logging
-            logging.info(f"XML tem {len(str(xml_nfse))} caracteres - nfse_nacional.py:1563")
+            logging.info(f"XML tem {len(str(xml_nfse))} caracteres - nfse_nacional.py:1837")
             
             # Tentar diferentes namespaces possíveis
             namespaces = [
@@ -2039,7 +1972,7 @@ def emissao_imprimir_danfs(emissao_id: int):
                 
                 if numero_node is not None and numero_node.text:
                     emissao.numero_nfse = numero_node.text.strip()
-                    logging.info(f"Número extraído do XML: {emissao.numero_nfse} - nfse_nacional.py:1588")
+                    logging.info(f"Número extraído do XML: {emissao.numero_nfse} - nfse_nacional.py:1862")
                 
                 # Extrair código de verificação
                 codigo_verificacao_node = root.find('.//codigoVerificacao', ns)
@@ -2059,9 +1992,9 @@ def emissao_imprimir_danfs(emissao_id: int):
                     # A chave deve ter 50 dígitos numéricos
                     if len(chave_extraida) == 50 and chave_extraida.isdigit():
                         emissao.chave_nfse = chave_extraida
-                        logging.info(f"Chave de acesso extraída do XML (50 dígitos): {emissao.chave_nfse} - nfse_nacional.py:1608")
+                        logging.info(f"Chave de acesso extraída do XML (50 dígitos): {emissao.chave_nfse} - nfse_nacional.py:1882")
                     else:
-                        logging.warning(f"Chave extraída do XML não tem 50 dígitos: {chave_extraida} (len={len(chave_extraida)}) - nfse_nacional.py:1610")
+                        logging.warning(f"Chave extraída do XML não tem 50 dígitos: {chave_extraida} (len={len(chave_extraida)}) - nfse_nacional.py:1884")
                 
                 # Extrair dados do tomador (endereço)
                 tomador_endereco_node = root.find('.//endTom', ns)
@@ -2119,7 +2052,7 @@ def emissao_imprimir_danfs(emissao_id: int):
                     db.session.commit()
                     break
         except Exception as e:
-            logging.error(f"Erro ao extrair dados do XML: {e} - nfse_nacional.py:1668")
+            logging.error(f"Erro ao extrair dados do XML: {e} - nfse_nacional.py:1942")
     
     # Se não encontrou número no XML, tentar do payload_retorno
     if not emissao.numero_nfse and emissao.payload_retorno:
@@ -2132,9 +2065,9 @@ def emissao_imprimir_danfs(emissao_id: int):
                     if numero:
                         emissao.numero_nfse = str(numero)
                         db.session.commit()
-                        logging.info(f"Número extraído do payload_retorno: {emissao.numero_nfse} - nfse_nacional.py:1681")
+                        logging.info(f"Número extraído do payload_retorno: {emissao.numero_nfse} - nfse_nacional.py:1955")
         except Exception as e:
-            logging.error(f"Erro ao extrair número do payload_retorno: {e} - nfse_nacional.py:1683")
+            logging.error(f"Erro ao extrair número do payload_retorno: {e} - nfse_nacional.py:1957")
     
     # Sempre tentar extrair chave de acesso do payload_retorno (atualizar se necessário)
     if emissao.payload_retorno:
@@ -2148,16 +2081,16 @@ def emissao_imprimir_danfs(emissao_id: int):
                     if chave and len(str(chave)) == 50 and str(chave).isdigit():
                         emissao.chave_nfse = str(chave)
                         db.session.commit()
-                        logging.info(f"Chave de acesso extraída do response_body: {emissao.chave_nfse} - nfse_nacional.py:1697")
+                        logging.info(f"Chave de acesso extraída do response_body: {emissao.chave_nfse} - nfse_nacional.py:1971")
                 # Se não encontrou, tentar do nível superior
                 if not emissao.chave_nfse or len(emissao.chave_nfse) != 50:
                     chave = payload_retorno.get("chaveAcesso")
                     if chave and len(str(chave)) == 50 and str(chave).isdigit():
                         emissao.chave_nfse = str(chave)
                         db.session.commit()
-                        logging.info(f"Chave de acesso extraída do payload_retorno: {emissao.chave_nfse} - nfse_nacional.py:1704")
+                        logging.info(f"Chave de acesso extraída do payload_retorno: {emissao.chave_nfse} - nfse_nacional.py:1978")
         except Exception as e:
-            logging.error(f"Erro ao extrair chave do payload_retorno: {e} - nfse_nacional.py:1706")
+            logging.error(f"Erro ao extrair chave do payload_retorno: {e} - nfse_nacional.py:1980")
     
     # Construir URL do QRCode
     qr_code_url = None
@@ -2239,7 +2172,7 @@ def cancelamento():
                     lancamento = emissao.lancamento
                     db.session.delete(lancamento)
                     emissao.lancamento = None
-                    logging.info(f"Lançamento financeiro {lancamento.id} excluído ao cancelar NFSe pela chave {chave_acesso} - nfse_nacional.py:1788")
+                    logging.info(f"Lançamento financeiro {lancamento.id} excluído ao cancelar NFSe pela chave {chave_acesso} - nfse_nacional.py:2062")
                     db.session.commit()
                 
                 flash("Cancelamento realizado com sucesso.", "success")
@@ -2259,7 +2192,7 @@ def cancelamento():
                 )
                 
         except Exception as exc:
-            logging.error(f"Erro ao cancelar NFSe: {exc} - nfse_nacional.py:1808")
+            logging.error(f"Erro ao cancelar NFSe: {exc} - nfse_nacional.py:2082")
             flash(f"Erro ao cancelar NFS-e: {exc}", "danger")
             return render_template(
                 "nfse_nacional/cancelamento.html",
@@ -2355,7 +2288,7 @@ def cancelar_emissao(emissao_id):
                 # Excluir o lançamento
                 db.session.delete(lancamento)
                 emissao.lancamento = None
-                logging.info(f"Lançamento financeiro {lancamento.id} excluído ao cancelar NFSe {emissao.id} - nfse_nacional.py:1904")
+                logging.info(f"Lançamento financeiro {lancamento.id} excluído ao cancelar NFSe {emissao.id} - nfse_nacional.py:2178")
             
             db.session.commit()
             
@@ -2383,7 +2316,7 @@ def cancelar_emissao(emissao_id):
             
     except Exception as exc:
         db.session.rollback()
-        logging.error(f"Erro ao cancelar NFSe: {exc} - nfse_nacional.py:1932")
+        logging.error(f"Erro ao cancelar NFSe: {exc} - nfse_nacional.py:2206")
         
         if request.is_json:
             return jsonify({"error": f"Erro ao cancelar NFS-e: {exc}"}), 500
@@ -2457,7 +2390,7 @@ def nfse_consultar():
                 )
                 
         except Exception as exc:
-            logging.error(f"Erro ao consultar NFSe: {exc} - nfse_nacional.py:2006")
+            logging.error(f"Erro ao consultar NFSe: {exc} - nfse_nacional.py:2280")
             flash(f"Erro ao consultar NFS-e: {exc}", "danger")
             return render_template(
                 "nfse_nacional/consultar.html",
@@ -2530,63 +2463,6 @@ def listagem():
     )
 
 
-@nfse_nacional_bp.route("/listagem/<int:id>/replicar", methods=["GET"])
-@login_required
-def replicar_emissao(id):
-    """Abre uma nova emissão preenchida com os dados da nota original.
-
-    Mantém tomador, serviço e demais configurações; zera apenas o valor e a
-    data de emissão para que o usuário revise antes de transmitir.
-    """
-    emissao_origem = scoped_get_or_404(NfseNacionalEmissao, id)
-    empresa_id = tenant_id()
-
-    empresa = Empresa.query.get_or_404(empresa_id)
-    configuracoes = NfseNacionalConfiguracao.query.filter_by(
-        empresa_id=empresa_id
-    ).order_by(NfseNacionalConfiguracao.ambiente.asc()).all()
-
-    ambiente_q = (request.args.get("ambiente") or "").strip().lower()
-    if ambiente_q:
-        ambiente_selecionado = ambiente_q
-    else:
-        ativo_cfg = next((c for c in configuracoes if c.emissor_ativo), None)
-        if ativo_cfg:
-            ambiente_selecionado = (ativo_cfg.ambiente or "homologacao").strip().lower()
-        else:
-            ambiente_selecionado = (
-                configuracoes[0].ambiente if configuracoes else "homologacao"
-            )
-
-    servico = emissao_origem.servico
-    fiscal_defaults = {
-        "codigo_servico": (
-            getattr(servico, "codigo_servico", None)
-            or empresa.fiscal_principal_valor("codigo_servico")
-        ),
-        "nbs": getattr(servico, "nbs", None) or empresa.fiscal_principal_valor("nbs"),
-        "codigo_servico_opcoes": empresa.fiscal_valores_por_tipo("codigo_servico"),
-        "nbs_opcoes": empresa.fiscal_valores_por_tipo("nbs"),
-    }
-
-    return render_template(
-        "nfse_nacional/emissoes.html",
-        emissoes=[],
-        tomadores=scoped_query(Entidade).filter(
-            Entidade.tipo == "C", Entidade.ativo.is_(True)
-        ).order_by(Entidade.nome.asc()).all(),
-        servicos=scoped_query(Servico).filter(Servico.ativo.is_(True)).order_by(
-            Servico.descricao.asc()
-        ).all(),
-        configuracoes=configuracoes,
-        ambiente_selecionado=ambiente_selecionado,
-        filtro_status="",
-        filtro_busca="",
-        fiscal_defaults=fiscal_defaults,
-        replicar=emissao_origem,
-    )
-
-
 @nfse_nacional_bp.route("/listagem/<int:id>/visualizar", methods=["GET"])
 @login_required
 def visualizar(id):
@@ -2632,12 +2508,8 @@ def enviar_email(id):
     )
 
     try:
-        # O PDF anexado usa exatamente o mesmo template e os mesmos dados do
-        # DANFS-e gerado na impressão; quando o XML autorizado não existe,
-        # o documento é montado a partir dos dados já gravados na emissão.
-        danfse_data = _preparar_danfse(emissao)
+        pdf_bytes = _generar_danfs_pdf(emissao)
         empresa = current_user.empresa or emissao.empresa
-        pdf_bytes = _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data)
         nome_cliente = emissao.tomador.nome if emissao.tomador else email_cliente
         enviado = brevo_service.send_transactional_email(
             email_cliente,
@@ -2645,7 +2517,7 @@ def enviar_email(id):
             f"NFS-e Nº {numero} - {empresa.nome_fantasia or empresa.nome}",
             _construir_html_email(mensagem, empresa),
             attachment={
-                "name": f"DANFSe_{numero}.pdf",
+                "name": f"danfse_{numero}.pdf",
                 "content": pdf_bytes,
                 "content_type": "application/pdf",
             },
@@ -2752,7 +2624,7 @@ def nfse_cancelamento_substituicao():
                 )
                 
         except Exception as exc:
-            logging.error(f"Erro ao cancelar por substituição: {exc} - nfse_nacional.py:2204")
+            logging.error(f"Erro ao cancelar por substituição: {exc} - nfse_nacional.py:2514")
             flash(f"Erro ao cancelar por substituição: {exc}", "danger")
             return render_template(
                 "nfse_nacional/cancelamento_substituicao.html",
@@ -2831,6 +2703,6 @@ def nfse_consultar_imprimir():
         )
         
     except Exception as exc:
-        logging.error(f"Erro ao imprimir DANFSe da consulta: {exc} - nfse_nacional.py:2364")
+        logging.error(f"Erro ao imprimir DANFSe da consulta: {exc} - nfse_nacional.py:2593")
         flash(f"Erro ao imprimir DANFSe: {exc}", "danger")
         return redirect(url_for("nfse_nacional.nfse_consultar"))

@@ -137,25 +137,25 @@
 
             <div class="col-md-6">
                 <label class="form-label">Nome do tomador</label>
-                <input type="text" name="tomador_nome" id="tomadorNome" class="form-control ls-theme-control" placeholder="Usado quando tomador_id estiver vazio">
+                <input type="text" name="tomador_nome" id="tomadorNome" class="form-control ls-theme-control" placeholder="Usado quando tomador_id estiver vazio" value="{{ replicar.tomador.nome if replicar and replicar.tomador else '' }}">
             </div>
             <div class="col-md-3">
                 <label class="form-label">CPF/CNPJ</label>
-                <input type="text" name="tomador_documento" id="tomadorDocumento" class="form-control ls-theme-control" placeholder="CPF/CNPJ">
+                <input type="text" name="tomador_documento" id="tomadorDocumento" class="form-control ls-theme-control" placeholder="CPF/CNPJ" value="{{ replicar.tomador.cnpj_cpf if replicar and replicar.tomador else '' }}">
             </div>
             <div class="col-md-3">
                 <label class="form-label">Código interno do serviço</label>
-                <input type="text" name="codigo_interno" id="codigoInternoServico" class="form-control ls-theme-control" placeholder="SERV001" required>
+                <input type="text" name="codigo_interno" id="codigoInternoServico" class="form-control ls-theme-control" placeholder="SERV001" required value="{{ replicar.servico.codigo_interno if replicar and replicar.servico else '' }}">
             </div>
 
             <div class="col-12">
                 <label class="form-label">Descrição do serviço</label>
-                <input type="text" name="descricao" id="descricaoServico" class="form-control ls-theme-control" placeholder="Serviço prestado" required>
+                <input type="text" name="descricao" id="descricaoServico" class="form-control ls-theme-control" placeholder="Serviço prestado" required value="{{ replicar.servico.descricao if replicar and replicar.servico else '' }}">
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">Código nacional</label>
-                <input type="text" name="codigo_servico" id="codigoServico" list="codigoServicoOptions" class="form-control ls-theme-control" value="{{ fiscal_defaults.codigo_servico }}" required>
+                <input type="text" name="codigo_servico" id="codigoServico" list="codigoServicoOptions" class="form-control ls-theme-control" value="{{ replicar.servico.codigo_servico if replicar and replicar.servico else fiscal_defaults.codigo_servico }}" required>
                 <datalist id="codigoServicoOptions">
                     {% for valor in fiscal_defaults.codigo_servico_opcoes %}
                     <option value="{{ valor }}"></option>
@@ -165,7 +165,7 @@
             </div>
             <div class="col-md-4">
                 <label class="form-label">NBS</label>
-                <input type="text" name="nbs" id="nbsServico" list="nbsOptions" class="form-control ls-theme-control" value="{{ fiscal_defaults.nbs }}" required>
+                <input type="text" name="nbs" id="nbsServico" list="nbsOptions" class="form-control ls-theme-control" value="{{ replicar.servico.nbs if replicar and replicar.servico else fiscal_defaults.nbs }}" required>
                 <datalist id="nbsOptions">
                     {% for valor in fiscal_defaults.nbs_opcoes %}
                     <option value="{{ valor }}"></option>
@@ -204,15 +204,15 @@
 
             <div class="col-md-4">
                 <label class="form-label">Valor serviço</label>
-                <input type="number" step="0.01" name="valor_servico" class="form-control ls-theme-control" required>
+                <input type="number" step="0.01" name="valor_servico" class="form-control ls-theme-control" required value="{{ replicar.valor_servico if replicar else '' }}">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Deduções</label>
-                <input type="number" step="0.01" name="valor_deducoes" class="form-control ls-theme-control" value="0.00">
+                <input type="number" step="0.01" name="valor_deducoes" class="form-control ls-theme-control" value="{{ replicar.valor_deducoes if replicar else '0.00' }}">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Data de emissão</label>
-                <input type="date" name="data_emissao" class="form-control ls-theme-control">
+                <input type="date" name="data_emissao" class="form-control ls-theme-control" value="{{ replicar.criado_em.strftime('%Y-%m-%d') if replicar and replicar.criado_em else '' }}">
             </div>
 
             <div class="col-md-6">
