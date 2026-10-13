@@ -76,7 +76,6 @@ desktop.ini
 # Ignore dev-only files
 arquivos_usados/
 CriaPostgreeSQL_MontuDB/
-src/core/
 tests/
 
 # Keep important files
