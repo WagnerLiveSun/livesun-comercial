@@ -1734,29 +1734,6 @@ class EventoCobranca(db.Model):
 
 
 
-class EventoSistema(db.Model):
-    """Registro genérico de eventos auditáveis no backoffice comercial."""
-
-    __tablename__ = 'evento_sistema'
-
-    id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=True)
-    categoria = db.Column(db.String(20), nullable=False, index=True)
-    tipo = db.Column(db.String(60), nullable=False)
-    descricao = db.Column(db.String(500), nullable=True)
-    detalhes = db.Column(db.JSON, nullable=True)
-    origem_tabela = db.Column(db.String(60), nullable=True)
-    origem_id = db.Column(db.Integer, nullable=True)
-    criado_em = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
-
-    __table_args__ = (
-        db.Index('ix_evento_sistema_criado_em', 'criado_em'),
-        db.Index('ix_evento_sistema_empresa_criado', 'empresa_id', 'criado_em'),
-    )
-
-    def __repr__(self):
-        return f'<EventoSistema {self.id} {self.categoria}: {self.tipo}>'
 
 class HistoricoMudancaPlano(db.Model):
 
