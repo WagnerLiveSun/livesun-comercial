@@ -18,6 +18,9 @@ from lxml import etree
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import QName
 
+import requests
+
+from src.models import Empresa
 from src.services.nfse_validation import validate_xml
 from src.services.xml_signer import sign_xml_enveloped
 

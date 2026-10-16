@@ -1,3 +1,5 @@
+import logging
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import func
@@ -1475,7 +1477,7 @@ def reset_password():
 
         except Exception as e:
             db.session.rollback()
-            logger.error(f'Erro ao redefinir senha: {e}')
+            logging.error(f'Erro ao redefinir senha: {e}')
             flash('Erro ao redefinir senha. Tente novamente.', 'danger')
     
     return render_template('auth/reset_password.html', email=email)
