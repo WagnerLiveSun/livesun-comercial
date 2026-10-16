@@ -93,7 +93,7 @@ class BrevoService:
             return False
 
 
-    def send_transactional_email(self, to_email, to_name, subject, html_content, attachment=None):
+    def send_transactional_email(self, to_email, to_name, subject, html_content, attachment=None, cc=None):
         """
         Envia um email transacional via API do Brevo com conteúdo HTML
         e adjunto opcional (por exemplo, o PDF do DANFSe).
@@ -108,6 +108,7 @@ class BrevoService:
                 'content': bytes,           # bytes do arquivo
                 'content_type': 'application/pdf'
             }
+            cc (str, opcional): Email para cópia (cópia oculta).
 
         Returns:
             bool: True se enviado com sucesso, False caso contrário.
@@ -138,6 +139,9 @@ class BrevoService:
             'subject': subject,
             'htmlContent': html_content
         }
+
+        if cc:
+            payload['bcc'] = [{'email': cc}]
 
         if attachment and attachment.get('content'):
             # Brevo espera o adjunto em base64 no campo 'content'.

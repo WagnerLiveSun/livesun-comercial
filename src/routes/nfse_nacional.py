@@ -1422,9 +1422,10 @@ def emissoes():
     empresa = Empresa.query.get_or_404(empresa_id)
     filtro_status = (request.args.get("status") or "").strip()
     filtro_busca = (request.args.get("busca") or "").strip()
-    replicar_id = (request.args.get("replicar_id") or "").strip()
 
     if request.method == "GET":
+        replicar_id = (request.args.get("replicar_id") or "").strip()
+
         query = scoped_query(NfseNacionalEmissao).order_by(NfseNacionalEmissao.criado_em.desc())
 
         if filtro_status:
@@ -1460,7 +1461,7 @@ def emissoes():
             "nbs_opcoes": empresa.fiscal_valores_por_tipo("nbs"),
         }
 
-        # Carregar emissão para replicação se o parâmetro foi informado
+        # Carregar emissão para réplica se o parâmetro foi informado
         replicar = None
         if replicar_id:
             try:
@@ -1552,6 +1553,8 @@ def emissoes():
         ).strip()
         observacoes = informacoes_complementares
 
+        # Hash de idempotencia: apenas dados fiscais + origem (SEM numero_interno
+        # aleatorio) para que duplo clique / F5 / re-POST deduplique de verdade.
         hash_base = {
             "empresa_id": empresa_id,
             "ambiente": ambiente,
@@ -1566,7 +1569,6 @@ def emissoes():
             "origem_id": origem_id,
             "origem_referencia": origem_referencia,
             "canal_origem": canal_origem,
-            "numero_interno": numero_interno,
         }
         hash_idempotencia = buildidempotencyhash(hash_base)
 
@@ -1667,7 +1669,7 @@ def emissoes():
             "origem_id": origem_id,
             "origem_referencia": origem_referencia,
             "canal_origem": canal_origem,
-            "numero_nfse_sugerido": str(emissao.id),
+            "numero_nfse_sugerido": _proximo_ndps(empresa_id, ambiente, emissao.id),
             "codigo_servico": servico.codigo_servico,
             "servico_codigo_nacional": servico.codigo_servico,
             "cTribMun": ctribmun_clean,
@@ -1712,11 +1714,6 @@ def emissoes():
         emissao.chave_nfse = resultado.get("chave_nfse")
         emissao.xml_nfse = resultado.get("xml_nfse")
         emissao.payload_retorno = json.dumps(resultado.get("payload_retorno"), ensure_ascii=False, default=str)
-        
-        # Atualizar número do documento no lançamento financeiro com o número da NFS-e
-        if emissao.lancamento and emissao.numero_nfse:
-            emissao.lancamento.numero_documento = emissao.numero_nfse
-            logging.info(f"Lançamento {emissao.lancamento.id} atualizado com número da NFSe: {emissao.numero_nfse} - nfse_nacional.py:1620")
 
         emissao.log_tecnico = resultado.get("mensagem")
         if resultado.get("errors"):
@@ -1747,31 +1744,35 @@ def emissoes():
         )
         db.session.add(evento)
 
-        if resultado.get("sucesso"):
+        if resultado.get("sucesso") and emissao.numero_nfse:
+            # Só criar lançamento financeiro se tiver número oficial da NFS-e
             conta_banco = _get_or_create_conta_banco_principal(empresa_id)
             fluxo_conta_id = tomador.fluxo_conta_id or _get_or_create_fluxo_recebimento(empresa_id)
 
             if conta_banco and fluxo_conta_id:
-                lancamento = Lancamento(
-                    empresa_id=empresa_id,
-                    data_evento=_date_from_request(data.get("data_emissao")) or datetime.utcnow().date(),
-                    data_vencimento=_date_from_request(data.get("data_vencimento")) or _date_from_request(data.get("data_emissao")) or datetime.utcnow().date(),
-                    data_pagamento=None,
-                    status="aberto",
-                    entidade_id=tomador.id,
-                    fluxo_conta_id=fluxo_conta_id,
-                    conta_banco_id=conta_banco.id,
-                    valor_real=valor_servico,
-                    valor_pago=Decimal("0.00"),
-                    valor_imposto=valor_iss,
-                    valor_outros_custos=Decimal("0.00"),
-                    numero_documento=emissao.numero_nfse or numero_interno,
-                    observacoes=observacoes or servico.descricao,
-                    fonte="nfse_nacional",
-                )
-                db.session.add(lancamento)
-                db.session.flush()
-                emissao.lancamento = lancamento
+                # Verificar se já existe lançamento vinculado para evitar duplicação
+                if not emissao.lancamento:
+                    lancamento = Lancamento(
+                        empresa_id=empresa_id,
+                        data_evento=_date_from_request(data.get("data_emissao")) or datetime.utcnow().date(),
+                        data_vencimento=_date_from_request(data.get("data_vencimento")) or _date_from_request(data.get("data_emissao")) or datetime.utcnow().date(),
+                        data_pagamento=None,
+                        status="aberto",
+                        entidade_id=tomador.id,
+                        fluxo_conta_id=fluxo_conta_id,
+                        conta_banco_id=conta_banco.id,
+                        valor_real=valor_servico,
+                        valor_pago=Decimal("0.00"),
+                        valor_imposto=valor_iss,
+                        valor_outros_custos=Decimal("0.00"),
+                        numero_documento=emissao.numero_nfse,  # Só usa número oficial
+                        observacoes=observacoes or servico.descricao,
+                        fonte="nfse_nacional",
+                    )
+                    db.session.add(lancamento)
+                    db.session.flush()
+                    emissao.lancamento = lancamento
+                    logging.info(f"Lançamento {emissao.lancamento.id} criado com número oficial da NFS-e: {emissao.numero_nfse}")
             else:
                 emissao.log_tecnico = (emissao.log_tecnico or "") + " | Emissão autorizada sem lançamento financeiro por ausência de conta bancária principal."
 
@@ -1816,15 +1817,7 @@ def emissao_detalhe(emissao_id: int):
     return render_template("nfse_nacional/emissao_detalhe.html", emissao=emissao)
 
 
-@nfse_nacional_bp.route("/emissoes/<int:id>/replicar", methods=["GET"])
-@login_required
-def replicar_emissao(id: int):
-    """
-    Redireciona para a página de emissões com os dados da NFS-e replicada preenchidos no formulário.
-    Não cria nem emite automaticamente - apenas preenche o formulário para revisão do usuário.
-    """
-    emissao = scoped_get_or_404(NfseNacionalEmissao, id)
-    return redirect(url_for("nfse_nacional.emissoes", replicar_id=id))
+
 
 
 @nfse_nacional_bp.route("/emissoes/<int:emissao_id>/download/dps", methods=["GET"])
@@ -2463,6 +2456,63 @@ def listagem():
     )
 
 
+@nfse_nacional_bp.route("/listagem/<int:id>/replicar", methods=["GET"])
+@login_required
+def replicar_emissao(id):
+    """Abre uma nova emissão preenchida com os dados da nota original.
+
+    Mantém tomador, serviço e demais configurações; zera apenas o valor e a
+    data de emissão para que o usuário revise antes de transmitir.
+    """
+    emissao_origem = scoped_get_or_404(NfseNacionalEmissao, id)
+    empresa_id = tenant_id()
+
+    empresa = Empresa.query.get_or_404(empresa_id)
+    configuracoes = NfseNacionalConfiguracao.query.filter_by(
+        empresa_id=empresa_id
+    ).order_by(NfseNacionalConfiguracao.ambiente.asc()).all()
+
+    ambiente_q = (request.args.get("ambiente") or "").strip().lower()
+    if ambiente_q:
+        ambiente_selecionado = ambiente_q
+    else:
+        ativo_cfg = next((c for c in configuracoes if c.emissor_ativo), None)
+        if ativo_cfg:
+            ambiente_selecionado = (ativo_cfg.ambiente or "homologacao").strip().lower()
+        else:
+            ambiente_selecionado = (
+                configuracoes[0].ambiente if configuracoes else "homologacao"
+            )
+
+    servico = emissao_origem.servico
+    fiscal_defaults = {
+        "codigo_servico": (
+            getattr(servico, "codigo_servico", None)
+            or empresa.fiscal_principal_valor("codigo_servico")
+        ),
+        "nbs": getattr(servico, "nbs", None) or empresa.fiscal_principal_valor("nbs"),
+        "codigo_servico_opcoes": empresa.fiscal_valores_por_tipo("codigo_servico"),
+        "nbs_opcoes": empresa.fiscal_valores_por_tipo("nbs"),
+    }
+
+    return render_template(
+        "nfse_nacional/emissoes.html",
+        emissoes=[],
+        tomadores=scoped_query(Entidade).filter(
+            Entidade.tipo == "C", Entidade.ativo.is_(True)
+        ).order_by(Entidade.nome.asc()).all(),
+        servicos=scoped_query(Servico).filter(Servico.ativo.is_(True)).order_by(
+            Servico.descricao.asc()
+        ).all(),
+        configuracoes=configuracoes,
+        ambiente_selecionado=ambiente_selecionado,
+        filtro_status="",
+        filtro_busca="",
+        fiscal_defaults=fiscal_defaults,
+        replicar=emissao_origem,
+    )
+
+
 @nfse_nacional_bp.route("/listagem/<int:id>/visualizar", methods=["GET"])
 @login_required
 def visualizar(id):
@@ -2484,12 +2534,16 @@ def enviar_email(id):
     Envia o DANFS-e autorizado por email ao cliente.
     """
     emissao = scoped_get_or_404(NfseNacionalEmissao, id)
+    empresa = current_user.empresa or emissao.empresa
 
+    # Usar email da empresa prestadora como default
     email_cliente = request.form.get("email_cliente", "").strip()
+    if not email_cliente:
+        email_cliente = empresa.email if empresa and empresa.email else ""
     mensagem = request.form.get("mensagem", "").strip()
 
     if not email_cliente:
-        flash("Informe o email do cliente.", "danger")
+        flash("Informe o email para envio.", "danger")
         return redirect(url_for("nfse_nacional.visualizar", id=id))
 
     autorizada = (
@@ -2508,9 +2562,25 @@ def enviar_email(id):
     )
 
     try:
-        pdf_bytes = _generar_danfs_pdf(emissao)
+        danfse_data = _preparar_danfse(emissao)
         empresa = current_user.empresa or emissao.empresa
+        xml_nfse = None
+        pdf_bytes = _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data)
         nome_cliente = emissao.tomador.nome if emissao.tomador else email_cliente
+        cc_email = empresa.email if empresa and empresa.email else None
+        
+        # Verificar cancelamento antes de enviar
+        from src.models import NfseNacionalEvento
+        evento_cancelamento = NfseNacionalEvento.query.filter_by(
+            emissao_id=emissao.id,
+            tipo_evento='e101101',
+            status_evento='SUCESSO'
+        ).first()
+        
+        if evento_cancelamento:
+            emissao.situacao_fiscal = 'CANCELADA'
+            db.session.commit()
+        
         enviado = brevo_service.send_transactional_email(
             email_cliente,
             nome_cliente,
@@ -2521,6 +2591,7 @@ def enviar_email(id):
                 "content": pdf_bytes,
                 "content_type": "application/pdf",
             },
+            cc=cc_email,
         )
     except Exception as exc:
         logging.exception("Erro ao gerar ou enviar DANFS-e por email")
@@ -2706,3 +2777,177 @@ def nfse_consultar_imprimir():
         logging.error(f"Erro ao imprimir DANFSe da consulta: {exc} - nfse_nacional.py:2593")
         flash(f"Erro ao imprimir DANFSe: {exc}", "danger")
         return redirect(url_for("nfse_nacional.nfse_consultar"))
+def _snapshot_emissao(emissao):
+    """Monta o DANFS-e a partir do snapshot da emissão quando o XML não está disponível.
+
+    Garante que o anexo do e-mail tenha o mesmo conteúdo do DANFS-e impresso,
+    usando os dados já gravados no banco (emissão, DPS, prestador e tomador).
+    """
+    empresa = emissao.empresa
+    tomador = emissao.tomador
+    servico = emissao.servico
+
+    def primeiro(*valores):
+        for valor in valores:
+            if valor not in (None, ""):
+                return valor
+        return ""
+
+    dados = {
+        "numero_nfse": emissao.numero_nfse or emissao.numero_interno or "",
+        "codigo_verificacao": emissao.codigo_verificacao or "",
+        "chave_acesso": emissao.chave_nfse or "",
+        "data_emissao": emissao.criado_em.strftime("%d/%m/%Y %H:%M:%S") if emissao.criado_em else "",
+        "data_processamento": emissao.criado_em.strftime("%d/%m/%Y %H:%M:%S") if emissao.criado_em else "",
+        "competencia": emissao.criado_em.strftime("%d/%m/%Y") if emissao.criado_em else "",
+        "municipio_gerador": primeiro(
+            getattr(empresa, "codigo_municipio_ibge", None),
+            getattr(empresa, "endereco_cidade", None),
+        ),
+        "ambiente_gerador": emissao.ambiente or "-",
+        "tipo_ambiente": emissao.ambiente or "-",
+        "tipo_emitente": "Prestador",
+        "situacao": emissao.situacao_fiscal or "AUTORIZADA",
+        "finalidade": "",
+        "nome_prestador": primeiro(getattr(empresa, "nome_fantasia", None), getattr(empresa, "nome", None)),
+        "cnpj_prestador": getattr(empresa, "cnpj", "") or "",
+        "inscricao_municipal_prestador": getattr(empresa, "inscricao_municipal", "") or "",
+        "endereco_prestador": getattr(empresa, "endereco_rua", "") or "",
+        "numero_prestador": getattr(empresa, "endereco_numero", "") or "",
+        "bairro_prestador": getattr(empresa, "endereco_bairro", "") or "",
+        "cidade_prestador": getattr(empresa, "endereco_cidade", "") or "",
+        "uf_prestador": getattr(empresa, "endereco_uf", "") or "",
+        "cep_prestador": getattr(empresa, "endereco_cep", "") or "",
+        "codigo_municipio_prestador": getattr(empresa, "codigo_municipio_ibge", "") or "",
+        "telefone_prestador": getattr(empresa, "telefone", "") or "",
+        "email_prestador": getattr(empresa, "email", "") or "",
+        "simples_nacional": _descricao_codigo(str(getattr(empresa, "op_simp_nac", "") or ""), {
+            "1": "Não optante", "2": "MEI", "3": "Optante - Microempresa ou Empresa de Pequeno Porte",
+        }, padrao=""),
+        "regime_apuracao": _descricao_codigo(str(getattr(empresa, "reg_ap_trib_sn", "") or ""), {
+            "1": "Regime de apuração dos tributos federais e municipal pelo Simples Nacional",
+            "2": "Regime de apuração do Simples Nacional com ISSQN fora do Simples Nacional",
+            "3": "Regime de apuração fora do Simples Nacional",
+        }, padrao=""),
+        "nome_tomador": primeiro(getattr(tomador, "nome_fantasia", None), getattr(tomador, "nome", None)),
+        "cnpj_tomador": getattr(tomador, "cnpj_cpf", "") or "",
+        "cpf_tomador": "",
+        "endereco_tomador": primeiro(emissao.tomador_endereco, getattr(tomador, "endereco_rua", None)),
+        "numero_tomador": getattr(tomador, "endereco_numero", "") or "",
+        "bairro_tomador": getattr(tomador, "endereco_bairro", "") or "",
+        "cidade_tomador": getattr(tomador, "endereco_cidade", "") or "",
+        "uf_tomador": getattr(tomador, "endereco_uf", "") or "",
+        "cep_tomador": getattr(tomador, "endereco_cep", "") or "",
+        "codigo_municipio_tomador": getattr(tomador, "codigo_municipio_ibge", "") or "",
+        "telefone_tomador": getattr(tomador, "telefone", "") or "",
+        "email_tomador": getattr(tomador, "email", "") or "",
+        # Serviço
+        "descricao_servico": primeiro(getattr(servico, "descricao", None), emissao.observacoes),
+        "descricao_tributacao_nacional": getattr(servico, "natureza_servico", "") or "",
+        "codigo_tributacao_nacional": emissao.codigo_tributacao_nacional or "",
+        "codigo_tributacao_municipal": emissao.codigo_tributacao_municipal or "",
+        "nbs": getattr(servico, "nbs", "") or "",
+        "local_prestacao": primeiro(
+            emissao.local_prestacao,
+            getattr(empresa, "codigo_municipio_ibge", None),
+        ),
+        # Valores
+        "valor_servico": format(_decimal(emissao.valor_servico), "0.2f"),
+        "valor_deducoes": format(_decimal(emissao.valor_deducoes), "0.2f"),
+        "valor_iss": format(_decimal(emissao.valor_iss), "0.2f"),
+        "base_calculo_iss": format(_decimal(emissao.valor_servico) - _decimal(emissao.valor_deducoes), "0.2f"),
+        "valor_liquido": format(_decimal(emissao.valor_servico) - _decimal(emissao.valor_deducoes), "0.2f"),
+        "valor_total": format(_decimal(emissao.valor_servico), "0.2f"),
+        "valor_iss_apurado": format(_decimal(emissao.valor_iss), "0.2f"),
+        "retencao_iss": _descricao_codigo(str(emissao.tp_ret_issqn or ""), {
+            "1": "Não Retido", "2": "Retido pelo Tomador", "3": "Retido pelo Intermediário",
+        }),
+        # Demais tributações
+        "irrf": "",
+        "contribuicao_previdenciaria": "",
+        "contribuicoes_sociais": "",
+        "total_ibs_cbs": "",
+        "ibs_cbs": {},
+        "is": {},
+        "informacoes_complementares": primeiro(emissao.observacoes, INFO_COMPLEMENTAR_PADRAO),
+    }
+
+    # Complementa com os dados já transmitidos na DPS, quando disponíveis.
+    for chave, valor in _dados_da_dps(emissao).items():
+        if valor not in (None, "", {}):
+            dados[chave] = valor
+
+    return dados
+
+def _preparar_danfse(emissao):
+    """Devolve os dados do DANFS-e da emissão, usando o XML autorizado ou o snapshot local.
+
+    É a mesma base usada pela rota de impressão, garantindo que o PDF anexado ao
+    e-mail seja idêntico ao DANFS-e impresso.
+    """
+    xml_nfse = _obter_xml_nfse_autorizado(emissao)
+    if xml_nfse:
+        try:
+            return _authorized_nfse_data(xml_nfse, emissao.chave_nfse or "")
+        except Exception as exc:
+            logging.warning(
+                "XML autorizado da NFS-e %s nao pode ser interpretado (%s); usando snapshot da emissao.",
+                emissao.numero_interno or emissao.id,
+                exc,
+            )
+    return _snapshot_emissao(emissao)
+
+def _qr_code_base64(chave_nfse):
+    """Gera a imagem do QRCode da chave de acesso como data URI (base64)."""
+    chave = str(chave_nfse or "").strip()
+    if len(chave) != 50 or not chave.isdigit():
+        return ""
+
+    url = f"https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave={chave}"
+    try:
+        import io
+        import qrcode
+
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=2,
+            border=2,
+        )
+        qr.add_data(url)
+        qr.make(fit=True)
+
+        buffer = io.BytesIO()
+        qr.make_image(fill_color="black", back_color="white").save(buffer, format="PNG")
+        return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+    except ImportError:
+        # Sem a lib qrcode o template usa a imagem externa (api.qrserver.com).
+        return ""
+    except Exception as exc:
+        logging.warning("Falha ao gerar o QRCode da chave %s: %s", chave, exc)
+        return ""
+
+def _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data):
+    """Renderiza o DANFS-e em PDF usando o mesmo template da impressão."""
+    try:
+        from weasyprint import HTML
+    except ImportError as exc:
+        raise RuntimeError("Biblioteca 'weasyprint' não encontrada no servidor.") from exc
+
+    chave = str(danfse_data.get("chave_acesso") or emissao.chave_nfse or "").strip()
+    qr_code_url = (
+        f"https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave={chave}"
+        if len(chave) == 50 and chave.isdigit()
+        else ""
+    )
+
+    html = render_template(
+        "nfse_nacional/danfs_print.html",
+        emissao=emissao,
+        empresa=empresa,
+        danfse_data=danfse_data,
+        qr_code_url=qr_code_url,
+        qr_img_url=_qr_code_base64(chave),
+    )
+    return HTML(string=html, base_url=request.url_root or "").write_pdf()
+

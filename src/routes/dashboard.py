@@ -23,7 +23,6 @@ from src.models import (
     Empresa,
     AssinaturaEmpresa,
     NfseNacionalEmissao,
-    ImportacaoNFSe,
 )
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -85,7 +84,7 @@ def index():
             link_pagamento=link_pagamento,
         )
     except Exception as e:
-        logging.error('Erro no dashboard geral: %s\n%s', e, traceback.format_exc())
+        logging.error('Erro no dashboard geral: %s\n%s - dashboard.py:87', e, traceback.format_exc())
         from flask import abort
         abort(500)
 
@@ -132,7 +131,7 @@ def comercial():
             valor_total_pedidos=valor_total_pedidos,
         )
     except Exception as e:
-        logging.error('Erro no dashboard comercial: %s\n%s', e, traceback.format_exc())
+        logging.error('Erro no dashboard comercial: %s\n%s - dashboard.py:134', e, traceback.format_exc())
         from flask import abort
         abort(500)
 
@@ -323,7 +322,7 @@ def financeiro():
             total_recebido_mes=total_recebido_mes,
         )
     except Exception as e:
-        logging.error('Erro no dashboard financeiro: %s\n%s', e, traceback.format_exc())
+        logging.error('Erro no dashboard financeiro: %s\n%s - dashboard.py:325', e, traceback.format_exc())
         from flask import abort
         abort(500)
 
@@ -376,7 +375,7 @@ def locacao():
             taxa_ocupacao=round(taxa_ocupacao, 1),
         )
     except Exception as e:
-        logging.error('Erro no dashboard locação: %s\n%s', e, traceback.format_exc())
+        logging.error('Erro no dashboard locação: %s\n%s - dashboard.py:378', e, traceback.format_exc())
         from flask import abort
         abort(500)
 
@@ -432,7 +431,7 @@ def propostas():
             taxa_aprovacao=round(taxa_aprovacao, 1),
         )
     except Exception as e:
-        logging.error('Erro no dashboard propostas: %s\n%s', e, traceback.format_exc())
+        logging.error('Erro no dashboard propostas: %s\n%s - dashboard.py:434', e, traceback.format_exc())
         from flask import abort
         abort(500)
 
@@ -591,7 +590,7 @@ def fiscal():
             ultimas_nfse=ultimas_nfse,
         )
     except Exception as e:
-        logging.error('Erro no dashboard fiscal: %s\n%s', e, traceback.format_exc())
+        logging.error('Erro no dashboard fiscal: %s\n%s - dashboard.py:532', e, traceback.format_exc())
         from flask import abort
         abort(500)
 

@@ -98,7 +98,7 @@
             </div>
         </div>
     </div>
-    <form method="post">
+    <form method="post" id="formEmitirNfse">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row g-3">
             {# Ambiente mostrado no resumo da empresa; removido aqui para evitar redundância #}
@@ -238,11 +238,24 @@
             </div>
 
             <div class="col-12 d-grid">
-                <button type="submit" class="btn ls-btn-primary">Emitir NFS-e</button>
+                <button type="submit" class="btn ls-btn-primary" id="btnEmitirNfse">Emitir NFS-e</button>
             </div>
         </div>
     </form>
 </div>
+
+<script>
+(function () {
+    // Trava anti-duplo-clique: desabilita o botao no submit (a SEFIN pode demorar ate 60s).
+    const formEmitir = document.getElementById('formEmitirNfse') || document.querySelector('form[method=\"post\"]');
+    const btnEmitir = document.getElementById('btnEmitirNfse');
+    if (formEmitir && btnEmitir) {
+        formEmitir.addEventListener('submit', function () {
+            btnEmitir.disabled = true;
+            btnEmitir.innerHTML = '<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span> Emitindo...';
+        });
+    }
+})();
 
 <script>
 (function () {

@@ -939,6 +939,55 @@ def transmitiremissao(payload: dict, configuracao=None) -> dict:
             retorno.get("raw") if isinstance(retorno, dict) else retorno
         )
 
+        # A SEFIN devolve o XML da NFS-e dentro de nfseXmlGZipB64 (gzip + base64).
+        # O JSON não traz numero_nfse nem codigo_verificacao: eles só estão no XML.
+        numero_nfse = None
+        codigo_verificacao = None
+        xml_nfse = None
+        if isinstance(retorno, dict):
+            xml_b64 = (
+                retorno.get("nfseXmlGZipB64")
+                or retorno.get("nfseXml")
+                or retorno.get("xml")
+            )
+            if xml_b64 and isinstance(xml_b64, str) and len(xml_b64) > 100:
+                try:
+                    import gzip
+                    import base64
+                    import xml.etree.ElementTree as ET
+                    xml_bytes = base64.b64decode(xml_b64)
+                    if xml_bytes[:2] == b"\x1f\x8b":
+                        xml_bytes = gzip.decompress(xml_bytes)
+                    xml_text = xml_bytes.decode("utf-8")
+                    xml_nfse = xml_text
+                    root = ET.fromstring(xml_text)
+                    for ns in (
+                        {"nfse": "http://www.sped.fazenda.gov.br/nfse"},
+                        {"nfse": "http://www.abrasf.org.br/nfse"},
+                        {},
+                    ):
+                        nNFSe = (
+                            root.find(".//nfse:nNFSe", ns) or root.find(".//nNFSe", ns)
+                        )
+                        cv = (
+                            root.find(".//nfse:codigoVerificacao", ns)
+                            or root.find(".//codigoVerificacao", ns)
+                        )
+                        if nNFSe is not None and nNFSe.text:
+                            numero_nfse = nNFSe.text.strip()
+                        if cv is not None and cv.text:
+                            codigo_verificacao = cv.text.strip()
+                        if numero_nfse:
+                            break
+                except Exception:
+                    pass
+            if not xml_nfse:
+                xml_nfse = (
+                    response.text
+                    if str(response.text or "").lstrip().startswith("<")
+                    else None
+                )
+
         return {
             "sucesso": response.ok,
             "status": (
@@ -948,10 +997,10 @@ def transmitiremissao(payload: dict, configuracao=None) -> dict:
                 retorno.get("situacao_fiscal") if isinstance(retorno, dict) else None
             ) or ("AUTORIZADA" if response.ok else "REJEITADA"),
             "protocolo": retorno.get("protocolo") if isinstance(retorno, dict) else None,
-            "numero_nfse": retorno.get("numero_nfse") if isinstance(retorno, dict) else None,
-            "codigo_verificacao": retorno.get("codigo_verificacao") if isinstance(retorno, dict) else None,
+            "numero_nfse": numero_nfse,
+            "codigo_verificacao": codigo_verificacao,
             "chave_nfse": retorno.get("chaveAcesso") if isinstance(retorno, dict) else None,
-            "xml_nfse": response.text if str(response.text or "").lstrip().startswith("<") else None,
+            "xml_nfse": xml_nfse,
             "payload_retorno": {
                 "request_url": request_url,
                 "request_content_type": headers_json["Content-Type"],
