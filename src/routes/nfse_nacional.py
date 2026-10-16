@@ -328,6 +328,83 @@ def _sincronizar_cancelamento_emissao(emissao, consultar_api=True):
         return False
 
 
+def sincronizar_cancelamentos_pendentes(empresa_id, limite_api=3, limite_dias=90):
+    """Marca como CANCELADA emissões cujo cancelamento já ocorreu mas não foi gravado.
+
+    Cobre o caso das notas canceladas pela rota antiga de cancelamento por chave,
+    que transmitia o evento à SEFIN mas não atualizava a emissão.
+
+    Fases:
+    1. Fontes locais (campos ``cancelado_em``/``protocolo_cancelamento`` ou evento
+       ``e101101`` já registrado) — sem custo de rede;
+    2. API nacional (histórico de eventos) — limitada a ``limite_api`` consultas
+       por chamada, para não lentar painéis e listagens.
+
+    Retorna o número de emissões marcadas como CANCELADA nesta chamada.
+    """
+    if not empresa_id:
+        return 0
+
+    from datetime import timedelta
+
+    desde = datetime.utcnow() - timedelta(days=limite_dias)
+
+    def _nao_cancelada():
+        return db.or_(
+            NfseNacionalEmissao.situacao_fiscal != "CANCELADA",
+            NfseNacionalEmissao.status_processamento != "CANCELADA",
+        )
+
+    base = NfseNacionalEmissao.query.filter(
+        NfseNacionalEmissao.empresa_id == empresa_id,
+        _nao_cancelada(),
+        NfseNacionalEmissao.criado_em >= desde,
+    )
+
+    atualizadas = 0
+
+    # Eventos e101101 (cancelamento) já registrados localmente
+    ids_evento_cancelamento = [
+        row[0]
+        for row in db.session.query(NfseNacionalEvento.emissao_id).filter(
+            NfseNacionalEvento.empresa_id == empresa_id,
+            NfseNacionalEvento.tipo_evento == "e101101",
+            NfseNacionalEvento.status_evento == "SUCESSO",
+        ).distinct().all()
+    ]
+
+    # Fase 1: fontes locais (sem chamada à API)
+    candidatas_locais = base.filter(
+        db.or_(
+            NfseNacionalEmissao.cancelado_em.isnot(None),
+            NfseNacionalEmissao.protocolo_cancelamento.isnot(None),
+            NfseNacionalEmissao.id.in_(ids_evento_cancelamento),
+        )
+    ).all()
+    for emissao in candidatas_locais:
+        if _sincronizar_cancelamento_emissao(emissao, consultar_api=False):
+            atualizadas += 1
+
+    # Fase 2: API nacional (histórico de eventos), chamadas limitadas
+    consultas_api = 0
+    candidatas_api = base.filter(
+        NfseNacionalEmissao.situacao_fiscal == "AUTORIZADA",
+        NfseNacionalEmissao.cancelado_em.is_(None),
+        NfseNacionalEmissao.protocolo_cancelamento.is_(None),
+        db.not_(NfseNacionalEmissao.id.in_(ids_evento_cancelamento)),
+    ).order_by(NfseNacionalEmissao.criado_em.desc()).all()
+    for emissao in candidatas_api:
+        if consultas_api >= limite_api:
+            break
+        if not emissao.chave_nfse or len(str(emissao.chave_nfse)) != 50:
+            continue
+        consultas_api += 1
+        if _sincronizar_cancelamento_emissao(emissao, consultar_api=True):
+            atualizadas += 1
+
+    return atualizadas
+
+
 def _dados_da_dps(emissao):
     """Dados da DPS (XML sempre armazenado na emissão) para complementar o DANFS-e."""
     import xml.etree.ElementTree as ET
@@ -2557,23 +2634,17 @@ def listagem():
     
     emissoes = pagination.items
     
-    # Sincroniza cancelamentos para refletir na listagem. A consulta à API
-    # nacional é limitada por carregamento para não lentar a página; as
-    # demais emissões são atualizadas apenas com as fontes locais.
-    consultas_api = 0
-    for item in emissoes:
-        pode_consultar_api = (
-            consultas_api < 4
-            and item.situacao_fiscal == "AUTORIZADA"
-            and item.chave_nfse
-            and len(str(item.chave_nfse)) == 50
-            and not (item.cancelado_em or item.protocolo_cancelamento)
+    # Sincroniza cancelamentos que já ocorreram mas não foram gravados. A
+    # consulta à API nacional é limitada por carregamento para não lentar a
+    # página; a função cobre emissões recentes da empresa inteira (não apenas
+    # a página atual).
+    try:
+        sincronizar_cancelamentos_pendentes(tenant_id())
+    except Exception as exc:
+        logging.warning(
+            "Falha ao sincronizar cancelamentos na listagem de NFS-e: %s", exc
         )
-        if pode_consultar_api:
-            consultas_api += 1
-            _sincronizar_cancelamento_emissao(item, consultar_api=True)
-        else:
-            _sincronizar_cancelamento_emissao(item, consultar_api=False)
+        db.session.rollback()
     
     return render_template(
         "nfse_nacional/listagem.html",

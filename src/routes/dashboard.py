@@ -447,6 +447,18 @@ def fiscal():
         primeiro_dia_mes = hoje.replace(day=1)
         empresa_id = current_user.empresa_id
 
+        # Sincroniza cancelamentos que já ocorreram mas não foram gravados
+        # (ex.: cancelamentos feitos pelo sistema que só atualizavam a SEFIN).
+        # Sem isso, notas canceladas continuariam contadas como autorizadas.
+        try:
+            from src.routes.nfse_nacional import sincronizar_cancelamentos_pendentes
+            sincronizar_cancelamentos_pendentes(empresa_id)
+        except Exception as exc:
+            logging.warning(
+                'Falha ao sincronizar cancelamentos no painel fiscal: %s', exc
+            )
+            db.session.rollback()
+
         # NFS-e emitidas no mês.
         # Uma nota vale como emitida quando está autorizada fiscalmente.
         # O status_processamento grava variações como AUTORIZADA_LOCALMENTE,
