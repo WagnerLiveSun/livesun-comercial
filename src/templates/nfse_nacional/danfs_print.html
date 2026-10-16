@@ -294,7 +294,7 @@
     </style>
 </head>
 <body>
-{% if emissao.situacao_fiscal == 'CANCELADA' %}
+{% if emissao.situacao_fiscal == 'CANCELADA' or emissao.status_processamento == 'CANCELADA' or emissao.cancelado_em %}
 <div class="watermark">NOTA CANCELADA</div>
 {% endif %}
 <div class="danfs">

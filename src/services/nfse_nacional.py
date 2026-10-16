@@ -6,6 +6,7 @@ import hashlib
 import json as _json
 import logging
 import os
+import re
 import tempfile
 import unicodedata
 import uuid
@@ -1814,4 +1815,119 @@ def consultar_nfse(
             try:
                 os.remove(path)
             except Exception:
+                pass
+
+
+def consultareventosnfse(
+    chave_nfse: str,
+    configuracao=None,
+    timeout: int = 20,
+) -> dict:
+    """Consulta os eventos de uma NFS-e na API NFS-e Nacional.
+
+    Usado para detectar cancelamentos processados fora do fluxo principal
+    (ex.: cancelamento por chave no portal nacional). Retorna
+    ``cancelado=True`` quando um evento de cancelamento (e101101) aparece
+    no historico de eventos da NFS-e.
+    """
+    import requests
+
+    chave = only_digits(chave_nfse)
+    if len(chave) != 50:
+        return {
+            "sucesso": False,
+            "status": "ERRO_VALIDACAO",
+            "mensagem": f"Chave de acesso deve ter 50 digitos. Recebido: {len(chave)}",
+            "cancelado": False,
+            "protocolo": None,
+            "httpstatus": 400,
+        }
+
+    ambiente = getattr(configuracao, "ambiente", None) if configuracao else None
+    empresa_id = getattr(configuracao, "empresa_id", None) if configuracao else None
+
+    base_emissao = get_base_emissao(configuracao=configuracao, ambiente=ambiente)
+    request_url = f"{base_emissao}/nfse/{chave}/eventos"
+
+    headers_json = {"Accept": "application/json, application/xml"}
+    cert_paths: list[str] = []
+
+    try:
+        pfx_path, pfx_pass = resolve_certificate_settings(empresa_id=empresa_id, ambiente=ambiente)
+        cert = None
+        if pfx_path:
+            cert_pem, key_pem, cert_paths = prepare_mtls_from_pfx(pfx_path, pfx_pass)
+            cert = (cert_pem, key_pem)
+
+        response = requests.get(
+            request_url,
+            headers=headers_json,
+            cert=cert,
+            timeout=timeout,
+            verify=os.environ.get("NFS_CA_BUNDLE") or True,
+        )
+
+        texto_resposta = response.text or ""
+        if str(texto_resposta).lstrip()[:1] in ("{", "["):
+            try:
+                texto_resposta = _json.dumps(response.json(), ensure_ascii=False)
+            except Exception:
+                pass
+
+        # Evento de cancelamento (e101101) presente no historico = NFS-e cancelada.
+        cancelado = bool(re.search(r"e101101", texto_resposta, re.IGNORECASE))
+
+        protocolo = None
+        match_protocolo = re.search(
+            r'"(?:protocolo|numeroProtocolo)"\s*:\s*"?(\d{6,20})"?|<protocolo[^>]*>(\d{6,20})</protocolo>',
+            texto_resposta,
+            re.IGNORECASE,
+        )
+        if match_protocolo:
+            protocolo = match_protocolo.group(1) or match_protocolo.group(2)
+
+        return {
+            "sucesso": response.ok,
+            "status": "ENCONTRADA" if response.ok else "NAO_ENCONTRADA",
+            "mensagem": (
+                "Eventos consultados com sucesso."
+                if response.ok
+                else f"Erro na consulta de eventos: {response.status_code}"
+            ),
+            "cancelado": cancelado,
+            "protocolo": protocolo,
+            "httpstatus": response.status_code,
+            "payload_retorno": {
+                "request_url": request_url,
+                "response_status": response.status_code,
+                "response_body": texto_resposta[:20000],
+            },
+        }
+
+    except requests.exceptions.SSLError as exc:
+        return {
+            "sucesso": False,
+            "status": "ERRO_SSL",
+            "mensagem": f"Falha SSL no transporte para o endpoint configurado: {exc}",
+            "cancelado": False,
+            "protocolo": None,
+            "httpstatus": 495,
+        }
+
+    except requests.exceptions.RequestException as exc:
+        return {
+            "sucesso": False,
+            "status": "ERRO_TRANSPORTE",
+            "mensagem": f"Falha no transporte para o endpoint configurado: {exc}",
+            "cancelado": False,
+            "protocolo": None,
+            "httpstatus": 503,
+        }
+
+    finally:
+        for path in cert_paths:
+            try:
+                os.remove(path)
+            except Exception:
+                pass
                 pass

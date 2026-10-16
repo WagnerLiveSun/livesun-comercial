@@ -23,8 +23,9 @@ from src.models import (
     Empresa,
     AssinaturaEmpresa,
     NfseNacionalEmissao,
+    ImportacaoNFSe,
 )
-from sqlalchemy import func
+from sqlalchemy import func, and_
 from datetime import datetime, timedelta
 from decimal import Decimal
 from src.services.assinatura import ServicoAssinatura
@@ -450,7 +451,7 @@ def fiscal():
         # Uma nota vale como emitida quando está autorizada fiscalmente.
         # O status_processamento grava variações como AUTORIZADA_LOCALMENTE,
         # por isso a situacao_fiscal é o critério confiável.
-        filtro_emitidas = db.and_(
+        filtro_emitidas = and_(
             NfseNacionalEmissao.empresa_id == empresa_id,
             NfseNacionalEmissao.criado_em >= primeiro_dia_mes,
             NfseNacionalEmissao.situacao_fiscal == 'AUTORIZADA',
@@ -523,26 +524,34 @@ def fiscal():
         # NFS-e importadas de XML (próprias e de terceiros).
         # A importação só grava o registro quando o processamento tem sucesso,
         # então status_importacao diferente de 'sucesso' é desconsiderado.
-        filtro_importadas_validas = db.and_(
-            ImportacaoNFSe.empresa_id == empresa_id,
-            ImportacaoNFSe.status_importacao == 'sucesso',
-        )
+        # Bloco defensivo: se a tabela 'importacao_nfse' ainda não existir no
+        # banco de produção (migração pendente), cai para zero em vez de 500.
+        try:
+            filtro_importadas_validas = and_(
+                ImportacaoNFSe.empresa_id == empresa_id,
+                ImportacaoNFSe.status_importacao == 'sucesso',
+            )
 
-        importadas_mes = ImportacaoNFSe.query.filter(
-            filtro_importadas_validas,
-            ImportacaoNFSe.data_emissao >= primeiro_dia_mes,
-        ).count()
+            importadas_mes = ImportacaoNFSe.query.filter(
+                filtro_importadas_validas,
+                ImportacaoNFSe.data_emissao >= primeiro_dia_mes,
+            ).count()
 
-        valor_importado_mes = db.session.query(func.sum(ImportacaoNFSe.valor_bruto)).filter(
-            filtro_importadas_validas,
-            ImportacaoNFSe.data_emissao >= primeiro_dia_mes,
-        ).scalar() or Decimal('0')
+            valor_importado_mes = db.session.query(func.sum(ImportacaoNFSe.valor_bruto)).filter(
+                filtro_importadas_validas,
+                ImportacaoNFSe.data_emissao >= primeiro_dia_mes,
+            ).scalar() or Decimal('0')
 
-        importadas_total = ImportacaoNFSe.query.filter(filtro_importadas_validas).count()
+            importadas_total = ImportacaoNFSe.query.filter(filtro_importadas_validas).count()
 
-        valor_importado_total = db.session.query(func.sum(ImportacaoNFSe.valor_bruto)).filter(
-            filtro_importadas_validas
-        ).scalar() or Decimal('0')
+            valor_importado_total = db.session.query(func.sum(ImportacaoNFSe.valor_bruto)).filter(
+                filtro_importadas_validas
+            ).scalar() or Decimal('0')
+        except Exception:
+            importadas_mes = 0
+            valor_importado_mes = Decimal('0')
+            importadas_total = 0
+            valor_importado_total = Decimal('0')
 
         # Total consolidado: emitidas pelo sistema + importadas de XML.
         total_notas_mes = nfse_emitidas_mes + importadas_mes

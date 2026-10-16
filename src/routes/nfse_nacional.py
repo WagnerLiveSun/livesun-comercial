@@ -41,6 +41,7 @@ from src.services.nfse_nacional import (
     generateinternalnumber,
     transmitiremissao,
     consultar_nfse,
+    consultareventosnfse,
     transmitireventocancelamentosubstituicao,
     normalizar_versao_layout,
     resolve_xsd_path,
@@ -216,6 +217,115 @@ def _obter_xml_nfse_autorizado(emissao, consultar_api=True):
         except Exception as exc:
             logging.warning("Falha ao consultar o XML da NFS-e %s: %s", emissao.chave_nfse, exc)
     return ""
+
+
+def _gravar_cancelamento_local(emissao, protocolo=None, motivo=None, payload_retorno=None, usuario_id=None):
+    """Grava os campos de cancelamento e o evento e101101 na emissão.
+
+    Não faz commit; o chamador decide quando persistir.
+    """
+    emissao.situacao_fiscal = "CANCELADA"
+    emissao.status_processamento = "CANCELADA"
+    if protocolo and not emissao.protocolo_cancelamento:
+        emissao.protocolo_cancelamento = str(protocolo)
+    if motivo and not emissao.motivo_cancelamento:
+        emissao.motivo_cancelamento = motivo
+    if not emissao.cancelado_em:
+        emissao.cancelado_em = datetime.utcnow()
+    if usuario_id and not emissao.cancelado_por_id:
+        emissao.cancelado_por_id = usuario_id
+    if payload_retorno is not None and not emissao.payload_cancelamento:
+        try:
+            emissao.payload_cancelamento = json.dumps(payload_retorno, ensure_ascii=False, default=str)
+        except Exception:
+            emissao.payload_cancelamento = str(payload_retorno)
+
+    evento_cancelamento = NfseNacionalEvento.query.filter_by(
+        emissao_id=emissao.id,
+        tipo_evento="e101101",
+    ).first()
+    if not evento_cancelamento:
+        db.session.add(
+            NfseNacionalEvento(
+                empresa_id=emissao.empresa_id,
+                emissao=emissao,
+                tipo_evento="e101101",
+                status_evento="SUCESSO",
+                protocolo=emissao.protocolo_cancelamento,
+                mensagem=emissao.motivo_cancelamento or "Cancelamento processado.",
+                payload_retorno=emissao.payload_cancelamento,
+                criado_por_user_id=usuario_id,
+            )
+        )
+
+
+def _sincronizar_cancelamento_emissao(emissao, consultar_api=True):
+    """Garante que emissões canceladas estejam com status CANCELADA.
+
+    Fontes de verdade, nesta ordem:
+    1. Campos locais (cancelado_em / protocolo_cancelamento);
+    2. Evento e101101 registrado localmente;
+    3. Histórico de eventos na API nacional (quando ``consultar_api``).
+
+    Retorna True quando a emissão foi marcada como cancelada nesta chamada.
+    """
+    try:
+        cancelada_local = bool(emissao.cancelado_em or emissao.protocolo_cancelamento)
+        if not cancelada_local:
+            cancelada_local = (
+                NfseNacionalEvento.query.filter_by(
+                    emissao_id=emissao.id,
+                    tipo_evento="e101101",
+                    status_evento="SUCESSO",
+                ).first()
+                is not None
+            )
+
+        if cancelada_local:
+            if emissao.situacao_fiscal != "CANCELADA" or emissao.status_processamento != "CANCELADA":
+                _gravar_cancelamento_local(emissao)
+                db.session.commit()
+                return True
+            return False
+
+        if not consultar_api:
+            return False
+        if emissao.situacao_fiscal != "AUTORIZADA":
+            return False
+        if not emissao.chave_nfse or len(str(emissao.chave_nfse)) != 50:
+            return False
+
+        configuracao = emissao.configuracao or NfseNacionalConfiguracao.query.filter_by(
+            empresa_id=emissao.empresa_id,
+            ambiente=emissao.ambiente or "homologacao",
+        ).first()
+
+        resultado = consultareventosnfse(
+            chave_nfse=emissao.chave_nfse,
+            configuracao=configuracao,
+        )
+        if resultado.get("cancelado"):
+            _gravar_cancelamento_local(
+                emissao,
+                protocolo=resultado.get("protocolo"),
+                motivo="Cancelamento localizado no historico de eventos da API nacional.",
+                payload_retorno=resultado.get("payload_retorno"),
+            )
+            db.session.commit()
+            logging.info(
+                "NFS-e %s marcada como CANCELADA apos consulta de eventos na API.",
+                emissao.chave_nfse,
+            )
+            return True
+        return False
+    except Exception as exc:
+        db.session.rollback()
+        logging.warning(
+            "Falha ao sincronizar cancelamento da NFS-e %s: %s",
+            getattr(emissao, "id", "?"),
+            exc,
+        )
+        return False
 
 
 def _dados_da_dps(emissao):
@@ -1814,6 +1924,7 @@ def emissoes():
 @login_required
 def emissao_detalhe(emissao_id: int):
     emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
+    _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
     return render_template("nfse_nacional/emissao_detalhe.html", emissao=emissao)
 
 
@@ -1866,17 +1977,8 @@ def emissao_imprimir_danfs(emissao_id: int):
     # Recarregar empresa do banco para garantir dados atualizados (incluindo logo)
     db.session.refresh(empresa)
     
-    # Verificar se há eventos de cancelamento processados com sucesso
-    from src.models import NfseNacionalEvento
-    evento_cancelamento = NfseNacionalEvento.query.filter_by(
-        emissao_id=emissao.id,
-        tipo_evento='e101101',
-        status_evento='SUCESSO'
-    ).first()
-    
-    if evento_cancelamento:
-        emissao.situacao_fiscal = 'CANCELADA'
-        db.session.commit()
+    # Sincroniza cancelamento (campos locais, evento e API nacional)
+    _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
     
     # Tentar extrair o XML correto da NFS-e (não DPS)
     xml_nfse = None
@@ -2155,19 +2257,30 @@ def cancelamento():
             )
             
             if resultado.get("sucesso"):
-                # Encontrar a emissão pela chave de acesso e excluir o lançamento
+                # Encontrar a emissão pela chave de acesso, gravar o cancelamento
+                # e excluir o lançamento financeiro associado.
                 emissao = NfseNacionalEmissao.query.filter_by(
                     empresa_id=empresa_id,
                     chave_nfse=chave_acesso
                 ).first()
-                
-                if emissao and emissao.lancamento:
-                    lancamento = emissao.lancamento
-                    db.session.delete(lancamento)
-                    emissao.lancamento = None
-                    logging.info(f"Lançamento financeiro {lancamento.id} excluído ao cancelar NFSe pela chave {chave_acesso} - nfse_nacional.py:2062")
+
+                if emissao:
+                    _gravar_cancelamento_local(
+                        emissao,
+                        protocolo=resultado.get("protocolo"),
+                        motivo=descricao_motivo,
+                        payload_retorno=resultado.get("payload_retorno"),
+                        usuario_id=current_user.id,
+                    )
+
+                    if emissao.lancamento:
+                        lancamento = emissao.lancamento
+                        db.session.delete(lancamento)
+                        emissao.lancamento = None
+                        logging.info(f"Lançamento financeiro {lancamento.id} excluído ao cancelar NFSe pela chave {chave_acesso} - nfse_nacional.py:2062")
+
                     db.session.commit()
-                
+
                 flash("Cancelamento realizado com sucesso.", "success")
                 return render_template(
                     "nfse_nacional/cancelamento.html",
@@ -2264,16 +2377,14 @@ def cancelar_emissao(emissao_id):
         )
         
         if resultado.get("sucesso"):
-            # Atualizar status da emissão
-            emissao.situacao_fiscal = "CANCELADA"
-            emissao.status_processamento = "CANCELADA"
-            emissao.protocolo_cancelamento = resultado.get("protocolo")
-            emissao.motivo_cancelamento = descricao_motivo
-            emissao.cancelado_em = datetime.utcnow()
-            emissao.cancelado_por_id = current_user.id
-            
-            # Salvar payload de retorno do cancelamento
-            emissao.payload_cancelamento = json.dumps(resultado.get("payload_retorno"), ensure_ascii=False, default=str)
+            # Atualizar status da emissão (campos + evento e101101)
+            _gravar_cancelamento_local(
+                emissao,
+                protocolo=resultado.get("protocolo"),
+                motivo=descricao_motivo,
+                payload_retorno=resultado.get("payload_retorno"),
+                usuario_id=current_user.id,
+            )
             
             # Excluir lançamento financeiro associado, se existir
             if emissao.lancamento:
@@ -2446,6 +2557,24 @@ def listagem():
     
     emissoes = pagination.items
     
+    # Sincroniza cancelamentos para refletir na listagem. A consulta à API
+    # nacional é limitada por carregamento para não lentar a página; as
+    # demais emissões são atualizadas apenas com as fontes locais.
+    consultas_api = 0
+    for item in emissoes:
+        pode_consultar_api = (
+            consultas_api < 4
+            and item.situacao_fiscal == "AUTORIZADA"
+            and item.chave_nfse
+            and len(str(item.chave_nfse)) == 50
+            and not (item.cancelado_em or item.protocolo_cancelamento)
+        )
+        if pode_consultar_api:
+            consultas_api += 1
+            _sincronizar_cancelamento_emissao(item, consultar_api=True)
+        else:
+            _sincronizar_cancelamento_emissao(item, consultar_api=False)
+    
     return render_template(
         "nfse_nacional/listagem.html",
         emissoes=emissoes,
@@ -2520,6 +2649,7 @@ def visualizar(id):
     Rota para visualizar detalhes de uma NFS-e emitida.
     """
     emissao = scoped_get_or_404(NfseNacionalEmissao, id)
+    _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
     
     return render_template(
         "nfse_nacional/visualizar.html",
@@ -2546,6 +2676,10 @@ def enviar_email(id):
         flash("Informe o email para envio.", "danger")
         return redirect(url_for("nfse_nacional.visualizar", id=id))
 
+    # Sincroniza cancelamento (campos locais, evento e API nacional) antes de
+    # decidir se o envio é permitido e para marcar o DANFS-e no PDF.
+    _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
+
     autorizada = (
         emissao.status_processamento == "AUTORIZADA"
         or emissao.situacao_fiscal == "AUTORIZADA"
@@ -2568,18 +2702,6 @@ def enviar_email(id):
         pdf_bytes = _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data)
         nome_cliente = emissao.tomador.nome if emissao.tomador else email_cliente
         cc_email = empresa.email if empresa and empresa.email else None
-        
-        # Verificar cancelamento antes de enviar
-        from src.models import NfseNacionalEvento
-        evento_cancelamento = NfseNacionalEvento.query.filter_by(
-            emissao_id=emissao.id,
-            tipo_evento='e101101',
-            status_evento='SUCESSO'
-        ).first()
-        
-        if evento_cancelamento:
-            emissao.situacao_fiscal = 'CANCELADA'
-            db.session.commit()
         
         enviado = brevo_service.send_transactional_email(
             email_cliente,
