@@ -141,7 +141,7 @@ class BrevoService:
         }
 
         if cc:
-            payload['bcc'] = [{'email': cc}]
+            payload['cc'] = [{'email': cc}]
 
         if attachment and attachment.get('content'):
             # Brevo espera o adjunto em base64 no campo 'content'.

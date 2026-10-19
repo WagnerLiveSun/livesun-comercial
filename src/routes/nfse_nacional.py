@@ -2738,10 +2738,10 @@ def enviar_email(id):
     emissao = scoped_get_or_404(NfseNacionalEmissao, id)
     empresa = current_user.empresa or emissao.empresa
 
-    # Usar email da empresa prestadora como default
+    # Destinatário principal: email do tomador
     email_cliente = request.form.get("email_cliente", "").strip()
-    if not email_cliente:
-        email_cliente = empresa.email if empresa and empresa.email else ""
+    if not email_cliente and emissao.tomador:
+        email_cliente = emissao.tomador.email or ""
     mensagem = request.form.get("mensagem", "").strip()
 
     if not email_cliente:
