@@ -210,7 +210,7 @@ def index():
     _purge_expired_exclusions()
 
     assinaturas = AssinaturaEmpresa.query.all()
-    empresa_ids = [a.empresa_id for a in assinaturas]
+    assinaturas_map = {a.empresa_id: a for a in assinaturas}
 
     users_count = dict(
         db.session.query(User.empresa_id, func.count(User.id))
@@ -241,51 +241,82 @@ def index():
     )
     pending_charge_map = {row[0]: {'qtd': int(row[1] or 0), 'valor': Decimal(str(row[2] or 0))} for row in pending_charge_rows}
 
-    empresas_map = {e.id: e for e in Empresa.query.all()}
+    empresas = Empresa.query.all()
     rows = []
-    for assinatura in assinaturas:
-        empresa = empresas_map.get(assinatura.empresa_id)
-        if not empresa:
-            continue
+    for empresa in empresas:
+        assinatura = assinaturas_map.get(empresa.id)
 
         data_volume = int(entidades_count.get(empresa.id, 0) or 0) + int(lancamentos_count.get(empresa.id, 0) or 0)
         atraso_info = pending_charge_map.get(empresa.id, {'qtd': 0, 'valor': Decimal('0.00')})
-        rows.append({
-            'empresa_id': empresa.id,
-            'empresa_nome': empresa.nome,
-            'empresa': empresa,
-            'plano': get_plan_label(assinatura.plano_codigo),
-            'plano_codigo': normalize_plan(assinatura.plano_codigo),
-            'proximo_plano_codigo': normalize_plan(assinatura.proximo_plano_codigo) if assinatura.proximo_plano_codigo else None,
-            'status': assinatura.status,
-            'vigencia': assinatura.data_vencimento,
-            'mudanca_plano_efetivar_em': assinatura.mudanca_plano_efetivar_em,
-            'gateway_customer_id': assinatura.gateway_customer_id,
-            'gateway_subscription_id': assinatura.gateway_subscription_id,
-            'users_total': int(users_count.get(empresa.id, 0) or 0),
-            'users_ativos': int(users_active_count.get(empresa.id, 0) or 0),
-            'volume_dados': data_volume,
-            'atraso_qtd': atraso_info['qtd'],
-            'atraso_valor': atraso_info['valor'],
-            'modulos': {
-                key: bool(getattr(empresa, f'atividade_{key}', False))
-                for key in ALL_MODULE_LABELS
-            },
-            'data_exclusao': assinatura.data_exclusao,
-            'dias_restantes_exclusao': _dias_restantes_exclusao(assinatura.data_exclusao),
-            'data_purga_exclusao': (
-                assinatura.data_exclusao + timedelta(days=RETENCAO_EXCLUSAO_DIAS)
-                if assinatura.data_exclusao else None
-            ),
-            'bonus_liberado': bool(assinatura.bonus_liberado),
-            'bonus_motivo': assinatura.bonus_motivo,
-            'bonus_concedido_em': assinatura.bonus_concedido_em,
-            'bonus_dias': assinatura.bonus_dias,
-            'bonus_fim': (
-                assinatura.bonus_concedido_em + timedelta(days=assinatura.bonus_dias)
-                if assinatura.bonus_dias and assinatura.bonus_concedido_em else None
-            ),
-        })
+
+        if assinatura:
+            rows.append({
+                'empresa_id': empresa.id,
+                'empresa_nome': empresa.nome,
+                'empresa': empresa,
+                'plano': get_plan_label(assinatura.plano_codigo),
+                'plano_codigo': normalize_plan(assinatura.plano_codigo),
+                'proximo_plano_codigo': normalize_plan(assinatura.proximo_plano_codigo) if assinatura.proximo_plano_codigo else None,
+                'status': assinatura.status,
+                'vigencia': assinatura.data_vencimento,
+                'mudanca_plano_efetivar_em': assinatura.mudanca_plano_efetivar_em,
+                'gateway_customer_id': assinatura.gateway_customer_id,
+                'gateway_subscription_id': assinatura.gateway_subscription_id,
+                'users_total': int(users_count.get(empresa.id, 0) or 0),
+                'users_ativos': int(users_active_count.get(empresa.id, 0) or 0),
+                'volume_dados': data_volume,
+                'atraso_qtd': atraso_info['qtd'],
+                'atraso_valor': atraso_info['valor'],
+                'modulos': {
+                    key: bool(getattr(empresa, f'atividade_{key}', False))
+                    for key in ALL_MODULE_LABELS
+                },
+                'data_exclusao': assinatura.data_exclusao,
+                'dias_restantes_exclusao': _dias_restantes_exclusao(assinatura.data_exclusao),
+                'data_purga_exclusao': (
+                    assinatura.data_exclusao + timedelta(days=RETENCAO_EXCLUSAO_DIAS)
+                    if assinatura.data_exclusao else None
+                ),
+                'bonus_liberado': bool(assinatura.bonus_liberado),
+                'bonus_motivo': assinatura.bonus_motivo,
+                'bonus_concedido_em': assinatura.bonus_concedido_em,
+                'bonus_dias': assinatura.bonus_dias,
+                'bonus_fim': (
+                    assinatura.bonus_concedido_em + timedelta(days=assinatura.bonus_dias)
+                    if assinatura.bonus_dias and assinatura.bonus_concedido_em else None
+                ),
+            })
+        else:
+            rows.append({
+                'empresa_id': empresa.id,
+                'empresa_nome': empresa.nome,
+                'empresa': empresa,
+                'plano': 'Sem assinatura',
+                'plano_codigo': None,
+                'proximo_plano_codigo': None,
+                'status': 'pendente',
+                'vigencia': None,
+                'mudanca_plano_efetivar_em': None,
+                'gateway_customer_id': None,
+                'gateway_subscription_id': None,
+                'users_total': int(users_count.get(empresa.id, 0) or 0),
+                'users_ativos': int(users_active_count.get(empresa.id, 0) or 0),
+                'volume_dados': data_volume,
+                'atraso_qtd': atraso_info['qtd'],
+                'atraso_valor': atraso_info['valor'],
+                'modulos': {
+                    key: bool(getattr(empresa, f'atividade_{key}', False))
+                    for key in ALL_MODULE_LABELS
+                },
+                'data_exclusao': None,
+                'dias_restantes_exclusao': None,
+                'data_purga_exclusao': None,
+                'bonus_liberado': False,
+                'bonus_motivo': None,
+                'bonus_concedido_em': None,
+                'bonus_dias': None,
+                'bonus_fim': None,
+            })
 
     rows.sort(key=lambda item: item['empresa_nome'].lower())
 
@@ -339,8 +370,23 @@ def atualizar_status_assinatura(empresa_id: int):
 
     assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
     if not assinatura:
-        flash('Assinatura da empresa não encontrada.', 'warning')
-        return redirect(url_for('admin_comercial.index'))
+        # Criar assinatura padrão para empresa sem assinatura
+        empresa = Empresa.query.get(empresa_id)
+        if not empresa:
+            flash('Empresa não encontrada.', 'danger')
+            return redirect(url_for('admin_comercial.index'))
+
+        assinatura = AssinaturaEmpresa(
+            empresa_id=empresa_id,
+            plano_codigo='basico',
+            status='pendente',
+            data_vencimento=datetime.utcnow() + timedelta(days=30),
+            gateway_customer_id=None,
+            gateway_subscription_id=None,
+        )
+        db.session.add(assinatura)
+        db.session.flush()
+        flash(f'Assinatura criada para empresa "{empresa.nome}".', 'success')
 
     acao = (request.form.get('acao') or '').strip().lower()
     if acao == 'ativar':
@@ -395,8 +441,24 @@ def atualizar_plano_assinatura(empresa_id: int):
 
     assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
     if not assinatura:
-        flash('Assinatura da empresa não encontrada.', 'warning')
-        return redirect(url_for('admin_comercial.index'))
+        # Criar assinatura padrão para empresa sem assinatura
+        empresa = Empresa.query.get(empresa_id)
+        if not empresa:
+            flash('Empresa não encontrada.', 'danger')
+            return redirect(url_for('admin_comercial.index'))
+
+        novo_plano = normalize_plan(request.form.get('novo_plano'))
+        assinatura = AssinaturaEmpresa(
+            empresa_id=empresa_id,
+            plano_codigo=novo_plano,
+            status='ativa',
+            data_vencimento=datetime.utcnow() + timedelta(days=30),
+            gateway_customer_id=None,
+            gateway_subscription_id=None,
+        )
+        db.session.add(assinatura)
+        db.session.flush()
+        flash(f'Assinatura criada para empresa "{empresa.nome}" com plano {novo_plano}.', 'success')
 
     novo_plano = normalize_plan(request.form.get('novo_plano'))
     planos_validos = {codigo for codigo, _ in PLAN_CHOICES}
@@ -538,8 +600,23 @@ def atualizar_bonus_assinatura(empresa_id: int):
 
     assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
     if not assinatura:
-        flash('Assinatura da empresa não encontrada.', 'warning')
-        return redirect(url_for('admin_comercial.index'))
+        # Criar assinatura padrão para empresa sem assinatura
+        empresa = Empresa.query.get(empresa_id)
+        if not empresa:
+            flash('Empresa não encontrada.', 'danger')
+            return redirect(url_for('admin_comercial.index'))
+
+        assinatura = AssinaturaEmpresa(
+            empresa_id=empresa_id,
+            plano_codigo='basico',
+            status='ativa',
+            data_vencimento=datetime.utcnow() + timedelta(days=30),
+            gateway_customer_id=None,
+            gateway_subscription_id=None,
+        )
+        db.session.add(assinatura)
+        db.session.flush()
+        flash(f'Assinatura criada para empresa "{empresa.nome}".', 'success')
 
     acao = (request.form.get('acao') or '').strip().lower()
     
