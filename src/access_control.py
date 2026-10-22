@@ -53,7 +53,23 @@ EDITABLE_ROLES = ("operator",)
 
 # Admin sempre tem acesso total; operator/viewer podem ser ajustados na tela.
 DEFAULT_ROLE_PERMISSIONS = {
-    "operator": set(),
+    "operator": {
+        "dashboard",
+        "entidades",
+        "fluxo",
+        "contas_banco",
+        "comercial_filiais",
+        "comercial_produtos",
+        "comercial_servicos",
+        "comercial_estoque",
+        "comercial_compras",
+        "comercial_documentos",
+        "comercial_tabelas_preco",
+        "comercial_orcamentos",
+        "comercial_pedidos",
+        "comercial_pdv",
+        "lancamentos",
+    },
     "viewer": {
         "dashboard",
         "entidades",

@@ -676,41 +676,41 @@
                 {% set show_menu_principal = show_dashboard or show_add_user or show_controle_acesso %}
 
                 {% set show_entidades = has_permission('entidades') %}
-                {% set show_fluxo = has_permission('fluxo') and plan_allows_endpoint('fluxo.index') %}
-                {% set show_contas_banco = has_permission('contas_banco') %}
+                {% set show_fluxo = has_activity('financeiro') and has_permission('fluxo') and plan_allows_endpoint('fluxo.index') %}
+                {% set show_contas_banco = has_activity('financeiro') and has_permission('contas_banco') %}
                 {% set show_cadastros = show_entidades or show_fluxo or show_contas_banco %}
 
-                {% set show_filiais = has_permission('comercial_filiais') and plan_allows_endpoint('comercial_operacional.filiais_index') %}
-                {% set show_produtos = has_permission('comercial_produtos') and plan_allows_endpoint('comercial_operacional.produtos_index') %}
-                {% set show_servicos = has_permission('comercial_servicos') and plan_allows_endpoint('comercial_operacional.servicos_index') %}
-                {% set show_estoque = has_permission('comercial_estoque') and plan_allows_endpoint('comercial_operacional.estoque_index') %}
-                {% set show_compras = has_permission('comercial_compras') and plan_allows_endpoint('comercial_operacional.compras_index') %}
-                {% set show_documentos = has_permission('comercial_documentos') and plan_allows_endpoint('comercial_operacional.documentos_index') %}
-                {% set show_tabelas_preco = has_permission('comercial_tabelas_preco') and plan_allows_endpoint('comercial_operacional.tabelas_preco_index') %}
-                {% set show_orcamentos = has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.orcamentos_index') %}
-                {% set show_propostas_aprovacao = has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.propostas_aprovacao') %}
-                {% set show_pedidos = has_permission('comercial_pedidos') and plan_allows_endpoint('comercial_operacional.pedidos_index') %}
-                {% set show_pdv = has_permission('comercial_pdv') and plan_allows_endpoint('comercial_operacional.pdv_index') %}
+                {% set show_filiais = has_activity('comercial') and has_permission('comercial_filiais') and plan_allows_endpoint('comercial_operacional.filiais_index') %}
+                {% set show_produtos = has_activity('comercial') and has_permission('comercial_produtos') and plan_allows_endpoint('comercial_operacional.produtos_index') %}
+                {% set show_servicos = has_activity('comercial') and has_permission('comercial_servicos') and plan_allows_endpoint('comercial_operacional.servicos_index') %}
+                {% set show_estoque = has_activity('comercial') and has_permission('comercial_estoque') and plan_allows_endpoint('comercial_operacional.estoque_index') %}
+                {% set show_compras = has_activity('comercial') and has_permission('comercial_compras') and plan_allows_endpoint('comercial_operacional.compras_index') %}
+                {% set show_documentos = has_activity('comercial') and has_permission('comercial_documentos') and plan_allows_endpoint('comercial_operacional.documentos_index') %}
+                {% set show_tabelas_preco = has_activity('comercial') and has_permission('comercial_tabelas_preco') and plan_allows_endpoint('comercial_operacional.tabelas_preco_index') %}
+                {% set show_orcamentos = has_activity('comercial') and has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.orcamentos_index') %}
+                {% set show_propostas_aprovacao = has_activity('comercial') and has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.propostas_aprovacao') %}
+                {% set show_pedidos = has_activity('comercial') and has_permission('comercial_pedidos') and plan_allows_endpoint('comercial_operacional.pedidos_index') %}
+                {% set show_pdv = has_activity('comercial') and has_permission('comercial_pdv') and plan_allows_endpoint('comercial_operacional.pdv_index') %}
                 {% set show_comercial = has_activity('comercial') and (show_filiais or show_produtos or show_servicos or show_estoque or show_compras or show_documentos or show_tabelas_preco or show_orcamentos or show_propostas_aprovacao or show_pedidos or show_pdv) %}
 
-                {% set show_lancamentos = has_permission('lancamentos') %}
-                {% set show_comissoes = has_permission('comissoes') and plan_allows_endpoint('comissoes.listar') %}
-                {% set show_relatorios = has_permission('relatorios') and (plan_allows_endpoint('relatorio_fluxo.index') or plan_allows_endpoint('relatorios.fluxo_caixa_csv') or plan_allows_endpoint('relatorios.listagem_lancamentos') or plan_allows_endpoint('relatorios.listagem_notas_nfse')) %}
-                {% set show_import_nfse = has_permission('importar_nfse') and plan_allows_endpoint('importacoes.importar_nfse') %}
-                {% set show_import_ofx = has_permission('importar_ofx') and plan_allows_endpoint('importacoes.importar_ofx') %}
-                {% set show_conciliacao = has_permission('conciliacao') and plan_allows_endpoint('conciliacao.index') %}
+                {% set show_lancamentos = has_activity('financeiro') and has_permission('lancamentos') %}
+                {% set show_comissoes = has_activity('financeiro') and has_permission('comissoes') and plan_allows_endpoint('comissoes.listar') %}
+                {% set show_relatorios = has_activity('relatorios') and has_permission('relatorios') and (plan_allows_endpoint('relatorio_fluxo.index') or plan_allows_endpoint('relatorios.fluxo_caixa_csv') or plan_allows_endpoint('relatorios.listagem_lancamentos') or plan_allows_endpoint('relatorios.listagem_notas_nfse')) %}
+                {% set show_import_nfse = has_activity('servicos') and has_permission('importar_nfse') and plan_allows_endpoint('importacoes.importar_nfse') %}
+                {% set show_import_ofx = has_activity('servicos') and has_permission('importar_ofx') and plan_allows_endpoint('importacoes.importar_ofx') %}
+                {% set show_conciliacao = has_activity('financeiro') and has_permission('conciliacao') and plan_allows_endpoint('conciliacao.index') %}
                 {% set show_importacao = has_activity('servicos') and (show_import_nfse or show_import_ofx or show_conciliacao) %}
                 {% set show_nfse_nacional = has_activity('servicos') and has_permission('nfse_nacional') and plan_allows_endpoint('nfse_nacional.index') %}
                 {% set show_financeiro = has_activity('financeiro') and (show_fluxo or show_contas_banco or show_lancamentos or show_relatorios) %}
                 
-                {% set show_contratos = has_permission('contratos_view') %}
-                {% set show_clausulas = has_permission('clausulas_view') %}
+                {% set show_contratos = has_activity('contratos') and has_permission('contratos_view') %}
+                {% set show_clausulas = has_activity('contratos') and has_permission('clausulas_view') %}
                 {% set show_contratos_module = has_activity('contratos') and (show_contratos or show_clausulas) %}
                 
-                {% set show_locacao_acervo = has_permission('locacao_acervo') %}
-                {% set show_locacao_agenda = has_permission('locacao_agenda') %}
-                {% set show_locacao_contratos = has_permission('locacao_contratos') %}
-                {% set show_locacao_operacao = has_permission('locacao_operacao') %}
+                {% set show_locacao_acervo = has_activity('locacao') and has_permission('locacao_acervo') %}
+                {% set show_locacao_agenda = has_activity('locacao') and has_permission('locacao_agenda') %}
+                {% set show_locacao_contratos = has_activity('locacao') and has_permission('locacao_contratos') %}
+                {% set show_locacao_operacao = has_activity('locacao') and has_permission('locacao_operacao') %}
                 {% set show_locacao = has_activity('locacao') and (show_locacao_acervo or show_locacao_agenda or show_locacao_contratos or show_locacao_operacao) %}
 
                 {% if show_menu_principal %}
@@ -825,7 +825,7 @@
                 </ul>
                 {% endif %}
 
-                {% if show_relatorios %}
+                {% if has_activity('relatorios') %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-chart-bar"></i> Relatórios</div>
                 <ul class="ls-sidebar-nav">
                     <li class="ls-sidebar-group-label">Administração</li>

@@ -207,9 +207,9 @@
 <div class="ls-card p-4 mb-4">
     <h5 class="mb-1 ls-page-title"><i class="fas fa-tasks me-2"></i> Módulos / Atividades da Empresa</h5>
     <p class="text-muted small mb-3">
-        Controle liberado pelo Backoffice Comercial conforme a assinatura. Este painel tem
-        autoridade sobre o acesso da empresa — os módulos definidos aqui determinam quais
-        funcionalidades os usuários da empresa visualizam no sistema.
+        Controle liberado pelo Backoffice Comercial conforme a assinatura. O <b>Dashboard Gerencial</b> fica
+        sempre disponível (fora do seletor). Os demais módulos determinam quais funcionalidades os usuários
+        da empresa visualizam no menu lateral do sistema.
     </p>
     {% for r in rows %}
     <div class="border rounded p-3 mb-2">
@@ -219,20 +219,65 @@
         </div>
         <form method="POST" action="{{ url_for('admin_comercial.atualizar_modulos', empresa_id=r.empresa_id) }}" class="row g-2 align-items-end">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            {% for key, meta in module_labels.items() %}
-            <div class="col-md-3">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox"
-                           name="modulo_{{ key }}" id="mod_{{ r.empresa_id }}_{{ key }}"
-                           {% if r.modulos.get(key) %}checked{% endif %}
-                           {% if r.status == 'excluida' %}disabled{% endif %}>
-                    <label class="form-check-label small fw-semibold" for="mod_{{ r.empresa_id }}_{{ key }}">
-                        {{ meta.label }}
-                    </label>
-                    <div class="small text-muted">{{ meta.descricao }}</div>
+
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <div class="form-check form-switch disabled">
+                        <input class="form-check-input" type="checkbox" name="modulo_dashboard" id="mod_{{ r.empresa_id }}_dashboard" checked disabled>
+                        <label class="form-check-label small fw-semibold text-muted" for="mod_{{ r.empresa_id }}_dashboard">Dashboard Gerencial</label>
+                        <div class="small text-muted">Painel de indicadores gerenciais <span class="text-success"><i class="fas fa-check-circle"></i> Sempre ativo</span></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="modulo_comercial" id="mod_{{ r.empresa_id }}_comercial" {% if r.modulos.get('comercial') %}checked{% endif %}{% if r.status == 'excluida' %}disabled{% endif %}>
+                        <label class="form-check-label small fw-semibold" for="mod_{{ r.empresa_id }}_comercial">Comercial</label>
+                        <div class="small text-muted">PDV, NF-e, NFC-e e Pedidos</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="modulo_servicos" id="mod_{{ r.empresa_id }}_servicos" {% if r.modulos.get('servicos') %}checked{% endif %}{% if r.status == 'excluida' %}disabled{% endif %}>
+                        <label class="form-check-label small fw-semibold" for="mod_{{ r.empresa_id }}_servicos">Serviços / Fiscal</label>
+                        <div class="small text-muted">NFS-e e Importação de Notas</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="modulo_financeiro" id="mod_{{ r.empresa_id }}_financeiro" {% if r.modulos.get('financeiro') %}checked{% endif %}{% if r.status == 'excluida' %}disabled{% endif %}>
+                        <label class="form-check-label small fw-semibold" for="mod_{{ r.empresa_id }}_financeiro">Financeiro</label>
+                        <div class="small text-muted">Gestão Financeira e Fluxo de Caixa</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="modulo_locacao" id="mod_{{ r.empresa_id }}_locacao" {% if r.modulos.get('locacao') %}checked{% endif %}{% if r.status == 'excluida' %}disabled{% endif %}>
+                        <label class="form-check-label small fw-semibold" for="mod_{{ r.empresa_id }}_locacao">Locação</label>
+                        <div class="small text-muted">Aluguel de Roupas e Fantasias</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="modulo_contratos" id="mod_{{ r.empresa_id }}_contratos" {% if r.modulos.get('contratos') %}checked{% endif %}{% if r.status == 'excluida' %}disabled{% endif %}>
+                        <label class="form-check-label small fw-semibold" for="mod_{{ r.empresa_id }}_contratos">Contratos</label>
+                        <div class="small text-muted">Gestão de Contratos de Serviços</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="modulo_propostas" id="mod_{{ r.empresa_id }}_propostas" {% if r.modulos.get('propostas') %}checked{% endif %}{% if r.status == 'excluida' %}disabled{% endif %}>
+                        <label class="form-check-label small fw-semibold" for="mod_{{ r.empresa_id }}_propostas">Propostas</label>
+                        <div class="small text-muted">Gestão de Propostas Comerciais</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="modulo_relatorios" id="mod_{{ r.empresa_id }}_relatorios" {% if r.modulos.get('relatorios') %}checked{% endif %}{% if r.status == 'excluida' %}disabled{% endif %}>
+                        <label class="form-check-label small fw-semibold" for="mod_{{ r.empresa_id }}_relatorios">Relatórios</label>
+                        <div class="small text-muted">Relatórios gerenciais e fiscais</div>
+                    </div>
                 </div>
             </div>
-            {% endfor %}
             <div class="col-12 mt-2">
                 {% if r.status == 'excluida' %}
                     <span class="text-danger small"><i class="fas fa-ban me-1"></i>Empresa excluída — módulos bloqueados até a purga dos dados.</span>

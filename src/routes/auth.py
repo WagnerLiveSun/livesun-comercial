@@ -591,7 +591,7 @@ def login():
                     login_user(user, remember=request.form.get('remember'))
                     persist_auth_tenant_session(user)
                     flash('Finalize os dados comerciais da assinatura para visualizar preço, trial e meios de pagamento.', 'warning')
-                    return redirect(url_for('auth.assinatura'))
+                    return redirect(url_for('dashboard.index'))
 
                 login_user(user, remember=request.form.get('remember'))
                 persist_auth_tenant_session(user)
