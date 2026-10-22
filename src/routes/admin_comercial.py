@@ -369,6 +369,7 @@ def atualizar_status_assinatura(empresa_id: int):
         return gate
 
     assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
+    nova_assinatura = False
     if not assinatura:
         # Criar assinatura padrão para empresa sem assinatura
         empresa = Empresa.query.get(empresa_id)
@@ -386,9 +387,16 @@ def atualizar_status_assinatura(empresa_id: int):
         )
         db.session.add(assinatura)
         db.session.flush()
-        flash(f'Assinatura criada para empresa "{empresa.nome}".', 'success')
+        nova_assinatura = True
 
     acao = (request.form.get('acao') or '').strip().lower()
+
+    # Se é uma nova assinatura criada agora, apenas salvar e não executar mudança de status
+    if nova_assinatura:
+        db.session.commit()
+        flash(f'Assinatura criada para empresa "{empresa.nome}". Configure o plano posteriormente.', 'success')
+        return redirect(url_for('admin_comercial.index'))
+
     if acao == 'ativar':
         assinatura.status = 'ativa'
         assinatura.bloqueio_nivel = 'nenhum'
@@ -457,8 +465,14 @@ def atualizar_plano_assinatura(empresa_id: int):
             gateway_subscription_id=None,
         )
         db.session.add(assinatura)
-        db.session.flush()
+        db.session.commit()
+
+        # Sincroniza os módulos liberados conforme a assinatura/plano escolhido.
+        empresa.plano = novo_plano
+        sync_empresa_modules(empresa, novo_plano)
+
         flash(f'Assinatura criada para empresa "{empresa.nome}" com plano {novo_plano}.', 'success')
+        return redirect(url_for('admin_comercial.index'))
 
     novo_plano = normalize_plan(request.form.get('novo_plano'))
     planos_validos = {codigo for codigo, _ in PLAN_CHOICES}
@@ -599,6 +613,7 @@ def atualizar_bonus_assinatura(empresa_id: int):
         return gate
 
     assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
+    nova_assinatura = False
     if not assinatura:
         # Criar assinatura padrão para empresa sem assinatura
         empresa = Empresa.query.get(empresa_id)
@@ -616,22 +631,36 @@ def atualizar_bonus_assinatura(empresa_id: int):
         )
         db.session.add(assinatura)
         db.session.flush()
-        flash(f'Assinatura criada para empresa "{empresa.nome}".', 'success')
+        nova_assinatura = True
 
     acao = (request.form.get('acao') or '').strip().lower()
-    
+
+    # Se é uma nova assinatura criada agora, apenas salvar e não executar ações de bônus
+    if nova_assinatura:
+        db.session.commit()
+        flash(f'Assinatura criada para empresa "{empresa.nome}". Configure o bônus posteriormente.', 'success')
+        return redirect(url_for('admin_comercial.index'))
+
     if acao == 'conceder':
         bonus_tipo = (request.form.get('bonus_tipo') or '').strip()
         bonus_motivo = (request.form.get('bonus_motivo') or '').strip()
-        
+
         if not bonus_tipo:
             flash('Tipo de bônus não informado.', 'warning')
             return redirect(url_for('admin_comercial.index'))
-        
+
         assinatura.bonus_liberado = True
         assinatura.bonus_tipo = bonus_tipo
         assinatura.bonus_motivo = bonus_motivo or f'Bônus {bonus_tipo} concedido manualmente via backoffice'
         assinatura.bonus_concedido_em = datetime.utcnow()
+
+        bonus_dias = request.form.get('bonus_dias')
+        if bonus_dias:
+            try:
+                assinatura.bonus_dias = int(bonus_dias)
+            except ValueError:
+                pass
+
         db.session.commit()
 
         _registrar_evento(
@@ -642,7 +671,7 @@ def atualizar_bonus_assinatura(empresa_id: int):
         )
 
         flash('Bônus concedido com sucesso.', 'success')
-        
+
     elif acao == 'revogar':
         assinatura.bonus_liberado = False
         assinatura.bonus_tipo = None
