@@ -97,6 +97,19 @@ ENDPOINT_PERMISSION_MAP = {
     'relatorio_fluxo.index': 'relatorios',
     'relatorio_fluxo.exportar': 'relatorios',
 
+    'relatorios_p1.usuarios': 'relatorios',
+    'relatorios_p1.entidades': 'relatorios',
+    'relatorios_p1.clientes_comissao': 'relatorios',
+    'relatorios_p1.orcamentos': 'relatorios',
+    'relatorios_p1.compras': 'relatorios',
+    'relatorios_p1.saldo_contas': 'relatorios',
+    'relatorios_p1.fluxo_categorias': 'relatorios',
+    'relatorios_p1.nfse': 'relatorios',
+    'relatorios_p1.locacao_pecas': 'relatorios',
+    'relatorios_p1.locacao_contratos': 'relatorios',
+    'relatorios_p1.locacao_manutencao': 'relatorios',
+    'relatorios_p1.contratos': 'relatorios',
+
     'importacoes.importar_nfse': 'importar_nfse',
     'importacoes.importar_ofx': 'importar_ofx',
 
@@ -347,6 +360,14 @@ def create_app(config_name=None):
             'has_activity': lambda activity: getattr(getattr(current_user, 'empresa', None), f'atividade_{activity}', False),
         }
 
+
+    def _user_has_activity(user, activity: str) -> bool:
+        """Verifica se a empresa do usuário tem a atividade habilitada (usado no before_request)."""
+        empresa = getattr(user, 'empresa', None)
+        if empresa is None:
+            return False
+        return bool(getattr(empresa, f'atividade_{activity}', False))
+
     @app.before_request
     def enforce_process_permissions():
         from src.core.tenant_context import apply_postgres_tenant_context, persist_auth_tenant_session
@@ -405,6 +426,21 @@ def create_app(config_name=None):
 
         if not current_user_has_permission(permission_key):
             flash('Acesso negado para este processo no seu papel atual.', 'danger')
+            return redirect(url_for('dashboard.index'))
+
+        # Gate por atividade do módulo (definida pelo Backoffice Comercial).
+        # Relatórios só são expostos quando a empresa possui a atividade
+        # `relatorios` habilitada — evita acesso direto a rotas de relatório
+        # mesmo quando o plano autoriza o endpoint (ex.: basic com acesso a
+        # listagens básicas). Admins LiveSun (sem empresa) ficam isentos pois
+        # o backoffice administra a própria empresa.
+        if (
+            not getattr(current_user, 'is_admin', False)
+            and not getattr(current_user, 'empresa_id', None) is None
+            and endpoint_name.startswith(('relatorios.', 'relatorios_p1.', 'relatorio_fluxo.'))
+            and not _user_has_activity(current_user, 'relatorios')
+        ):
+            flash('Os relatórios não estão habilitados para a sua empresa no momento.', 'warning')
             return redirect(url_for('dashboard.index'))
 
         # Viewer é estritamente leitura: bloqueia qualquer tentativa de escrita.
@@ -475,6 +511,20 @@ def create_app(config_name=None):
     def _teardown_db_session(exc):
         if exc is not None:
             db.session.rollback()
+        # O Flask-Login cacheia o usuario em ``g._login_user`` e o ``g`` pertence
+        # ao app context (nao ao request). Quando o app context e reutilizado
+        # entre requisicoes (ex.: testes com ``app_context().push()`` ou
+        # servidores com app context persistente), o usuario cacheado fica
+        # apontando para objetos ORM ja desanexados por ``session.remove()``,
+        # quebrando qualquer acesso lazy (ex.: ``current_user.empresa``) com
+        # DetachedInstanceError. Descartar o cache forca o user_loader a
+        # recarregar o usuario na proxima requisicao, ja dentro da nova sessao.
+        try:
+            from flask import g
+
+            g.pop('_login_user', None)
+        except Exception:  # pragma: no cover - defensivo
+            logger.debug('Nao foi possivel limpar o cache de usuario do Flask-Login', exc_info=True)
         db.session.remove()
     
     # Shell context for flask shell
@@ -640,6 +690,8 @@ def _ensure_schema_compatibility():
                 'nome_fantasia': "nome_fantasia VARCHAR(150)",
                 'atividade_propostas': 'atividade_propostas BOOLEAN DEFAULT FALSE',
                 'atividade_dashboard': 'atividade_dashboard BOOLEAN DEFAULT TRUE',
+                'atividade_relatorios': 'atividade_relatorios BOOLEAN DEFAULT FALSE',
+                'usuarios_maximos': 'usuarios_maximos INTEGER DEFAULT 5',
             }
         )
 

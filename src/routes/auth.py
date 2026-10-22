@@ -23,6 +23,7 @@ from src.models import (
     PasswordResetCode,
 )
 from src.extensions import limiter, require_role
+from src.core.tenant_context import clear_auth_tenant_session, persist_auth_tenant_session
 from src.access_control import (
     PERMISSION_CATALOG,
     build_operator_permissions,
@@ -38,6 +39,7 @@ from src.services.planos import (
     plan_allows_endpoint,
     plan_rank,
     PLAN_CHOICES,
+    sync_empresa_modules,
 )
 from src.services.assinatura import ServicoAssinatura
 from src.services.brevo import brevo_service
@@ -246,13 +248,30 @@ def _precos_plano(plano_codigo: str) -> dict[str, str]:
 @require_role('admin')
 @limiter.limit('10/minute')
 def add_user():
-    empresa_plano = normalize_plan(getattr(current_user.empresa, 'plano', 'premium'))
-    limite_usuarios = max_users_for_plan(empresa_plano)
+    empresa = current_user.empresa
+    empresa_plano = normalize_plan(getattr(empresa, 'plano', 'premium'))
+
+    # O Backoffice Comercial define o limite exato em Empresa.usuarios_maximos.
+    # Quando não preenchido, recorre ao limite do plano (max_users_for_plan).
+    limite_backoffice = None
+    if empresa is not None and getattr(empresa, 'usuarios_maximos', None) not in (None, 0):
+        limite_backoffice = int(empresa.usuarios_maximos)
+    elif empresa is not None:
+        # Normalizar valores NULL/0 deixados por bancos antigos
+        empresa.usuarios_maximos = 5
+        db.session.commit()
+        limite_backoffice = 5
+
+    plano_max = max_users_for_plan(empresa_plano) if empresa_plano else None
+    limite_usuarios = limite_backoffice if limite_backoffice is not None else plano_max
+
     if limite_usuarios is not None:
         usuarios_ativos = User.query.filter_by(empresa_id=current_user.empresa_id, is_active=True).count()
         if usuarios_ativos >= limite_usuarios:
+            origem = 'backoffice comercial' if limite_backoffice is not None else f'plano {get_plan_label(empresa_plano)}'
             flash(
-                f'O plano {get_plan_label(empresa_plano)} permite até {limite_usuarios} usuários ativos.',
+                f'O limite de {limite_usuarios} usuários ativos ({origem}) foi atingido. '
+                'Solicite um aumento no backoffice comercial antes de criar novos usuários.',
                 'warning'
             )
             return redirect(url_for('auth.controle_acesso'))
@@ -560,6 +579,7 @@ def login():
                 # Usuário LiveSun (sem empresa) vai direto para backoffice
                 if user.empresa_id is None and user.role == 'admin':
                     login_user(user, remember=request.form.get('remember'))
+                    persist_auth_tenant_session(user)
                     logging.info(f'Redirecionando para backoffice: {user.username} - auth.py:561')
                     flash(f'Bem-vindo, {user.full_name or user.username}!', 'success')
                     return redirect(url_for('admin_comercial.index'))
@@ -569,10 +589,12 @@ def login():
 
                 if user.is_admin and not assinatura.gateway_subscription_id:
                     login_user(user, remember=request.form.get('remember'))
+                    persist_auth_tenant_session(user)
                     flash('Finalize os dados comerciais da assinatura para visualizar preço, trial e meios de pagamento.', 'warning')
                     return redirect(url_for('auth.assinatura'))
 
                 login_user(user, remember=request.form.get('remember'))
+                persist_auth_tenant_session(user)
                 flash(f'Bem-vindo, {user.full_name or user.username}!', 'success')
                 next_page = request.args.get('next')
                 return redirect(next_page) if next_page else redirect(url_for('dashboard.index'))
@@ -589,6 +611,7 @@ def login():
 @login_required
 def logout():
     logout_user()
+    clear_auth_tenant_session()
     flash('Você foi desconectado', 'info')
     return redirect(url_for('auth.login'))
 
@@ -601,7 +624,6 @@ def register():
         try:
             empresa_nome = request.form.get('empresa_nome')
             empresa_cnpj = _normalize_document(request.form.get('empresa_cnpj'))
-            empresa_plano = normalize_plan(request.form.get('plano'))
             username = request.form.get('username')
             email = request.form.get('email')
             password = request.form.get('password')
@@ -634,7 +656,7 @@ def register():
                 nome=empresa_nome,
                 nome_fantasia=request.form.get('nome_fantasia'),
                 cnpj=empresa_cnpj,
-                plano=empresa_plano,
+                plano='intermediate',
                 endereco_rua=request.form.get('endereco_rua'),
                 endereco_numero=request.form.get('endereco_numero'),
                 endereco_bairro=request.form.get('endereco_bairro'),
@@ -740,6 +762,9 @@ def register():
                     flash('Erro ao salvar o item fiscal inicial. Cadastro criado, edite na empresa depois.', 'warning')
 
             db.session.commit()
+
+            # Sincroniza módulos da empresa conforme o plano intermediário
+            sync_empresa_modules(empresa, 'intermediate')
 
             # Cria assinatura inicial para garantir visibilidade imediata de trial/cobranca no onboarding.
             ServicoAssinatura.obter_ou_criar_assinatura(empresa.id)
