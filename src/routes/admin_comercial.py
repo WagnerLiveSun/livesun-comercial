@@ -379,8 +379,9 @@ def atualizar_status_assinatura(empresa_id: int):
 
         assinatura = AssinaturaEmpresa(
             empresa_id=empresa_id,
-            plano_codigo='basico',
+            plano_codigo='basic',
             status='pendente',
+            data_inicio=datetime.utcnow().date(),
             data_vencimento=datetime.utcnow() + timedelta(days=30),
             gateway_customer_id=None,
             gateway_subscription_id=None,
@@ -460,6 +461,7 @@ def atualizar_plano_assinatura(empresa_id: int):
             empresa_id=empresa_id,
             plano_codigo=novo_plano,
             status='ativa',
+            data_inicio=datetime.utcnow().date(),
             data_vencimento=datetime.utcnow() + timedelta(days=30),
             gateway_customer_id=None,
             gateway_subscription_id=None,
@@ -589,7 +591,9 @@ def atualizar_modulos(empresa_id: int):
     # liberando o acesso da empresa conforme a assinatura escolhida.
     for module_key in ALL_MODULE_LABELS:
         checkbox_name = f'modulo_{module_key}'
-        setattr(empresa, f'atividade_{module_key}', checkbox_name in request.form)
+        attr_name = f'atividade_{module_key}'
+        if hasattr(empresa, attr_name):
+            setattr(empresa, attr_name, checkbox_name in request.form)
 
     db.session.commit()
 
@@ -623,8 +627,9 @@ def atualizar_bonus_assinatura(empresa_id: int):
 
         assinatura = AssinaturaEmpresa(
             empresa_id=empresa_id,
-            plano_codigo='basico',
+            plano_codigo='basic',
             status='ativa',
+            data_inicio=datetime.utcnow().date(),
             data_vencimento=datetime.utcnow() + timedelta(days=30),
             gateway_customer_id=None,
             gateway_subscription_id=None,

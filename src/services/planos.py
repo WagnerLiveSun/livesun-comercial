@@ -259,4 +259,8 @@ def sync_empresa_modules(empresa, plan: Optional[str]) -> None:
         return
     enabled = modules_for_plan(plan)
     for module_key in ALL_MODULE_LABELS:
-        setattr(empresa, f'atividade_{module_key}', module_key in enabled)
+        # Verifica se o atributo existe no modelo antes de tentar definir
+        # (compatibilidade com banco MySQL onde coluna pode não existir ainda)
+        attr_name = f'atividade_{module_key}'
+        if hasattr(empresa, attr_name):
+            setattr(empresa, attr_name, module_key in enabled)
