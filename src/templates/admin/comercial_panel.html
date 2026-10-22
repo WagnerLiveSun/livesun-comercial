@@ -74,7 +74,7 @@
                     </td>
                     <td><span class="comercial-cell-main d-inline-block" title="{{ r.plano }}">{{ r.plano }}</span></td>
                     <td>
-                        {% set st = r.status %}
+                        {% set st = r.status or 'pendente' %}
                         {% if st in ('ativa', 'trial') %}
                             <span class="badge bg-success text-capitalize">{{ st }}</span>
                         {% elif st == 'suspensa' %}
@@ -83,13 +83,15 @@
                             <span class="badge bg-danger text-capitalize">{{ st }}</span>
                         {% elif st == 'excluida' %}
                             <span class="badge bg-dark text-capitalize">excluída</span>
+                        {% elif st == 'pendente' %}
+                            <span class="badge bg-secondary text-capitalize">pendente</span>
                         {% else %}
                             <span class="badge bg-secondary text-capitalize">{{ st }}</span>
                         {% endif %}
                         {% if r.bonus_liberado %}
                             {% if r.bonus_tipo == 'trial' %}
                                 <span class="badge bg-primary" title="{{ r.bonus_motivo or '' }}">
-                                    <i class="fas fa-gift me-1"></i>Trial {{ r.bonus_dias }} dia(s)
+                                    <i class="fas fa-gift me-1"></i>Trial {{ r.bonus_dias or 0 }} dia(s)
                                 </span>
                                 {% if r.bonus_fim %}
                                 <small class="text-muted d-block">até {{ r.bonus_fim.strftime('%d/%m/%Y') }}</small>
@@ -102,7 +104,7 @@
                         {% endif %}
                         {% if st == 'excluida' %}
                             <div class="mt-2">
-                                {% if r.dias_restantes_exclusao > 0 %}
+                                {% if r.dias_restantes_exclusao and r.dias_restantes_exclusao > 0 %}
                                 <small class="text-danger fw-bold">
                                     <i class="fas fa-hourglass-half me-1"></i>
                                     Exclusão definitiva em {{ r.dias_restantes_exclusao }} dia(s)
@@ -158,7 +160,7 @@
     {% endfor %}
 </div>
 
-{% if r.bonus_liberado and r.bonus_concedido_em %}
+{% if r.bonus_liberado %}
 <form method="POST" action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}" class="d-flex align-items-center gap-1">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="acao" value="revogar">

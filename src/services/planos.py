@@ -231,8 +231,8 @@ def is_premium_plan(plan: Optional[str]) -> bool:
 # ============================================================================
 PLAN_MODULES: Dict[str, set] = {
     'basic': {'comercial', 'servicos', 'financeiro', 'dashboard'},
-    'intermediate': {'comercial', 'servicos', 'financeiro', 'locacao', 'contratos', 'propostas', 'dashboard'},
-    'premium': {'comercial', 'servicos', 'financeiro', 'locacao', 'contratos', 'propostas', 'dashboard'},
+    'intermediate': {'comercial', 'servicos', 'financeiro', 'locacao', 'contratos', 'propostas', 'dashboard', 'relatorios'},
+    'premium': {'comercial', 'servicos', 'financeiro', 'locacao', 'contratos', 'propostas', 'dashboard', 'relatorios'},
 }
 
 
@@ -249,6 +249,7 @@ ALL_MODULE_LABELS: Dict[str, Dict[str, str]] = {
     'contratos': {'label': 'Contratos', 'descricao': 'Gestão de Contratos de Serviços'},
     'propostas': {'label': 'Propostas', 'descricao': 'Gestão de Propostas Comerciais'},
     'dashboard': {'label': 'Dashboard', 'descricao': 'Painéis de gestão'},
+    'relatorios': {'label': 'Relatórios', 'descricao': 'Relatórios gerenciais e fiscais'},
 }
 
 

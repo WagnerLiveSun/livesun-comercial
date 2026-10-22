@@ -591,6 +591,8 @@ class Empresa(db.Model):
 
     atividade_dashboard = db.Column(db.Boolean, default=True)
 
+    atividade_relatorios = db.Column(db.Boolean, default=False)
+
 
 
     criado_em = db.Column(db.DateTime, default=_utcnow)
