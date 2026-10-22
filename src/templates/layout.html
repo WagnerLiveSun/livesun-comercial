@@ -750,13 +750,6 @@
                 </ul>
                 {% endif %}
                 
-                {% if show_comercial %}
-                <div class="ls-sidebar-section-label"><i class="fas fa-briefcase"></i> Propostas </div>
-                <ul class="ls-sidebar-nav">
-                    {% if show_orcamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.orcamentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.orcamentos_index') }}"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>{% endif %}
-                    {% if show_propostas_aprovacao %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint == 'comercial_operacional.propostas_aprovacao' %}active{% endif %}" href="{{ url_for('comercial_operacional.propostas_aprovacao') }}"><i class="fas fa-clipboard-check"></i> Aprovação de Propostas</a></li>{% endif %}
-                </ul>
-                {% endif %}
 
                 {% if show_comercial %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-briefcase"></i> Mercadoria </div>
@@ -765,6 +758,8 @@
                     {% if show_compras %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.compras') %}active{% endif %}" href="{{ url_for('comercial_operacional.compras_index') }}"><i class="fas fa-file-invoice"></i> Entrada de NF de compra</a></li>{% endif %}
                     {% if show_pedidos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pedidos') %}active{% endif %}" href="{{ url_for('comercial_operacional.pedidos_index') }}"><i class="fas fa-clipboard-check"></i> Pedidos de venda</a></li>{% endif %}
                     {% if show_pdv %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pdv') %}active{% endif %}" href="{{ url_for('comercial_operacional.pdv_index') }}"><i class="fas fa-cash-register"></i> PDV Caixa</a></li>{% endif %}
+                    {% if show_orcamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.orcamentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.orcamentos_index') }}"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>{% endif %}
+                    {% if show_propostas_aprovacao %}<li><a class="ls-sidebar-link {% if request.endpoint == 'comercial_operacional.propostas_aprovacao' %}active{% endif %}" href="{{ url_for('comercial_operacional.propostas_aprovacao') }}"><i class="fas fa-clipboard-check"></i> Aprovação de Propostas</a></li>{% endif %}
                 </ul>
                 {% endif %}
 
