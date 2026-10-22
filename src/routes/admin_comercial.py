@@ -36,19 +36,6 @@ from src.services.planos import (
 RETENCAO_EXCLUSAO_DIAS = 60
 
 
-def _evento_sistema_disponivel() -> bool:
-    # Checagem direta a cada chamada (backoffice tem tráfego baixo) para que,
-    # após aplicar a migração 030, o log volte a funcionar sem restart.
-    try:
-        return bool(db.engine.dialect.has_table(db.session.connection(), 'evento_sistema'))
-    except Exception:
-        try:
-            db.session.rollback()
-        except Exception:
-            pass
-        return False
-
-
 def _safe_all(query, padrao=None, rotulo='consulta'):
     try:
         return query.all()
@@ -110,43 +97,8 @@ def _require_backoffice_access():
 def _registrar_evento(empresa_id: int, categoria: str, tipo: str, descricao: str,
                       detalhes: dict | None = None, origem_tabela: str | None = None,
                       origem_id: int | None = None) -> None:
-    """Registra um evento de auditoria no log do backoffice comercial.
-
-    O insert roda num SAVEPOINT (nested): se a tabela evento_sistema não
-    existir (migração 030 pendente) ou o insert falhar, só o savepoint é
-    desfeito — a ação em curso na sessão NÃO é perdida e a transação não
-    fica abortada para as próximas queries.
-    """
-    if not _evento_sistema_disponivel():
-        return
-    evento = EventoSistema(
-        usuario_id=current_user.id,
-        empresa_id=empresa_id,
-        categoria=categoria,
-        tipo=tipo,
-        descricao=descricao,
-        detalhes=detalhes or None,
-        origem_tabela=origem_tabela,
-        origem_id=origem_id,
-    )
-    db.session.add(evento)
-    try:
-        # Flush dentro de SAVEPOINT: valida o INSERT sem commitar a ação.
-        # Quem commita a ação é a rota chamadora. Se o INSERT falhar,
-        # só o savepoint é desfeito e a ação continua pendente na sessão.
-        nested = db.session.begin_nested()
-        try:
-            db.session.flush()
-        except Exception:
-            nested.rollback()
-            raise
-        else:
-            nested.commit()
-    except Exception:
-        current_app.logger.warning(
-            f'Falha ao registrar evento de auditoria para empresa {empresa_id}.',
-            exc_info=True,
-        )
+    """Função desativada - EventoSistema removido."""
+    pass
 
 
 @admin_comercial_bp.route('/acesso', methods=['GET', 'POST'])
