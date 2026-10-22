@@ -36,6 +36,31 @@ from src.services.planos import (
 RETENCAO_EXCLUSAO_DIAS = 60
 
 
+def _evento_sistema_disponivel() -> bool:
+    # Checagem direta a cada chamada (backoffice tem tráfego baixo) para que,
+    # após aplicar a migração 030, o log volte a funcionar sem restart.
+    try:
+        return bool(db.engine.dialect.has_table(db.session.connection(), 'evento_sistema'))
+    except Exception:
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        return False
+
+
+def _safe_all(query, padrao=None, rotulo='consulta'):
+    try:
+        return query.all()
+    except Exception as exc:
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        current_app.logger.warning(f'Falha em {rotulo}: {exc}')
+        return [] if padrao is None else padrao
+
+
 admin_comercial_bp = Blueprint('admin_comercial', __name__, url_prefix='/backoffice/comercial')
 
 
@@ -82,6 +107,48 @@ def _require_backoffice_access():
     return None
 
 
+def _registrar_evento(empresa_id: int, categoria: str, tipo: str, descricao: str,
+                      detalhes: dict | None = None, origem_tabela: str | None = None,
+                      origem_id: int | None = None) -> None:
+    """Registra um evento de auditoria no log do backoffice comercial.
+
+    O insert roda num SAVEPOINT (nested): se a tabela evento_sistema não
+    existir (migração 030 pendente) ou o insert falhar, só o savepoint é
+    desfeito — a ação em curso na sessão NÃO é perdida e a transação não
+    fica abortada para as próximas queries.
+    """
+    if not _evento_sistema_disponivel():
+        return
+    evento = EventoSistema(
+        usuario_id=current_user.id,
+        empresa_id=empresa_id,
+        categoria=categoria,
+        tipo=tipo,
+        descricao=descricao,
+        detalhes=detalhes or None,
+        origem_tabela=origem_tabela,
+        origem_id=origem_id,
+    )
+    db.session.add(evento)
+    try:
+        # Flush dentro de SAVEPOINT: valida o INSERT sem commitar a ação.
+        # Quem commita a ação é a rota chamadora. Se o INSERT falhar,
+        # só o savepoint é desfeito e a ação continua pendente na sessão.
+        nested = db.session.begin_nested()
+        try:
+            db.session.flush()
+        except Exception:
+            nested.rollback()
+            raise
+        else:
+            nested.commit()
+    except Exception:
+        current_app.logger.warning(
+            f'Falha ao registrar evento de auditoria para empresa {empresa_id}.',
+            exc_info=True,
+        )
+
+
 @admin_comercial_bp.route('/acesso', methods=['GET', 'POST'])
 @login_required
 @require_role('admin')
@@ -123,9 +190,43 @@ def _dias_restantes_exclusao(data_exclusao) -> int:
     return max(restantes, 0)
 
 
+def _hard_delete_empresa(empresa_id: int) -> None:
+    """Remove definitivamente (hard delete) todos os registros vinculados à empresa.
+
+    Apaga toda tabela que possua coluna ``empresa_id`` e, por fim, o registro da
+    própria empresa (inclusive a assinatura, que também possui ``empresa_id``).
+    Reaproveitado tanto pela purga automática (retenção de 60 dias) quanto pela
+    purga manual disparada no console de gestão comercial.
+
+    Roda dentro da transação da sessão atual (``db.session``) de propósito: o
+    contexto RLS do Postgres (``app.empresa_id`` via ``SET LOCAL``) só vale na
+    transação da sessão. Abrir conexão/transação separada aqui quebraria o RLS.
+    """
+    inspector = inspect(db.engine)
+    tables = [
+        t for t in inspector.get_table_names()
+        if 'empresa_id' in {c['name'] for c in inspector.get_columns(t)}
+    ]
+    conn = db.session.connection()
+    if db.engine.dialect.name == 'mysql':
+        conn.execute(text('SET FOREIGN_KEY_CHECKS=0'))
+    try:
+        for table in tables:
+            conn.execute(
+                text(f'DELETE FROM {table} WHERE empresa_id = :empresa_id'),
+                {'empresa_id': empresa_id},
+            )
+        conn.execute(text('DELETE FROM empresas WHERE id = :empresa_id'), {'empresa_id': empresa_id})
+        if db.engine.dialect.name == 'mysql':
+            conn.execute(text('SET FOREIGN_KEY_CHECKS=1'))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+
 def _purge_expired_exclusions():
     """Remove definitivamente (hard delete) dados de empresas excluídas há mais de 60 dias."""
-    from sqlalchemy import inspect as _inspect
     limite = datetime.utcnow() - timedelta(days=RETENCAO_EXCLUSAO_DIAS)
     expiradas = (
         AssinaturaEmpresa.query
@@ -137,24 +238,10 @@ def _purge_expired_exclusions():
     for assinatura in expiradas:
         empresa_id = assinatura.empresa_id
         try:
-            inspector = _inspect(db.engine)
-            tables = [
-                t for t in inspector.get_table_names()
-                if 'empresa_id' in {c['name'] for c in inspector.get_columns(t)}
-            ]
-            conn = db.session.connection()
-            if db.engine.dialect.name == 'mysql':
-                conn.execute(text('SET FOREIGN_KEY_CHECKS=0'))
-            for table in tables:
-                conn.execute(
-                    text(f'DELETE FROM {table} WHERE empresa_id = :empresa_id'),
-                    {'empresa_id': empresa_id},
-                )
-            conn.execute(text('DELETE FROM empresas WHERE id = :empresa_id'), {'empresa_id': empresa_id})
-            if db.engine.dialect.name == 'mysql':
-                conn.execute(text('SET FOREIGN_KEY_CHECKS=1'))
-            db.session.commit()
+            _hard_delete_empresa(empresa_id)
         except Exception as exc:  # noqa: BLE001
+            # O _hard_delete_empresa já faz rollback interno, mas o belt-and-
+            # braces aqui garante a sessão limpa antes das queries do painel.
             db.session.rollback()
             current_app.logger.error(f'Erro na purga de empresa {empresa_id}: {exc}')
 
@@ -241,6 +328,11 @@ def index():
             'bonus_liberado': bool(assinatura.bonus_liberado),
             'bonus_motivo': assinatura.bonus_motivo,
             'bonus_concedido_em': assinatura.bonus_concedido_em,
+            'bonus_dias': assinatura.bonus_dias,
+            'bonus_fim': (
+                assinatura.bonus_concedido_em + timedelta(days=assinatura.bonus_dias)
+                if assinatura.bonus_dias and assinatura.bonus_concedido_em else None
+            ),
         })
 
     rows.sort(key=lambda item: item['empresa_nome'].lower())
@@ -253,13 +345,8 @@ def index():
         .all()
     )
 
-    erro_eventos = (
-        EventoCobranca.query
-        .filter_by(status_processamento='erro')
-        .order_by(EventoCobranca.recebido_em.desc())
-        .limit(30)
-        .all()
-    )
+    filtros = {'categoria': '', 'tipo': ''}
+    eventos = []
 
     resumo = {
         'clientes_ativos': sum(1 for r in rows if r['status'] in {'ativa', 'trial'}),
@@ -281,7 +368,7 @@ def index():
         rows=rows,
         resumo=resumo,
         novas_assinaturas=novas_assinaturas,
-        erro_eventos=erro_eventos,
+        filtros=filtros,
         ofertas=ofertas,
         planos_disponiveis=PLAN_CHOICES,
         module_labels=ALL_MODULE_LABELS,
@@ -327,6 +414,19 @@ def atualizar_status_assinatura(empresa_id: int):
     else:
         flash('Ação de status inválida.', 'warning')
         return redirect(url_for('admin_comercial.index'))
+
+    categoria = 'sucesso'
+    tipo = 'ATUALIZACAO_USUARIO'
+    if acao == 'cancelar':
+        tipo = 'EXCLUIR'
+    elif acao == 'suspender':
+        categoria = 'alerta'
+    _registrar_evento(
+        empresa_id,
+        categoria,
+        tipo,
+        f'Ação "{acao}" registrada no backoffice comercial.',
+    )
 
     db.session.commit()
     flash('Status da assinatura atualizado com sucesso.', 'success')
@@ -394,6 +494,13 @@ def atualizar_plano_assinatura(empresa_id: int):
     db.session.add(historico)
     db.session.commit()
 
+    _registrar_evento(
+        empresa_id,
+        'sucesso',
+        'MUDANCA_PLANO',
+        f'Plano alterado de {plano_atual} para {novo_plano} (efetivado no backoffice).',
+    )
+
     flash(f'{tipo_mudanca.capitalize()} de plano efetivado com sucesso.', 'success')
     return redirect(url_for('admin_comercial.index'))
 
@@ -425,6 +532,14 @@ def atualizar_preco_catalogo():
 
     oferta.preco = novo_preco
     db.session.commit()
+
+    _registrar_evento(
+        None,
+        'sucesso',
+        'ATUALIZACAO_USUARIO',
+        'Preço do catálogo comercial atualizado no backoffice.',
+    )
+
     flash('Preço da oferta atualizado com sucesso.', 'success')
     return redirect(url_for('admin_comercial.index'))
 
@@ -449,7 +564,76 @@ def atualizar_modulos(empresa_id: int):
         setattr(empresa, f'atividade_{module_key}', checkbox_name in request.form)
 
     db.session.commit()
+
+    _registrar_evento(
+        empresa_id,
+        'sucesso',
+        'ATUALIZACAO_USUARIO',
+        f'Módulos/atividades da empresa "{empresa.nome}" atualizados no backoffice.',
+    )
+
     flash(f'Módulos da empresa "{empresa.nome}" atualizados com sucesso.', 'success')
+    return redirect(url_for('admin_comercial.index'))
+
+
+@admin_comercial_bp.route('/assinatura/<int:empresa_id>/bonus', methods=['POST'])
+@login_required
+@require_role('admin')
+def atualizar_bonus_assinatura(empresa_id: int):
+    gate = _require_backoffice_access()
+    if gate:
+        return gate
+
+    assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
+    if not assinatura:
+        flash('Assinatura da empresa não encontrada.', 'warning')
+        return redirect(url_for('admin_comercial.index'))
+
+    acao = (request.form.get('acao') or '').strip().lower()
+    
+    if acao == 'conceder':
+        bonus_tipo = (request.form.get('bonus_tipo') or '').strip()
+        bonus_motivo = (request.form.get('bonus_motivo') or '').strip()
+        
+        if not bonus_tipo:
+            flash('Tipo de bônus não informado.', 'warning')
+            return redirect(url_for('admin_comercial.index'))
+        
+        assinatura.bonus_liberado = True
+        assinatura.bonus_tipo = bonus_tipo
+        assinatura.bonus_motivo = bonus_motivo or f'Bônus {bonus_tipo} concedido manualmente via backoffice'
+        assinatura.bonus_concedido_em = datetime.utcnow()
+        db.session.commit()
+
+        _registrar_evento(
+            empresa_id,
+            'sucesso',
+            'ATUALIZACAO_USUARIO',
+            'Bônus concedido no backoffice comercial.',
+        )
+
+        flash('Bônus concedido com sucesso.', 'success')
+        
+    elif acao == 'revogar':
+        assinatura.bonus_liberado = False
+        assinatura.bonus_tipo = None
+        assinatura.bonus_motivo = None
+        assinatura.bonus_concedido_em = None
+        db.session.commit()
+
+        _registrar_evento(
+            empresa_id,
+            'sucesso',
+            'ATUALIZACAO_USUARIO',
+            'Bônus revogado no backoffice comercial.',
+        )
+
+        flash('Bônus revogado com sucesso.', 'success')
+        
+    else:
+        flash('Ação de bônus inválida.', 'warning')
+        return redirect(url_for('admin_comercial.index'))
+
     return redirect(url_for('admin_comercial.index'))
 
 
@@ -506,9 +690,89 @@ def excluir_empresa(empresa_id: int):
     User.query.filter_by(empresa_id=empresa_id).update({'is_active': False})
 
     db.session.commit()
+
+    _registrar_evento(
+        empresa_id,
+        'alerta',
+        'EXCLUSAO_DEFINITIVA',
+        f'Empresa "{empresa.nome}" excluída (exclusão lógica com retenção de {RETENCAO_EXCLUSAO_DIAS} dias).',
+    )
+
     flash(
         f'Empresa "{empresa.nome}" excluída. O acesso foi removido e os dados serão '
         f'mantidos por {RETENCAO_EXCLUSAO_DIAS} dias antes da remoção definitiva.',
         'success',
     )
+    return redirect(url_for('admin_comercial.index'))
+
+
+@admin_comercial_bp.route('/empresa/<int:empresa_id>/purge', methods=['POST'])
+@login_required
+@require_role('admin')
+def purgar_empresa(empresa_id: int):
+    """Purga manual (hard delete) dos dados de uma empresa já excluída logicamente.
+
+    Exige que o operador digite ``PURGAR``. Liberada no console de gestão assim que
+    a retenção de ``RETENCAO_EXCLUSAO_DIAS`` completa; se disparada antes do prazo,
+    é permitida, mas registrada como purga antecipada.
+    """
+    gate = _require_backoffice_access()
+    if gate:
+        return gate
+
+    confirm = (request.form.get('confirmacao') or '').strip().upper()
+    if confirm != 'PURGAR':
+        flash('Confirmação inválida para a purga. Digite PURGAR.', 'warning')
+        return redirect(url_for('admin_comercial.index'))
+
+    if getattr(current_user, 'empresa_id', None) == empresa_id:
+        flash('Não é permitido purgar os dados da própria empresa logada.', 'danger')
+        return redirect(url_for('admin_comercial.index'))
+
+    empresa = Empresa.query.filter_by(id=empresa_id).first()
+    if not empresa:
+        flash('Empresa não encontrada.', 'warning')
+        return redirect(url_for('admin_comercial.index'))
+
+    assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
+    if not assinatura or assinatura.status != 'excluida':
+        flash(
+            'A purga definitiva só está disponível para empresas marcadas como '
+            '"excluída" (exclusão lógica já aplicada).',
+            'warning',
+        )
+        return redirect(url_for('admin_comercial.index'))
+
+    nome = empresa.nome
+    dias_restantes = _dias_restantes_exclusao(assinatura.data_exclusao)
+    antecipada = dias_restantes > 0
+
+    try:
+        _hard_delete_empresa(empresa_id)
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.error(f'Erro na purga manual da empresa {empresa_id}: {exc}')
+        flash('Não foi possível concluir a purga dos dados. Verifique os logs do servidor.', 'danger')
+        return redirect(url_for('admin_comercial.index'))
+
+    _registrar_evento(
+        empresa_id,
+        'sucesso' if not antecipada else 'alerta',
+        'EXCLUIR',
+        f'Dados da empresa "{nome}" excluídos definitivamente via purga manual '
+        f'{"antes" if antecipada else "após"} do prazo de retenção.',
+    )
+
+    if antecipada:
+        flash(
+            f'Dados da empresa "{nome}" excluídos DEFINITIVAMENTE do banco — purga '
+            f'ANTECIPADA: faltavam {dias_restantes} dia(s) para completar os '
+            f'{RETENCAO_EXCLUSAO_DIAS} dias de retenção.',
+            'warning',
+        )
+    else:
+        flash(
+            f'Dados da empresa "{nome}" excluídos DEFINITIVAMENTE do banco após o '
+            f'período de retenção de {RETENCAO_EXCLUSAO_DIAS} dias.',
+            'success',
+        )
     return redirect(url_for('admin_comercial.index'))

@@ -2,6 +2,23 @@
 
 {% block title %}Backoffice Comercial{% endblock %}
 
+{% block extra_css %}
+<style>
+    .comercial-clientes-table { min-width: 1360px; }
+    .comercial-clientes-table th,
+    .comercial-clientes-table td { vertical-align: top; }
+    .comercial-clientes-table .col-empresa { min-width: 210px; }
+    .comercial-clientes-table .col-plano { min-width: 130px; }
+    .comercial-clientes-table .col-mudanca { min-width: 170px; }
+    .comercial-clientes-table .col-acoes { min-width: 320px; }
+    .comercial-acoes { display: flex; flex-wrap: wrap; gap: .35rem; align-items: flex-start; }
+    .comercial-acoes .btn { white-space: nowrap; flex: 0 0 auto; }
+    .comercial-acoes form { display: inline-flex; margin: 0; }
+    .comercial-cell-main { white-space: normal; word-break: break-word; }
+    .comercial-cell-meta { white-space: nowrap; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-12 d-flex justify-content-between align-items-center">
@@ -34,28 +51,28 @@
 <div class="ls-card p-4 mb-4">
     <h5 class="mb-3 ls-page-title">Clientes / Assinaturas</h5>
     <div class="table-responsive">
-        <table class="table table-hover align-middle ls-theme-table mb-0">
+        <table class="table table-hover align-middle ls-theme-table mb-0 comercial-clientes-table">
             <thead>
                 <tr>
-                    <th>Empresa</th>
-                    <th>Plano</th>
+                    <th class="col-empresa">Empresa</th>
+                    <th class="col-plano">Plano</th>
                     <th>Status</th>
                     <th>Vigência</th>
-                    <th>Mudança</th>
+                    <th class="col-mudanca">Mudança</th>
                     <th>Usuários</th>
                     <th>Volume</th>
                     <th>Atraso</th>
-                    <th>Ações</th>
+                    <th class="col-acoes">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for r in rows %}
                 <tr>
                     <td>
-                        <div>{{ r.empresa_nome }}</div>
-                        <small class="text-muted">ID {{ r.empresa_id }}</small>
+                        <div class="comercial-cell-main fw-semibold" title="{{ r.empresa_nome }}">{{ r.empresa_nome }}</div>
+                        <small class="text-muted comercial-cell-meta">ID {{ r.empresa_id }}</small>
                     </td>
-                    <td>{{ r.plano }}</td>
+                    <td><span class="comercial-cell-main d-inline-block" title="{{ r.plano }}">{{ r.plano }}</span></td>
                     <td>
                         {% set st = r.status %}
                         {% if st in ('ativa', 'trial') %}
@@ -85,6 +102,7 @@
                         {% endif %}
                         {% if st == 'excluida' %}
                             <div class="mt-2">
+                                {% if r.dias_restantes_exclusao > 0 %}
                                 <small class="text-danger fw-bold">
                                     <i class="fas fa-hourglass-half me-1"></i>
                                     Exclusão definitiva em {{ r.dias_restantes_exclusao }} dia(s)
@@ -92,6 +110,15 @@
                                 <small class="text-muted d-block">
                                     Purga em {{ r.data_purga_exclusao.strftime('%d/%m/%Y') if r.data_purga_exclusao else '-' }}
                                 </small>
+                                {% else %}
+                                <span class="badge bg-danger" title="Retenção de {{ retencao_dias }} dias concluída. Já é possível excluir os dados definitivamente.">
+                                    <i class="fas fa-skull-crossbones me-1"></i>
+                                    Retenção expirada — purga liberada
+                                </span>
+                                <small class="text-muted d-block">
+                                    Purgável desde {{ r.data_purga_exclusao.strftime('%d/%m/%Y') if r.data_purga_exclusao else '-' }}
+                                </small>
+                                {% endif %}
                             </div>
                         {% endif %}
                     </td>
@@ -110,67 +137,62 @@
                         {{ r.atraso_qtd }}<br>
                         <small class="text-muted">R$ {{ to_brl(r.atraso_valor) }}</small>
                     </td>
-                    <td>
-                        <form method="POST" action="{{ url_for('admin_comercial.atualizar_plano_assinatura', empresa_id=r.empresa_id) }}" class="d-flex flex-wrap gap-1 mb-2">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <select name="novo_plano" class="form-select form-select-sm" required>
-                                {% for codigo, label in planos_disponiveis %}
-                                <option value="{{ codigo }}" {% if codigo == r.plano_codigo %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                            <button type="submit" class="btn btn-sm btn-outline-info">Efetivar agora</button>
-                        </form>
-                        <small class="text-muted d-block mb-2">A troca de plano no backoffice é aplicada imediatamente.</small>
-                        <div class="d-flex flex-wrap gap-1 mb-2">
-                            {% if r.bonus_liberado %}
-                            <form method="POST" action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="acao" value="revogar">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary"
-                                        title="Remover a bonificação e voltar ao fluxo normal de assinatura">
-                                    Remover bonificação
-                                </button>
-                            </form>
-                            {% else %}
-                            <form method="POST" action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}"
-                                  class="d-flex flex-wrap gap-1">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="acao" value="conceder">
-                                <select name="bonus_tipo" class="form-select form-select-sm" style="max-width:130px;">
-                                    <option value="ilimitado">Ilimitado</option>
-                                    <option value="trial">Trial (dias)</option>
-                                </select>
-                                <input type="number" name="bonus_dias" min="1" class="form-control form-control-sm"
-                                       style="max-width:90px;" placeholder="Dias">
-                                <input type="text" name="motivo" class="form-control form-control-sm"
-                                       placeholder="Motivo (opcional)">
-                                <button type="submit" class="btn btn-sm btn-info text-nowrap"
-                                        title="Libera o acesso da empresa — ilimitado ou por trial com dias determinados">
-                                    <i class="fas fa-gift me-1"></i>Bonificar
-                                </button>
-                            </form>
-                            {% endif %}
-                        </div>
-                        {% if r.bonus_liberado and r.bonus_concedido_em %}
-                        <small class="text-muted d-block mb-2">
-                            Concedida em {{ r.bonus_concedido_em.strftime('%d/%m/%Y %H:%M') }} — sem limite de dias.
-                        </small>
-                        {% endif %}
-                        <div class="d-flex flex-wrap gap-1 mb-2">
-                            {% for action in ['ativar','suspender','cancelar','reativar'] %}
-                            <form method="POST" action="{{ url_for('admin_comercial.atualizar_status_assinatura', empresa_id=r.empresa_id) }}">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="acao" value="{{ action }}">
-                                <button type="submit" class="btn btn-sm btn-primary">{{ action }}</button>
-                            </form>
-                            {% endfor %}
-                        </div>
-                        <form method="POST" action="{{ url_for('admin_comercial.excluir_empresa', empresa_id=r.empresa_id) }}" class="d-flex gap-1">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="text" name="confirmacao" class="form-control form-control-sm" placeholder="EXCLUIR" required>
-                            <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
-                        </form>
-                    </td>
+<td>
+<form method="POST" action="{{ url_for('admin_comercial.atualizar_plano_assinatura', empresa_id=r.empresa_id) }}" class="d-flex align-items-center gap-1">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="novo_plano" class="form-select form-select-sm" style="width:auto;min-width:120px;" required>
+        {% for codigo, label in planos_disponiveis %}
+        <option value="{{ codigo }}" {% if codigo == r.plano_codigo %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-sm btn-outline-info">Plano</button>
+</form>
+
+<div class="d-flex gap-1">
+    {% for action in ['ativar','suspender','cancelar','reativar'] %}
+    <form method="POST" action="{{ url_for('admin_comercial.atualizar_status_assinatura', empresa_id=r.empresa_id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="acao" value="{{ action }}">
+        <button type="submit" class="btn btn-sm btn-primary">{{ action }}</button>
+    </form>
+    {% endfor %}
+</div>
+
+{% if r.bonus_liberado and r.bonus_concedido_em %}
+<form method="POST" action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}" class="d-flex align-items-center gap-1">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="acao" value="revogar">
+    <button type="submit" class="btn btn-sm btn-outline-danger">Rem. bonif.</button>
+</form>
+{% else %}
+<form method="POST" action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}" class="d-flex align-items-center gap-1">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="acao" value="conceder">
+    <select name="bonus_tipo" class="form-select form-select-sm" style="width:auto;min-width:110px;">
+        <option value="ilimitado">Ilimitado</option>
+        <option value="trial">Trial (dias)</option>
+    </select>
+    <input type="number" name="bonus_dias" min="1" class="form-control form-control-sm" style="max-width:70px;" placeholder="Dias">
+    <input type="text" name="motivo" class="form-control form-control-sm" style="max-width:120px;" placeholder="Motivo">
+    <button type="submit" class="btn btn-sm btn-outline-success">Bonificar</button>
+</form>
+{% endif %}
+
+<form method="POST" action="{{ url_for('admin_comercial.excluir_empresa', empresa_id=r.empresa_id) }}" class="d-flex align-items-center gap-1">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="text" name="confirmacao" class="form-control form-control-sm" placeholder="EXCLUIR" required style="max-width:80px;">
+    <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+</form>
+
+{% if st == 'excluida' %}
+<form method="POST" action="{{ url_for('admin_comercial.purgar_empresa', empresa_id=r.empresa_id) }}" class="d-flex align-items-center gap-1">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="text" name="confirmacao" class="form-control form-control-sm" placeholder="PURGAR" required style="max-width:80px;">
+    <button type="submit" class="btn btn-sm btn-dark">Purgar</button>
+</form>
+{% endif %}
+
+</td>
                 </tr>
                 {% else %}
                 <tr><td colspan="9" class="text-muted">Nenhuma assinatura encontrada.</td></tr>
@@ -224,30 +246,7 @@
 </div>
 
 <div class="row g-4">
-    <div class="col-lg-6">
-        <div class="ls-card p-4 h-100">
-            <h5 class="mb-3 ls-page-title">Logs de Erro (Eventos)</h5>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle ls-theme-table mb-0">
-                    <thead><tr><th>Quando</th><th>Empresa</th><th>Evento</th><th>Erro</th></tr></thead>
-                    <tbody>
-                        {% for e in erro_eventos %}
-                        <tr>
-                            <td>{{ e.recebido_em.strftime('%d/%m %H:%M') if e.recebido_em else '-' }}</td>
-                            <td>{{ e.empresa_id or '-' }}</td>
-                            <td>{{ e.tipo_evento }}</td>
-                            <td>{{ e.mensagem_erro or '-' }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="4" class="text-muted">Sem erros recentes.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
+    <div class="col-lg-12">
         <div class="ls-card p-4 h-100">
             <h5 class="mb-3 ls-page-title">Atualização de Valores (Catálogo)</h5>
             <div class="table-responsive">
