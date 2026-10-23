@@ -264,6 +264,7 @@ def index():
                 'gateway_subscription_id': assinatura.gateway_subscription_id,
                 'users_total': int(users_count.get(empresa.id, 0) or 0),
                 'users_ativos': int(users_active_count.get(empresa.id, 0) or 0),
+                'usuarios_maximos': int(empresa.usuarios_maximos or 5),
                 'volume_dados': data_volume,
                 'atraso_qtd': atraso_info['qtd'],
                 'atraso_valor': atraso_info['valor'],
@@ -301,6 +302,7 @@ def index():
                 'gateway_subscription_id': None,
                 'users_total': int(users_count.get(empresa.id, 0) or 0),
                 'users_ativos': int(users_active_count.get(empresa.id, 0) or 0),
+                'usuarios_maximos': int(empresa.usuarios_maximos or 5),
                 'volume_dados': data_volume,
                 'atraso_qtd': atraso_info['qtd'],
                 'atraso_valor': atraso_info['valor'],
@@ -395,6 +397,8 @@ def atualizar_status_assinatura(empresa_id: int):
     # Se é uma nova assinatura criada agora, apenas salvar e não executar mudança de status
     if nova_assinatura:
         db.session.commit()
+        # Sincroniza módulos da empresa conforme o plano básico padrão
+        sync_empresa_modules(empresa, empresa.plano)
         flash(f'Assinatura criada para empresa "{empresa.nome}". Configure o plano posteriormente.', 'success')
         return redirect(url_for('admin_comercial.index'))
 
@@ -593,7 +597,21 @@ def atualizar_modulos(empresa_id: int):
         checkbox_name = f'modulo_{module_key}'
         attr_name = f'atividade_{module_key}'
         if hasattr(empresa, attr_name):
-            setattr(empresa, attr_name, checkbox_name in request.form)
+            # Entidades é sempre ativo (liberação mínima garantida)
+            if module_key == 'entidades':
+                setattr(empresa, attr_name, True)
+            # comercial é módulo pai: derivado dos sub-módulos após o loop
+            elif module_key == 'comercial':
+                continue
+            else:
+                setattr(empresa, attr_name, checkbox_name in request.form)
+
+    # atividade_comercial derivada: ativo quando qualquer sub-módulo comercial ativo
+    if hasattr(empresa, 'atividade_comercial'):
+        setattr(empresa, 'atividade_comercial', any(
+            getattr(empresa, f'atividade_{sub}', False)
+            for sub in ('pdv', 'compras', 'pedidos', 'estoque')
+        ))
 
     db.session.commit()
 
@@ -605,6 +623,38 @@ def atualizar_modulos(empresa_id: int):
     )
 
     flash(f'Módulos da empresa "{empresa.nome}" atualizados com sucesso.', 'success')
+    return redirect(url_for('admin_comercial.index'))
+
+
+@admin_comercial_bp.route('/empresa/<int:empresa_id>/usuarios_maximos', methods=['POST'])
+@login_required
+@require_role('admin')
+def atualizar_usuarios_maximos(empresa_id: int):
+    gate = _require_backoffice_access()
+    if gate:
+        return gate
+
+    empresa = Empresa.query.get(empresa_id)
+    if not empresa:
+        flash('Empresa não encontrada.', 'warning')
+        return redirect(url_for('admin_comercial.index'))
+
+    novo_limite = request.form.get('usuarios_maximos')
+    if not novo_limite:
+        flash('Limite de usuários não informado.', 'warning')
+        return redirect(url_for('admin_comercial.index'))
+
+    try:
+        limite = int(novo_limite)
+        if limite < 1:
+            flash('Limite de usuários deve ser pelo menos 1.', 'warning')
+            return redirect(url_for('admin_comercial.index'))
+        empresa.usuarios_maximos = limite
+        db.session.commit()
+        flash(f'Limite de usuários atualizado para {limite}.', 'success')
+    except ValueError:
+        flash('Valor inválido para limite de usuários.', 'warning')
+
     return redirect(url_for('admin_comercial.index'))
 
 
@@ -643,6 +693,8 @@ def atualizar_bonus_assinatura(empresa_id: int):
     # Se é uma nova assinatura criada agora, apenas salvar e não executar ações de bônus
     if nova_assinatura:
         db.session.commit()
+        # Sincroniza módulos da empresa conforme o plano básico padrão
+        sync_empresa_modules(empresa, empresa.plano)
         flash(f'Assinatura criada para empresa "{empresa.nome}". Configure o bônus posteriormente.', 'success')
         return redirect(url_for('admin_comercial.index'))
 

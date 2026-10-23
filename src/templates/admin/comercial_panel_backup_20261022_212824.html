@@ -1,0 +1,1234 @@
+{% extends "layout.html" %}
+
+{% block title %}Backoffice Comercial{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* =====================================================
+       LARGURA DA PÁGINA
+       Ajuste limitado ao contêiner deste backoffice.
+       ===================================================== */
+
+    .container:has(.comercial-backoffice),
+    .container-fluid:has(.comercial-backoffice),
+    .container-sm:has(.comercial-backoffice),
+    .container-md:has(.comercial-backoffice),
+    .container-lg:has(.comercial-backoffice),
+    .container-xl:has(.comercial-backoffice),
+    .container-xxl:has(.comercial-backoffice) {
+        width: 100%;
+        max-width: 1600px;
+    }
+
+    .comercial-backoffice {
+        width: 100%;
+        min-width: 0;
+        margin-inline: auto;
+    }
+
+    .comercial-backoffice > .ls-card {
+        min-width: 0;
+    }
+
+    /* =====================================================
+       CLIENTES / ASSINATURAS
+       Sem largura mínima fixa para toda a tabela.
+       ===================================================== */
+
+    .comercial-clientes-table {
+        width: 100%;
+        min-width: 0;
+        table-layout: auto;
+    }
+
+    .comercial-clientes-table th,
+    .comercial-clientes-table td {
+        padding: .8rem .55rem;
+        vertical-align: middle;
+    }
+
+    .comercial-clientes-table th {
+        white-space: nowrap;
+    }
+
+    .comercial-clientes-table td {
+        overflow-wrap: anywhere;
+    }
+
+    .comercial-clientes-table .col-empresa {
+        width: 16%;
+    }
+
+    .comercial-clientes-table .col-plano {
+        width: 9%;
+    }
+
+    .comercial-clientes-table .col-status {
+        width: 11%;
+    }
+
+    .comercial-clientes-table .col-vigencia {
+        width: 9%;
+    }
+
+    .comercial-clientes-table .col-mudanca {
+        width: 12%;
+    }
+
+    .comercial-clientes-table .col-usuarios {
+        width: 6%;
+    }
+
+    .comercial-clientes-table .col-volume {
+        width: 5%;
+    }
+
+    .comercial-clientes-table .col-atraso {
+        width: 7%;
+    }
+
+    .comercial-clientes-table .col-acoes {
+        width: 25%;
+    }
+
+    .comercial-cell-main {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .comercial-cell-meta,
+    .comercial-data {
+        white-space: nowrap;
+    }
+
+    .comercial-status {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .3rem;
+    }
+
+    .comercial-status .badge {
+        max-width: 100%;
+        white-space: normal;
+        text-align: left;
+        line-height: 1.35;
+    }
+
+    .comercial-acoes {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: .45rem;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .comercial-acoes form {
+        min-width: 0;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .comercial-acoes .btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .comercial-form-linha {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .35rem;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .comercial-status-acoes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .comercial-plano-select {
+        flex: 1 1 105px;
+        width: auto;
+        min-width: 0;
+        max-width: 180px;
+    }
+
+    .comercial-bonus-select {
+        flex: 1 1 105px;
+        width: auto;
+        min-width: 0;
+        max-width: 150px;
+    }
+
+    .comercial-bonus-dias {
+        flex: 0 1 70px;
+        width: 70px;
+        min-width: 0;
+    }
+
+    .comercial-bonus-motivo {
+        flex: 1 1 100px;
+        width: 110px;
+        min-width: 0;
+        max-width: 180px;
+    }
+
+    .comercial-confirmacao {
+        flex: 0 1 100px;
+        width: 100px;
+        min-width: 0;
+    }
+
+    /* =====================================================
+       MÓDULOS / ATIVIDADES
+       Reutiliza as superfícies e tabelas do tema existente.
+       ===================================================== */
+
+    .comercial-modulos .modulos-empresa {
+        padding: 0;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .comercial-modulos .modulos-empresa:last-child {
+        margin-bottom: 0;
+    }
+
+    .comercial-modulos .modulos-form {
+        margin: 0;
+    }
+
+    .comercial-modulos .modulos-cabecalho-table {
+        width: 100%;
+        margin: 0;
+    }
+
+    .comercial-modulos .modulos-cabecalho-table th {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .comercial-modulos .modulos-empresa-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: .75rem;
+    }
+
+    .comercial-modulos .modulos-empresa-identificacao {
+        min-width: 0;
+    }
+
+    .comercial-modulos .modulos-empresa-nome {
+        font-size: .95rem;
+        overflow-wrap: anywhere;
+    }
+
+    .comercial-modulos .modulos-empresa-meta {
+        margin-top: .15rem;
+        font-size: .75rem;
+        font-weight: normal;
+    }
+
+    .comercial-modulos .modulos-empresa-body {
+        padding: 1rem;
+    }
+
+    .comercial-modulos .modulos-dashboard {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: .75rem;
+
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+
+        border-bottom: 1px solid;
+        border-bottom-color:
+            var(--bs-border-color, rgba(127, 127, 127, .25));
+    }
+
+    .comercial-modulos .modulos-dashboard .form-check {
+        margin: 0;
+    }
+
+    /* Nove grupos: três linhas de três nas telas maiores. */
+    .comercial-modulos .modulos-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: stretch;
+        gap: .85rem;
+    }
+
+    .comercial-modulos .modulos-grupo {
+        width: 100%;
+        min-width: 0;
+        height: 100%;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .comercial-modulos .modulos-grupo-table {
+        width: 100%;
+        margin: 0;
+    }
+
+    .comercial-modulos .modulos-grupo-table th {
+        padding: .7rem .85rem;
+        font-size: .8rem;
+        font-weight: 600;
+        vertical-align: middle;
+    }
+
+    .comercial-modulos .modulos-grupo-itens {
+        padding: .2rem .85rem;
+    }
+
+    .comercial-modulos .modulo-item {
+        display: flex;
+        align-items: flex-start;
+        gap: .7rem;
+
+        min-width: 0;
+        margin: 0;
+        padding: .8rem 0;
+
+        color: inherit;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .comercial-modulos .modulo-item + .modulo-item {
+        border-top: 1px solid;
+        border-top-color:
+            var(--bs-border-color, rgba(127, 127, 127, .25));
+    }
+
+    .comercial-modulos .modulo-controle {
+        display: block;
+        flex: 0 0 auto;
+        padding-left: 0;
+    }
+
+    .comercial-modulos .modulo-controle .form-check-input {
+        float: none;
+        margin: .15rem 0 0;
+        cursor: pointer;
+    }
+
+    .comercial-modulos .modulo-texto {
+        display: block;
+        min-width: 0;
+    }
+
+    .comercial-modulos .modulo-nome {
+        display: block;
+        color: inherit;
+        font-size: .85rem;
+        font-weight: 600;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .comercial-modulos .modulo-descricao {
+        display: block;
+        margin-top: .2rem;
+        font-size: .75rem;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .comercial-modulos .modulo-item:hover .modulo-nome {
+        text-decoration: underline;
+        text-underline-offset: .2rem;
+    }
+
+    .comercial-modulos .modulo-item-bloqueado,
+    .comercial-modulos .modulo-item-bloqueado
+        .modulo-controle .form-check-input {
+        cursor: not-allowed;
+    }
+
+    .comercial-modulos .modulo-item-bloqueado:hover
+        .modulo-nome {
+        text-decoration: none;
+    }
+
+    .comercial-modulos .modulos-footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: .75rem;
+
+        margin-top: 1rem;
+        padding-top: 1rem;
+
+        border-top: 1px solid;
+        border-top-color:
+            var(--bs-border-color, rgba(127, 127, 127, .25));
+    }
+
+    .comercial-modulos .modulos-footer .btn {
+        white-space: normal;
+    }
+
+    /* =====================================================
+       CATÁLOGO
+       ===================================================== */
+
+    .comercial-catalogo-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .35rem;
+    }
+
+    .comercial-catalogo-preco {
+        flex: 1 1 100px;
+        width: 120px;
+        min-width: 0;
+        max-width: 180px;
+    }
+
+    /* =====================================================
+       RESPONSIVIDADE
+       ===================================================== */
+
+    @media (max-width: 991.98px) {
+        .comercial-modulos .modulos-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        /*
+           Com nove grupos, o último ocupa a linha inteira
+           no layout de duas colunas.
+        */
+        .comercial-modulos .modulos-grupo:last-child {
+            grid-column: 1 / -1;
+        }
+
+        /*
+           Em telas menores, a rolagem passa a ser uma proteção
+           para manter os nove campos da tabela legíveis.
+        */
+        .comercial-clientes-table {
+            min-width: 900px;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .comercial-modulos .modulos-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .comercial-modulos .modulos-grupo:last-child {
+            grid-column: auto;
+        }
+
+        .comercial-modulos .modulos-empresa-body {
+            padding: .75rem;
+        }
+
+        .comercial-modulos .modulos-footer .btn {
+            width: 100%;
+        }
+
+        .comercial-clientes-table th,
+        .comercial-clientes-table td {
+            padding: .6rem .45rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set grupos_modulos = [
+    (
+        'Cadastros',
+        [
+            (
+                'entidades',
+                'Entidades',
+                'Clientes, fornecedores e cadastros'
+            )
+        ]
+    ),
+    (
+            (
+                'comercial',
+                'Comercial',
+    ('propostas',
+                'Propostas Comerciais',
+                'Gestão de propostas comerciais'
+            ),
+    ('aprovacao',
+                'Aprovação de Propostas',
+                'Aprovação de propostas'
+            ),            ('pdv', 'PDV, NF-e, NFC-e e Pedidos'),'
+            ),
+            ('estoque',
+                'Estoque',
+                'Movimento de estoque'),
+            ),
+            (
+                'compras',
+                'Compras',
+                'Entrada de NF de compra'
+            ),
+            (
+                'pedidos',
+                'Pedidos',
+                'Pedidos de venda'
+            ),
+            (
+                'pdv',
+    ),
+    (
+        'Locação',
+        [
+            (
+                'locacao',
+                'Locação',
+                'Aluguel de Roupas e Fantasias'
+            )
+        ]
+    ),
+    (
+        'Contratos',
+        [
+            (
+                'contratos',
+                'Contratos',
+                'Gestão de Contratos de Serviços'
+            )
+        ]
+    ),
+    (
+        'Financeiro',
+        [
+            (
+                'financeiro',
+                'Financeiro',
+                'Gestão Financeira e Fluxo de Caixa'
+            ),
+            (
+                'fluxo',
+                'Fluxo Caixa',
+                'Movimentação de caixa'
+            ),
+            (
+                'contas_banco',
+                'Contas Banco',
+                'Contas bancárias'
+            )
+        ]
+    ),
+    (
+        'Relatórios',
+        [
+            (
+                'relatorios',
+                'Relatórios',
+                'Relatórios gerenciais e fiscais'
+            )
+        ]
+    ),
+    (
+        'Admin',
+        [
+            (
+                'usuarios',
+                'Usuários',
+                'Gerenciar Usuários'
+            ),
+            (
+                'controle_acesso',
+                'Controle de Acesso',
+                'Controle de Acesso'
+            )
+        ]
+    )
+
+<div class="comercial-backoffice">
+
+    <!-- Cabeçalho -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h1 class="display-6 fw-bold ls-page-title">
+                    Backoffice Comercial
+                </h1>
+
+                <p class="text-muted mb-0">
+                    Painel administrativo comercial (acesso por URL direta).
+                </p>
+            </div>
+
+            <span class="badge bg-warning text-dark">
+                Fora do menu
+            </span>
+        </div>
+    </div>
+
+    <!-- Resumo -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-2">
+            <div class="ls-card p-3 h-100">
+                <small class="text-muted d-block">
+                    Clientes ativos
+                </small>
+                <strong>{{ resumo.clientes_ativos }}</strong>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-2">
+            <div class="ls-card p-3 h-100">
+                <small class="text-muted d-block">
+                    Suspensos
+                </small>
+                <strong>{{ resumo.clientes_suspensos }}</strong>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-2">
+            <div class="ls-card p-3 h-100">
+                <small class="text-muted d-block">
+                    Cancelados
+                </small>
+                <strong>{{ resumo.clientes_cancelados }}</strong>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-2">
+            <div class="ls-card p-3 h-100">
+                <small class="text-muted d-block">
+                    Inadimplentes
+                </small>
+                <strong>{{ resumo.inadimplentes }}</strong>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="ls-card p-3 h-100">
+                <small class="text-muted d-block">
+                    Valor em atraso
+                </small>
+                <strong>
+                    R$ {{ to_brl(resumo.valor_em_atraso) }}
+                </strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clientes / Assinaturas -->
+    <div class="ls-card p-3 p-lg-4 mb-4">
+        <h5 class="mb-3 ls-page-title">
+            Clientes / Assinaturas
+        </h5>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle ls-theme-table mb-0 comercial-clientes-table">
+                <thead>
+                    <tr>
+                        <th class="col-empresa">Empresa</th>
+                        <th class="col-plano">Plano</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-vigencia">Vigência</th>
+                        <th class="col-mudanca">Mudança</th>
+                        <th class="col-usuarios">Usuários</th>
+                        <th class="col-volume">Volume</th>
+                        <th class="col-atraso">Atraso</th>
+                        <th class="col-acoes">Ações</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for r in rows %}
+                    {% set st = r.status or 'pendente' %}
+
+                    <tr>
+                        <td>
+                            <div class="comercial-cell-main fw-semibold"
+                                 title="{{ r.empresa_nome }}">
+                                {{ r.empresa_nome }}
+                            </div>
+
+                            <small class="text-muted comercial-cell-meta">
+                                ID {{ r.empresa_id }}
+                            </small>
+                        </td>
+
+                        <td>
+                            <span class="comercial-cell-main d-inline-block"
+                                  title="{{ r.plano }}">
+                                {{ r.plano }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="comercial-status">
+                                {% if st in ('ativa', 'trial') %}
+                                    <span class="badge bg-success text-capitalize">
+                                        {{ st }}
+                                    </span>
+
+                                {% elif st == 'suspensa' %}
+                                    <span class="badge bg-warning text-dark text-capitalize">
+                                        {{ st }}
+                                    </span>
+
+                                {% elif st == 'cancelada' %}
+                                    <span class="badge bg-danger text-capitalize">
+                                        {{ st }}
+                                    </span>
+
+                                {% elif st == 'excluida' %}
+                                    <span class="badge bg-dark text-capitalize">
+                                        excluída
+                                    </span>
+
+                                {% elif st == 'pendente' %}
+                                    <span class="badge bg-secondary text-capitalize">
+                                        pendente
+                                    </span>
+
+                                {% else %}
+                                    <span class="badge bg-secondary text-capitalize">
+                                        {{ st }}
+                                    </span>
+                                {% endif %}
+
+                                {% if r.bonus_liberado %}
+                                    {% if r.bonus_tipo == 'trial' %}
+                                        <span class="badge bg-primary"
+                                              title="{{ r.bonus_motivo or '' }}">
+                                            <i class="fas fa-gift me-1"></i>
+                                            Trial {{ r.bonus_dias or 0 }} dia(s)
+                                        </span>
+
+                                        {% if r.bonus_fim %}
+                                            <small class="text-muted">
+                                                até {{ r.bonus_fim.strftime('%d/%m/%Y') }}
+                                            </small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-info text-dark"
+                                              title="{{ r.bonus_motivo or '' }}">
+                                            <i class="fas fa-gift me-1"></i>
+                                            Bonificação
+                                        </span>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if st == 'excluida' %}
+                                    <div class="mt-2">
+                                        {% if r.dias_restantes_exclusao and r.dias_restantes_exclusao > 0 %}
+                                            <small class="text-danger fw-bold">
+                                                <i class="fas fa-hourglass-half me-1"></i>
+                                                Exclusão definitiva em
+                                                {{ r.dias_restantes_exclusao }} dia(s)
+                                            </small>
+
+                                            <small class="text-muted d-block">
+                                                Purga em
+                                                {{ r.data_purga_exclusao.strftime('%d/%m/%Y') if r.data_purga_exclusao else '-' }}
+                                            </small>
+                                        {% else %}
+                                            <span class="badge bg-danger"
+                                                  title="Retenção de {{ retencao_dias }} dias concluída. Já é possível excluir os dados definitivamente.">
+                                                <i class="fas fa-skull-crossbones me-1"></i>
+                                                Retenção expirada — purga liberada
+                                            </span>
+
+                                            <small class="text-muted d-block">
+                                                Purgável desde
+                                                {{ r.data_purga_exclusao.strftime('%d/%m/%Y') if r.data_purga_exclusao else '-' }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="comercial-data">
+                                {{ r.vigencia.strftime('%d/%m/%Y') if r.vigencia else '-' }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if r.proximo_plano_codigo %}
+                                <div class="fw-semibold">
+                                    {{ r.proximo_plano_codigo }}
+                                </div>
+
+                                <small class="text-muted">
+                                    até
+                                    {{ r.mudanca_plano_efetivar_em.strftime('%d/%m/%Y') if r.mudanca_plano_efetivar_em else '-' }}
+                                </small>
+                            {% else %}
+                                <span class="text-muted">
+                                    Sem mudança pendente
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ r.users_ativos }}/{{ r.users_total }}
+                        </td>
+
+                        <td>
+                            {{ r.volume_dados }}
+                        </td>
+
+                        <td>
+                            {{ r.atraso_qtd }}<br>
+                            <small class="text-muted">
+                                R$ {{ to_brl(r.atraso_valor) }}
+                            </small>
+                        </td>
+
+                        <td>
+                            <div class="comercial-acoes">
+
+                                <!-- Plano -->
+                                <form method="POST"
+                                      action="{{ url_for('admin_comercial.atualizar_plano_assinatura', empresa_id=r.empresa_id) }}"
+                                      class="comercial-form-linha">
+
+                                    <input type="hidden"
+                                           name="csrf_token"
+                                           value="{{ csrf_token() }}">
+
+                                    <select name="novo_plano"
+                                            class="form-select form-select-sm comercial-plano-select"
+                                            aria-label="Plano de {{ r.empresa_nome }}"
+                                            required>
+                                        {% for codigo, label in planos_disponiveis %}
+                                            <option value="{{ codigo }}"
+                                                    {% if codigo == r.plano_codigo %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-info">
+                                        Plano
+                                    </button>
+                                </form>
+
+                                <!-- Status -->
+                                <div class="comercial-status-acoes">
+                                    {% for action in ['ativar', 'suspender', 'cancelar', 'reativar'] %}
+                                        <form method="POST"
+                                              action="{{ url_for('admin_comercial.atualizar_status_assinatura', empresa_id=r.empresa_id) }}">
+
+                                            <input type="hidden"
+                                                   name="csrf_token"
+                                                   value="{{ csrf_token() }}">
+
+                                            <input type="hidden"
+                                                   name="acao"
+                                                   value="{{ action }}">
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-primary">
+                                                {{ action }}
+                                            </button>
+                                        </form>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Bonificação -->
+                                {% if r.bonus_liberado %}
+                                    <form method="POST"
+                                          action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}"
+                                          class="comercial-form-linha">
+
+                                        <input type="hidden"
+                                               name="csrf_token"
+                                               value="{{ csrf_token() }}">
+
+                                        <input type="hidden"
+                                               name="acao"
+                                               value="revogar">
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger">
+                                            Rem. bonif.
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <form method="POST"
+                                          action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}"
+                                          class="comercial-form-linha">
+
+                                        <input type="hidden"
+                                               name="csrf_token"
+                                               value="{{ csrf_token() }}">
+
+                                        <input type="hidden"
+                                               name="acao"
+                                               value="conceder">
+
+                                        <select name="bonus_tipo"
+                                                class="form-select form-select-sm comercial-bonus-select"
+                                                aria-label="Tipo de bonificação">
+                                            <option value="ilimitado">
+                                                Ilimitado
+                                            </option>
+                                            <option value="trial">
+                                                Trial (dias)
+                                            </option>
+                                        </select>
+
+                                        <input type="number"
+                                               name="bonus_dias"
+                                               min="1"
+                                               class="form-control form-control-sm comercial-bonus-dias"
+                                               placeholder="Dias"
+                                               aria-label="Dias de bonificação">
+
+                                        <input type="text"
+                                               name="motivo"
+                                               class="form-control form-control-sm comercial-bonus-motivo"
+                                               placeholder="Motivo"
+                                               aria-label="Motivo da bonificação">
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-success">
+                                            Bonificar
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                <!-- Exclusão -->
+                                <form method="POST"
+                                      action="{{ url_for('admin_comercial.excluir_empresa', empresa_id=r.empresa_id) }}"
+                                      class="comercial-form-linha">
+
+                                    <input type="hidden"
+                                           name="csrf_token"
+                                           value="{{ csrf_token() }}">
+
+                                    <input type="text"
+                                           name="confirmacao"
+                                           class="form-control form-control-sm comercial-confirmacao"
+                                           placeholder="EXCLUIR"
+                                           aria-label="Confirmação de exclusão"
+                                           required>
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-danger">
+                                        Excluir
+                                    </button>
+                                </form>
+
+                                <!-- Purga -->
+                                {% if st == 'excluida' %}
+                                    <form method="POST"
+                                          action="{{ url_for('admin_comercial.purgar_empresa', empresa_id=r.empresa_id) }}"
+                                          class="comercial-form-linha">
+
+                                        <input type="hidden"
+                                               name="csrf_token"
+                                               value="{{ csrf_token() }}">
+
+                                        <input type="text"
+                                               name="confirmacao"
+                                               class="form-control form-control-sm comercial-confirmacao"
+                                               placeholder="PURGAR"
+                                               aria-label="Confirmação de purga"
+                                               required>
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-dark">
+                                            Purgar
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-muted">
+                            Nenhuma assinatura encontrada.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Módulos / Atividades -->
+    <div class="ls-card p-3 p-lg-4 mb-4 comercial-modulos">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <h5 class="mb-0 ls-page-title">
+                <i class="fas fa-tasks me-2"></i>
+                Módulos / Atividades da Empresa
+            </h5>
+
+            <span class="badge bg-secondary">
+                Controle por assinatura
+            </span>
+        </div>
+
+        <p class="text-muted small mb-4">
+            Controle liberado pelo Backoffice Comercial conforme a assinatura.
+            O Dashboard Gerencial permanece sempre disponível.
+            Os demais módulos determinam quais funcionalidades os usuários
+            da empresa visualizam no menu lateral do sistema.
+        </p>
+
+        <div id="modulosGrid">
+            {% for r in rows %}
+            {% set mod = r.modulos or {} %}
+            {% set modulo_disabled = r.status == 'excluida' %}
+
+            <div class="ls-card modulos-empresa">
+                <form method="POST"
+                      action="{{ url_for('admin_comercial.atualizar_modulos', empresa_id=r.empresa_id) }}"
+                      class="modulos-form">
+
+                    <input type="hidden"
+                           name="csrf_token"
+                           value="{{ csrf_token() }}">
+
+                    <table class="table ls-theme-table modulos-cabecalho-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <div class="modulos-empresa-header">
+                                        <div class="modulos-empresa-identificacao">
+                                            <div class="modulos-empresa-nome fw-semibold">
+                                                {{ r.empresa_nome }}
+                                            </div>
+
+                                            <div class="modulos-empresa-meta text-muted">
+                                                ID {{ r.empresa_id }}
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
+                                            <span class="badge bg-secondary">
+                                                Plano {{ r.plano }}
+                                            </span>
+
+                                            {% if modulo_disabled %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-ban me-1"></i>
+                                                    Empresa excluída
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+
+                    <div class="modulos-empresa-body">
+
+                        <!-- Dashboard sempre disponível -->
+                        <div class="modulos-dashboard">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       name="modulo_dashboard"
+                                       id="mod_{{ r.empresa_id }}_dashboard"
+                                       checked
+                                       disabled>
+
+                                <label class="form-check-label small fw-semibold"
+                                       for="mod_{{ r.empresa_id }}_dashboard">
+                                    Dashboard Gerencial
+                                </label>
+
+                                <div class="small text-muted">
+                                    Painel inicial do sistema
+                                </div>
+                            </div>
+
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Sempre ativo
+                            </span>
+                        </div>
+
+                        <!-- Grupos de módulos -->
+                        <div class="modulos-grid">
+                            {% for grupo_nome, grupo_itens in grupos_modulos %}
+                            <section class="ls-card modulos-grupo"
+                                     aria-label="{{ grupo_nome }}">
+
+                                <table class="table ls-theme-table modulos-grupo-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">
+                                                {{ grupo_nome }}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                </table>
+
+                                <div class="modulos-grupo-itens">
+                                    {% for codigo, nome, descricao in grupo_itens %}
+                                    <label class="modulo-item{% if modulo_disabled %} modulo-item-bloqueado{% endif %}"
+                                           for="mod_{{ r.empresa_id }}_{{ codigo }}">
+
+                                        <span class="form-switch modulo-controle">
+                                            <input class="form-check-input"
+                                                   type="checkbox"
+                                                   name="modulo_{{ codigo }}"
+                                                   id="mod_{{ r.empresa_id }}_{{ codigo }}"
+                                                   {% if mod.get(codigo) %}checked{% endif %}
+                                                   {% if modulo_disabled %}disabled{% endif %}>
+                                        </span>
+
+                                        <span class="modulo-texto">
+                                            <span class="modulo-nome">
+                                                {{ nome }}
+                                            </span>
+
+                                            <span class="modulo-descricao text-muted">
+                                                {{ descricao }}
+                                            </span>
+                                        </span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </section>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Salvar -->
+                        <div class="modulos-footer">
+                            {% if modulo_disabled %}
+                                <span class="text-danger small">
+                                    <i class="fas fa-ban me-1"></i>
+                                    Empresa excluída — módulos bloqueados
+                                    até a purga dos dados.
+                                </span>
+                            {% else %}
+                                <span class="small text-muted">
+                                    As alterações serão enviadas ao salvar.
+                                </span>
+
+                                <button type="submit"
+                                        class="btn btn-sm btn-primary">
+                                    <i class="fas fa-save me-1"></i>
+                                    Salvar módulos de {{ r.empresa_nome }}
+                                </button>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+
+            {% else %}
+            <p class="text-muted mb-0">
+                Nenhuma assinatura para gerenciar módulos.
+            </p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Atualização de Valores -->
+    <div class="row g-4">
+        <div class="col-lg-12">
+            <div class="ls-card p-3 p-lg-4 h-100">
+                <h5 class="mb-3 ls-page-title">
+                    Atualização de Valores (Catálogo)
+                </h5>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle ls-theme-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Plano</th>
+                                <th>Ciclo</th>
+                                <th>Versão</th>
+                                <th>Preço</th>
+                                <th>Novo Preço</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for o in ofertas %}
+                            <tr>
+                                <td>
+                                    {{ o.nome_exibicao }}
+                                </td>
+
+                                <td>
+                                    {{ o.periodicidade }}
+                                </td>
+
+                                <td>
+                                    v{{ o.versao_oferta }}
+                                </td>
+
+                                <td>
+                                    R$ {{ '%.2f'|format(o.preco)|replace('.', ',') }}
+                                </td>
+
+                                <td>
+                                    <form method="POST"
+                                          action="{{ url_for('admin_comercial.atualizar_preco_catalogo') }}"
+                                          class="comercial-catalogo-form">
+
+                                        <input type="hidden"
+                                               name="csrf_token"
+                                               value="{{ csrf_token() }}">
+
+                                        <input type="hidden"
+                                               name="oferta_id"
+                                               value="{{ o.id }}">
+
+                                        <input type="text"
+                                               name="novo_preco"
+                                               class="form-control form-control-sm comercial-catalogo-preco"
+                                               placeholder="0,00"
+                                               aria-label="Novo preço de {{ o.nome_exibicao }}"
+                                               required>
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-primary">
+                                            Salvar
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-muted">
+                                    Sem ofertas ativas no catálogo.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

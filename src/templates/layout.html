@@ -680,18 +680,19 @@
                 {% set show_contas_banco = has_activity('financeiro') and has_permission('contas_banco') %}
                 {% set show_cadastros = show_entidades or show_fluxo or show_contas_banco %}
 
-                {% set show_filiais = has_activity('comercial') and has_permission('comercial_filiais') and plan_allows_endpoint('comercial_operacional.filiais_index') %}
-                {% set show_produtos = has_activity('comercial') and has_permission('comercial_produtos') and plan_allows_endpoint('comercial_operacional.produtos_index') %}
-                {% set show_servicos = has_activity('comercial') and has_permission('comercial_servicos') and plan_allows_endpoint('comercial_operacional.servicos_index') %}
-                {% set show_estoque = has_activity('comercial') and has_permission('comercial_estoque') and plan_allows_endpoint('comercial_operacional.estoque_index') %}
-                {% set show_compras = has_activity('comercial') and has_permission('comercial_compras') and plan_allows_endpoint('comercial_operacional.compras_index') %}
+                {% set show_filiais = has_activity('entidades') and has_permission('comercial_filiais') and plan_allows_endpoint('comercial_operacional.filiais_index') %}
+                {% set show_produtos = has_activity('entidades') and has_permission('comercial_produtos') and plan_allows_endpoint('comercial_operacional.produtos_index') %}
+                {% set show_servicos = has_activity('entidades') and has_permission('comercial_servicos') and plan_allows_endpoint('comercial_operacional.servicos_index') %}
+                {% set show_estoque = has_activity('estoque') and has_permission('comercial_estoque') and plan_allows_endpoint('comercial_operacional.estoque_index') %}
+                {% set show_compras = has_activity('compras') and has_permission('comercial_compras') and plan_allows_endpoint('comercial_operacional.compras_index') %}
                 {% set show_documentos = has_activity('comercial') and has_permission('comercial_documentos') and plan_allows_endpoint('comercial_operacional.documentos_index') %}
-                {% set show_tabelas_preco = has_activity('comercial') and has_permission('comercial_tabelas_preco') and plan_allows_endpoint('comercial_operacional.tabelas_preco_index') %}
-                {% set show_orcamentos = has_activity('comercial') and has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.orcamentos_index') %}
-                {% set show_propostas_aprovacao = has_activity('comercial') and has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.propostas_aprovacao') %}
-                {% set show_pedidos = has_activity('comercial') and has_permission('comercial_pedidos') and plan_allows_endpoint('comercial_operacional.pedidos_index') %}
-                {% set show_pdv = has_activity('comercial') and has_permission('comercial_pdv') and plan_allows_endpoint('comercial_operacional.pdv_index') %}
-                {% set show_comercial = has_activity('comercial') and (show_filiais or show_produtos or show_servicos or show_estoque or show_compras or show_documentos or show_tabelas_preco or show_orcamentos or show_propostas_aprovacao or show_pedidos or show_pdv) %}
+                {% set show_tabelas_preco = has_activity('entidades') and has_permission('comercial_tabelas_preco') and plan_allows_endpoint('comercial_operacional.tabelas_preco_index') %}
+                {% set show_orcamentos = has_activity('propostas') and has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.orcamentos_index') %}
+                {% set show_propostas_aprovacao = has_activity('aprovacao') and has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.propostas_aprovacao') %}
+                {% set show_pedidos = has_activity('pedidos') and has_permission('comercial_pedidos') and plan_allows_endpoint('comercial_operacional.pedidos_index') %}
+                {% set show_pdv = has_activity('pdv') and has_permission('comercial_pdv') and plan_allows_endpoint('comercial_operacional.pdv_index') %}
+                {% set show_comercial = has_activity('comercial') and (show_filiais or show_produtos or show_servicos or show_estoque or show_compras or show_documentos or show_tabelas_preco or show_pedidos or show_pdv) %}
+                 {% set show_propostas = (show_orcamentos or show_propostas_aprovacao) %}
 
                 {% set show_lancamentos = has_activity('financeiro') and has_permission('lancamentos') %}
                 {% set show_comissoes = has_activity('financeiro') and has_permission('comissoes') and plan_allows_endpoint('comissoes.listar') %}
@@ -752,12 +753,18 @@
                 
 
                 {% if show_comercial %}
-                <div class="ls-sidebar-section-label"><i class="fas fa-briefcase"></i> Mercadoria </div>
+                <div class="ls-sidebar-section-label"><i class="fas fa-briefcase"></i> Comercial</div>
                 <ul class="ls-sidebar-nav">
                     {% if show_estoque %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.estoque') %}active{% endif %}" href="{{ url_for('comercial_operacional.estoque_index') }}"><i class="fas fa-warehouse"></i> Movimento de estoque</a></li>{% endif %}
                     {% if show_compras %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.compras') %}active{% endif %}" href="{{ url_for('comercial_operacional.compras_index') }}"><i class="fas fa-file-invoice"></i> Entrada de NF de compra</a></li>{% endif %}
                     {% if show_pedidos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pedidos') %}active{% endif %}" href="{{ url_for('comercial_operacional.pedidos_index') }}"><i class="fas fa-clipboard-check"></i> Pedidos de venda</a></li>{% endif %}
                     {% if show_pdv %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pdv') %}active{% endif %}" href="{{ url_for('comercial_operacional.pdv_index') }}"><i class="fas fa-cash-register"></i> PDV Caixa</a></li>{% endif %}
+                </ul>
+                {% endif %}
+
+                {% if show_propostas %}
+                <div class="ls-sidebar-section-label"><i class="fas fa-file-invoice-dollar"></i> Propostas</div>
+                <ul class="ls-sidebar-nav">
                     {% if show_orcamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.orcamentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.orcamentos_index') }}"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>{% endif %}
                     {% if show_propostas_aprovacao %}<li><a class="ls-sidebar-link {% if request.endpoint == 'comercial_operacional.propostas_aprovacao' %}active{% endif %}" href="{{ url_for('comercial_operacional.propostas_aprovacao') }}"><i class="fas fa-clipboard-check"></i> Aprovação de Propostas</a></li>{% endif %}
                 </ul>

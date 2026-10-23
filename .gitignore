@@ -39,6 +39,7 @@ venvold/
 .DS_Store
 .env
 .env.local
+.env.current
 chave API AsaaS.txt
 Key_Brevo.txt
 ngrok_recovery_codes.txt
@@ -67,6 +68,8 @@ logs/
 .tmp/
 temp/
 .cache/
+output.txt
+con
 
 # Ignore OS
 .DS_Store
@@ -77,6 +80,7 @@ desktop.ini
 arquivos_usados/
 CriaPostgreeSQL_MontuDB/
 tests/
+backups/
 
 # Keep important files
 !.env.example

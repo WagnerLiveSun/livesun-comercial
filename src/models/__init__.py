@@ -576,23 +576,26 @@ class Empresa(db.Model):
     
 
     # Atividades da Empresa
-
     atividade_comercial = db.Column(db.Boolean, default=True)
-
     atividade_servicos = db.Column(db.Boolean, default=True)
-
     atividade_financeiro = db.Column(db.Boolean, default=True)
-
     atividade_locacao = db.Column(db.Boolean, default=False)
-
     atividade_contratos = db.Column(db.Boolean, default=False)
-
     atividade_propostas = db.Column(db.Boolean, default=False)
-
     atividade_dashboard = db.Column(db.Boolean, default=True)
-
     atividade_relatorios = db.Column(db.Boolean, default=False)
+    atividade_entidades = db.Column(db.Boolean, default=True)
+    atividade_estoque = db.Column(db.Boolean, default=False)
+    atividade_compras = db.Column(db.Boolean, default=False)
+    atividade_pedidos = db.Column(db.Boolean, default=False)
+    atividade_pdv = db.Column(db.Boolean, default=False)
+    atividade_aprovacao = db.Column(db.Boolean, default=False)
+    atividade_fluxo = db.Column(db.Boolean, default=True)
+    atividade_contas_banco = db.Column(db.Boolean, default=True)
+    atividade_usuarios = db.Column(db.Boolean, default=False)
+    atividade_controle_acesso = db.Column(db.Boolean, default=False)
 
+    usuarios_maximos = db.Column(db.Integer, default=5, nullable=False)
 
 
     criado_em = db.Column(db.DateTime, default=_utcnow)

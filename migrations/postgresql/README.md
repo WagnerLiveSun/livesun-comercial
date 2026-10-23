@@ -44,6 +44,9 @@ CREATE TRIGGER update_tabela_atualizado_em
 - `001_create_comissoes_tables_postgresql.sql` - Tabelas de comissão
 - `009_create_commercial_billing_tables_postgresql.sql` - Tabelas de assinatura e cobrança
 - `013_create_nfse_nacional_tables_postgresql.sql` - Tabelas de NFS-e Nacional
+- `022_add_atividade_contratos_postgresql.sql` - Coluna `atividade_contratos` em `app.empresas`
+- `031_add_atividade_relatorios_postgresql.sql` - Coluna `atividade_relatorios` em `app.empresas`
+- `032_add_atividade_columns_postgresql.sql` - Todas as colunas `atividade_*` em `app.empresas` (idempotente)
 
 ## Execução
 
@@ -62,3 +65,5 @@ psql -U postgres -d comercial
 1. Certifique-se de que as tabelas base (empresas, users, entidades, etc.) já existam
 2. Execute o script principal `criar_banco_comercial_postgresql.sql` antes das migrações
 3. Verifique se a função `update_updated_at_column()` já existe antes de criar
+4. As migrations `022`, `031` e `032` usam `ADD COLUMN IF NOT EXISTS` e são idempotentes
+5. As colunas `atividade_*` ficam em `app.empresas` (schema `app`, tabela no plural)

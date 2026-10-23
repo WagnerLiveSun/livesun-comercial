@@ -162,7 +162,8 @@ def export_listagem_notas_nfse():
     data_emissao_ate = request.args.get('data_emissao_ate', '')
     data_venc_de = request.args.get('data_venc_de', '')
     data_venc_ate = request.args.get('data_venc_ate', '')
-    status = request.args.get('status', '')
+    status = request.args.getlist('status')  # Receber múltiplos valores
+    origem = request.args.getlist('origem')  # Receber múltiplos valores
 
     query = ImportacaoNFSe.query.filter(ImportacaoNFSe.empresa_id == current_user.empresa_id)
     query = query.options(joinedload(ImportacaoNFSe.entidade), joinedload(ImportacaoNFSe.lancamento))
@@ -193,7 +194,9 @@ def export_listagem_notas_nfse():
         except Exception:
             pass
     if status:
-        query = query.join(Lancamento, ImportacaoNFSe.lancamento).filter(Lancamento.status == status)
+        query = query.join(Lancamento, ImportacaoNFSe.lancamento).filter(Lancamento.status.in_(status))
+    if origem:
+        query = query.join(Lancamento, ImportacaoNFSe.lancamento).filter(Lancamento.fonte.in_(origem))
 
     notas = query.order_by(ImportacaoNFSe.data_emissao.desc(), ImportacaoNFSe.id.desc()).all()
 

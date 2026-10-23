@@ -359,7 +359,7 @@ class ServicoAssinatura:
             return assinatura
 
         empresa = Empresa.query.filter_by(id=empresa_id).first()
-        plano_codigo = (empresa.plano if empresa and empresa.plano else 'premium').strip().lower()
+        plano_codigo = (empresa.plano if empresa and empresa.plano else 'intermediate').strip().lower()
 
         hoje = _today()
         trial_days = ServicoAssinatura._trial_days()
@@ -382,6 +382,11 @@ class ServicoAssinatura:
         db.session.flush()
 
         ServicoAssinatura.provisionar_gateway_asaas(assinatura)
+
+        # Sincroniza módulos da empresa conforme o plano
+        from src.services.planos import sync_empresa_modules
+        sync_empresa_modules(empresa, plano_codigo)
+
         return assinatura
 
     @staticmethod

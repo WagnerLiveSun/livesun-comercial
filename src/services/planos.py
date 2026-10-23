@@ -230,9 +230,25 @@ def is_premium_plan(plan: Optional[str]) -> bool:
 # o acesso da empresa conforme a assinatura escolhida.
 # ============================================================================
 PLAN_MODULES: Dict[str, set] = {
-    'basic': {'comercial', 'servicos', 'financeiro', 'dashboard'},
-    'intermediate': {'comercial', 'servicos', 'financeiro', 'locacao', 'contratos', 'propostas', 'dashboard', 'relatorios'},
-    'premium': {'comercial', 'servicos', 'financeiro', 'locacao', 'contratos', 'propostas', 'dashboard', 'relatorios'},
+    'basic': {
+        'comercial', 'servicos', 'financeiro', 'dashboard',
+        'entidades', 'fluxo', 'contas_banco', 'pdv',
+        'usuarios', 'controle_acesso',
+    },
+    'intermediate': {
+        'comercial', 'servicos', 'financeiro', 'dashboard',
+        'entidades', 'fluxo', 'contas_banco', 'pdv',
+        'estoque', 'compras', 'pedidos',
+        'locacao', 'contratos', 'propostas', 'aprovacao',
+        'usuarios', 'controle_acesso',
+    },
+    'premium': {
+        'comercial', 'servicos', 'financeiro', 'dashboard',
+        'entidades', 'fluxo', 'contas_banco', 'pdv',
+        'estoque', 'compras', 'pedidos',
+        'locacao', 'contratos', 'propostas', 'aprovacao',
+        'usuarios', 'controle_acesso', 'relatorios',
+    },
 }
 
 
@@ -242,14 +258,34 @@ def modules_for_plan(plan: Optional[str]) -> set:
 
 
 ALL_MODULE_LABELS: Dict[str, Dict[str, str]] = {
-    'comercial': {'label': 'Mercadoria', 'descricao': 'PDV, NF-e, NFC-e e Pedidos'},
+    # Cadastros
+    'entidades': {'label': 'Entidades', 'descricao': 'Clientes, fornecedores e cadastros'},
+    # Comercial (módulo pai — atividade_comercial derivada do sub-módulo)
+    'comercial': {'label': 'Comercial', 'descricao': 'Operações comerciais (PDV, NF-e, NFC-e, Pedidos)'},
+    'estoque': {'label': 'Estoque', 'descricao': 'Movimento de estoque'},
+    'compras': {'label': 'Compras', 'descricao': 'Entrada de NF de compra'},
+    'pedidos': {'label': 'Pedidos', 'descricao': 'Pedidos de venda'},
+    'pdv': {'label': 'PDV', 'descricao': 'PDV Caixa'},
+    # Propostas
+    'propostas': {'label': 'Propostas Comerciais', 'descricao': 'Gestão de propostas comerciais'},
+    'aprovacao': {'label': 'Aprovação de Propostas', 'descricao': 'Aprovação de propostas'},
+    # Serviços / Fiscal
     'servicos': {'label': 'Serviços / Fiscal', 'descricao': 'NFS-e e Importação de Notas'},
-    'financeiro': {'label': 'Financeiro', 'descricao': 'Gestão Financeira e Fluxo de Caixa'},
+    # Locação
     'locacao': {'label': 'Locação', 'descricao': 'Aluguel de Roupas e Fantasias'},
+    # Contratos
     'contratos': {'label': 'Contratos', 'descricao': 'Gestão de Contratos de Serviços'},
-    'propostas': {'label': 'Propostas', 'descricao': 'Gestão de Propostas Comerciais'},
-    'dashboard': {'label': 'Dashboard', 'descricao': 'Painéis de gestão'},
+    # Financeiro
+    'financeiro': {'label': 'Financeiro', 'descricao': 'Gestão Financeira e Fluxo de Caixa'},
+    'fluxo': {'label': 'Fluxo Caixa', 'descricao': 'Movimentação de caixa'},
+    'contas_banco': {'label': 'Contas Banco', 'descricao': 'Contas bancárias'},
+    # Relatórios
     'relatorios': {'label': 'Relatórios', 'descricao': 'Relatórios gerenciais e fiscais'},
+    # Admin
+    'usuarios': {'label': 'Usuários', 'descricao': 'Gerenciar Usuários'},
+    'controle_acesso': {'label': 'Controle de Acesso', 'descricao': 'Controle de Acesso'},
+    # Dashboard (controlado pelo backoffice comercial)
+    'dashboard': {'label': 'Dashboard', 'descricao': 'Painéis de gestão'},
 }
 
 
@@ -263,4 +299,21 @@ def sync_empresa_modules(empresa, plan: Optional[str]) -> None:
         # (compatibilidade com banco MySQL onde coluna pode não existir ainda)
         attr_name = f'atividade_{module_key}'
         if hasattr(empresa, attr_name):
-            setattr(empresa, attr_name, module_key in enabled)
+            # Entidades é sempre ativo (liberação mínima garantida)
+            if module_key == 'entidades':
+                setattr(empresa, attr_name, True)
+            # comercial é módulo pai: derivado dos sub-módulos após o loop
+            elif module_key == 'comercial':
+                continue
+            # Dashboard passa a ser controlado pelo backoffice (toggle)
+            elif module_key == 'dashboard':
+                continue
+            else:
+                setattr(empresa, attr_name, module_key in enabled)
+
+    # atividade_comercial derivada: ativo quando qualquer sub-módulo comercial está ativo
+    if hasattr(empresa, 'atividade_comercial'):
+        setattr(empresa, 'atividade_comercial', any(
+            getattr(empresa, f'atividade_{sub}', False)
+            for sub in ('pdv', 'compras', 'pedidos', 'estoque')
+        ))

@@ -2086,13 +2086,15 @@ def orcamentos_exportar_pdf(orcamento_id):
             return total if total > 0 else Decimal("0.00")
 
         def dados_contato_cliente(cliente_obj, vendedor_obj):
-            """Retorna o contato do cliente (nome + email) para o cabeçalho do PDF."""
-            contato = vendedor_obj if vendedor_obj else cliente_obj
-            nome_contato = txt(getattr(contato, "nome", None)) or "Contato"
-            email = txt(getattr(contato, "email", None) or getattr(cliente_obj, "email", None))
+            """Retorna o contato do vendedor para o cabeçalho do PDF (evita mostrar o email do cliente)."""
+            contato = vendedor_obj if vendedor_obj else None
+            nome_contato = txt(getattr(contato, "nome", None)) if contato else "Vendedor não informado"
+            email = txt(getattr(contato, "email", None)) if contato else None
             linhas = [nome_contato]
             if email:
                 linhas.append(email)
+            if not contato:
+                linhas.append("(sem vendedor informado)")
             return linhas
 
         def texto_valido(s):
@@ -2223,9 +2225,18 @@ def orcamentos_exportar_pdf(orcamento_id):
         pdf.set_x(left_x)
         pdf.cell(0, 6, f"O orçamento expira em: {orcamento.data_validade.strftime('%d/%m/%Y') if getattr(orcamento, 'data_validade', None) else '-'}", 0, 1)
 
-        total_geral = Decimal(str(getattr(orcamento, "valor_total", 0) or 0))
-        if total_geral <= 0:
-            total_geral = sum((item_total(i) for i in orcamento.itens), Decimal("0.00"))
+        # Total = soma de TODAS as linhas de itens (desconto por linha já considerado)
+        total_geral = sum(
+            (item_total(i) for i in getattr(orcamento, "itens", []) or []),
+            Decimal("0.00"),
+        )
+        # Desconto total: soma dos descontos por linha + desconto total do orçamento
+        desconto_total = sum(
+            (Decimal(str(getattr(i, "valor_desconto", 0) or 0)) for i in getattr(orcamento, "itens", []) or []),
+            Decimal("0.00"),
+        )
+        desconto_total += Decimal(str(getattr(orcamento, "valor_desconto", 0) or 0))
+        total_geral -= Decimal(str(getattr(orcamento, "valor_desconto", 0) or 0))
 
         #top_total_y = ref_y + 28
         #pdf.set_xy(left_x, top_total_y)
@@ -2239,16 +2250,17 @@ def orcamentos_exportar_pdf(orcamento_id):
         #table_y = top_total_y + 14
         table_y = ref_y + 28
         x0 = 14
-        w_desc = 124
-        w_qtd = 22
-        w_preco = 36
+        w_desc = 90
+        w_qtd = 20
+        w_preco = 32
+        w_desconto = 32
         h_header = 8
-        h_item = 36
 
         pdf.set_line_width(0.25)
         pdf.rect(x0, table_y, w_desc, h_header)
         pdf.rect(x0 + w_desc, table_y, w_qtd, h_header)
         pdf.rect(x0 + w_desc + w_qtd, table_y, w_preco, h_header)
+        pdf.rect(x0 + w_desc + w_qtd + w_preco, table_y, w_desconto, h_header)
         pdf.set_line_width(0.2)
 
         pdf.set_xy(x0 + 2, table_y + 2.5)
@@ -2260,7 +2272,10 @@ def orcamentos_exportar_pdf(orcamento_id):
         pdf.cell(w_qtd, 5, "QUANTIDADE", 0, 0, "C")
 
         pdf.set_xy(x0 + w_desc + w_qtd, table_y + 2.5)
-        pdf.cell(w_preco - 2, 5, "PREÇO", 0, 0, "R")
+        pdf.cell(w_preco, 5, "UNITÁRIO", 0, 0, "C")
+
+        pdf.set_xy(x0 + w_desc + w_qtd + w_preco, table_y + 2.5)
+        pdf.cell(w_desconto, 5, "DESCONTO", 0, 0, "R")
 
         # --- Renderizar TODOS os itens do orçamento ---
         item_y = table_y + h_header
@@ -2270,6 +2285,8 @@ def orcamentos_exportar_pdf(orcamento_id):
             desc = item_descricao(item)
             qtd = qtd_fmt(getattr(item, "quantidade", 0) or 0)
             preco = brl(item_total(item))
+            desconto_valor = Decimal(str(getattr(item, "valor_desconto", 0) or 0))
+            desconto_linha = brl(desconto_valor) if desconto_valor > 0 else "-"
 
             # Altura dinâmica baseada no tamanho da descrição (más fina, evita espaços vazios)
             linhas_desc = max(1, len(desc) // 55 + 1)
@@ -2286,22 +2303,26 @@ def orcamentos_exportar_pdf(orcamento_id):
             pdf.rect(x0, item_y, w_desc, h_row)
             pdf.rect(x0 + w_desc, item_y, w_qtd, h_row)
             pdf.rect(x0 + w_desc + w_qtd, item_y, w_preco, h_row)
+            pdf.rect(x0 + w_desc + w_qtd + w_preco, item_y, w_desconto, h_row)
             pdf.set_line_width(0.2)
 
             # Descrição do item
             #pdf.set_xy(x0 + 4, item_y + 4)
-            pdf.set_xy(x0 + 4, item_y + ((h_row - 6.5) / 2))
+            pdf.set_xy(x0 + 2, item_y + ((h_row - 6.5) / 2))
             pdf.set_font("Helvetica", "", 9.6)
             pdf.set_text_color(*pdf.texto)
-            pdf.multi_cell(w_desc - 8, 6.5, desc)
+            pdf.multi_cell(w_desc - 4, 6.5, desc)
 
             # Quantidade e Preço (centralizados verticalmente no row)
             val_y = item_y + (h_row - 6) / 2
             pdf.set_xy(x0 + w_desc, val_y)
             pdf.cell(w_qtd, 6, qtd, 0, 0, "C")
 
-            pdf.set_xy(x0 + w_desc + w_qtd + 2, val_y)
-            pdf.cell(w_preco - 4, 6, preco, 0, 0, "R")
+            pdf.set_xy(x0 + w_desc + w_qtd, val_y)
+            pdf.cell(w_preco, 6, preco, 0, 0, "R")
+
+            pdf.set_xy(x0 + w_desc + w_qtd + w_preco, val_y)
+            pdf.cell(w_desconto, 6, desconto_linha, 0, 0, "R")
 
             item_y += h_row
 
@@ -2322,6 +2343,14 @@ def orcamentos_exportar_pdf(orcamento_id):
         pdf.cell(final_w_label, 5, "Total", 0, 0, "C")
         pdf.set_xy(final_x + final_w_label, final_y + 3)
         pdf.cell(final_w_value - 3, 5, brl(total_geral), 0, 0, "R")
+
+        # Resumo do desconto total das linhas
+        pdf.set_xy(final_x, final_y + final_h + 3)
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.set_text_color(*pdf.azul)
+        pdf.cell(final_w_label, 5, "Desconto", 0, 0, "L")
+        pdf.set_xy(final_x + final_w_label, final_y + final_h + 3)
+        pdf.cell(final_w_value, 5, brl(desconto_total), 0, 0, "R")
 
         # PÁGINA 2
         pdf.add_page()
@@ -2740,7 +2769,7 @@ def orcamentos_exportar_pdf_resumido(orcamento_id):
         if not itens:
             itens = []
 
-        for item in itens[:6]:
+        for item in itens:
             total_item = item_total(item)
             total_geral += total_item
 
@@ -2779,8 +2808,7 @@ def orcamentos_exportar_pdf_resumido(orcamento_id):
 
             y += h_row
 
-        if total_geral == 0:
-            total_geral = Decimal(str(getattr(orcamento, "valor_total", 0) or 0))
+        # (total sempre é a soma das linhas de itens; se não houver itens, permanece 0)
 
         pdf.set_y(y + 10)
         pdf.set_font("Helvetica", "B", 15)
