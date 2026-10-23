@@ -916,6 +916,39 @@ def _get_or_create_fluxo_recebimento(empresa_id: int) -> int | None:
     return conta.id
 
 
+def _gerar_numero_titulo_nfse(empresa_id: int) -> str:
+    """
+    Gera o número do título financeiro como última NFS-e emitida + 1.
+
+    A numeração considera apenas os registros da empresa na tabela
+    nfse_nacional_emissoes, por meio do modelo NfseNacionalEmissao.
+    """
+    numeros = (
+        scoped_query(NfseNacionalEmissao)
+        .filter(
+            NfseNacionalEmissao.empresa_id == empresa_id,
+            NfseNacionalEmissao.numero_nfse.isnot(None),
+            NfseNacionalEmissao.numero_nfse != "",
+        )
+        .with_entities(NfseNacionalEmissao.numero_nfse)
+        .all()
+    )
+
+    ultimo_numero = 0
+
+    for (numero,) in numeros:
+        try:
+            numero_limpo = "".join(ch for ch in str(numero) if ch.isdigit())
+
+            if numero_limpo:
+                ultimo_numero = max(ultimo_numero, int(numero_limpo))
+
+        except (TypeError, ValueError):
+            continue
+
+    return str(ultimo_numero + 1)
+
+
 def _get_or_create_conta_banco_principal(empresa_id: int) -> ContaBanco | None:
     conta = ContaBanco.query.filter_by(empresa_id=empresa_id, is_principal=True).first()
     if conta:
@@ -1953,14 +1986,17 @@ def emissoes():
                         valor_pago=Decimal("0.00"),
                         valor_imposto=valor_iss,
                         valor_outros_custos=Decimal("0.00"),
-                        numero_documento=emissao.numero_nfse,  # Só usa número oficial
+                        numero_documento=_gerar_numero_titulo_nfse(empresa_id),  # Última NFS-e emitida + 1
                         observacoes=observacoes or servico.descricao,
                         fonte="nfse_nacional",
                     )
                     db.session.add(lancamento)
                     db.session.flush()
                     emissao.lancamento = lancamento
-                    logging.info(f"Lançamento {emissao.lancamento.id} criado com número oficial da NFS-e: {emissao.numero_nfse}")
+                    logging.info(
+                        f"Lançamento {emissao.lancamento.id} criado com número do título: "
+                        f"{lancamento.numero_documento} | NFS-e oficial: {emissao.numero_nfse}"
+                    )
             else:
                 emissao.log_tecnico = (emissao.log_tecnico or "") + " | Emissão autorizada sem lançamento financeiro por ausência de conta bancária principal."
 
