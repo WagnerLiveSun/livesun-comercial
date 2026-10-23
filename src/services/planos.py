@@ -92,7 +92,17 @@ PLAN_ENDPOINT_MIN_LEVEL = {
     'lancamentos.pagar': 1,
     'lancamentos.deletar': 1,
 
-    # Comercial operacional (intermediate+)
+    # Comercial operacional - Serviços (basic+)
+    'comercial_operacional.servicos_index': 1,
+    'comercial_operacional.servicos_criar': 1,
+    'comercial_operacional.servicos_editar': 1,
+    'comercial_operacional.servicos_deletar': 1,
+    'comercial_operacional.orcamentos_index': 1,
+    'comercial_operacional.orcamentos_criar': 1,
+    'comercial_operacional.orcamentos_detalhe': 1,
+    'comercial_operacional.orcamentos_converter': 1,
+
+    # Comercial operacional - Filiais/Produtos (intermediate+)
     'comercial_operacional.filiais_index': 2,
     'comercial_operacional.filiais_criar': 2,
     'comercial_operacional.filiais_editar': 2,
@@ -101,10 +111,6 @@ PLAN_ENDPOINT_MIN_LEVEL = {
     'comercial_operacional.produtos_criar': 2,
     'comercial_operacional.produtos_editar': 2,
     'comercial_operacional.produtos_deletar': 2,
-    'comercial_operacional.servicos_index': 2,
-    'comercial_operacional.servicos_criar': 2,
-    'comercial_operacional.servicos_editar': 2,
-    'comercial_operacional.servicos_deletar': 2,
     'comercial_operacional.estoque_index': 2,
     'comercial_operacional.estoque_criar': 2,
     'comercial_operacional.compras_index': 2,
@@ -119,10 +125,6 @@ PLAN_ENDPOINT_MIN_LEVEL = {
     'comercial_operacional.tabelas_preco_itens': 2,
     'comercial_operacional.tabelas_preco_itens_adicionar': 2,
     'comercial_operacional.tabelas_preco_itens_remover': 2,
-    'comercial_operacional.orcamentos_index': 2,
-    'comercial_operacional.orcamentos_criar': 2,
-    'comercial_operacional.orcamentos_detalhe': 2,
-    'comercial_operacional.orcamentos_converter': 2,
     'comercial_operacional.pedidos_index': 2,
     'comercial_operacional.pedidos_detalhe': 2,
     'comercial_operacional.pedidos_faturar': 2,
@@ -232,7 +234,7 @@ def is_premium_plan(plan: Optional[str]) -> bool:
 PLAN_MODULES: Dict[str, set] = {
     'basic': {
         'comercial', 'servicos', 'financeiro', 'dashboard',
-        'entidades', 'fluxo', 'contas_banco', 'pdv',
+        'entidades', 'fluxo', 'contas_banco', 'pdv','contratos', 'propostas', 'aprovacao',
         'usuarios', 'controle_acesso',
     },
     'intermediate': {
