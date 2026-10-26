@@ -73,7 +73,7 @@
             <div class="alert alert-info mb-2 py-2">
                 <strong>Replicando a NFS-e nº {{ replicar.numero_nfse or replicar.numero_interno }}</strong>
                 (tomador: {{ replicar.tomador.nome if replicar.tomador else '-' }}).
-                Os dados já vieram preenchidos; revise o <strong>valor</strong> e a <strong>data de emissão</strong> antes de emitir.
+                Tomador, serviço e configurações tributárias foram preenchidos; informe o <strong>valor</strong> e a <strong>data de emissão</strong> da nova prestação.
             </div>
             {% endif %}
             <div class="helper-box rounded-3 px-3 py-2">
@@ -204,15 +204,15 @@
 
             <div class="col-md-4">
                 <label class="form-label">Valor serviço</label>
-                <input type="number" step="0.01" name="valor_servico" class="form-control ls-theme-control" required value="{{ replicar.valor_servico if replicar else '' }}">
+                <input type="number" step="0.01" name="valor_servico" class="form-control ls-theme-control" required value="">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Deduções</label>
-                <input type="number" step="0.01" name="valor_deducoes" class="form-control ls-theme-control" value="{{ replicar.valor_deducoes if replicar else '0.00' }}">
+                <input type="number" step="0.01" name="valor_deducoes" class="form-control ls-theme-control" value="0.00">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Data de emissão</label>
-                <input type="date" name="data_emissao" class="form-control ls-theme-control" value="{{ replicar.criado_em.strftime('%Y-%m-%d') if replicar and replicar.criado_em else '' }}">
+                <input type="date" name="data_emissao" class="form-control ls-theme-control" value="">
             </div>
 
             <div class="col-md-6">
@@ -247,15 +247,21 @@
 <script>
 (function () {
     // Trava anti-duplo-clique: desabilita o botao no submit (a SEFIN pode demorar ate 60s).
-    const formEmitir = document.getElementById('formEmitirNfse') || document.querySelector('form[method=\"post\"]');
+    const formEmitir = document.getElementById('formEmitirNfse');
     const btnEmitir = document.getElementById('btnEmitirNfse');
     if (formEmitir && btnEmitir) {
-        formEmitir.addEventListener('submit', function () {
+        formEmitir.addEventListener('submit', function (event) {
+            if (formEmitir.dataset.enviando === 'true') {
+                event.preventDefault();
+                return;
+            }
+            formEmitir.dataset.enviando = 'true';
             btnEmitir.disabled = true;
             btnEmitir.innerHTML = '<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span> Emitindo...';
         });
     }
 })();
+</script>
 
 <script>
 (function () {

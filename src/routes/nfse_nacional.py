@@ -142,6 +142,60 @@ def _construir_html_email(mensagem, empresa):
     )
 
 
+def _extrair_identificadores_fiscais_xml(xml_text: str) -> dict:
+    """Extrai número oficial, código verificação e chave do XML da NFS-e.
+
+    Suporta XML puro ou compactado em gzip+base64.
+    Retorna dict com 'numero_nfse', 'codigo_verificacao', 'chave_nfse'.
+    """
+    if not xml_text:
+        return {}
+
+    texto = xml_text.strip() if isinstance(xml_text, str) else ""
+
+    # Tentar descomprimir se for gzip+base64
+    if texto and not texto.lstrip().startswith("<"):
+        try:
+            bruto = base64.b64decode(texto, validate=True)
+            if bruto[:2] == b"\x1f\x8b":
+                bruto = gzip.decompress(bruto)
+            texto = bruto.decode("utf-8", "ignore")
+        except Exception:
+            pass
+
+    if not texto or not texto.lstrip().startswith("<"):
+        return {}
+
+    try:
+        import xml.etree.ElementTree as ET
+        root = ET.fromstring(texto)
+
+        def find_text(path, default=""):
+            node = None
+            for ns in (
+                {"nfse": "http://www.sped.fazenda.gov.br/nfse"},
+                {"nfse": "http://www.abrasf.org.br/nfse"},
+                {},
+            ):
+                node = root.find(path, ns)
+                if node is not None:
+                    break
+            return (node.text or "").strip() if node is not None else default
+
+        numero_nfse = find_text(".//nfse:nNFSe") or find_text(".//nNFSe")
+        codigo_verificacao = find_text(".//nfse:codigoVerificacao") or find_text(".//codigoVerificacao") or find_text(".//nfse:cNFSe") or find_text(".//cNFSe")
+        chave_nfse = find_text(".//nfse:chave") or find_text(".//chave") or find_text(".//nfse:chaveAcesso") or find_text(".//chaveAcesso")
+
+        return {
+            "numero_nfse": numero_nfse,
+            "codigo_verificacao": codigo_verificacao,
+            "chave_nfse": chave_nfse,
+        }
+    except Exception as exc:
+        logging.warning("Falha ao extrair identificadores do XML: %s", exc)
+        return {}
+
+
 def _extrair_xml_nfse_do_payload(payload_retorno):
     """Recupera o XML da NFS-e do payload de retorno da transmissão.
 
@@ -218,6 +272,85 @@ def _obter_xml_nfse_autorizado(emissao, consultar_api=True):
         except Exception as exc:
             logging.warning("Falha ao consultar o XML da NFS-e %s: %s", emissao.chave_nfse, exc)
     return ""
+
+
+def _recuperar_ou_criar_lancamento(emissao, usuario_id=None):
+    """Recupera ou cria o lançamento financeiro de forma idempotente.
+
+    Usa o número oficial da NFS-e como número do documento.
+    Não transmite a nota novamente; apenas cria/recupera o lançamento.
+
+    Retorna o lançamento criado/recuperado ou None em caso de erro.
+    """
+    if not emissao.numero_nfse:
+        logging.warning("Não é possível criar lançamento sem número oficial da NFS-e (emissão %s)", emissao.id)
+        return None
+
+    try:
+        # Se já tem lançamento vinculado, retornar
+        if emissao.lancamento:
+            return emissao.lancamento
+
+        # Buscar conta bancária principal e fluxo
+        conta_banco = _get_or_create_conta_banco_principal(emissao.empresa_id)
+        fluxo_conta_id = emissao.tomador.fluxo_conta_id if emissao.tomador else None
+        if not fluxo_conta_id:
+            fluxo_conta_id = _get_or_create_fluxo_recebimento(emissao.empresa_id)
+
+        if not conta_banco or not fluxo_conta_id:
+            logging.warning("Não é possível criar lançamento sem conta bancária ou fluxo (emissão %s)", emissao.id)
+            return None
+
+        # Usar número oficial da NFS-e como número do documento
+        numero_documento = emissao.numero_nfse
+
+        # Verificar se já existe lançamento com mesmo número do documento
+        lancamento_existente = Lancamento.query.filter_by(
+            empresa_id=emissao.empresa_id,
+            numero_documento=numero_documento,
+            fonte="nfse_nacional"
+        ).first()
+
+        if lancamento_existente:
+            # Vincular lançamento existente à emissão
+            emissao.lancamento = lancamento_existente
+            db.session.commit()
+            logging.info(
+                f"Lançamento existente {lancamento_existente.id} vinculado à emissão {emissao.id} (NFS-e {emissao.numero_nfse})"
+            )
+            return lancamento_existente
+
+        # Criar novo lançamento
+        lancamento = Lancamento(
+            empresa_id=emissao.empresa_id,
+            data_evento=emissao.criado_em.date() if emissao.criado_em else datetime.utcnow().date(),
+            data_vencimento=emissao.criado_em.date() if emissao.criado_em else datetime.utcnow().date(),
+            data_pagamento=None,
+            status="aberto",
+            entidade_id=emissao.tomador_id,
+            fluxo_conta_id=fluxo_conta_id,
+            conta_banco_id=conta_banco.id,
+            valor_real=emissao.valor_servico,
+            valor_pago=Decimal("0.00"),
+            valor_imposto=emissao.valor_iss,
+            valor_outros_custos=Decimal("0.00"),
+            numero_documento=numero_documento,
+            observacoes=emissao.observacoes or (emissao.servico.descricao if emissao.servico else ""),
+            fonte="nfse_nacional",
+        )
+        db.session.add(lancamento)
+        db.session.flush()
+        emissao.lancamento = lancamento
+        db.session.commit()
+        logging.info(
+            f"Lançamento {lancamento.id} criado para emissão {emissao.id} (NFS-e {emissao.numero_nfse})"
+        )
+        return lancamento
+
+    except Exception as exc:
+        db.session.rollback()
+        logging.error("Falha ao recuperar/criar lançamento para emissão %s: %s", emissao.id, exc)
+        return None
 
 
 def _gravar_cancelamento_local(emissao, protocolo=None, motivo=None, payload_retorno=None, usuario_id=None):
@@ -916,37 +1049,7 @@ def _get_or_create_fluxo_recebimento(empresa_id: int) -> int | None:
     return conta.id
 
 
-def _gerar_numero_titulo_nfse(empresa_id: int) -> str:
-    """
-    Gera o número do título financeiro como última NFS-e emitida + 1.
 
-    A numeração considera apenas os registros da empresa na tabela
-    nfse_nacional_emissoes, por meio do modelo NfseNacionalEmissao.
-    """
-    numeros = (
-        scoped_query(NfseNacionalEmissao)
-        .filter(
-            NfseNacionalEmissao.empresa_id == empresa_id,
-            NfseNacionalEmissao.numero_nfse.isnot(None),
-            NfseNacionalEmissao.numero_nfse != "",
-        )
-        .with_entities(NfseNacionalEmissao.numero_nfse)
-        .all()
-    )
-
-    ultimo_numero = 0
-
-    for (numero,) in numeros:
-        try:
-            numero_limpo = "".join(ch for ch in str(numero) if ch.isdigit())
-
-            if numero_limpo:
-                ultimo_numero = max(ultimo_numero, int(numero_limpo))
-
-        except (TypeError, ValueError):
-            continue
-
-    return str(ultimo_numero + 1)
 
 
 def _get_or_create_conta_banco_principal(empresa_id: int) -> ContaBanco | None:
@@ -1927,6 +2030,7 @@ def emissoes():
 
         resultado = transmitiremissao(payload, configuracao)
 
+        # Persistir dados fiscais imediatamente após retorno da SEFIN
         emissao.status_processamento = resultado.get("status") or "ERRO"
         emissao.situacao_fiscal = resultado.get("situacao_fiscal") or "REJEITADA"
         emissao.protocolo = resultado.get("protocolo")
@@ -1935,6 +2039,20 @@ def emissoes():
         emissao.chave_nfse = resultado.get("chave_nfse")
         emissao.xml_nfse = resultado.get("xml_nfse")
         emissao.payload_retorno = json.dumps(resultado.get("payload_retorno"), ensure_ascii=False, default=str)
+
+        # Se o retorno não trouxe número oficial mas tem XML, tentar extrair do XML
+        if not emissao.numero_nfse and emissao.xml_nfse:
+            try:
+                identificadores = _extrair_identificadores_fiscais_xml(emissao.xml_nfse)
+                if identificadores.get("numero_nfse"):
+                    emissao.numero_nfse = identificadores["numero_nfse"]
+                    logging.info("Número oficial %s extraído do XML após retorno da SEFIN", emissao.numero_nfse)
+                if identificadores.get("codigo_verificacao") and not emissao.codigo_verificacao:
+                    emissao.codigo_verificacao = identificadores["codigo_verificacao"]
+                if identificadores.get("chave_nfse") and not emissao.chave_nfse:
+                    emissao.chave_nfse = identificadores["chave_nfse"]
+            except Exception as exc:
+                logging.warning("Falha ao extrair identificadores do XML após retorno: %s", exc)
 
         emissao.log_tecnico = resultado.get("mensagem")
         if resultado.get("errors"):
@@ -1965,42 +2083,78 @@ def emissoes():
         )
         db.session.add(evento)
 
-        if resultado.get("sucesso") and emissao.numero_nfse:
-            # Só criar lançamento financeiro se tiver número oficial da NFS-e
-            conta_banco = _get_or_create_conta_banco_principal(empresa_id)
-            fluxo_conta_id = tomador.fluxo_conta_id or _get_or_create_fluxo_recebimento(empresa_id)
-
-            if conta_banco and fluxo_conta_id:
-                # Verificar se já existe lançamento vinculado para evitar duplicação
-                if not emissao.lancamento:
-                    lancamento = Lancamento(
-                        empresa_id=empresa_id,
-                        data_evento=_date_from_request(data.get("data_emissao")) or datetime.utcnow().date(),
-                        data_vencimento=_date_from_request(data.get("data_vencimento")) or _date_from_request(data.get("data_emissao")) or datetime.utcnow().date(),
-                        data_pagamento=None,
-                        status="aberto",
-                        entidade_id=tomador.id,
-                        fluxo_conta_id=fluxo_conta_id,
-                        conta_banco_id=conta_banco.id,
-                        valor_real=valor_servico,
-                        valor_pago=Decimal("0.00"),
-                        valor_imposto=valor_iss,
-                        valor_outros_custos=Decimal("0.00"),
-                        numero_documento=_gerar_numero_titulo_nfse(empresa_id),  # Última NFS-e emitida + 1
-                        observacoes=observacoes or servico.descricao,
-                        fonte="nfse_nacional",
-                    )
-                    db.session.add(lancamento)
-                    db.session.flush()
-                    emissao.lancamento = lancamento
-                    logging.info(
-                        f"Lançamento {emissao.lancamento.id} criado com número do título: "
-                        f"{lancamento.numero_documento} | NFS-e oficial: {emissao.numero_nfse}"
-                    )
-            else:
-                emissao.log_tecnico = (emissao.log_tecnico or "") + " | Emissão autorizada sem lançamento financeiro por ausência de conta bancária principal."
-
+        # Commit primeiro: persistir dados fiscais (emissão, XML, identificadores)
+        # Isso garante que a nota autorizada não seja perdida mesmo se o lançamento falhar
         db.session.commit()
+
+        # Segunda fase: lançamento financeiro (separado do commit fiscal)
+        if resultado.get("sucesso") and emissao.numero_nfse:
+            try:
+                # Só criar lançamento financeiro se tiver número oficial da NFS-e
+                conta_banco = _get_or_create_conta_banco_principal(empresa_id)
+                fluxo_conta_id = tomador.fluxo_conta_id or _get_or_create_fluxo_recebimento(empresa_id)
+
+                if conta_banco and fluxo_conta_id:
+                    # Verificar se já existe lançamento vinculado para evitar duplicação
+                    if not emissao.lancamento:
+                        # Usar número oficial da NFS-e como número do documento (idempotente)
+                        numero_documento = emissao.numero_nfse
+
+                        # Verificar se já existe lançamento com mesmo número do documento para evitar duplicação
+                        lancamento_existente = Lancamento.query.filter_by(
+                            empresa_id=empresa_id,
+                            numero_documento=numero_documento,
+                            fonte="nfse_nacional"
+                        ).first()
+
+                        if lancamento_existente:
+                            # Reutilizar lançamento existente
+                            emissao.lancamento = lancamento_existente
+                            db.session.commit()
+                            logging.info(
+                                f"Lançamento existente {lancamento_existente.id} reutilizado para NFS-e {emissao.numero_nfse}"
+                            )
+                        else:
+                            # Criar novo lançamento
+                            lancamento = Lancamento(
+                                empresa_id=empresa_id,
+                                data_evento=_date_from_request(data.get("data_emissao")) or datetime.utcnow().date(),
+                                data_vencimento=_date_from_request(data.get("data_vencimento")) or _date_from_request(data.get("data_emissao")) or datetime.utcnow().date(),
+                                data_pagamento=None,
+                                status="aberto",
+                                entidade_id=tomador.id,
+                                fluxo_conta_id=fluxo_conta_id,
+                                conta_banco_id=conta_banco.id,
+                                valor_real=valor_servico,
+                                valor_pago=Decimal("0.00"),
+                                valor_imposto=valor_iss,
+                                valor_outros_custos=Decimal("0.00"),
+                                numero_documento=numero_documento,  # Número oficial da NFS-e
+                                observacoes=observacoes or servico.descricao,
+                                fonte="nfse_nacional",
+                            )
+                            db.session.add(lancamento)
+                            db.session.flush()
+                            emissao.lancamento = lancamento
+                            db.session.commit()
+                            logging.info(
+                                f"Lançamento {emissao.lancamento.id} criado com número do documento: "
+                                f"{lancamento.numero_documento} (NFS-e oficial: {emissao.numero_nfse})"
+                            )
+                else:
+                    # Log warning sem modificar a emissão (já commitada)
+                    logging.warning(
+                        "Emissão %s autorizada sem lançamento financeiro por ausência de conta bancária principal ou fluxo.",
+                        emissao.id
+                    )
+            except Exception as exc:
+                # Falha no lançamento não deve desfazer a nota já autorizada
+                db.session.rollback()
+                logging.error(
+                    "Falha ao criar lançamento financeiro para emissão %s (nota já autorizada): %s",
+                    emissao.id, exc
+                )
+                # A nota permanece autorizada; o lançamento pode ser criado posteriormente
 
         resposta = {
             "emissao_id": str(emissao.id),
@@ -2758,11 +2912,39 @@ def visualizar(id):
     """
     emissao = scoped_get_or_404(NfseNacionalEmissao, id)
     _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
-    
+
     return render_template(
         "nfse_nacional/visualizar.html",
         emissao=emissao,
     )
+
+
+@nfse_nacional_bp.route("/emissoes/<int:emissao_id>/recuperar-lancamento", methods=["POST"])
+@login_required
+def recuperar_lancamento(emissao_id):
+    """Recupera ou cria o lançamento financeiro para uma emissão já autorizada.
+
+    Não transmite a nota novamente; apenas vincula ou cria o lançamento
+    usando o número oficial da NFS-e como número do documento.
+    """
+    emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
+
+    if emissao.situacao_fiscal != "AUTORIZADA":
+        flash("Só é possível recuperar lançamento para emissões autorizadas.", "danger")
+        return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
+
+    if not emissao.numero_nfse:
+        flash("Emissão não possui número oficial da NFS-e.", "danger")
+        return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
+
+    lancamento = _recuperar_ou_criar_lancamento(emissao, usuario_id=current_user.id)
+
+    if lancamento:
+        flash(f"Lançamento financeiro {lancamento.id} vinculado com sucesso.", "success")
+    else:
+        flash("Não foi possível criar/recuperar o lançamento financeiro. Verifique os logs.", "danger")
+
+    return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
 
 
 @nfse_nacional_bp.route("/listagem/<int:id>/enviar-email", methods=["POST"])

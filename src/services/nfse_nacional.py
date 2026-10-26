@@ -964,6 +964,8 @@ def transmitiremissao(payload: dict, configuracao=None) -> dict:
                         xml_bytes = gzip.decompress(xml_bytes)
                     xml_text = xml_bytes.decode("utf-8")
                     xml_nfse = xml_text
+
+                    # Extrair identificadores usando helper robusto
                     root = ET.fromstring(xml_text)
                     for ns in (
                         {"nfse": "http://www.sped.fazenda.gov.br/nfse"},
@@ -976,11 +978,21 @@ def transmitiremissao(payload: dict, configuracao=None) -> dict:
                         cv = (
                             root.find(".//nfse:codigoVerificacao", ns)
                             or root.find(".//codigoVerificacao", ns)
+                            or root.find(".//nfse:cNFSe", ns)
+                            or root.find(".//cNFSe", ns)
+                        )
+                        chave = (
+                            root.find(".//nfse:chave", ns)
+                            or root.find(".//chave", ns)
+                            or root.find(".//nfse:chaveAcesso", ns)
+                            or root.find(".//chaveAcesso", ns)
                         )
                         if nNFSe is not None and nNFSe.text:
                             numero_nfse = nNFSe.text.strip()
                         if cv is not None and cv.text:
                             codigo_verificacao = cv.text.strip()
+                        if chave is not None and chave.text:
+                            pass  # Já tratado abaixo via retorno.get("chaveAcesso")
                         if numero_nfse:
                             break
                 except Exception:
