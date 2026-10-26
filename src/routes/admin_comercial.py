@@ -9,6 +9,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import func, inspect, text
 
 from src.extensions import require_role
+from src.services.assinatura import ServicoAssinatura
 from src.models import (
     AssinaturaEmpresa,
     CatalogoPlanoComercial,
@@ -258,6 +259,7 @@ def index():
                 'plano_codigo': normalize_plan(assinatura.plano_codigo),
                 'proximo_plano_codigo': normalize_plan(assinatura.proximo_plano_codigo) if assinatura.proximo_plano_codigo else None,
                 'status': assinatura.status,
+                'data_fim_trial': assinatura.data_fim_trial,
                 'vigencia': assinatura.data_vencimento,
                 'mudanca_plano_efetivar_em': assinatura.mudanca_plano_efetivar_em,
                 'gateway_customer_id': assinatura.gateway_customer_id,
@@ -282,6 +284,7 @@ def index():
                 'bonus_motivo': assinatura.bonus_motivo,
                 'bonus_concedido_em': assinatura.bonus_concedido_em,
                 'bonus_dias': assinatura.bonus_dias,
+                'bonus_tipo': assinatura.bonus_tipo,
                 'bonus_fim': (
                     assinatura.bonus_concedido_em + timedelta(days=assinatura.bonus_dias)
                     if assinatura.bonus_dias and assinatura.bonus_concedido_em else None
@@ -296,6 +299,7 @@ def index():
                 'plano_codigo': None,
                 'proximo_plano_codigo': None,
                 'status': 'pendente',
+                'data_fim_trial': None,
                 'vigencia': None,
                 'mudanca_plano_efetivar_em': None,
                 'gateway_customer_id': None,
@@ -317,6 +321,7 @@ def index():
                 'bonus_motivo': None,
                 'bonus_concedido_em': None,
                 'bonus_dias': None,
+                'bonus_tipo': None,
                 'bonus_fim': None,
             })
 
@@ -471,11 +476,11 @@ def atualizar_plano_assinatura(empresa_id: int):
             gateway_subscription_id=None,
         )
         db.session.add(assinatura)
-        db.session.commit()
 
         # Sincroniza os módulos liberados conforme a assinatura/plano escolhido.
         empresa.plano = novo_plano
         sync_empresa_modules(empresa, novo_plano)
+        db.session.commit()
 
         flash(f'Assinatura criada para empresa "{empresa.nome}" com plano {novo_plano}.', 'success')
         return redirect(url_for('admin_comercial.index'))
@@ -591,27 +596,8 @@ def atualizar_modulos(empresa_id: int):
         flash('Empresa não encontrada.', 'warning')
         return redirect(url_for('admin_comercial.index'))
 
-    # Estes switches passam a ser controlados pelo backoffice comercial,
-    # liberando o acesso da empresa conforme a assinatura escolhida.
-    for module_key in ALL_MODULE_LABELS:
-        checkbox_name = f'modulo_{module_key}'
-        attr_name = f'atividade_{module_key}'
-        if hasattr(empresa, attr_name):
-            # Entidades é sempre ativo (liberação mínima garantida)
-            if module_key == 'entidades':
-                setattr(empresa, attr_name, True)
-            # comercial é módulo pai: derivado dos sub-módulos após o loop
-            elif module_key == 'comercial':
-                continue
-            else:
-                setattr(empresa, attr_name, checkbox_name in request.form)
-
-    # atividade_comercial derivada: ativo quando qualquer sub-módulo comercial ativo
-    if hasattr(empresa, 'atividade_comercial'):
-        setattr(empresa, 'atividade_comercial', any(
-            getattr(empresa, f'atividade_{sub}', False)
-            for sub in ('pdv', 'compras', 'pedidos', 'estoque')
-        ))
+    from src.services.authorization import update_company_modules
+    update_company_modules(empresa, request.form)
 
     db.session.commit()
 
@@ -665,6 +651,34 @@ def atualizar_bonus_assinatura(empresa_id: int):
     gate = _require_backoffice_access()
     if gate:
         return gate
+
+    # Trial comercial explícito: funciona também para empresa sem assinatura.
+    # Usar o mesmo endpoint preserva as proteções de backoffice, papel e CSRF.
+    acao = (request.form.get('acao') or '').strip().lower()
+    if acao == 'configurar_trial':
+        empresa = db.session.get(Empresa, empresa_id)
+        if not empresa:
+            flash('Empresa não encontrada.', 'danger')
+            return redirect(url_for('admin_comercial.index'))
+        try:
+            dias = int(request.form.get('trial_dias', '7'))
+            if dias < 1:
+                raise ValueError('Informe uma quantidade de dias maior que zero.')
+            assinatura = ServicoAssinatura.obter_ou_criar_assinatura(
+                empresa_id, trial_dias=dias, provisionar_gateway=False,
+            )
+            ServicoAssinatura.configurar_trial(assinatura, dias)
+            db.session.commit()
+        except (ValueError, OverflowError) as exc:
+            db.session.rollback()
+            flash(f'Trial inválido: {exc}', 'warning')
+            return redirect(url_for('admin_comercial.index'))
+        _registrar_evento(
+            empresa_id, 'sucesso', 'ATUALIZACAO_USUARIO',
+            f'Trial configurado para {dias} dias, até {assinatura.data_fim_trial:%d/%m/%Y}, no backoffice.',
+        )
+        flash('Trial atualizado com sucesso.', 'success')
+        return redirect(url_for('admin_comercial.index'))
 
     assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
     nova_assinatura = False

@@ -553,6 +553,11 @@ def login():
                 if user.empresa_id is not None:
                     from src.models import AssinaturaEmpresa
                     _assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=user.empresa_id).first()
+                    if ServicoAssinatura.exige_pagamento_apos_trial(_assinatura) and _assinatura.status not in {'cancelada', 'excluida'}:
+                        login_user(user, remember=request.form.get('remember'))
+                        persist_auth_tenant_session(user)
+                        flash('Seu período de teste terminou. Conclua a assinatura para continuar.', 'warning')
+                        return redirect(url_for('auth.assinatura'))
                     # Bonificação: acesso liberado independentemente do status da assinatura.
                     if _assinatura and not getattr(_assinatura, 'bonus_liberado', False) \
                             and _assinatura.status in {'suspensa', 'cancelada', 'excluida'}:
@@ -758,16 +763,17 @@ def register():
                         raise ValueError('Tipo fiscal inválido.')
                     _create_empresa_fiscal_item(empresa, fiscal_tipo, fiscal_valor, principal=True)
                 except Exception:
-                    db.session.rollback()
-                    flash('Erro ao salvar o item fiscal inicial. Cadastro criado, edite na empresa depois.', 'warning')
-
-            db.session.commit()
+                    # Não anunciar sucesso após descartar empresa e usuário.
+                    raise ValueError('Erro ao salvar o item fiscal inicial.') from None
 
             # Sincroniza módulos da empresa conforme o plano intermediário
             sync_empresa_modules(empresa, 'intermediate')
 
             # Cria assinatura inicial para garantir visibilidade imediata de trial/cobranca no onboarding.
-            ServicoAssinatura.obter_ou_criar_assinatura(empresa.id)
+            ServicoAssinatura.obter_ou_criar_assinatura(
+                empresa.id, trial_dias=7, provisionar_gateway=False,
+            )
+            db.session.commit()
 
             flash('Empresa e usuário administrador criados com sucesso. Faça login para continuar.', 'success')
             return redirect(url_for('auth.login'))
@@ -983,6 +989,14 @@ def perfil():
 @login_required
 def assinatura():
     if not current_user.is_admin:
+        # Usuários comuns precisam de destino terminal, sem loop com Dashboard.
+        from src.models import AssinaturaEmpresa
+        assinatura_empresa = AssinaturaEmpresa.query.filter_by(empresa_id=current_user.empresa_id).first()
+        if ServicoAssinatura.exige_pagamento_apos_trial(assinatura_empresa):
+            if request.method != 'GET':
+                from flask import abort
+                abort(403)
+            return render_template('auth/assinatura_pendente.html')
         flash('Acesso permitido apenas para administradores.', 'danger')
         return redirect(url_for('dashboard.index'))
 

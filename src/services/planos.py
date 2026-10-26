@@ -304,18 +304,12 @@ def sync_empresa_modules(empresa, plan: Optional[str]) -> None:
             # Entidades é sempre ativo (liberação mínima garantida)
             if module_key == 'entidades':
                 setattr(empresa, attr_name, True)
-            # comercial é módulo pai: derivado dos sub-módulos após o loop
+            # O módulo Comercial tem liberação própria, não derivada de funções.
             elif module_key == 'comercial':
-                continue
+                setattr(empresa, attr_name, module_key in enabled)
             # Dashboard passa a ser controlado pelo backoffice (toggle)
             elif module_key == 'dashboard':
                 continue
             else:
                 setattr(empresa, attr_name, module_key in enabled)
 
-    # atividade_comercial derivada: ativo quando qualquer sub-módulo comercial está ativo
-    if hasattr(empresa, 'atividade_comercial'):
-        setattr(empresa, 'atividade_comercial', any(
-            getattr(empresa, f'atividade_{sub}', False)
-            for sub in ('pdv', 'compras', 'pedidos', 'estoque')
-        ))

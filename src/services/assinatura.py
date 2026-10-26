@@ -326,7 +326,12 @@ class ServicoAssinatura:
         if status in ServicoAssinatura.ASAAS_STATUS_INADIMPLENTE:
             cobranca.status = 'vencido'
         elif status in ServicoAssinatura.ASAAS_STATUS_PAGO:
-            cobranca.status = 'pago'
+            ServicoAssinatura.marcar_cobranca_paga(
+                assinatura, cobranca,
+                _parse_datetime(selected_payment.get('paymentDate')),
+                Decimal(str(selected_payment.get('netValue', selected_payment.get('value') or 0))),
+                selected_payment,
+            )
         else:
             cobranca.status = 'pendente'
         cobranca.payload_gateway = ServicoAssinatura._dump_payload(selected_payment)
@@ -342,11 +347,65 @@ class ServicoAssinatura:
         }
 
     @staticmethod
-    def obter_ou_criar_assinatura(empresa_id: int) -> AssinaturaEmpresa:
+    def exige_pagamento_apos_trial(assinatura: AssinaturaEmpresa | None) -> bool:
+        """Trial encerrado exige pagamento confirmado da própria assinatura.
+
+        Não consulta gateway e não concede carência adicional ao trial gratuito.
+        Assinaturas legadas sem data de trial mantêm a política existente.
+        """
+        if not assinatura or not assinatura.data_fim_trial:
+            return False
+        hoje = _today()
+        if hoje < assinatura.data_fim_trial:
+            return False
+        if not assinatura.data_vencimento or assinatura.data_vencimento <= hoje:
+            return True
+        pagamento = CobrancaRecorrente.query.filter(
+            CobrancaRecorrente.empresa_id == assinatura.empresa_id,
+            CobrancaRecorrente.assinatura_id == assinatura.id,
+            CobrancaRecorrente.status == 'pago',
+            CobrancaRecorrente.data_pagamento.isnot(None),
+        ).first()
+        return pagamento is None
+
+    @staticmethod
+    def configurar_trial(assinatura: AssinaturaEmpresa, dias: int = 7) -> None:
+        """Concede/redefine trial a partir de hoje sem integração externa.
+
+        Preserva o plano. A transação é confirmada pelo chamador.
+        """
+        if isinstance(dias, bool) or not isinstance(dias, int) or dias < 1:
+            raise ValueError('Informe uma quantidade inteira de dias maior que zero.')
+        if assinatura.status == 'excluida':
+            raise ValueError('Não é permitido conceder trial para empresa excluída.')
+        hoje = _today()
+        try:
+            fim = hoje + timedelta(days=dias)
+            limite = fim + timedelta(days=int(assinatura.carencia_dias or 7))
+        except (OverflowError, ValueError):
+            raise ValueError('Quantidade de dias de trial fora do intervalo permitido.') from None
+        assinatura.status = ServicoAssinatura.STATUS_TRIAL
+        assinatura.data_fim_trial = fim
+        assinatura.data_vencimento = fim
+        assinatura.data_limite_carencia = limite
+        assinatura.bloqueio_nivel = ServicoAssinatura.BLOQUEIO_NENHUM
+        assinatura.bloqueado_desde = None
+        # Uma bonificação ilimitada não deve neutralizar o prazo configurado.
+        assinatura.bonus_liberado = False
+        assinatura.bonus_tipo = None
+        assinatura.bonus_dias = None
+        assinatura.bonus_motivo = None
+        assinatura.bonus_concedido_em = None
+        assinatura.motivo_status = f'Trial de {dias} dias concedido até {fim.strftime("%d/%m/%Y")}.'
+
+    @staticmethod
+    def obter_ou_criar_assinatura(
+        empresa_id: int, *, trial_dias: int | None = None, provisionar_gateway: bool = True,
+    ) -> AssinaturaEmpresa:
         assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
         if assinatura:
-            # Ajusta assinaturas em trial para refletir a regra vigente de duracao.
-            if assinatura.status == ServicoAssinatura.STATUS_TRIAL and assinatura.data_inicio:
+            # Preencher apenas legado sem prazo, preservando ajustes do backoffice.
+            if assinatura.status == ServicoAssinatura.STATUS_TRIAL and assinatura.data_inicio and not assinatura.data_fim_trial:
                 trial_days = ServicoAssinatura._trial_days()
                 novo_fim_trial = assinatura.data_inicio + timedelta(days=trial_days)
                 if assinatura.data_fim_trial != novo_fim_trial:
@@ -354,7 +413,7 @@ class ServicoAssinatura:
                     assinatura.data_vencimento = novo_fim_trial
                     assinatura.data_limite_carencia = novo_fim_trial + timedelta(days=int(assinatura.carencia_dias or 7))
 
-            if not assinatura.gateway_customer_id or not assinatura.gateway_subscription_id:
+            if provisionar_gateway and (not assinatura.gateway_customer_id or not assinatura.gateway_subscription_id):
                 ServicoAssinatura.provisionar_gateway_asaas(assinatura)
             return assinatura
 
@@ -362,7 +421,9 @@ class ServicoAssinatura:
         plano_codigo = (empresa.plano if empresa and empresa.plano else 'intermediate').strip().lower()
 
         hoje = _today()
-        trial_days = ServicoAssinatura._trial_days()
+        trial_days = trial_dias if trial_dias is not None else ServicoAssinatura._trial_days()
+        if isinstance(trial_days, bool) or not isinstance(trial_days, int) or trial_days < 1:
+            raise ValueError('Informe uma quantidade inteira de dias de trial maior que zero.')
         assinatura = AssinaturaEmpresa(
             empresa_id=empresa_id,
             plano_codigo=plano_codigo,
@@ -381,7 +442,8 @@ class ServicoAssinatura:
         db.session.add(assinatura)
         db.session.flush()
 
-        ServicoAssinatura.provisionar_gateway_asaas(assinatura)
+        if provisionar_gateway:
+            ServicoAssinatura.provisionar_gateway_asaas(assinatura)
 
         # Sincroniza módulos da empresa conforme o plano
         from src.services.planos import sync_empresa_modules
@@ -465,6 +527,10 @@ class ServicoAssinatura:
         valor_pago: Decimal | None,
         payload: dict[str, Any] | None = None,
     ) -> None:
+        if cobranca.empresa_id != assinatura.empresa_id or cobranca.assinatura_id != assinatura.id:
+            raise ValueError('Cobrança não pertence à assinatura informada.')
+        if cobranca.status == 'pago' and cobranca.data_pagamento is not None:
+            return
         cobranca.status = 'pago'
         cobranca.data_pagamento = data_pagamento or datetime.utcnow()
         cobranca.valor_pago = valor_pago if valor_pago is not None else cobranca.valor_previsto

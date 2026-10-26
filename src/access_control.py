@@ -29,6 +29,7 @@ PERMISSION_CATALOG: List[Dict[str, str]] = [
     {"key": "comissoes", "label": "Comissões", "group": "Processos"},
     {"key": "relatorios", "label": "Relatórios", "group": "Processos"},
     {"key": "importar_nfse", "label": "Importação NFSe", "group": "Importação"},
+    {"key": "nfse_nacional", "label": "NFS-e Nacional", "group": "Fiscal"},
     {"key": "importar_ofx", "label": "Importação OFX", "group": "Importação"},
     {"key": "conciliacao", "label": "Conciliação Bancária", "group": "Importação"},
     {"key": "usuarios", "label": "Gerenciar Usuários", "group": "Administração"},
@@ -158,6 +159,22 @@ def has_permission_key(user, permission_key: str) -> bool:
 
 def current_user_has_permission(permission_key: str) -> bool:
     return has_permission_key(current_user, permission_key)
+
+
+DASHBOARD_ACTIVITIES = {
+    'dashboard.index': None,
+    'dashboard.comercial': 'comercial',
+    'dashboard.financeiro': 'financeiro',
+    'dashboard.fiscal': 'servicos',
+    'dashboard.locacao': 'locacao',
+    'dashboard.propostas': 'propostas',
+}
+
+
+def can_access_dashboard(user, endpoint_name: str) -> bool:
+    """Mesma decisão de autorização usada nas rotas e na navegação."""
+    from src.services.authorization import can_access_endpoint
+    return endpoint_name in DASHBOARD_ACTIVITIES and can_access_endpoint(user, endpoint_name)
 
 
 def require_permission(permission_key: str):

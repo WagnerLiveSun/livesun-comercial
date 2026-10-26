@@ -335,115 +335,14 @@
 #}
 
 {% set grupos_modulos = [
-    (
-        'Cadastros',
-        [
-            (
-                'entidades',
-                'Entidades',
-                'Clientes, fornecedores e cadastros'
-            )
-        ]
-    ),
-    (
-        'Comercial',
-        [
-            ('estoque', 'Estoque', 'Movimento de estoque'),
-            ('compras', 'Compras', 'Entrada de NF de compra'),
-            ('pedidos', 'Pedidos', 'Pedidos de venda'),
-            ('pdv', 'PDV', 'PDV Caixa')
-        ]
-    ),
-    (
-        'Propostas',
-        [
-            (
-                'propostas',
-                'Propostas Comerciais',
-                'Gestão de propostas comerciais'
-            ),
-            (
-                'aprovacao',
-                'Aprovação de Propostas',
-                'Aprovação de propostas'
-            )
-        ]
-    ),
-    (
-        'Serviços / Fiscal',
-        [
-            (
-                'servicos',
-                'Serviços / Fiscal',
-                'NFS-e e Importação de Notas'
-            )
-        ]
-    ),
-    (
-        'Locação',
-        [
-            (
-                'locacao',
-                'Locação',
-                'Aluguel de Roupas e Fantasias'
-            )
-        ]
-    ),
-    (
-        'Contratos',
-        [
-            (
-                'contratos',
-                'Contratos',
-                'Gestão de Contratos de Serviços'
-            )
-        ]
-    ),
-    (
-        'Financeiro',
-        [
-            (
-                'financeiro',
-                'Financeiro',
-                'Gestão Financeira e Fluxo de Caixa'
-            ),
-            (
-                'fluxo',
-                'Fluxo Caixa',
-                'Movimentação de caixa'
-            ),
-            (
-                'contas_banco',
-                'Contas Banco',
-                'Contas bancárias'
-            )
-        ]
-    ),
-    (
-        'Relatórios',
-        [
-            (
-                'relatorios',
-                'Relatórios',
-                'Relatórios gerenciais e fiscais'
-            )
-        ]
-    ),
-    (
-        'Admin',
-        [
-            (
-                'usuarios',
-                'Usuários',
-                'Gerenciar Usuários'
-            ),
-            (
-                'controle_acesso',
-                'Controle de Acesso',
-                'Controle de Acesso'
-            )
-        ]
-    )
+    ('Cadastros', [('entidades', 'Cadastros', 'Entidades, filiais, produtos, serviços e tabelas de preço')]),
+    ('Comercial', [('comercial', 'Comercial', 'Estoque, compras, pedidos e PDV')]),
+    ('Propostas', [('propostas', 'Propostas', 'Propostas comerciais e aprovação')]),
+    ('Serviços / Fiscal', [('servicos', 'Serviços / Fiscal', 'NFS-e e rotinas fiscais')]),
+    ('Locação', [('locacao', 'Locação', 'Acervo, agenda, orçamentos e contratos de locação')]),
+    ('Contratos', [('contratos', 'Contratos', 'Contratos de vendas e cláusulas padrão')]),
+    ('Financeiro', [('financeiro', 'Financeiro', 'Contas, lançamentos, OFX, conciliação e comissões')]),
+    ('Administração', [('usuarios', 'Administração', 'Usuários e controle de acesso')])
 ] %}
 
 <!-- Cabeçalho da página -->
@@ -738,6 +637,27 @@
                                 {% endfor %}
                             </div>
 
+                            <!-- Trial: prazo em dias contado a partir da operação -->
+                            <form method="POST"
+                                  action="{{ url_for('admin_comercial.atualizar_bonus_assinatura', empresa_id=r.empresa_id) }}"
+                                  class="comercial-form-linha">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="acao" value="configurar_trial">
+                                <label class="small" for="trial_dias_{{ r.empresa_id }}">Trial (dias a partir de hoje)</label>
+                                <input type="number" name="trial_dias" id="trial_dias_{{ r.empresa_id }}"
+                                       min="1" step="1" value="7" required
+                                       class="form-control form-control-sm comercial-bonus-dias"
+                                       {% if r.status == 'excluida' %}disabled{% endif %}>
+                                <button type="submit" class="btn btn-sm btn-outline-primary"
+                                        {% if r.status == 'excluida' %}disabled{% endif %}>
+                                    Conceder / redefinir trial
+                                </button>
+                                {% if r.data_fim_trial %}
+                                <small class="text-muted">Fim do trial: {{ r.data_fim_trial.strftime('%d/%m/%Y') }}</small>
+                                {% endif %}
+                                <small class="text-muted">Redefinir trial substitui uma bonificação vigente. A cobrança já criada no gateway não é alterada por esta ação.</small>
+                            </form>
+
                             <!-- Bonificação -->
                             {% if r.bonus_liberado %}
                                 <form method="POST"
@@ -869,7 +789,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
         <h5 class="mb-0 ls-page-title">
             <i class="fas fa-tasks me-2"></i>
-            Módulos / Atividades da Empresa
+            Módulos da Empresa
         </h5>
 
         <span class="badge bg-secondary">
@@ -879,9 +799,10 @@
 
     <p class="text-muted small mb-4">
         Controle liberado pelo Backoffice Comercial conforme a assinatura.
-        O Dashboard Gerencial pode ser ativado ou desativado pelo Backoffice.
-        Os demais módulos determinam quais funcionalidades os usuários
-        da empresa visualizam no menu lateral do sistema.
+        Este painel controla somente módulos. As permissões das funções são definidas no Controle de Acesso.
+        O Painel Gerencial depende da permissão de Dashboard do usuário.
+        Cada painel específico depende da mesma permissão e do respectivo módulo habilitado.
+        As liberações são verificadas no menu e no acesso direto às rotas.
     </p>
 
     <div id="modulosGrid">
@@ -898,8 +819,6 @@
                        name="csrf_token"
                        value="{{ csrf_token() }}">
 
-                <!-- Campo garantido sempre ativo (não pode ser desativado) -->
-                                <input type="hidden" name="modulo_entidades" value="on">
 
                 <!-- Cabeçalho com o mesmo tema das tabelas -->
                 <table class="table ls-theme-table modulos-cabecalho-table">
@@ -936,38 +855,6 @@
                 </table>
 
                 <div class="modulos-empresa-body">
-
-                    <!-- Dashboard (editável) -->
-                    <div class="modulos-dashboard">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="modulo_dashboard"
-                                   id="mod_{{ r.empresa_id }}_dashboard"
-                                   {% if mod.get('dashboard') %}checked{% endif %}>
-
-                            <label class="form-check-label small fw-semibold"
-                                   for="mod_{{ r.empresa_id }}_dashboard">
-                                Dashboard Gerencial
-                            </label>
-
-                            <div class="small text-muted">
-                                Painel inicial do sistema
-                            </div>
-                        </div>
-
-                        {% if mod.get('dashboard') %}
-                        <span class="badge bg-success">
-                            <i class="fas fa-check-circle me-1"></i>
-                            Ativo
-                        </span>
-                        {% else %}
-                        <span class="badge bg-secondary">
-                            <i class="fas fa-times-circle me-1"></i>
-                            Inativo
-                        </span>
-                        {% endif %}
-                    </div>
 
                     <!-- Grupos de módulos -->
                     <div class="modulos-grid">

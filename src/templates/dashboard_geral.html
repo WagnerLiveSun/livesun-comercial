@@ -12,6 +12,7 @@
 
 <!-- KPIs de Entidades -->
 <div class="row mb-4">
+    {% if fornecedores is not none %}
     <div class="col-md-6 col-lg-3 mb-3">
         <div class="ls-card p-4">
             <div class="d-flex justify-content-between align-items-start">
@@ -54,6 +55,8 @@
         </div>
     </div>
 
+    {% endif %}
+    {% if total_usuarios is not none %}
     <div class="col-md-6 col-lg-3 mb-3">
         <div class="ls-card p-4">
             <div class="d-flex justify-content-between align-items-start">
@@ -67,10 +70,12 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <!-- KPIs de Cadastros -->
 <div class="row mb-4">
+    {% if total_produtos is not none %}
     <div class="col-md-6 mb-3">
         <div class="ls-card p-4">
             <div class="d-flex justify-content-between align-items-start">
@@ -85,6 +90,8 @@
         </div>
     </div>
 
+    {% endif %}
+    {% if total_servicos is not none %}
     <div class="col-md-6 mb-3">
         <div class="ls-card p-4">
             <div class="d-flex justify-content-between align-items-start">
@@ -98,8 +105,10 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
+{% if current_user.is_admin %}
 <!-- Sessão de Assinatura -->
 <div class="row mb-4">
     <div class="col-12">
@@ -139,5 +148,6 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 {% endblock %}

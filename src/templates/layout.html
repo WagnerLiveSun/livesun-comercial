@@ -618,7 +618,7 @@
     <div class="ls-shell">
         <nav class="navbar navbar-expand-lg ls-topbar">
             <div class="container-fluid">
-                <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard.index') }}">
+                <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard.index') if can_access_dashboard('dashboard.index') else '#' }}">
                     <img src="{{ url_for('static', filename='images/logo.png') }}"
                         alt="LiveSun Tecnologia"
                         height="46"
@@ -648,11 +648,11 @@
                                 {% set assinatura_url = safe_url_for('auth.assinatura') %}
                                 <li><a class="dropdown-item" href="{{ assinatura_url or '#' }}">Assinatura</a></li>
                                 {% endif %}
-                                {% if has_permission('controle_acesso') %}
+                                {% if can_access_endpoint('auth.controle_acesso') %}
                                 {% set controle_acesso_url = safe_url_for('auth.controle_acesso') %}
                                 <li><a class="dropdown-item" href="{{ controle_acesso_url or '#' }}">Controle de Acesso</a></li>
                                 {% endif %}
-                                {% if has_permission('usuarios') and plan_allows_endpoint('auth.add_user') %}
+                                {% if can_access_endpoint('auth.add_user') %}
                                 {% set add_user_url = safe_url_for('auth.add_user') %}
                                 <li><a class="dropdown-item" href="{{ add_user_url or '#' }}">Adicionar Usuário</a></li>
                                 {% endif %}
@@ -669,49 +669,55 @@
 
         <div class="ls-layout">
             <aside class="ls-sidebar">
-                {% set show_dashboard = has_permission('dashboard') %}
-                {% set show_add_user = current_user.is_admin and has_permission('usuarios') and plan_allows_endpoint('auth.add_user') %}
-                {% set show_controle_acesso = current_user.is_admin and has_permission('controle_acesso') and plan_allows_endpoint('auth.controle_acesso') %}
+                {% set show_dashboard_gerencial = can_access_dashboard('dashboard.index') %}
+                {% set show_dashboard_comercial = can_access_dashboard('dashboard.comercial') %}
+                {% set show_dashboard_financeiro = can_access_dashboard('dashboard.financeiro') %}
+                {% set show_dashboard_fiscal = can_access_dashboard('dashboard.fiscal') %}
+                {% set show_dashboard_locacao = can_access_dashboard('dashboard.locacao') %}
+                {% set show_dashboard_propostas = can_access_dashboard('dashboard.propostas') %}
+                {% set show_dashboard = show_dashboard_gerencial or show_dashboard_comercial or show_dashboard_financeiro or show_dashboard_fiscal or show_dashboard_locacao or show_dashboard_propostas %}
+                {% set show_add_user = current_user.is_admin and can_access_endpoint('auth.add_user') %}
+                {% set show_controle_acesso = current_user.is_admin and can_access_endpoint('auth.controle_acesso') %}
                 {% set show_admin = show_add_user or show_controle_acesso %}
                 {% set show_menu_principal = show_dashboard or show_add_user or show_controle_acesso %}
 
-                {% set show_entidades = has_permission('entidades') %}
-                {% set show_fluxo = has_activity('financeiro') and has_permission('fluxo') and plan_allows_endpoint('fluxo.index') %}
-                {% set show_contas_banco = has_activity('financeiro') and has_permission('contas_banco') %}
-                {% set show_cadastros = show_entidades or show_fluxo or show_contas_banco %}
+                {% set show_entidades = can_access_endpoint('entidades.index') %}
+                {% set show_fluxo = can_access_endpoint('fluxo.index') %}
+                {% set show_contas_banco = can_access_endpoint('contas_banco.index') %}
+                {% set show_cadastros = show_entidades or show_fluxo or show_contas_banco or can_access_endpoint('comercial_operacional.filiais_index') or can_access_endpoint('comercial_operacional.produtos_index') or can_access_endpoint('comercial_operacional.servicos_index') or can_access_endpoint('comercial_operacional.tabelas_preco_index') %}
 
-                {% set show_filiais = has_activity('entidades') and has_permission('comercial_filiais') and plan_allows_endpoint('comercial_operacional.filiais_index') %}
-                {% set show_produtos = has_activity('entidades') and has_permission('comercial_produtos') and plan_allows_endpoint('comercial_operacional.produtos_index') %}
-                {% set show_servicos = has_activity('entidades') and has_permission('comercial_servicos') and plan_allows_endpoint('comercial_operacional.servicos_index') %}
-                {% set show_estoque = has_activity('estoque') and has_permission('comercial_estoque') and plan_allows_endpoint('comercial_operacional.estoque_index') %}
-                {% set show_compras = has_activity('compras') and has_permission('comercial_compras') and plan_allows_endpoint('comercial_operacional.compras_index') %}
-                {% set show_documentos = has_activity('comercial') and has_permission('comercial_documentos') and plan_allows_endpoint('comercial_operacional.documentos_index') %}
-                {% set show_tabelas_preco = has_activity('entidades') and has_permission('comercial_tabelas_preco') and plan_allows_endpoint('comercial_operacional.tabelas_preco_index') %}
-                {% set show_orcamentos = has_activity('propostas') and has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.orcamentos_index') %}
-                {% set show_propostas_aprovacao = has_activity('aprovacao') and has_permission('comercial_orcamentos') and plan_allows_endpoint('comercial_operacional.propostas_aprovacao') %}
-                {% set show_pedidos = has_activity('pedidos') and has_permission('comercial_pedidos') and plan_allows_endpoint('comercial_operacional.pedidos_index') %}
-                {% set show_pdv = has_activity('pdv') and has_permission('comercial_pdv') and plan_allows_endpoint('comercial_operacional.pdv_index') %}
-                {% set show_comercial = has_activity('comercial') and (show_filiais or show_produtos or show_servicos or show_estoque or show_compras or show_documentos or show_tabelas_preco or show_pedidos or show_pdv) %}
+                {% set show_filiais = can_access_endpoint('comercial_operacional.filiais_index') %}
+                {% set show_produtos = can_access_endpoint('comercial_operacional.produtos_index') %}
+                {% set show_servicos = can_access_endpoint('comercial_operacional.servicos_index') %}
+                {% set show_estoque = can_access_endpoint('comercial_operacional.estoque_index') %}
+                {% set show_compras = can_access_endpoint('comercial_operacional.compras_index') %}
+                {% set show_documentos = can_access_endpoint('comercial_operacional.documentos_index') %}
+                {% set show_tabelas_preco = can_access_endpoint('comercial_operacional.tabelas_preco_index') %}
+                {% set show_orcamentos = can_access_endpoint('comercial_operacional.orcamentos_index') %}
+                {% set show_propostas_aprovacao = can_access_endpoint('comercial_operacional.propostas_aprovacao') %}
+                {% set show_pedidos = can_access_endpoint('comercial_operacional.pedidos_index') %}
+                {% set show_pdv = can_access_endpoint('comercial_operacional.pdv_index') %}
+                {% set show_comercial = show_estoque or show_compras or show_pedidos or show_pdv %}
                  {% set show_propostas = (show_orcamentos or show_propostas_aprovacao) %}
 
-                {% set show_lancamentos = has_activity('financeiro') and has_permission('lancamentos') %}
-                {% set show_comissoes = has_activity('financeiro') and has_permission('comissoes') and plan_allows_endpoint('comissoes.listar') %}
-                {% set show_relatorios = has_activity('relatorios') and has_permission('relatorios') and (plan_allows_endpoint('relatorio_fluxo.index') or plan_allows_endpoint('relatorios.fluxo_caixa_csv') or plan_allows_endpoint('relatorios.listagem_lancamentos') or plan_allows_endpoint('relatorios.listagem_notas_nfse')) %}
-                {% set show_import_nfse = has_activity('servicos') and has_permission('importar_nfse') and plan_allows_endpoint('importacoes.importar_nfse') %}
-                {% set show_import_ofx = has_activity('servicos') and has_permission('importar_ofx') and plan_allows_endpoint('importacoes.importar_ofx') %}
-                {% set show_conciliacao = has_activity('financeiro') and has_permission('conciliacao') and plan_allows_endpoint('conciliacao.index') %}
+                {% set show_lancamentos = can_access_endpoint('lancamentos.index') %}
+                {% set show_comissoes = can_access_endpoint('comissoes.listar') %}
+                {% set show_relatorios = can_access_endpoint('relatorio_fluxo.index') or can_access_endpoint('relatorios.listagem_lancamentos') %}
+                {% set show_import_nfse = can_access_endpoint('importacoes.importar_nfse') %}
+                {% set show_import_ofx = can_access_endpoint('importacoes.importar_ofx') %}
+                {% set show_conciliacao = can_access_endpoint('conciliacao.index') %}
                 {% set show_importacao = has_activity('servicos') and (show_import_nfse or show_import_ofx or show_conciliacao) %}
-                {% set show_nfse_nacional = has_activity('servicos') and has_permission('nfse_nacional') and plan_allows_endpoint('nfse_nacional.index') %}
-                {% set show_financeiro = has_activity('financeiro') and (show_fluxo or show_contas_banco or show_lancamentos or show_relatorios) %}
+                {% set show_nfse_nacional = can_access_endpoint('nfse_nacional.index') %}
+                {% set show_financeiro = show_lancamentos or show_import_ofx or show_conciliacao or show_comissoes or show_relatorios %}
                 
-                {% set show_contratos = has_activity('contratos') and has_permission('contratos_view') %}
-                {% set show_clausulas = has_activity('contratos') and has_permission('clausulas_view') %}
+                {% set show_contratos = can_access_endpoint('contratos.index') %}
+                {% set show_clausulas = can_access_endpoint('contratos.clausulas_lista') %}
                 {% set show_contratos_module = has_activity('contratos') and (show_contratos or show_clausulas) %}
                 
-                {% set show_locacao_acervo = has_activity('locacao') and has_permission('locacao_acervo') %}
-                {% set show_locacao_agenda = has_activity('locacao') and has_permission('locacao_agenda') %}
-                {% set show_locacao_contratos = has_activity('locacao') and has_permission('locacao_contratos') %}
-                {% set show_locacao_operacao = has_activity('locacao') and has_permission('locacao_operacao') %}
+                {% set show_locacao_acervo = can_access_endpoint('locacao.acervo_lista') %}
+                {% set show_locacao_agenda = can_access_endpoint('locacao.operacao_agenda') %}
+                {% set show_locacao_contratos = can_access_endpoint('locacao.contratos_lista') %}
+                {% set show_locacao_operacao = can_access_endpoint('locacao.orcamentos_lista') %}
                 {% set show_locacao = has_activity('locacao') and (show_locacao_acervo or show_locacao_agenda or show_locacao_contratos or show_locacao_operacao) %}
 
                 {% if show_menu_principal %}
@@ -723,12 +729,12 @@
                 {% if show_dashboard %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-chart-pie"></i> Dashboard</div>
                 <ul class="ls-sidebar-nav">
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" href="{{ url_for('dashboard.index') }}"><i class="fas fa-chart-line"></i> Painel Gerencial</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.comercial' %}active{% endif %}" href="{{ url_for('dashboard.comercial') }}"><i class="fas fa-briefcase"></i> Painel Comercial</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.financeiro' %}active{% endif %}" href="{{ url_for('dashboard.financeiro') }}"><i class="fas fa-hand-holding-usd"></i> Painel Financeiro</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.fiscal' %}active{% endif %}" href="{{ url_for('dashboard.fiscal') }}"><i class="fas fa-file-invoice"></i> Painel Fiscal</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.locacao' %}active{% endif %}" href="{{ url_for('dashboard.locacao') }}"><i class="fas fa-tshirt"></i> Painel Locação</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.propostas' %}active{% endif %}" href="{{ url_for('dashboard.propostas') }}"><i class="fas fa-file-invoice-dollar"></i> Painel Propostas</a></li>
+                    {% if show_dashboard_gerencial %}{% if can_access_endpoint('dashboard.index') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" href="{{ url_for('dashboard.index') }}"><i class="fas fa-chart-line"></i> Painel Gerencial</a></li>{% endif %}{% endif %}
+                    {% if show_dashboard_comercial %}{% if can_access_endpoint('dashboard.comercial') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.comercial' %}active{% endif %}" href="{{ url_for('dashboard.comercial') }}"><i class="fas fa-briefcase"></i> Painel Comercial</a></li>{% endif %}{% endif %}
+                    {% if show_dashboard_financeiro %}{% if can_access_endpoint('dashboard.financeiro') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.financeiro' %}active{% endif %}" href="{{ url_for('dashboard.financeiro') }}"><i class="fas fa-hand-holding-usd"></i> Painel Financeiro</a></li>{% endif %}{% endif %}
+                    {% if show_dashboard_fiscal %}{% if can_access_endpoint('dashboard.fiscal') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.fiscal' %}active{% endif %}" href="{{ url_for('dashboard.fiscal') }}"><i class="fas fa-file-invoice"></i> Painel Fiscal</a></li>{% endif %}{% endif %}
+                    {% if show_dashboard_locacao %}{% if can_access_endpoint('dashboard.locacao') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.locacao' %}active{% endif %}" href="{{ url_for('dashboard.locacao') }}"><i class="fas fa-tshirt"></i> Painel Locação</a></li>{% endif %}{% endif %}
+                    {% if show_dashboard_propostas %}{% if can_access_endpoint('dashboard.propostas') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'dashboard.propostas' %}active{% endif %}" href="{{ url_for('dashboard.propostas') }}"><i class="fas fa-file-invoice-dollar"></i> Painel Propostas</a></li>{% endif %}{% endif %}
                 </ul>
                 {% endif %}
 
@@ -736,18 +742,18 @@
                 <div class="ls-sidebar-section-label"><i class="fas fa-database"></i> Cadastros</div>
                 <ul class="ls-sidebar-nav">
                     {% if show_entidades %}
-                    <li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('entidades.') %}active{% endif %}" href="{{ url_for('entidades.index') }}"><i class="fas fa-users"></i> Entidades</a></li>
+                    {% if can_access_endpoint('entidades.index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('entidades.') %}active{% endif %}" href="{{ url_for('entidades.index') }}"><i class="fas fa-users"></i> Entidades</a></li>{% endif %}
                     {% endif %}
                     {% if show_fluxo %}
-                    <li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('fluxo.') %}active{% endif %}" href="{{ url_for('fluxo.index') }}"><i class="fas fa-stream"></i> Fluxo Caixa</a></li>
+                    {% if can_access_endpoint('fluxo.index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('fluxo.') %}active{% endif %}" href="{{ url_for('fluxo.index') }}"><i class="fas fa-stream"></i> Fluxo Caixa</a></li>{% endif %}
                     {% endif %}
                     {% if show_contas_banco %}
-                    <li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('contas_banco.') %}active{% endif %}" href="{{ url_for('contas_banco.index') }}"><i class="fas fa-university"></i> Contas Banco</a></li>
+                    {% if can_access_endpoint('contas_banco.index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('contas_banco.') %}active{% endif %}" href="{{ url_for('contas_banco.index') }}"><i class="fas fa-university"></i> Contas Banco</a></li>{% endif %}
                     {% endif %}
-                    {% if show_filiais %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.filiais') %}active{% endif %}" href="{{ url_for('comercial_operacional.filiais_index') }}"><i class="fas fa-building"></i> Filiais</a></li>{% endif %}
-                    {% if show_produtos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.produtos') %}active{% endif %}" href="{{ url_for('comercial_operacional.produtos_index') }}"><i class="fas fa-box"></i> Produtos</a></li>{% endif %}
-                    {% if show_servicos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.servicos') %}active{% endif %}" href="{{ url_for('comercial_operacional.servicos_index') }}"><i class="fas fa-concierge-bell"></i> Serviços</a></li>{% endif %}
-                    {% if show_tabelas_preco %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.tabelas_preco') %}active{% endif %}" href="{{ url_for('comercial_operacional.tabelas_preco_index') }}"><i class="fas fa-tags"></i> Tabelas de Preço</a></li>{% endif %}
+                    {% if show_filiais %}{% if can_access_endpoint('comercial_operacional.filiais_index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.filiais') %}active{% endif %}" href="{{ url_for('comercial_operacional.filiais_index') }}"><i class="fas fa-building"></i> Filiais</a></li>{% endif %}{% endif %}
+                    {% if show_produtos %}{% if can_access_endpoint('comercial_operacional.produtos_index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.produtos') %}active{% endif %}" href="{{ url_for('comercial_operacional.produtos_index') }}"><i class="fas fa-box"></i> Produtos</a></li>{% endif %}{% endif %}
+                    {% if show_servicos %}{% if can_access_endpoint('comercial_operacional.servicos_index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.servicos') %}active{% endif %}" href="{{ url_for('comercial_operacional.servicos_index') }}"><i class="fas fa-concierge-bell"></i> Serviços</a></li>{% endif %}{% endif %}
+                    {% if show_tabelas_preco %}{% if can_access_endpoint('comercial_operacional.tabelas_preco_index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.tabelas_preco') %}active{% endif %}" href="{{ url_for('comercial_operacional.tabelas_preco_index') }}"><i class="fas fa-tags"></i> Tabelas de Preço</a></li>{% endif %}{% endif %}
                 </ul>
                 {% endif %}
                 
@@ -755,37 +761,37 @@
                 {% if show_comercial %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-briefcase"></i> Comercial</div>
                 <ul class="ls-sidebar-nav">
-                    {% if show_estoque %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.estoque') %}active{% endif %}" href="{{ url_for('comercial_operacional.estoque_index') }}"><i class="fas fa-warehouse"></i> Movimento de estoque</a></li>{% endif %}
-                    {% if show_compras %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.compras') %}active{% endif %}" href="{{ url_for('comercial_operacional.compras_index') }}"><i class="fas fa-file-invoice"></i> Entrada de NF de compra</a></li>{% endif %}
-                    {% if show_pedidos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pedidos') %}active{% endif %}" href="{{ url_for('comercial_operacional.pedidos_index') }}"><i class="fas fa-clipboard-check"></i> Pedidos de venda</a></li>{% endif %}
-                    {% if show_pdv %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pdv') %}active{% endif %}" href="{{ url_for('comercial_operacional.pdv_index') }}"><i class="fas fa-cash-register"></i> PDV Caixa</a></li>{% endif %}
+                    {% if show_estoque %}{% if can_access_endpoint('comercial_operacional.estoque_index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.estoque') %}active{% endif %}" href="{{ url_for('comercial_operacional.estoque_index') }}"><i class="fas fa-warehouse"></i> Movimento de estoque</a></li>{% endif %}{% endif %}
+                    {% if show_compras %}{% if can_access_endpoint('comercial_operacional.compras_index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.compras') %}active{% endif %}" href="{{ url_for('comercial_operacional.compras_index') }}"><i class="fas fa-file-invoice"></i> Entrada de NF de compra</a></li>{% endif %}{% endif %}
+                    {% if show_pedidos %}{% if can_access_endpoint('comercial_operacional.pedidos_index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pedidos') %}active{% endif %}" href="{{ url_for('comercial_operacional.pedidos_index') }}"><i class="fas fa-clipboard-check"></i> Pedidos de venda</a></li>{% endif %}{% endif %}
+                    {% if show_pdv %}{% if can_access_endpoint('comercial_operacional.pdv_index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.pdv') %}active{% endif %}" href="{{ url_for('comercial_operacional.pdv_index') }}"><i class="fas fa-cash-register"></i> PDV Caixa</a></li>{% endif %}{% endif %}
                 </ul>
                 {% endif %}
 
                 {% if show_propostas %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-file-invoice-dollar"></i> Propostas</div>
                 <ul class="ls-sidebar-nav">
-                    {% if show_orcamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.orcamentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.orcamentos_index') }}"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>{% endif %}
-                    {% if show_propostas_aprovacao %}<li><a class="ls-sidebar-link {% if request.endpoint == 'comercial_operacional.propostas_aprovacao' %}active{% endif %}" href="{{ url_for('comercial_operacional.propostas_aprovacao') }}"><i class="fas fa-clipboard-check"></i> Aprovação de Propostas</a></li>{% endif %}
+                    {% if show_orcamentos %}{% if can_access_endpoint('comercial_operacional.orcamentos_index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.orcamentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.orcamentos_index') }}"><i class="fas fa-file-invoice-dollar"></i> Propostas Comerciais</a></li>{% endif %}{% endif %}
+                    {% if show_propostas_aprovacao %}{% if can_access_endpoint('comercial_operacional.propostas_aprovacao') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'comercial_operacional.propostas_aprovacao' %}active{% endif %}" href="{{ url_for('comercial_operacional.propostas_aprovacao') }}"><i class="fas fa-clipboard-check"></i> Aprovação de Propostas</a></li>{% endif %}{% endif %}
                 </ul>
                 {% endif %}
 
                 {% if show_importacao or show_nfse_nacional or show_documentos %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-file-invoice"></i> Serviços / Fiscal</div>
                 <ul class="ls-sidebar-nav">
-                    {% if show_import_nfse %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.importar_nfse' %}active{% endif %}" href="{{ url_for('importacoes.importar_nfse') }}"><i class="fas fa-file-upload"></i> Importação de XML NFS-e Emitida</a></li>{% endif %}
+                    {% if show_import_nfse %}{% if can_access_endpoint('importacoes.importar_nfse') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.importar_nfse' %}active{% endif %}" href="{{ url_for('importacoes.importar_nfse') }}"><i class="fas fa-file-upload"></i> Importação de XML NFS-e Emitida</a></li>{% endif %}{% endif %}
                     {% if show_nfse_nacional %}
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.listagem' %}active{% endif %}" href="{{ url_for('nfse_nacional.listagem') }}"><i class="fas fa-list"></i> NFS-e Emitidas</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.emissoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.emissoes') }}"><i class="fas fa-plus-circle"></i> Geração de NFS-e</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_consultar' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_consultar') }}"><i class="fas fa-search"></i> Consultar NFS-e</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.cancelamento' %}active{% endif %}" href="{{ url_for('nfse_nacional.cancelamento') }}"><i class="fas fa-times-circle"></i> Cancelamento NFS-e</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_cancelamento_substituicao' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_cancelamento_substituicao') }}"><i class="fas fa-exchange-alt"></i> Cancelamento por Substituição</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.configuracoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.configuracoes') }}"><i class="fas fa-cog"></i> Configurações NFS-e</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.tomadores' %}active{% endif %}" href="{{ url_for('nfse_nacional.tomadores') }}"><i class="fas fa-users"></i> Tomadores de Serviços</a></li>
+                    {% if can_access_endpoint('nfse_nacional.listagem') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.listagem' %}active{% endif %}" href="{{ url_for('nfse_nacional.listagem') }}"><i class="fas fa-list"></i> NFS-e Emitidas</a></li>{% endif %}
+                    {% if can_access_endpoint('nfse_nacional.emissoes') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.emissoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.emissoes') }}"><i class="fas fa-plus-circle"></i> Geração de NFS-e</a></li>{% endif %}
+                    {% if can_access_endpoint('nfse_nacional.nfse_consultar') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_consultar' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_consultar') }}"><i class="fas fa-search"></i> Consultar NFS-e</a></li>{% endif %}
+                    {% if can_access_endpoint('nfse_nacional.cancelamento') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.cancelamento' %}active{% endif %}" href="{{ url_for('nfse_nacional.cancelamento') }}"><i class="fas fa-times-circle"></i> Cancelamento NFS-e</a></li>{% endif %}
+                    {% if can_access_endpoint('nfse_nacional.nfse_cancelamento_substituicao') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_cancelamento_substituicao' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_cancelamento_substituicao') }}"><i class="fas fa-exchange-alt"></i> Cancelamento por Substituição</a></li>{% endif %}
+                    {% if can_access_endpoint('nfse_nacional.configuracoes') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.configuracoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.configuracoes') }}"><i class="fas fa-cog"></i> Configurações NFS-e</a></li>{% endif %}
+                    {% if can_access_endpoint('nfse_nacional.tomadores') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.tomadores' %}active{% endif %}" href="{{ url_for('nfse_nacional.tomadores') }}"><i class="fas fa-users"></i> Tomadores de Serviços</a></li>{% endif %}
                     {% endif %}
-                    {% if show_documentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.documentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.documentos_index') }}"><i class="fas fa-receipt"></i> Emissão de NF-e Avulsa</a></li>{% endif %}
-                    {% if show_relatorios and plan_allows_endpoint('relatorios.listagem_notas_nfse') %}
-                        <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_notas_nfse' %}active{% endif %}" href="{{ url_for('relatorios.listagem_notas_nfse') }}"><i class="fas fa-file-invoice"></i> Listagem de NFS-e Próprias importadas</a></li>
+                    {% if show_documentos %}{% if can_access_endpoint('comercial_operacional.documentos_index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comercial_operacional.documentos') %}active{% endif %}" href="{{ url_for('comercial_operacional.documentos_index') }}"><i class="fas fa-receipt"></i> Emissão de NF-e Avulsa</a></li>{% endif %}{% endif %}
+                    {% if can_access_endpoint('relatorios.listagem_notas_nfse') %}
+                        {% if can_access_endpoint('relatorios.listagem_notas_nfse') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_notas_nfse' %}active{% endif %}" href="{{ url_for('relatorios.listagem_notas_nfse') }}"><i class="fas fa-file-invoice"></i> Listagem de NFS-e Próprias importadas</a></li>{% endif %}
                     {% endif %}
                 </ul>
                 {% endif %}
@@ -793,73 +799,74 @@
                 {% if show_locacao %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-tshirt"></i> Locação</div>
                 <ul class="ls-sidebar-nav">
-                    {% if show_locacao_acervo %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.acervo') %}active{% endif %}" href="{{ url_for('locacao.acervo_lista') }}"><i class="fas fa-tags"></i> Acervo</a></li>{% endif %}
-                    {% if show_locacao_agenda %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.operacao_agenda') %}active{% endif %}" href="{{ url_for('locacao.operacao_agenda') }}"><i class="fas fa-calendar-alt"></i> Agenda / Disponibilidade</a></li>{% endif %}
-                    {% if show_locacao_contratos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.contratos') %}active{% endif %}" href="{{ url_for('locacao.contratos_lista') }}"><i class="fas fa-file-contract"></i> Contrato de Locação</a></li>{% endif %}
-                    {% if show_locacao_operacao %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.orcamentos') %}active{% endif %}" href="{{ url_for('locacao.orcamentos_lista') }}"><i class="fas fa-truck-loading"></i> Orçamento de locação</a></li>{% endif %}
+                    {% if show_locacao_acervo %}{% if can_access_endpoint('locacao.acervo_lista') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.acervo') %}active{% endif %}" href="{{ url_for('locacao.acervo_lista') }}"><i class="fas fa-tags"></i> Acervo</a></li>{% endif %}{% endif %}
+                    {% if show_locacao_agenda %}{% if can_access_endpoint('locacao.operacao_agenda') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.operacao_agenda') %}active{% endif %}" href="{{ url_for('locacao.operacao_agenda') }}"><i class="fas fa-calendar-alt"></i> Agenda / Disponibilidade</a></li>{% endif %}{% endif %}
+                    {% if show_locacao_contratos %}{% if can_access_endpoint('locacao.contratos_lista') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.contratos') %}active{% endif %}" href="{{ url_for('locacao.contratos_lista') }}"><i class="fas fa-file-contract"></i> Contrato de Locação</a></li>{% endif %}{% endif %}
+                    {% if show_locacao_operacao %}{% if can_access_endpoint('locacao.orcamentos_lista') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('locacao.orcamentos') %}active{% endif %}" href="{{ url_for('locacao.orcamentos_lista') }}"><i class="fas fa-truck-loading"></i> Orçamento de locação</a></li>{% endif %}{% endif %}
                 </ul>
                 {% endif %}
 
                 {% if show_contratos_module %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-file-contract"></i> Contratos</div>
                 <ul class="ls-sidebar-nav">
-                    {% if show_contratos %}<li><a class="ls-sidebar-link {% if request.endpoint == 'contratos.index' %}active{% endif %}" href="{{ url_for('contratos.index') }}"><i class="fas fa-file-contract"></i> Contrato de Vendas</a></li>{% endif %}
-                    {% if show_clausulas %}<li><a class="ls-sidebar-link {% if request.endpoint == 'contratos.clausulas_lista' %}active{% endif %}" href="{{ url_for('contratos.clausulas_lista') }}"><i class="fas fa-file-alt"></i> Cláusulas Padrão</a></li>{% endif %}
+                    {% if show_contratos %}{% if can_access_endpoint('contratos.index') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'contratos.index' %}active{% endif %}" href="{{ url_for('contratos.index') }}"><i class="fas fa-file-contract"></i> Contrato de Vendas</a></li>{% endif %}{% endif %}
+                    {% if show_clausulas %}{% if can_access_endpoint('contratos.clausulas_lista') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'contratos.clausulas_lista' %}active{% endif %}" href="{{ url_for('contratos.clausulas_lista') }}"><i class="fas fa-file-alt"></i> Cláusulas Padrão</a></li>{% endif %}{% endif %}
                 </ul>
                 {% endif %}
 
                 {% if show_financeiro %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-hand-holding-usd"></i> Financeiro</div>
                 <ul class="ls-sidebar-nav">
-                    {% if show_lancamentos %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('lancamentos.') %}active{% endif %}" href="{{ url_for('lancamentos.index') }}"><i class="fas fa-receipt"></i> Lançamentos</a></li>{% endif %}
-                    {% if show_import_ofx %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.import_ofx'%}active{% endif %}" href="{{ url_for('importacoes.importar_ofx') }}"><i class="fas fa-file-upload"></i> Importar OFX</a></li>{% endif %}
-                    {% if show_conciliacao %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('conciliacao.') %}active{% endif %}" href="{{ url_for('conciliacao.index') }}"><i class="fas fa-receipt"></i> Conciliação Bancária</a></li>{% endif %}
+                    {% if show_lancamentos %}{% if can_access_endpoint('lancamentos.index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('lancamentos.') %}active{% endif %}" href="{{ url_for('lancamentos.index') }}"><i class="fas fa-receipt"></i> Lançamentos</a></li>{% endif %}{% endif %}
+                    {% if show_import_ofx %}{% if can_access_endpoint('importacoes.importar_ofx') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.import_ofx'%}active{% endif %}" href="{{ url_for('importacoes.importar_ofx') }}"><i class="fas fa-file-upload"></i> Importar OFX</a></li>{% endif %}{% endif %}
+                    {% if show_conciliacao %}{% if can_access_endpoint('conciliacao.index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('conciliacao.') %}active{% endif %}" href="{{ url_for('conciliacao.index') }}"><i class="fas fa-receipt"></i> Conciliação Bancária</a></li>{% endif %}{% endif %}
                     {% if show_comissoes %}
-                    <li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comissoes') and request.endpoint != 'comissoes.apurar' and request.endpoint != 'comissoes.relatorio' and request.endpoint != 'comissoes.parametros' %}active{% endif %}" href="{{ url_for('comissoes.listar') }}"><i class="fas fa-list"></i> Comissões</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'comissoes.apurar' %}active{% endif %}" href="{{ url_for('comissoes.apurar') }}"><i class="fas fa-calculator"></i> Apuração de Comissões</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'comissoes.relatorio' %}active{% endif %}" href="{{ url_for('comissoes.relatorio') }}"><i class="fas fa-chart-line"></i> Listagem de Comissões</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'comissoes.parametros' %}active{% endif %}" href="{{ url_for('comissoes.parametros') }}"><i class="fas fa-sliders-h"></i> Parâmetros de Comissão</a></li>
+                    {% if can_access_endpoint('comissoes.listar') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('comissoes') and request.endpoint != 'comissoes.apurar' and request.endpoint != 'comissoes.relatorio' and request.endpoint != 'comissoes.parametros' %}active{% endif %}" href="{{ url_for('comissoes.listar') }}"><i class="fas fa-list"></i> Comissões</a></li>{% endif %}
+                    {% if can_access_endpoint('comissoes.apurar') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'comissoes.apurar' %}active{% endif %}" href="{{ url_for('comissoes.apurar') }}"><i class="fas fa-calculator"></i> Apuração de Comissões</a></li>{% endif %}
+                    {% if can_access_endpoint('comissoes.relatorio') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'comissoes.relatorio' %}active{% endif %}" href="{{ url_for('comissoes.relatorio') }}"><i class="fas fa-chart-line"></i> Listagem de Comissões</a></li>{% endif %}
+                    {% if can_access_endpoint('comissoes.parametros') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'comissoes.parametros' %}active{% endif %}" href="{{ url_for('comissoes.parametros') }}"><i class="fas fa-sliders-h"></i> Parâmetros de Comissão</a></li>{% endif %}
                     {% endif %}
                     {% if show_relatorios %}
-                        {% if plan_allows_endpoint('relatorio_fluxo.index') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorio_fluxo.index' %}active{% endif %}" href="{{ url_for('relatorio_fluxo.index') }}"><i class="fas fa-chart-line"></i> Fluxo de Caixa</a></li>{% endif %}
-                        <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_lancamentos' %}active{% endif %}" href="{{ url_for('relatorios.listagem_lancamentos') }}"><i class="fas fa-list"></i> Listagem de Lançamentos</a></li>
+                        {% if plan_allows_endpoint('relatorio_fluxo.index') %}{% if can_access_endpoint('relatorio_fluxo.index') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorio_fluxo.index' %}active{% endif %}" href="{{ url_for('relatorio_fluxo.index') }}"><i class="fas fa-chart-line"></i> Fluxo de Caixa</a></li>{% endif %}{% endif %}
+                        {% if can_access_endpoint('relatorios.listagem_lancamentos') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios.listagem_lancamentos' %}active{% endif %}" href="{{ url_for('relatorios.listagem_lancamentos') }}"><i class="fas fa-list"></i> Listagem de Lançamentos</a></li>{% endif %}
                     {% endif %}
                 </ul>
                 {% endif %}
 
-                {% if has_activity('relatorios') %}
+                {% if has_permission('relatorios') %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-chart-bar"></i> Relatórios</div>
                 <ul class="ls-sidebar-nav">
                     <li class="ls-sidebar-group-label">Administração</li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.usuarios' %}active{% endif %}" href="{{ url_for('relatorios_p1.usuarios') }}"><i class="fas fa-users"></i> Usuários</a></li>
+                    {% if can_access_endpoint('relatorios_p1.usuarios') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.usuarios' %}active{% endif %}" href="{{ url_for('relatorios_p1.usuarios') }}"><i class="fas fa-users"></i> Usuários</a></li>{% endif %}
+                    {% if can_access_endpoint('relatorios_p1.orcamentos') %}<li class="ls-sidebar-group-label">Propostas</li><li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.orcamentos' %}active{% endif %}" href="{{ url_for('relatorios_p1.orcamentos') }}"><i class="fas fa-file-invoice-dollar"></i> Relatório de Propostas</a></li>{% endif %}
                     <li class="ls-sidebar-group-label">Cadastros</li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.entidades' %}active{% endif %}" href="{{ url_for('relatorios_p1.entidades') }}"><i class="fas fa-address-book"></i> Entidades</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.clientes_comissao' %}active{% endif %}" href="{{ url_for('relatorios_p1.clientes_comissao') }}"><i class="fas fa-percent"></i> Clientes c/ Comissão</a></li>
+                    {% if can_access_endpoint('relatorios_p1.entidades') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.entidades' %}active{% endif %}" href="{{ url_for('relatorios_p1.entidades') }}"><i class="fas fa-address-book"></i> Entidades</a></li>{% endif %}
+                    {% if can_access_endpoint('relatorios_p1.clientes_comissao') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.clientes_comissao' %}active{% endif %}" href="{{ url_for('relatorios_p1.clientes_comissao') }}"><i class="fas fa-percent"></i> Clientes c/ Comissão</a></li>{% endif %}
                     {% if has_activity('comercial') %}
                     <li class="ls-sidebar-group-label">Comercial</li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.orcamentos' %}active{% endif %}" href="{{ url_for('relatorios_p1.orcamentos') }}"><i class="fas fa-file-invoice-dollar"></i> Orçamentos</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.pedidos' %}active{% endif %}" href="{{ url_for('relatorios_p1.pedidos') }}"><i class="fas fa-shopping-cart"></i> Pedidos</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.estoque' %}active{% endif %}" href="{{ url_for('relatorios_p1.estoque') }}"><i class="fas fa-boxes"></i> Estoque</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.compras' %}active{% endif %}" href="{{ url_for('relatorios_p1.compras') }}"><i class="fas fa-truck"></i> Compras</a></li>
+
+                    {% if can_access_endpoint('relatorios_p1.pedidos') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.pedidos' %}active{% endif %}" href="{{ url_for('relatorios_p1.pedidos') }}"><i class="fas fa-shopping-cart"></i> Pedidos</a></li>{% endif %}
+                    {% if can_access_endpoint('relatorios_p1.estoque') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.estoque' %}active{% endif %}" href="{{ url_for('relatorios_p1.estoque') }}"><i class="fas fa-boxes"></i> Estoque</a></li>{% endif %}
+                    {% if can_access_endpoint('relatorios_p1.compras') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.compras' %}active{% endif %}" href="{{ url_for('relatorios_p1.compras') }}"><i class="fas fa-truck"></i> Compras</a></li>{% endif %}
                     {% endif %}
                     {% if has_activity('financeiro') %}
                     <li class="ls-sidebar-group-label">Financeiro</li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.saldo_contas' %}active{% endif %}" href="{{ url_for('relatorios_p1.saldo_contas') }}"><i class="fas fa-university"></i> Saldo por Conta</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.fluxo_categorias' %}active{% endif %}" href="{{ url_for('relatorios_p1.fluxo_categorias') }}"><i class="fas fa-stream"></i> Receitas/Despesas</a></li>
+                    {% if can_access_endpoint('relatorios_p1.saldo_contas') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.saldo_contas' %}active{% endif %}" href="{{ url_for('relatorios_p1.saldo_contas') }}"><i class="fas fa-university"></i> Saldo por Conta</a></li>{% endif %}
+                    {% if can_access_endpoint('relatorios_p1.fluxo_categorias') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.fluxo_categorias' %}active{% endif %}" href="{{ url_for('relatorios_p1.fluxo_categorias') }}"><i class="fas fa-stream"></i> Receitas/Despesas</a></li>{% endif %}
                     {% endif %}
                     {% if has_activity('servicos') %}
                     <li class="ls-sidebar-group-label">Fiscal</li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.nfse' %}active{% endif %}" href="{{ url_for('relatorios_p1.nfse') }}"><i class="fas fa-file-invoice"></i> NFS-e</a></li>
+                    {% if can_access_endpoint('relatorios_p1.nfse') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.nfse' %}active{% endif %}" href="{{ url_for('relatorios_p1.nfse') }}"><i class="fas fa-file-invoice"></i> NFS-e</a></li>{% endif %}
                     {% endif %}
                     {% if has_activity('locacao') %}
                     <li class="ls-sidebar-group-label">Locação</li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.locacao_pecas' %}active{% endif %}" href="{{ url_for('relatorios_p1.locacao_pecas') }}"><i class="fas fa-tshirt"></i> Peças / Acervo</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.locacao_contratos' %}active{% endif %}" href="{{ url_for('relatorios_p1.locacao_contratos') }}"><i class="fas fa-file-contract"></i> Contratos Locação</a></li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.locacao_manutencao' %}active{% endif %}" href="{{ url_for('relatorios_p1.locacao_manutencao') }}"><i class="fas fa-tools"></i> Manutenção</a></li>
+                    {% if can_access_endpoint('relatorios_p1.locacao_pecas') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.locacao_pecas' %}active{% endif %}" href="{{ url_for('relatorios_p1.locacao_pecas') }}"><i class="fas fa-tshirt"></i> Peças / Acervo</a></li>{% endif %}
+                    {% if can_access_endpoint('relatorios_p1.locacao_contratos') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.locacao_contratos' %}active{% endif %}" href="{{ url_for('relatorios_p1.locacao_contratos') }}"><i class="fas fa-file-contract"></i> Contratos Locação</a></li>{% endif %}
+                    {% if can_access_endpoint('relatorios_p1.locacao_manutencao') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.locacao_manutencao' %}active{% endif %}" href="{{ url_for('relatorios_p1.locacao_manutencao') }}"><i class="fas fa-tools"></i> Manutenção</a></li>{% endif %}
                     {% endif %}
                     {% if has_activity('contratos') %}
                     <li class="ls-sidebar-group-label">Contratos</li>
-                    <li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.contratos' %}active{% endif %}" href="{{ url_for('relatorios_p1.contratos') }}"><i class="fas fa-file-signature"></i> Contratos de Serviços</a></li>
+                    {% if can_access_endpoint('relatorios_p1.contratos') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'relatorios_p1.contratos' %}active{% endif %}" href="{{ url_for('relatorios_p1.contratos') }}"><i class="fas fa-file-signature"></i> Contratos de Serviços</a></li>{% endif %}
                     {% endif %}
                 </ul>
                 {% endif %}

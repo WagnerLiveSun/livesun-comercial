@@ -43,6 +43,11 @@ logger = logging.getLogger(__name__)
 
 ENDPOINT_PERMISSION_MAP = {
     'dashboard.index': 'dashboard',
+    'dashboard.comercial': 'dashboard',
+    'dashboard.financeiro': 'dashboard',
+    'dashboard.fiscal': 'dashboard',
+    'dashboard.locacao': 'dashboard',
+    'dashboard.propostas': 'dashboard',
 
     'entidades.index': 'entidades',
     'entidades.criar': 'entidades',
@@ -341,6 +346,15 @@ def create_app(config_name=None):
                 return None
 
         from src.utils import get_empresa_logo
+        from src.access_control import can_access_dashboard
+        from src.services.authorization import can_access_endpoint, endpoint_plan_allows
+        from src.services.assinatura import ServicoAssinatura
+        from src.models import AssinaturaEmpresa
+
+        assinatura_pagamento_pendente = False
+        if current_user.is_authenticated and getattr(current_user, 'empresa_id', None):
+            assinatura_menu = AssinaturaEmpresa.query.filter_by(empresa_id=current_user.empresa_id).first()
+            assinatura_pagamento_pendente = ServicoAssinatura.exige_pagamento_apos_trial(assinatura_menu)
 
         return {
             'current_user': current_user,
@@ -349,6 +363,9 @@ def create_app(config_name=None):
             'powered_by': 'LiveSun Comercial',
             'safe_url_for': safe_url_for,
             'has_permission': current_user_has_permission,
+            'can_access_dashboard': lambda endpoint: not assinatura_pagamento_pendente and can_access_dashboard(current_user, endpoint),
+            'can_access_endpoint': lambda endpoint: not assinatura_pagamento_pendente and can_access_endpoint(current_user, endpoint),
+            'assinatura_pagamento_pendente': assinatura_pagamento_pendente,
             'get_empresa_logo': get_empresa_logo,
             'current_plan': normalize_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
             'current_plan_label': get_plan_label(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
@@ -356,7 +373,7 @@ def create_app(config_name=None):
             'is_basic_plan': is_basic_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
             'is_intermediate_plan': is_intermediate_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
             'is_premium_plan': is_premium_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium')),
-            'plan_allows_endpoint': lambda endpoint_name: plan_allows_endpoint(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium'), endpoint_name),
+            'plan_allows_endpoint': lambda endpoint_name: endpoint_plan_allows(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium'), endpoint_name),
             'has_activity': lambda activity: getattr(getattr(current_user, 'empresa', None), f'atividade_{activity}', False),
         }
 
@@ -384,6 +401,20 @@ def create_app(config_name=None):
         endpoint_name = request.endpoint
         if not endpoint_name:
             return None
+
+        # Trial vencido: autenticar permite regularizar, não executar rotinas.
+        # Não isentar todo auth.* (há gravações administrativas nesse blueprint).
+        if getattr(current_user, 'empresa_id', None) is not None:
+            from src.models import AssinaturaEmpresa
+            from src.services.assinatura import ServicoAssinatura
+            assinatura_trial = AssinaturaEmpresa.query.filter_by(
+                empresa_id=current_user.empresa_id,
+            ).first()
+            if ServicoAssinatura.exige_pagamento_apos_trial(assinatura_trial):
+                permitidos = {'auth.assinatura', 'auth.logout', 'suporte'}
+                if endpoint_name not in permitidos and not endpoint_name.startswith('static'):
+                    flash('Seu período de teste terminou. Conclua a assinatura e aguarde a confirmação do pagamento.', 'warning')
+                    return redirect(url_for('auth.assinatura'))
 
         # ------------------------------------------------------------------
         # Controle de acesso por assinatura (Backoffice Comercial tem autoridade).
@@ -416,8 +447,29 @@ def create_app(config_name=None):
                 return redirect(url_for('auth.login'))
 
         company_plan = normalize_plan(getattr(getattr(current_user, 'empresa', None), 'plano', 'premium'))
+        from src.services.authorization import can_access_endpoint, endpoint_is_managed
+        if endpoint_is_managed(endpoint_name):
+            if not can_access_endpoint(current_user, endpoint_name):
+                from flask import abort
+                # Dashboard negado nunca redireciona para si mesmo.
+                if endpoint_name.startswith('dashboard.'):
+                    abort(403)
+                flash('Recurso indisponível para o plano, módulo ou permissões do usuário.', 'warning')
+                return redirect(url_for('dashboard.index'))
+            user_role = (getattr(current_user, 'role', 'viewer') or 'viewer').strip().lower()
+            if (
+                not getattr(current_user, 'is_admin', False)
+                and user_role == 'viewer'
+                and request.method in {'POST', 'PUT', 'PATCH', 'DELETE'}
+            ):
+                flash('Seu perfil Viewer possui acesso apenas para consulta (somente leitura).', 'warning')
+                return redirect(url_for('dashboard.index'))
+            return None
+
         if not plan_allows_endpoint(company_plan, endpoint_name):
             flash('Este recurso não está disponível no seu plano atual.', 'warning')
+            if endpoint_name.startswith('dashboard.'):
+                abort(403)
             return redirect(url_for('dashboard.index'))
 
         permission_key = ENDPOINT_PERMISSION_MAP.get(endpoint_name)
@@ -426,6 +478,8 @@ def create_app(config_name=None):
 
         if not current_user_has_permission(permission_key):
             flash('Acesso negado para este processo no seu papel atual.', 'danger')
+            if endpoint_name.startswith('dashboard.'):
+                abort(403)
             return redirect(url_for('dashboard.index'))
 
         # Gate por atividade do módulo (definida pelo Backoffice Comercial).

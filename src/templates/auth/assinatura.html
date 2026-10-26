@@ -3,6 +3,11 @@
 {% block title %}Assinatura Comercial{% endblock %}
 
 {% block content %}
+{% if assinatura_pagamento_pendente %}
+<div class="alert alert-warning" role="alert">
+    Seu período de teste terminou. As rotinas do sistema serão liberadas somente após a confirmação do pagamento da assinatura.
+</div>
+{% endif %}
 <div class="row mb-4">
     <div class="col-12">
         <h1 class="display-6 fw-bold ls-page-title">Assinatura Comercial</h1>

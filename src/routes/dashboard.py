@@ -29,8 +29,29 @@ from sqlalchemy import func, and_
 from datetime import datetime, timedelta
 from decimal import Decimal
 from src.services.assinatura import ServicoAssinatura
+from src.services.authorization import can_access_endpoint
 
 dashboard_bp = Blueprint('dashboard', __name__)
+
+
+@dashboard_bp.before_request
+def restrict_dashboard_indicators():
+    """Sem autorização aos dados, mostrar estado informativo sem consultá-los."""
+    from flask import request
+
+    if not current_user.is_authenticated:
+        return None
+    dependencies = {
+        'dashboard.comercial': ('comercial_operacional.orcamentos_index', 'comercial_operacional.pedidos_index'),
+        'dashboard.financeiro': ('lancamentos.index', 'contas_banco.index'),
+        'dashboard.fiscal': ('nfse_nacional.index', 'importacoes.importar_nfse'),
+        'dashboard.locacao': ('locacao.acervo_lista', 'locacao.contratos_lista', 'locacao.operacao_agenda', 'locacao.operacao_retirada'),
+        'dashboard.propostas': ('comercial_operacional.orcamentos_index',),
+    }
+    required = dependencies.get(request.endpoint, ())
+    if required and not all(can_access_endpoint(current_user, endpoint) for endpoint in required):
+        return render_template('dashboard_restrito.html')
+    return None
 
 
 @dashboard_bp.route('/')
@@ -38,21 +59,28 @@ dashboard_bp = Blueprint('dashboard', __name__)
 def index():
     """Main dashboard - Geral com indicadores de cadastros"""
     import logging, traceback
+    # A página inicial não consulta indicadores quando a permissão é negada.
+    # O interceptor preserva a negativa de acesso; esta defesa também atende
+    # chamadas diretas da view em contextos locais.
+    if not can_access_endpoint(current_user, 'dashboard.index'):
+        from flask import abort
+        abort(403)
     try:
         hoje = datetime.now().date()
         empresa_id = current_user.empresa_id
 
         # Indicadores de entidades por tipo
-        fornecedores = Entidade.query.filter_by(empresa_id=empresa_id, ativo=True, tipo='F').count()
-        clientes = Entidade.query.filter_by(empresa_id=empresa_id, ativo=True, tipo='C').count()
-        vendedores = Entidade.query.filter_by(empresa_id=empresa_id, ativo=True, tipo='V').count()
+        cadastros_permitidos = can_access_endpoint(current_user, 'entidades.index')
+        fornecedores = Entidade.query.filter_by(empresa_id=empresa_id, ativo=True, tipo='F').count() if cadastros_permitidos else None
+        clientes = Entidade.query.filter_by(empresa_id=empresa_id, ativo=True, tipo='C').count() if cadastros_permitidos else None
+        vendedores = Entidade.query.filter_by(empresa_id=empresa_id, ativo=True, tipo='V').count() if cadastros_permitidos else None
         
-        total_usuarios = User.query.filter_by(empresa_id=empresa_id, is_active=True).count()
-        total_produtos = Produto.query.filter_by(empresa_id=empresa_id, ativo=True).count()
-        total_servicos = Servico.query.filter_by(empresa_id=empresa_id, ativo=True).count()
+        total_usuarios = User.query.filter_by(empresa_id=empresa_id, is_active=True).count() if can_access_endpoint(current_user, 'auth.controle_acesso') else None
+        total_produtos = Produto.query.filter_by(empresa_id=empresa_id, ativo=True).count() if can_access_endpoint(current_user, 'comercial_operacional.produtos_index') else None
+        total_servicos = Servico.query.filter_by(empresa_id=empresa_id, ativo=True).count() if can_access_endpoint(current_user, 'comercial_operacional.servicos_index') else None
         
         # Dados da assinatura
-        assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first()
+        assinatura = AssinaturaEmpresa.query.filter_by(empresa_id=empresa_id).first() if current_user.is_admin else None
         plano = assinatura.plano_codigo if assinatura else 'N/A'
         vencimento = assinatura.data_vencimento if assinatura else None
         status = assinatura.status if assinatura else 'N/A'

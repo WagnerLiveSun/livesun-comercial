@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block title %}Assinatura pendente{% endblock %}
+{% block content %}
+<div class="ls-card p-4">
+    <h1 class="ls-page-title">Período de teste encerrado</h1>
+    <p>O acesso às rotinas está bloqueado até a confirmação do pagamento da assinatura.</p>
+    <p>Solicite ao administrador da empresa que acesse a assinatura e conclua o pagamento.</p>
+    <a href="{{ url_for('auth.logout') }}" class="btn ls-btn-primary">Sair</a>
+</div>
+{% endblock %}
