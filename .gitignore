@@ -80,6 +80,9 @@ desktop.ini
 arquivos_usados/
 CriaPostgreeSQL_MontuDB/
 tests/
+!/tests/
+/tests/*
+!/tests/test_proposta_novo_modelo.py
 backups/
 
 # Keep important files

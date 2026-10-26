@@ -2837,6 +2837,40 @@ def orcamentos_exportar_pdf_resumido(orcamento_id):
         return redirect(url_for('comercial_operacional.orcamentos_detalhe', orcamento_id=orcamento.id))
 
 
+@comercial_bp.route('/orcamentos/<int:orcamento_id>/exportar-pdf-novo-modelo', methods=['GET'])
+@login_required
+def orcamentos_exportar_pdf_novo_modelo(orcamento_id):
+    from io import BytesIO
+    from pathlib import Path
+
+    from flask import current_app
+    from werkzeug.utils import secure_filename
+
+    from src.services.proposta_pdf import gerar_novo_modelo
+
+    orcamento = scoped_get_or_404(Orcamento, orcamento_id)
+    if orcamento.empresa_id != tenant_id():
+        flash('Não autorizado', 'danger')
+        return redirect(url_for('comercial_operacional.orcamentos_index'))
+
+    try:
+        upload_folder = current_app.config.get('UPLOAD_FOLDER') or str(
+            Path(current_app.root_path).parent / 'uploads'
+        )
+        conteudo = gerar_novo_modelo(orcamento, upload_folder)
+        numero = secure_filename(str(orcamento.numero)) or str(orcamento.id)
+        return send_file(
+            BytesIO(conteudo),
+            as_attachment=True,
+            download_name=f'proposta_novo_modelo_{numero}.pdf',
+            mimetype='application/pdf',
+        )
+    except Exception:
+        current_app.logger.exception('Erro ao exportar Novo Modelo da proposta %s', orcamento.id)
+        flash('Não foi possível gerar o Novo Modelo. Confira os dados e o logo da empresa.', 'danger')
+        return redirect(url_for('comercial_operacional.orcamentos_detalhe', orcamento_id=orcamento.id))
+
+
 @comercial_bp.route('/orcamentos/<int:orcamento_id>/converter', methods=['POST'])
 @login_required
 def orcamentos_converter(orcamento_id):

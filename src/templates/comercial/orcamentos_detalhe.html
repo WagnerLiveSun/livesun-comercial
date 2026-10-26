@@ -37,6 +37,7 @@
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{{ url_for('comercial_operacional.orcamentos_exportar_pdf', orcamento_id=orcamento.id) }}"><i class="fas fa-file-pdf me-2 text-danger"></i>Completo</a></li>
                 <li><a class="dropdown-item" href="{{ url_for('comercial_operacional.orcamentos_exportar_pdf_resumido', orcamento_id=orcamento.id) }}"><i class="fas fa-file-lines me-2 text-primary"></i>Resumido</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('comercial_operacional.orcamentos_exportar_pdf_novo_modelo', orcamento_id=orcamento.id) }}"><i class="fas fa-file-pdf me-2 text-danger"></i>Novo Modelo</a></li>
             </ul>
         </div>
     </div>

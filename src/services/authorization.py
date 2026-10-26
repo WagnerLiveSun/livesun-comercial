@@ -63,7 +63,7 @@ for names, module, permission, level in (
     ('estoque_index estoque_criar', 'comercial', 'comercial_estoque', 2),
     ('compras_index compras_importar_xml compras_xml_validar compras_xml_confirmar compras_xml_cancelar compras_criar compras_detalhe compras_editar compras_excluir', 'comercial', 'comercial_compras', 2),
     ('documentos_index documentos_criar documentos_detalhe', 'servicos', 'comercial_documentos', 2),
-    ('orcamentos_index orcamentos_criar orcamentos_editar orcamentos_detalhe orcamentos_exportar_pdf orcamentos_exportar_pdf_resumido orcamentos_converter', 'propostas', 'comercial_orcamentos', 1),
+    ('orcamentos_index orcamentos_criar orcamentos_editar orcamentos_detalhe orcamentos_exportar_pdf orcamentos_exportar_pdf_resumido orcamentos_exportar_pdf_novo_modelo orcamentos_converter', 'propostas', 'comercial_orcamentos', 1),
     ('propostas_aprovacao orcamentos_aprovar orcamentos_reprovar', 'propostas', 'comercial_orcamentos', 1),
     ('pedidos_index pedidos_detalhe pedidos_faturar_previa pedidos_faturar', 'comercial', 'comercial_pedidos', 2),
     ('pdv_index pdv_abrir pdv_vender pdv_venda_adicionar_item pdv_venda_finalizar pdv_venda_imprimir pdv_fechar', 'comercial', 'comercial_pdv', 2),
