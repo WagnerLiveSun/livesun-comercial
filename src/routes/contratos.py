@@ -93,6 +93,8 @@ def _substituir_placeholders(texto, contrato):
         '{CONTRATANTE_ENDERECO}': f"{contratante.endereco_rua or ''}, {contratante.endereco_numero or ''}" if contratante else '',
         '{CONTRATANTE_CIDADE}': contratante.endereco_cidade or '' if contratante else '',
         '{CONTRATANTE_UF}': contratante.endereco_uf or '' if contratante else '',
+        '{CONTRATANTE_CONTATO_COMERCIAL}': contratante.contato_comercial or '' if contratante else '',
+        '{CONTRATANTE_EMAIL_COMERCIAL}': contratante.email_comercial or '' if contratante else '',
         '{CONTRATO_VALOR_TOTAL}': f"R$ {contrato.valor_total:,.2f}" if contrato.valor_total else '',
         '{CONTRATO_VALOR_MENSAL}': f"R$ {contrato.valor_mensal:,.2f}" if contrato.valor_mensal else '',
         '{CONTRATO_FORMA_PAGAMENTO}': contrato.forma_pagamento or '',
@@ -749,6 +751,10 @@ def exportar_pdf(id):
         pdf.ln(5)
         pdf.cell(0, 6, f'CONTRATANTE: {contrato.cliente.nome if contrato.cliente else "-"}', 0, 1)
         pdf.cell(0, 6, f'CNPJ/CPF: {contrato.cliente.cnpj_cpf if contrato.cliente else "-"}', 0, 1)
+        if contrato.cliente and contrato.cliente.contato_comercial:
+            pdf.cell(0, 6, f'Contato comercial: {contrato.cliente.contato_comercial}', 0, 1)
+        if contrato.cliente and contrato.cliente.email_comercial:
+            pdf.cell(0, 6, f'E-mail comercial: {contrato.cliente.email_comercial}', 0, 1)
         pdf.ln(10)
 
         # Cláusulas
@@ -832,6 +838,10 @@ def exportar_docx(id):
         doc.add_paragraph('')
         doc.add_paragraph(f'CONTRATANTE: {contrato.cliente.nome if contrato.cliente else "-"}')
         doc.add_paragraph(f'CNPJ/CPF: {contrato.cliente.cnpj_cpf if contrato.cliente else "-"}')
+        if contrato.cliente and contrato.cliente.contato_comercial:
+            doc.add_paragraph(f'Contato comercial: {contrato.cliente.contato_comercial}')
+        if contrato.cliente and contrato.cliente.email_comercial:
+            doc.add_paragraph(f'E-mail comercial: {contrato.cliente.email_comercial}')
 
         # Cláusulas
         doc.add_heading('CLÁUSULAS', level=1)

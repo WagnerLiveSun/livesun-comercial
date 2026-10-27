@@ -138,6 +138,25 @@
             </div>
         </div>
 
+        <div id="contato_comercial_section" style="display: {% if entidade and entidade.tipo == 'C' %}block{% else %}none{% endif %};">
+            <hr class="my-3">
+            <h5 class="mb-3">Contato comercial do cliente</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="contato_comercial">Contato</label>
+                    <input type="text" id="contato_comercial" name="contato_comercial" class="form-control"
+                           value="{{ entidade.contato_comercial if entidade and entidade.tipo == 'C' else '' }}"
+                           maxlength="150" {% if not entidade or entidade.tipo != 'C' %}disabled{% endif %}>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="email_comercial">E-mail comercial</label>
+                    <input type="email" id="email_comercial" name="email_comercial" class="form-control"
+                           value="{{ entidade.email_comercial if entidade and entidade.tipo == 'C' else '' }}"
+                           maxlength="120" {% if not entidade or entidade.tipo != 'C' %}disabled{% endif %}>
+                </div>
+            </div>
+        </div>
+
         <!-- Contrato/Produto -->
         <div class="row">
             <div class="col-12 mb-3">
@@ -249,14 +268,27 @@
     document.addEventListener('DOMContentLoaded', function() {
         const tipoSelect = document.querySelector('select[name="tipo"]');
         const comissaoSection = document.getElementById('comissao_section');
+        const contatoComercialSection = document.getElementById('contato_comercial_section');
+        const contatoComercialInput = document.getElementById('contato_comercial');
+        const emailComercialInput = document.getElementById('email_comercial');
         
         function toggleComissaoSection() {
             if (tipoSelect.value === 'C') {
                 comissaoSection.style.display = 'block';
+                contatoComercialSection.style.display = 'block';
+                contatoComercialInput.disabled = false;
+                emailComercialInput.disabled = false;
             } else {
                 comissaoSection.style.display = 'none';
+                contatoComercialSection.style.display = 'none';
+                contatoComercialInput.disabled = true;
+                emailComercialInput.disabled = true;
+                contatoComercialInput.value = '';
+                emailComercialInput.value = '';
             }
         }
+
+        toggleComissaoSection();
         
         tipoSelect.addEventListener('change', toggleComissaoSection);
 

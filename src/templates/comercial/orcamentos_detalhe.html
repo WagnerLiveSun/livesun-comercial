@@ -141,6 +141,12 @@
                     <td>Cliente:</td>
                     <td>{{ orcamento.cliente.nome if orcamento.cliente else '-' }}</td>
                 </tr>
+                {% if orcamento.cliente and orcamento.cliente.contato_comercial %}
+                <tr><td>Contato comercial:</td><td>{{ orcamento.cliente.contato_comercial }}</td></tr>
+                {% endif %}
+                {% if orcamento.cliente and orcamento.cliente.email_comercial %}
+                <tr><td>E-mail comercial:</td><td>{{ orcamento.cliente.email_comercial }}</td></tr>
+                {% endif %}
                 <tr>
                     <td>Vendedor:</td>
                     <td>{{ orcamento.vendedor.nome if orcamento.vendedor else '-' }}</td>

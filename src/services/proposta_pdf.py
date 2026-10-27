@@ -41,23 +41,34 @@ def data_formatada(valor):
     return valor.strftime('%d/%m/%Y') if valor else '-'
 
 
-def localizar_logo(empresa, upload_folder):
-    """Somente o logo cadastrado, dentro do diretório de uploads da empresa."""
+def localizar_logo(empresa, upload_folder, static_folder=None):
+    """Prioriza o logo cadastrado e usa o logo estático do app como fallback."""
     caminho = texto(getattr(empresa, 'logo_caminho', None))
-    if not caminho.startswith('/uploads/'):
-        return None
-    raiz = Path(upload_folder).resolve()
-    arquivo = (raiz / caminho[len('/uploads/'):]).resolve()
-    if arquivo.is_relative_to(raiz) and arquivo.is_file():
-        return arquivo
+    if caminho.startswith('/uploads/'):
+        raiz = Path(upload_folder).resolve()
+        arquivo = (raiz / caminho[len('/uploads/'):]).resolve()
+        if arquivo.is_relative_to(raiz) and arquivo.is_file():
+            return arquivo
+
+    if static_folder:
+        raiz_estatica = Path(static_folder).resolve()
+        candidatos = (
+            raiz_estatica / 'images' / 'logo_sem fundo2.png',
+            raiz_estatica / 'images' / 'logo_sem_fundo2.png',
+            raiz_estatica / 'images' / 'logo.png',
+            raiz_estatica / 'img' / 'logo.png',
+        )
+        for candidato in candidatos:
+            if candidato.is_file():
+                return candidato
     return None
 
 
 class PDFNovoModelo(FPDF):
     VERMELHO = (181, 31, 43)
     CINZA = (242, 244, 247)
-    LARGURAS_ITENS = (25, 60, 17, 27, 22, 31)
-    CABECALHO_ITENS = ('Item / SKU', 'Descrição', 'Qtd.', 'Unitário (R$)', 'Desc. (R$)', 'Total (R$)')
+    LARGURAS_ITENS = (30, 64, 15, 26, 22, 25)
+    CABECALHO_ITENS = ('Item / SKU', 'Descrição', 'Qtd.', 'Unitário', 'Desconto', 'Total (R$)')
 
     def __init__(self, empresa, numero):
         super().__init__('P', 'mm', 'A4')
@@ -106,21 +117,25 @@ class PDFNovoModelo(FPDF):
 
     def paragrafo(self, valor, negrito=False, tamanho=10):
         self.fonte(negrito, tamanho)
-        self.multi_cell(182, 5.2, self.codificar(valor), align='L')
-        self.ln(2)
+        self.multi_cell(182, 4.8, self.codificar(valor), align='L')
+        self.ln(1)
 
     def topico(self, titulo, conteudo):
-        self.garantir_espaco(20)
-        self.paragrafo(titulo, negrito=True)
-        self.paragrafo(conteudo)
-        self.ln(2)
+        self.fonte(tamanho=9)
+        linhas = self.linhas(conteudo, 182)
+        self.garantir_espaco(8 + min(len(linhas), 3) * 4.8)
+        self.paragrafo(titulo, negrito=True, tamanho=9.5)
+        self.paragrafo(conteudo, tamanho=9)
 
     def linha_tabela(self, valores, larguras, cabecalho=False, fundo=False):
         """Quebra linhas por largura real e divide células muito extensas entre páginas."""
-        self.fonte(cabecalho, 9)
-        colunas = [self.linhas(valor, largura - 4) for valor, largura in zip(valores, larguras)]
+        tamanho_fonte = 8 if cabecalho else 8.5
+        altura_linha = 4.2
+        self.fonte(cabecalho, tamanho_fonte)
+        colunas = [self.multi_cell(largura - 4, altura_linha, self.codificar(valor), split_only=True) or ['']
+                   for valor, largura in zip(valores, larguras)]
         restantes = max(map(len, colunas))
-        altura_total = restantes * 4.5 + 4
+        altura_total = restantes * altura_linha + 4
         limite_pagina = self.page_break_trigger - self.t_margin - 22
         if altura_total <= limite_pagina and self.get_y() + altura_total > self.page_break_trigger:
             self.add_page()
@@ -128,27 +143,27 @@ class PDFNovoModelo(FPDF):
                 self.cabecalho_itens()
         deslocamento = 0
         while restantes:
-            capacidade = int((self.page_break_trigger - self.get_y() - 4) / 4.5)
+            capacidade = int((self.page_break_trigger - self.get_y() - 4) / altura_linha)
             if capacidade < 1:
                 self.add_page()
                 if tuple(larguras) == self.LARGURAS_ITENS and not cabecalho:
                     self.cabecalho_itens()
-                capacidade = int((self.page_break_trigger - self.get_y() - 4) / 4.5)
+                capacidade = int((self.page_break_trigger - self.get_y() - 4) / altura_linha)
             quantidade = min(restantes, capacidade)
-            altura = quantidade * 4.5 + 4
+            altura = quantidade * altura_linha + 4
             x, y = self.l_margin, self.get_y()
             self.set_draw_color(0, 0, 0)
             self.set_line_width(0.25)
             self.set_fill_color(*(self.VERMELHO if cabecalho else self.CINZA))
-            self.fonte(cabecalho, 9)
+            self.fonte(cabecalho, tamanho_fonte)
             if cabecalho:
                 self.set_text_color(255, 255, 255)
             for indice, (largura, linhas) in enumerate(zip(larguras, colunas)):
                 self.rect(x, y, largura, altura, 'DF' if cabecalho or fundo else 'D')
                 for posicao, linha in enumerate(linhas[deslocamento:deslocamento + quantidade]):
-                    self.set_xy(x + 2, y + 2 + posicao * 4.5)
+                    self.set_xy(x + 2, y + 2 + posicao * altura_linha)
                     alinhamento = 'R' if len(larguras) == 6 and indice >= 3 and not cabecalho else 'L'
-                    self.cell(largura - 4, 4.5, linha, align=alinhamento)
+                    self.cell(largura - 4, altura_linha, linha, align=alinhamento)
                 x += largura
             self.set_xy(self.l_margin, y + altura)
             deslocamento += quantidade
@@ -159,14 +174,14 @@ class PDFNovoModelo(FPDF):
         self.linha_tabela(self.CABECALHO_ITENS, self.LARGURAS_ITENS, cabecalho=True)
 
 
-def gerar_novo_modelo(orcamento, upload_folder):
+def gerar_novo_modelo(orcamento, upload_folder, static_folder=None):
     """Retorna PDF sem alterar proposta, aprovação, cadastros ou banco de dados."""
     empresa = orcamento.empresa
     cliente = orcamento.cliente
     vendedor = orcamento.vendedor
     pdf = PDFNovoModelo(empresa, orcamento.numero)
     pdf.add_page()
-    logo = localizar_logo(empresa, upload_folder)
+    logo = localizar_logo(empresa, upload_folder, static_folder=static_folder)
     if logo:
         # Normaliza os formatos aceitos no cadastro (inclusive WEBP/GIF/BMP).
         with TemporaryDirectory(prefix='proposta_logo_') as temporario:
@@ -175,30 +190,59 @@ def gerar_novo_modelo(orcamento, upload_folder):
                 imagem.thumbnail((1200, 600))
                 arquivo = Path(temporario) / 'logo.png'
                 imagem.save(arquivo)
-                largura = min(48, 23 * imagem.width / imagem.height)
+                largura = min(48, 25 * imagem.width / imagem.height)
                 altura = largura * imagem.height / imagem.width
             pdf.image(str(arquivo), x=14, y=16, w=largura, h=altura)
-    pdf.fonte(True, 10)
-    pdf.set_xy(106, 16)
-    pdf.multi_cell(90, 5, pdf.codificar(
-        f'PROPOSTA COMERCIAL\nNº {orcamento.numero}\n'
-        f'Data: {data_formatada(orcamento.data_emissao)}\n'
-        f'Validade: {data_formatada(orcamento.data_validade)}'
-    ), align='R')
-    pdf.set_y(max(44, pdf.get_y() + 4))
-    pdf.paragrafo(texto(getattr(empresa, 'nome', None), 'Emitente não informado'), negrito=True)
-    pdf.paragrafo(f'CNPJ/CPF: {documento(empresa)}\n{endereco(empresa)}', tamanho=9)
+    pdf.set_xy(91, 15)
+    pdf.set_text_color(*pdf.VERMELHO)
+    pdf.set_font('Helvetica', 'B', 19)
+    pdf.cell(97, 9, pdf.codificar('PROPOSTA COMERCIAL'), align='R', ln=1)
+    pdf.set_x(91)
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font('Helvetica', 'B', 12)
+    pdf.cell(97, 7, pdf.codificar(f'Nº {orcamento.numero}'), align='R', ln=1)
+    pdf.set_x(91)
+    pdf.set_font('Helvetica', '', 9)
+    pdf.cell(97, 5, pdf.codificar(f'Emissão: {data_formatada(orcamento.data_emissao)}'), align='R', ln=1)
+    pdf.set_x(91)
+    pdf.cell(97, 5, pdf.codificar(f'Validade: {data_formatada(orcamento.data_validade)}'), align='R', ln=1)
+
+    # Identificação compacta e de altura dinâmica, sem sobrepor endereços longos.
+    endereco_emitente = f'CNPJ/CPF: {documento(empresa)}  |  {endereco(empresa)}'
     contato_empresa = ' | '.join(filter(None, [
         texto(getattr(empresa, 'email', None)), texto(getattr(empresa, 'telefone', None)),
     ]))
+    pdf.fonte(tamanho=8.5)
+    linhas_endereco = pdf.multi_cell(174, 4.2, pdf.codificar(endereco_emitente), split_only=True) or ['']
+    pdf.fonte(tamanho=8)
+    linhas_contato = pdf.multi_cell(174, 4, pdf.codificar(contato_empresa), split_only=True) if contato_empresa else []
+    altura_emitente = 11 + len(linhas_endereco) * 4.2 + len(linhas_contato) * 4
+    topo_emitente = 46
+    pdf.set_xy(14, topo_emitente + 1)
+    pdf.set_draw_color(215, 219, 225)
+    pdf.set_fill_color(*pdf.CINZA)
+    pdf.rect(14, topo_emitente, 182, altura_emitente, 'DF')
+    pdf.set_xy(18, 49)
+    pdf.fonte(True, 9.5)
+    pdf.cell(174, 5, pdf.codificar(texto(getattr(empresa, 'nome', None), 'Emitente não informado')), ln=1)
+    pdf.set_x(18)
+    pdf.fonte(tamanho=8.5)
+    pdf.multi_cell(174, 4.2, pdf.codificar(endereco_emitente))
     if contato_empresa:
-        pdf.paragrafo(contato_empresa, tamanho=9)
+        pdf.set_x(18)
+        pdf.fonte(tamanho=8)
+        pdf.multi_cell(174, 4, pdf.codificar(contato_empresa))
 
-    bloco_cliente = '\n'.join([
+    linhas_cliente = [
         'CLIENTE / USUÁRIO FINAL', texto(getattr(cliente, 'nome', None), '-'),
         f'CNPJ/CPF: {documento(cliente)}', endereco(cliente),
         ' | '.join(filter(None, [texto(getattr(cliente, 'email', None)), texto(getattr(cliente, 'telefone', None))])),
-    ])
+    ]
+    if texto(getattr(cliente, 'contato_comercial', None)):
+        linhas_cliente.append(f"Contato comercial: {texto(cliente.contato_comercial)}")
+    if texto(getattr(cliente, 'email_comercial', None)):
+        linhas_cliente.append(f"E-mail comercial: {texto(cliente.email_comercial)}")
+    bloco_cliente = '\n'.join(linhas_cliente)
     bloco_fornecedor = '\n'.join(filter(None, [
         'FORNECEDORA / EMITENTE', texto(getattr(empresa, 'nome', None), '-'),
         f'CNPJ/CPF: {documento(empresa)}',
@@ -206,11 +250,13 @@ def gerar_novo_modelo(orcamento, upload_folder):
         texto(getattr(vendedor, 'email', None)), texto(getattr(vendedor, 'telefone', None)),
         f'Filial: {orcamento.filial.nome}' if getattr(orcamento, 'filial', None) else '',
     ]))
+    pdf.set_y(topo_emitente + altura_emitente + 3)
     pdf.linha_tabela((bloco_cliente, bloco_fornecedor), (91, 91), fundo=True)
-    pdf.ln(5)
+    pdf.ln(3)
     pdf.titulo('Itens da proposta')
-    pdf.cabecalho_itens()
     itens = list(orcamento.itens)
+    pdf.garantir_espaco(22 if itens else 7)
+    pdf.cabecalho_itens()
     for indice, item in enumerate(itens, 1):
         cadastro = item.produto if item.tipo_item == 'P' else item.servico
         descricao = texto(item.descricao)
@@ -225,14 +271,21 @@ def gerar_novo_modelo(orcamento, upload_folder):
         ), pdf.LARGURAS_ITENS)
     if not itens:
         pdf.paragrafo('Nenhum item cadastrado nesta proposta.')
-    pdf.ln(3)
-    pdf.garantir_espaco(22)
+    pdf.ln(2)
+    pdf.garantir_espaco(18)
     if getattr(orcamento, 'valor_desconto', None):
-        pdf.paragrafo(f'Desconto da proposta: {moeda(orcamento.valor_desconto)}', tamanho=9)
+        pdf.set_x(14)
+        pdf.fonte(tamanho=9)
+        pdf.cell(182, 5, pdf.codificar(f'Desconto da proposta: {moeda(orcamento.valor_desconto)}'), align='R', ln=1)
     # O valor salvo é a fonte de verdade; não descontar novamente os descontos dos itens.
-    pdf.paragrafo(f'TOTAL DA PROPOSTA: {moeda(orcamento.valor_total)}', negrito=True, tamanho=14)
+    pdf.set_fill_color(*pdf.CINZA)
+    pdf.rect(108, pdf.get_y(), 88, 10, 'F')
+    pdf.set_xy(110, pdf.get_y() + 1)
+    pdf.set_text_color(*pdf.VERMELHO)
+    pdf.fonte(True, 12)
+    pdf.cell(84, 7, pdf.codificar(f'TOTAL DA PROPOSTA: R$ {Decimal(str(orcamento.valor_total or 0)):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')), align='R', ln=1)
+    pdf.ln(4)
 
-    pdf.add_page()
     pdf.titulo('Condições comerciais')
     numero_topico = 0
     for titulo, conteudo in (
@@ -248,7 +301,6 @@ def gerar_novo_modelo(orcamento, upload_folder):
 
     termos = texto(getattr(orcamento, 'termos_compra', None))
     if termos:
-        pdf.add_page()
         pdf.titulo('Termos de fornecimento e contratação')
         # Preserva os tópicos, as quebras e as condições informadas, sem cláusulas fixas.
         for linha in termos.splitlines():
@@ -276,12 +328,8 @@ def gerar_novo_modelo(orcamento, upload_folder):
     pdf.titulo('Aceite da proposta')
     pdf.paragrafo(aceite)
     pdf.linha_tabela((
-        f'Cliente: {texto(getattr(cliente, "nome", None), "-")}\nCNPJ/CPF: {documento(cliente)}',
-        'Representante: __________________________\nCargo: _________________________________',
-    ), (91, 91))
-    pdf.linha_tabela((
-        'Assinatura: ______________________________',
-        'Data da assinatura: ______ / ______ / __________',
+        f'CLIENTE\n{texto(getattr(cliente, "nome", None), "-")}\nCNPJ/CPF: {documento(cliente)}\n\nAssinatura: ______________________\nData da assinatura: ______ / ______ / __________',
+        f'FORNECEDORA\n{texto(getattr(empresa, "nome", None), "-")}\nCNPJ/CPF: {documento(empresa)}\n\nAssinatura: ______________________\nData da assinatura: ______ / ______ / __________',
     ), (91, 91))
     pdf.ln(3)
     if getattr(orcamento, 'data_aprovacao', None):

@@ -169,7 +169,8 @@
                                 <i class="fas fa-download"></i>
                             </a>
                             <button onclick="abrirModalEmail(this, {{ emissao.id }})"
-                                    data-email="{{ (emissao.tomador.email if emissao.tomador and emissao.tomador.email else '') }}"
+                                    data-email="{{ (emissao.tomador.email_comercial if emissao.tomador and emissao.tomador.email_comercial else (emissao.tomador.email if emissao.tomador and emissao.tomador.email else '')) }}"
+                                    data-contato="{{ (emissao.tomador.contato_comercial if emissao.tomador and emissao.tomador.contato_comercial else '') }}"
                                     data-numero="{{ (emissao.numero_nfse or emissao.numero_interno or '') }}"
                                     data-data-emissao="{{ (emissao.criado_em.strftime('%d/%m/%Y') if emissao.criado_em else '') }}"
                                     class="btn btn-sm btn-outline-secondary action-btn" title="Enviar por E-mail">
@@ -258,12 +259,15 @@
 <script>
 function abrirModalEmail(btn, id) {
     var email = (btn && btn.getAttribute('data-email')) || '';
+    var contato = (btn && btn.getAttribute('data-contato')) || '';
     var numero = (btn && btn.getAttribute('data-numero')) || '';
     var dataEmissao = (btn && btn.getAttribute('data-data-emissao')) || '';
 
     document.getElementById('formEmail').action = "{{ url_for('nfse_nacional.enviar_email', id=0) }}".replace('0', id);
     document.getElementById('emailCliente').value = email;
-    document.getElementById('mensagemEmail').value = "Prezado cliente, segue em anexo nossa NFS-e N\u00ba " + numero + " emitida em " + dataEmissao + ".";
+    var mensagem = "Prezado cliente, segue em anexo nossa NFS-e N\u00ba " + numero + " emitida em " + dataEmissao + ".";
+    if (contato) mensagem += " Aos cuidados de " + contato + ".";
+    document.getElementById('mensagemEmail').value = mensagem;
     var modal = new bootstrap.Modal(document.getElementById('modalEmail'));
     modal.show();
 }

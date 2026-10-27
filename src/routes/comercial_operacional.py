@@ -2049,7 +2049,13 @@ def orcamentos_exportar_pdf(orcamento_id):
             nome = txt(getattr(cliente, "nome", None), "-")
             email = txt(getattr(cliente, "email", None))
             telefone = format_fone(getattr(cliente, "telefone", None))
-            return [nome] + [x for x in [email, telefone] if x]
+            contato = txt(getattr(cliente, "contato_comercial", None))
+            email_comercial = txt(getattr(cliente, "email_comercial", None))
+            adicionais = [
+                f"Contato comercial: {contato}" if contato else None,
+                f"E-mail comercial: {email_comercial}" if email_comercial else None,
+            ]
+            return [nome] + [x for x in [email, telefone, *adicionais] if x]
 
         def dados_emitente(empresa_obj, vendedor):
             nome_vendedor = txt(getattr(vendedor, "nome", None))
@@ -2215,7 +2221,7 @@ def orcamentos_exportar_pdf(orcamento_id):
         pdf.write_lines(left_x, contact_y, left_w, dados_cliente(cliente), True, 6, pdf.azul)
         pdf.write_lines(right_x, contact_y, right_w, dados_emitente(empresa, vendedor), True, 6, pdf.azul)
 
-        ref_y = contact_y + 36
+        ref_y = contact_y + max(36, len(dados_cliente(cliente)) * 6 + 6)
         pdf.set_xy(left_x, ref_y)
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(*pdf.texto)
@@ -2722,6 +2728,10 @@ def orcamentos_exportar_pdf_resumido(orcamento_id):
         linha_texto("Endereço:", endereco_linha(cliente))
         linha_texto("Telefone:", format_fone(getattr(cliente, "telefone", None)))
         linha_texto("E-mail:", txt(getattr(cliente, "email", None), "-"))
+        if txt(getattr(cliente, "contato_comercial", None)):
+            linha_texto("Contato comercial:", txt(getattr(cliente, "contato_comercial", None)))
+        if txt(getattr(cliente, "email_comercial", None)):
+            linha_texto("E-mail comercial:", txt(getattr(cliente, "email_comercial", None)))
         pdf.ln(5)
 
         titulo_secao("Vendedor:")
@@ -2857,7 +2867,11 @@ def orcamentos_exportar_pdf_novo_modelo(orcamento_id):
         upload_folder = current_app.config.get('UPLOAD_FOLDER') or str(
             Path(current_app.root_path).parent / 'uploads'
         )
-        conteudo = gerar_novo_modelo(orcamento, upload_folder)
+        conteudo = gerar_novo_modelo(
+            orcamento,
+            upload_folder,
+            static_folder=current_app.static_folder,
+        )
         numero = secure_filename(str(orcamento.numero)) or str(orcamento.id)
         return send_file(
             BytesIO(conteudo),

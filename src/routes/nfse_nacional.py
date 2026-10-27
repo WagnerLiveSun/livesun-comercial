@@ -110,6 +110,15 @@ def _date_from_request(value):
 MENSAGEM_PADRAO_NFSE = "Prezado cliente, segue em anexo nossa NFS-e Nº {numero} emitida em {data_emissao}."
 
 
+def _acrescentar_contato_comercial(mensagem, contato):
+    """Acrescenta o destinatário pessoal sem duplicar nome já informado."""
+    contato = (contato or "").strip()
+    mensagem = mensagem or ""
+    if contato and contato.casefold() not in mensagem.casefold():
+        return f"{mensagem.rstrip()} Aos cuidados de {contato}."
+    return mensagem
+
+
 def _resolver_logo_path(empresa):
     logo_url = getattr(empresa, "logo_caminho", None)
     if logo_url and str(logo_url).startswith("/uploads/"):
@@ -2959,7 +2968,7 @@ def enviar_email(id):
     # Destinatário principal: email do tomador
     email_cliente = request.form.get("email_cliente", "").strip()
     if not email_cliente and emissao.tomador:
-        email_cliente = emissao.tomador.email or ""
+        email_cliente = emissao.tomador.email_comercial or emissao.tomador.email or ""
     mensagem = request.form.get("mensagem", "").strip()
 
     if not email_cliente:
@@ -2984,13 +2993,18 @@ def enviar_email(id):
         numero=numero,
         data_emissao=data_emissao,
     )
+    contato_comercial = (getattr(emissao.tomador, "contato_comercial", None) or "").strip() if emissao.tomador else ""
+    mensagem = _acrescentar_contato_comercial(mensagem, contato_comercial)
 
     try:
         danfse_data = _preparar_danfse(emissao)
         empresa = current_user.empresa or emissao.empresa
         xml_nfse = None
         pdf_bytes = _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data)
-        nome_cliente = emissao.tomador.nome if emissao.tomador else email_cliente
+        nome_cliente = (
+            emissao.tomador.contato_comercial or emissao.tomador.nome
+            if emissao.tomador else email_cliente
+        )
         cc_email = empresa.email if empresa and empresa.email else None
         
         enviado = brevo_service.send_transactional_email(

@@ -97,6 +97,19 @@
                     {% endif %}
                 </p>
             </div>
+
+            {% if entidade.tipo == 'C' %}
+            <div class="mb-3">
+                <p class="text-muted mb-1">Contato comercial</p>
+                <p style="color: #e5e7eb;">{{ entidade.contato_comercial or 'N/A' }}</p>
+            </div>
+            <div class="mb-3">
+                <p class="text-muted mb-1">E-mail comercial</p>
+                <p style="color: #e5e7eb;">
+                    {% if entidade.email_comercial %}<a href="mailto:{{ entidade.email_comercial }}" style="color: #3b82f6;">{{ entidade.email_comercial }}</a>{% else %}N/A{% endif %}
+                </p>
+            </div>
+            {% endif %}
         </div>
     </div>
 

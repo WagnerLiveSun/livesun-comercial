@@ -72,6 +72,8 @@
             <h6 class="text-muted">Contratante</h6>
             <p class="mb-0"><strong>{{ contrato.contratante.nome }}</strong></p>
             <small class="text-muted">{{ contrato.contratante.cnpj_cpf }}</small>
+            {% if contrato.contratante.contato_comercial %}<p class="mb-0 mt-2">Contato comercial: {{ contrato.contratante.contato_comercial }}</p>{% endif %}
+            {% if contrato.contratante.email_comercial %}<p class="mb-0">E-mail comercial: {{ contrato.contratante.email_comercial }}</p>{% endif %}
         </div>
     </div>
 </div>

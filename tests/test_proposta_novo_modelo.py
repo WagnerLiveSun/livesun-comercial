@@ -64,8 +64,9 @@ def ler_pdf(conteudo):
 
 def test_conteudo_dinamico_termos_aceite_e_rodapes(tmp_path):
     proposta = proposta_exemplo()
-    leitor = ler_pdf(gerar_novo_modelo(proposta, tmp_path))
-    assert len(leitor.pages) == 3
+    static_folder = Path(__file__).resolve().parents[1] / 'src' / 'static'
+    leitor = ler_pdf(gerar_novo_modelo(proposta, tmp_path, static_folder=static_folder))
+    assert len(leitor.pages) == 2
     paginas = [pagina.extract_text() for pagina in leitor.pages]
     conteudo = '\n'.join(paginas)
     for esperado in (
@@ -73,7 +74,7 @@ def test_conteudo_dinamico_termos_aceite_e_rodapes(tmp_path):
         'SKU-001', 'SRV-002', '26.400,00', '4.053,75', '100,00', '25',
         proposta.condicoes_pagamento, proposta.validade_precos,
         'Entrega eletrônica após confirmação do pagamento.', 'Aceite da proposta',
-        'Representante:', 'Cargo:', 'Data da assinatura:', 'proteção — renovação',
+        'CLIENTE', 'FORNECEDORA', 'Data da assinatura:', 'proteção — renovação',
     ):
         assert esperado in conteudo
     assert proposta.observacoes_internas not in conteudo
@@ -138,6 +139,21 @@ def test_dados_opcionais_fallback_servico_total_zero_e_sem_logo_padrao(tmp_path)
     assert gerar_novo_modelo(proposta, tmp_path).startswith(b'%PDF-')
 
 
+def test_cabecalho_logo_itens_total_e_condicoes_aproveitam_primeira_pagina(tmp_path):
+    proposta = proposta_exemplo()
+    static_folder = Path(__file__).resolve().parents[1] / 'src' / 'static'
+    leitor = ler_pdf(gerar_novo_modelo(proposta, tmp_path, static_folder=static_folder))
+    primeira = leitor.pages[0].extract_text()
+
+    assert len(leitor.pages) == 2
+    assert len(list(leitor.pages[0].images)) == 1
+    for esperado in (
+        'PROPOSTA COMERCIAL', 'CLIENTE / USUÁRIO FINAL', 'FORNECEDORA / EMITENTE',
+        'Itens da proposta', 'TOTAL DA PROPOSTA: R$ 26.400,00', 'Condições comerciais',
+    ):
+        assert esperado in primeira
+
+
 @pytest.mark.parametrize('extensao', ['png', 'webp', 'gif', 'bmp', 'jpg'])
 def test_logo_cadastrado_formatos_e_confinamento(tmp_path, extensao):
     proposta = proposta_exemplo()
@@ -153,6 +169,34 @@ def test_logo_cadastrado_formatos_e_confinamento(tmp_path, extensao):
     assert localizar_logo(proposta.empresa, tmp_path) is None
     proposta.empresa.logo_caminho = 'https://example.test/logo.png'
     assert localizar_logo(proposta.empresa, tmp_path) is None
+
+
+def test_logo_estatico_e_fallback_quando_upload_cadastrado_indisponivel(tmp_path):
+    proposta = proposta_exemplo()
+    imagens = tmp_path / 'static' / 'images'
+    imagens.mkdir(parents=True)
+    arquivo = imagens / 'logo.png'
+    Image.new('RGB', (180, 60), (181, 31, 43)).save(arquivo)
+    proposta.empresa.logo_caminho = '/uploads/logos/logo-ausente.png'
+
+    assert localizar_logo(proposta.empresa, tmp_path, tmp_path / 'static') == arquivo
+    leitor = ler_pdf(gerar_novo_modelo(proposta, tmp_path, tmp_path / 'static'))
+    assert len(list(leitor.pages[0].images)) == 1
+
+
+def test_logo_cadastrado_tem_prioridade_sobre_logo_estatico(tmp_path):
+    proposta = proposta_exemplo()
+    uploads = tmp_path / 'logos'
+    estaticos = tmp_path / 'static' / 'images'
+    uploads.mkdir()
+    estaticos.mkdir(parents=True)
+    logo_cadastrado = uploads / 'logo-cliente.png'
+    logo_estatico = estaticos / 'logo.png'
+    Image.new('RGB', (120, 60), (0, 0, 255)).save(logo_cadastrado)
+    Image.new('RGB', (180, 60), (181, 31, 43)).save(logo_estatico)
+    proposta.empresa.logo_caminho = '/uploads/logos/logo-cliente.png'
+
+    assert localizar_logo(proposta.empresa, tmp_path, tmp_path / 'static') == logo_cadastrado
 
 
 def test_aprovacao_nao_preenche_data_de_assinatura(tmp_path):
@@ -185,7 +229,8 @@ def test_estilo_referencia_e_integracao_dos_menus():
 @pytest.fixture
 def app_pdf(tmp_path):
     from src.routes.comercial_operacional import comercial_bp
-    app = Flask(__name__)
+    static_folder = Path(__file__).resolve().parents[1] / 'src' / 'static'
+    app = Flask(__name__, static_folder=str(static_folder))
     app.config.update(TESTING=True, SECRET_KEY='test-only', UPLOAD_FOLDER=str(tmp_path))
     login = LoginManager(app)
     login.user_loader(lambda user_id: None)
@@ -207,6 +252,7 @@ def test_rota_pdf_e_isolamento_empresa(app_pdf):
     assert resposta.status_code == 200
     assert resposta.mimetype == 'application/pdf'
     assert resposta.data.startswith(b'%PDF-')
+    assert len(list(ler_pdf(resposta.data).pages[0].images)) == 1
     assert 'proposta_novo_modelo_PROP-2026-042.pdf' in resposta.headers['Content-Disposition']
     assert consulta.call_args.args[1] == 42
     with patch('src.routes.comercial_operacional.scoped_get_or_404', return_value=proposta), \

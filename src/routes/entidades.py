@@ -93,6 +93,8 @@ def criar():
                 endereco_cidade=municipio.nome_municipio if municipio else (request.form.get('endereco_cidade') or '').strip(),
                 endereco_uf=municipio.uf_sigla if municipio else (request.form.get('endereco_uf') or '').strip().upper(),
                 endereco_cep=format_cep(request.form.get('endereco_cep')),
+                contato_comercial=((request.form.get('contato_comercial') or '').strip() or None) if request.form.get('tipo') == 'C' else None,
+                email_comercial=((request.form.get('email_comercial') or '').strip() or None) if request.form.get('tipo') == 'C' else None,
                 ativo=request.form.get('ativo') == 'on',
                 fluxo_conta_id=request.form.get('fluxo_conta_id') or None
             )
@@ -169,6 +171,8 @@ def editar(id):
             entidade.endereco_cep = format_cep(request.form.get('endereco_cep'))
             entidade.telefone = request.form.get('telefone')
             entidade.email = request.form.get('email')
+            entidade.contato_comercial = ((request.form.get('contato_comercial') or '').strip() or None) if entidade.tipo == 'C' else None
+            entidade.email_comercial = ((request.form.get('email_comercial') or '').strip() or None) if entidade.tipo == 'C' else None
             entidade.contrato_produto = request.form.get('contrato_produto')
             entidade.ativo = request.form.get('ativo') == 'on'
             entidade.fluxo_conta_id = request.form.get('fluxo_conta_id') or None

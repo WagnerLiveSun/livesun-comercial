@@ -82,6 +82,7 @@ CriaPostgreeSQL_MontuDB/
 tests/
 !/tests/
 /tests/*
+!/tests/test_contato_comercial_entidades.py
 !/tests/test_proposta_novo_modelo.py
 backups/
 

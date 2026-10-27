@@ -124,6 +124,11 @@ class Entidade(db.Model):
 
     email = db.Column(db.String(120))
 
+    # Dados comerciais opcionais do cliente; separados do email fiscal existente.
+    contato_comercial = db.Column(db.String(150), nullable=True)
+
+    email_comercial = db.Column(db.String(120), nullable=True)
+
     contrato_produto = db.Column(db.Text)
 
     # Campos de comissão
