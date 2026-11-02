@@ -72,8 +72,9 @@ for names, module, permission, level in (
 
 _register('nfse_nacional', '''index configuracoes tomadores servicos emissoes emissao_detalhe
     emissao_download_dps emissao_download_nfse emissao_imprimir_danfs cancelamento
-    cancelar_emissao nfse_consultar listagem replicar_emissao visualizar enviar_email
+    cancelar_emissao nfse_consultar listagem visualizar enviar_email
     nfse_cancelamento_substituicao nfse_consultar_imprimir''', 'servicos', 'nfse_nacional', 2)
+_register('nfse_nacional', 'integracao_financeira', 'financeiro', 'lancamentos', 2)
 
 for names, permission in (
     ('clausulas_lista', 'clausulas_view'), ('clausulas_criar', 'clausulas_create'),

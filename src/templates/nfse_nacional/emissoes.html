@@ -13,6 +13,15 @@
 </div>
 
 <style>
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
 /* Tela de nova emissão em largura cheia, com contraste e leitura melhores */
 .nfse-emissao-card {
     background: var(--ls-card-bg);
@@ -98,7 +107,7 @@
             </div>
         </div>
     </div>
-    <form method="post" id="formEmitirNfse">
+    <form method="post" action="{{ url_for('nfse_nacional.emissoes') }}" id="formEmitirNfse">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row g-3">
             {# Ambiente mostrado no resumo da empresa; removido aqui para evitar redundância #}
@@ -246,6 +255,14 @@
 
 <script>
 (function () {
+    document.querySelectorAll('input[type="number"]').forEach(function (input) {
+        input.addEventListener('wheel', function (event) {
+            if (document.activeElement === input) event.preventDefault();
+        }, { passive: false });
+        input.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') event.preventDefault();
+        });
+    });
     // Trava anti-duplo-clique: desabilita o botao no submit (a SEFIN pode demorar ate 60s).
     const formEmitir = document.getElementById('formEmitirNfse');
     const btnEmitir = document.getElementById('btnEmitirNfse');

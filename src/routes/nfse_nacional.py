@@ -363,10 +363,21 @@ def _recuperar_ou_criar_lancamento(emissao, usuario_id=None):
 
 
 def _gravar_cancelamento_local(emissao, protocolo=None, motivo=None, payload_retorno=None, usuario_id=None):
-    """Grava os campos de cancelamento e o evento e101101 na emissão.
+    """Grava o cancelamento, exclui o recebível vinculado e registra e101101.
 
     Não faz commit; o chamador decide quando persistir.
     """
+    if emissao.lancamento is not None:
+        lancamento = emissao.lancamento
+        if lancamento.empresa_id != emissao.empresa_id:
+            raise ValueError("Lançamento vinculado pertence a outra empresa; cancelamento local não gravado.")
+        emissao.lancamento = None
+        emissao.lancamento_id = None
+        db.session.delete(lancamento)
+        logging.info(
+            "Lançamento financeiro %s excluído no cancelamento da NFS-e %s.",
+            lancamento.id, emissao.id,
+        )
     emissao.situacao_fiscal = "CANCELADA"
     emissao.status_processamento = "CANCELADA"
     if protocolo and not emissao.protocolo_cancelamento:
@@ -413,7 +424,10 @@ def _sincronizar_cancelamento_emissao(emissao, consultar_api=True):
     Retorna True quando a emissão foi marcada como cancelada nesta chamada.
     """
     try:
-        cancelada_local = bool(emissao.cancelado_em or emissao.protocolo_cancelamento)
+        cancelada_local = bool(
+            emissao.cancelado_em or emissao.protocolo_cancelamento
+            or emissao.situacao_fiscal == "CANCELADA"
+        )
         if not cancelada_local:
             cancelada_local = (
                 NfseNacionalEvento.query.filter_by(
@@ -425,7 +439,9 @@ def _sincronizar_cancelamento_emissao(emissao, consultar_api=True):
             )
 
         if cancelada_local:
-            if emissao.situacao_fiscal != "CANCELADA" or emissao.status_processamento != "CANCELADA":
+            if (emissao.situacao_fiscal != "CANCELADA"
+                    or emissao.status_processamento != "CANCELADA"
+                    or emissao.lancamento is not None):
                 _gravar_cancelamento_local(emissao)
                 db.session.commit()
                 return True
@@ -496,6 +512,7 @@ def sincronizar_cancelamentos_pendentes(empresa_id, limite_api=3, limite_dias=90
         return db.or_(
             NfseNacionalEmissao.situacao_fiscal != "CANCELADA",
             NfseNacionalEmissao.status_processamento != "CANCELADA",
+            NfseNacionalEmissao.lancamento.has(),
         )
 
     base = NfseNacionalEmissao.query.filter(
@@ -521,6 +538,7 @@ def sincronizar_cancelamentos_pendentes(empresa_id, limite_api=3, limite_dias=90
         db.or_(
             NfseNacionalEmissao.cancelado_em.isnot(None),
             NfseNacionalEmissao.protocolo_cancelamento.isnot(None),
+            NfseNacionalEmissao.situacao_fiscal == "CANCELADA",
             NfseNacionalEmissao.id.in_(ids_evento_cancelamento),
         )
     ).all()
@@ -577,7 +595,6 @@ def _dados_da_dps(emissao):
         "local_prestacao": "cLocPrestacao",
         "descricao_tributacao_nacional": "xTribNac",
         "descricao_tributacao_municipal": "xTribMun",
-        "informacoes_complementares": "xInfComp",
         "base_calculo_iss": "vBC",
         "aliquota_iss": "pAliq",
         "valor_iss_apurado": "vISSQN",
@@ -736,7 +753,8 @@ def _authorized_nfse_data(xml: str, chave_acesso: str = "") -> dict:
         "aliquota_iss": text(trib_mun, "pAliq"),
         "retencao_iss": _descricao_codigo(tp_ret_issqn, {"1": "Não Retido", "2": "Retido pelo Tomador", "3": "Retido pelo Intermediário"}),
         "valor_iss_apurado": text(trib_mun, "vISSQN") or text(trib, "vISSQN"),
-        "informacoes_complementares": text(serv, "xInfComp") or INFO_COMPLEMENTAR_PADRAO,
+        # Reserva fiscal: não reproduzir xInfComp/observações comerciais da DPS.
+        "informacoes_complementares": "",
         "irrf": text(trib_fed, "vIRRF"),
         "contribuicao_previdenciaria": text(trib_fed, "vCP"),
         "contribuicoes_sociais": text(trib_fed, "vCSLL") or text(trib_fed, "vPIS") or text(trib_fed, "vCOFINS"),
@@ -2550,12 +2568,6 @@ def cancelamento():
                         usuario_id=current_user.id,
                     )
 
-                    if emissao.lancamento:
-                        lancamento = emissao.lancamento
-                        db.session.delete(lancamento)
-                        emissao.lancamento = None
-                        logging.info(f"Lançamento financeiro {lancamento.id} excluído ao cancelar NFSe pela chave {chave_acesso} - nfse_nacional.py:2062")
-
                     db.session.commit()
 
                 flash("Cancelamento realizado com sucesso.", "success")
@@ -2662,14 +2674,6 @@ def cancelar_emissao(emissao_id):
                 payload_retorno=resultado.get("payload_retorno"),
                 usuario_id=current_user.id,
             )
-            
-            # Excluir lançamento financeiro associado, se existir
-            if emissao.lancamento:
-                lancamento = emissao.lancamento
-                # Excluir o lançamento
-                db.session.delete(lancamento)
-                emissao.lancamento = None
-                logging.info(f"Lançamento financeiro {lancamento.id} excluído ao cancelar NFSe {emissao.id} - nfse_nacional.py:2178")
             
             db.session.commit()
             
@@ -2854,65 +2858,6 @@ def listagem():
         situacao=situacao,
         busca=busca,
     )
-
-
-@nfse_nacional_bp.route("/listagem/<int:id>/replicar", methods=["GET"])
-@login_required
-def replicar_emissao(id):
-    """Abre uma nova emissão preenchida com os dados da nota original.
-
-    Mantém tomador, serviço e demais configurações; zera apenas o valor e a
-    data de emissão para que o usuário revise antes de transmitir.
-    """
-    emissao_origem = scoped_get_or_404(NfseNacionalEmissao, id)
-    empresa_id = tenant_id()
-
-    empresa = Empresa.query.get_or_404(empresa_id)
-    configuracoes = NfseNacionalConfiguracao.query.filter_by(
-        empresa_id=empresa_id
-    ).order_by(NfseNacionalConfiguracao.ambiente.asc()).all()
-
-    ambiente_q = (request.args.get("ambiente") or "").strip().lower()
-    if ambiente_q:
-        ambiente_selecionado = ambiente_q
-    else:
-        ativo_cfg = next((c for c in configuracoes if c.emissor_ativo), None)
-        if ativo_cfg:
-            ambiente_selecionado = (ativo_cfg.ambiente or "homologacao").strip().lower()
-        else:
-            ambiente_selecionado = (
-                configuracoes[0].ambiente if configuracoes else "homologacao"
-            )
-
-    servico = emissao_origem.servico
-    fiscal_defaults = {
-        "codigo_servico": (
-            getattr(servico, "codigo_servico", None)
-            or empresa.fiscal_principal_valor("codigo_servico")
-        ),
-        "nbs": getattr(servico, "nbs", None) or empresa.fiscal_principal_valor("nbs"),
-        "codigo_servico_opcoes": empresa.fiscal_valores_por_tipo("codigo_servico"),
-        "nbs_opcoes": empresa.fiscal_valores_por_tipo("nbs"),
-    }
-
-    return render_template(
-        "nfse_nacional/emissoes.html",
-        emissoes=[],
-        tomadores=scoped_query(Entidade).filter(
-            Entidade.tipo == "C", Entidade.ativo.is_(True)
-        ).order_by(Entidade.nome.asc()).all(),
-        servicos=scoped_query(Servico).filter(Servico.ativo.is_(True)).order_by(
-            Servico.descricao.asc()
-        ).all(),
-        configuracoes=configuracoes,
-        ambiente_selecionado=ambiente_selecionado,
-        filtro_status="",
-        filtro_busca="",
-        fiscal_defaults=fiscal_defaults,
-        replicar=emissao_origem,
-    )
-
-
 @nfse_nacional_bp.route("/listagem/<int:id>/visualizar", methods=["GET"])
 @login_required
 def visualizar(id):
@@ -3100,6 +3045,18 @@ def nfse_cancelamento_substituicao():
             )
             
             if resultado.get("sucesso"):
+                emissao = NfseNacionalEmissao.query.filter_by(
+                    empresa_id=empresa_id, chave_nfse=chave_nfse,
+                ).first()
+                if emissao:
+                    _gravar_cancelamento_local(
+                        emissao,
+                        protocolo=resultado.get("protocolo"),
+                        motivo=descricao_motivo,
+                        payload_retorno=resultado.get("payload_retorno"),
+                        usuario_id=current_user.id,
+                    )
+                    db.session.commit()
                 flash("Cancelamento por substituição realizado com sucesso.", "success")
                 return render_template(
                     "nfse_nacional/cancelamento_substituicao.html",
@@ -3121,6 +3078,7 @@ def nfse_cancelamento_substituicao():
                 )
                 
         except Exception as exc:
+            db.session.rollback()
             logging.error(f"Erro ao cancelar por substituição: {exc} - nfse_nacional.py:2514")
             flash(f"Erro ao cancelar por substituição: {exc}", "danger")
             return render_template(
@@ -3295,7 +3253,7 @@ def _snapshot_emissao(emissao):
         "total_ibs_cbs": "",
         "ibs_cbs": {},
         "is": {},
-        "informacoes_complementares": primeiro(emissao.observacoes, INFO_COMPLEMENTAR_PADRAO),
+        "informacoes_complementares": "",
     }
 
     # Complementa com os dados já transmitidos na DPS, quando disponíveis.
@@ -3376,4 +3334,8 @@ def _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data):
         qr_img_url=_qr_code_base64(chave),
     )
     return HTML(string=html, base_url=request.url_root or "").write_pdf()
+
+
+# Registra somente as ações locais de integração, antes do registro do blueprint.
+from src.routes import nfse_financeiro  # noqa: E402,F401
 

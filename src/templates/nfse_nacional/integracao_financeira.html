@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+{% block title %}Integração financeira de NFS-e{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Integração financeira de NFS-e</h2>
+    <a class="btn btn-outline-secondary" href="{{ url_for('nfse_nacional.listagem') }}">Voltar às notas</a>
+</div>
+<p>Processo manual de notas já emitidas. Esta ação não transmite NFS-e.</p>
+<p class="text-muted">Pendente significa sem vínculo financeiro confirmado. Se houver lançamento compatível já existente, ele será vinculado sem criar outro. Notas canceladas não são integradas.</p>
+<div class="alert alert-info">Pendentes: <strong>{{ total_pendentes }}</strong> · Processadas: <strong>{{ total_processadas }}</strong></div>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <label for="situacao" class="form-label">Integração</label>
+        <select id="situacao" name="situacao" class="form-select">
+            {% for valor, titulo in [('pendentes', 'Pendentes'), ('processadas', 'Processadas'), ('todas', 'Todas')] %}
+            <option value="{{ valor }}" {% if situacao == valor %}selected{% endif %}>{{ titulo }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-5">
+        <label for="busca" class="form-label">Número ou tomador</label>
+        <input id="busca" name="busca" value="{{ busca }}" class="form-control">
+    </div>
+    <div class="col-md-3 align-self-end"><button class="btn btn-outline-primary">Filtrar</button></div>
+</form>
+{% if resultados %}
+<div class="ls-card p-3 mb-3">
+    <h5>Resultado do processamento</h5>
+    <ul>
+    {% for resultado in resultados %}
+        <li class="{{ 'text-danger' if resultado.status == 'erro' else 'text-success' }}">
+            Registro {{ resultado.emissao_id }}:
+            {% if resultado.status == 'erro' %}{{ resultado.mensagem }}
+            {% else %}{{ {'criada': 'Lançamento criado', 'vinculada': 'Lançamento existente vinculado', 'ja_integrada': 'Nota já integrada; nenhuma duplicação'}[resultado.status] }} — lançamento {{ resultado.lancamento_id }}.{% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="table-responsive">
+        <table class="table ls-theme-table align-middle">
+            <thead><tr><th>Selecionar</th><th>NFS-e</th><th>Tomador</th><th>Emissão (cadastro)</th><th>Valor</th><th>Integração</th><th>Lançamento</th></tr></thead>
+            <tbody>
+            {% for nota in pagination.items %}
+                <tr>
+                    <td>{% if not nota.lancamento %}<input class="form-check-input" type="checkbox" name="emissao_ids" value="{{ nota.id }}" aria-label="Integrar nota {{ nota.numero_nfse or nota.numero_interno }}">{% endif %}</td>
+                    <td><a href="{{ url_for('nfse_nacional.emissao_detalhe', emissao_id=nota.id) }}">{{ nota.numero_nfse or nota.numero_interno }}</a><small class="d-block">{{ nota.ambiente }}</small></td>
+                    <td>{{ nota.tomador.nome if nota.tomador else '-' }}</td>
+                    <td>{{ nota.criado_em.strftime('%d/%m/%Y') if nota.criado_em else '-' }}</td>
+                    <td>R$ {{ nota.valor_servico|brl }}</td>
+                    <td>{{ 'Processada' if nota.lancamento else 'Pendente' }}</td>
+                    <td>{{ nota.lancamento.id if nota.lancamento else '-' }}</td>
+                </tr>
+            {% else %}<tr><td colspan="7">Nenhuma nota nesta situação.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label for="vencimento" class="form-label">Vencimento das notas selecionadas (opcional)</label>
+            <input id="vencimento" name="data_vencimento" type="date" class="form-control">
+            <small>Sem preenchimento, usa a data armazenada; na ausência, a data da emissão.</small>
+        </div>
+        <div class="col-md-5"><button class="btn btn-primary" type="submit">Integrar notas selecionadas ao financeiro</button></div>
+    </div>
+</form>
+<nav class="d-flex gap-3 mt-3" aria-label="Páginas da integração">
+    {% if pagination.has_prev %}<a href="{{ url_for('nfse_nacional.integracao_financeira', page=pagination.prev_num, situacao=situacao, busca=busca) }}">Anterior</a>{% endif %}
+    <span>Página {{ pagination.page }} de {{ pagination.pages or 1 }}</span>
+    {% if pagination.has_next %}<a href="{{ url_for('nfse_nacional.integracao_financeira', page=pagination.next_num, situacao=situacao, busca=busca) }}">Próxima</a>{% endif %}
+</nav>
+{% endblock %}

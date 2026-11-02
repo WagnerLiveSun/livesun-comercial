@@ -84,6 +84,7 @@ tests/
 /tests/*
 !/tests/test_contato_comercial_entidades.py
 !/tests/test_proposta_novo_modelo.py
+!/tests/test_nfse_integracao_financeira.py
 backups/
 
 # Keep important files

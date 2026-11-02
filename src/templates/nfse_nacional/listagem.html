@@ -8,7 +8,10 @@
         <h2 class="fw-bold ls-page-title mb-1">NFS-e Emitidas</h2>
         <p class="text-muted mb-0">Listagem de todas as notas fiscais de serviços emitidas.</p>
     </div>
-    <a href="{{ url_for('nfse_nacional.emissoes') }}" class="btn ls-btn-primary"><i class="fas fa-plus-circle me-2"></i>Nova Emissão</a>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('nfse_nacional.integracao_financeira') }}" class="btn btn-outline-secondary">Integração financeira</a>
+        <a href="{{ url_for('nfse_nacional.emissoes') }}" class="btn ls-btn-primary"><i class="fas fa-plus-circle me-2"></i>Nova Emissão</a>
+    </div>
 </div>
 
 <style>
@@ -176,7 +179,7 @@
                                     class="btn btn-sm btn-outline-secondary action-btn" title="Enviar por E-mail">
                                 <i class="fas fa-envelope"></i>
                             </button>
-                            <a href="{{ url_for('nfse_nacional.replicar_emissao', id=emissao.id) }}"
+                            <a href="{{ url_for('nfse_nacional.emissoes', replicar_id=emissao.id) }}"
                                class="btn btn-sm btn-outline-secondary action-btn"
                                title="Replicar nota para nova emissão">
                                 <i class="fas fa-copy"></i>
