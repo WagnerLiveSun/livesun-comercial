@@ -207,6 +207,30 @@ def test_integracao_tem_permissao_financeira():
     assert regra.permission == "lancamentos"
 
 
+def test_menu_principal_inclui_integracao_com_permissao_e_estado_ativo():
+    raiz = Path(__file__).resolve().parents[1]
+    layout = (raiz / "src/templates/layout.html").read_text(encoding="utf-8")
+    Environment().parse(layout)
+    inicio = layout.index("{% if show_importacao or show_nfse_nacional")
+    fim = layout.index("{% if show_locacao %}", inicio)
+    trecho = layout[inicio:fim]
+    app = Flask(__name__)
+    app.register_blueprint(nfse_nacional_bp)
+    with app.test_request_context("/nfse-nacional/integracao-financeira"):
+        html = app.jinja_env.from_string(trecho).render(
+            show_importacao=False, show_nfse_nacional=False, show_documentos=False,
+            can_access_endpoint=lambda endpoint: endpoint == "nfse_nacional.integracao_financeira",
+        )
+        assert "Integração NFS-e com Lançamentos" in html
+        assert 'href="/nfse-nacional/integracao-financeira"' in html
+        assert "ls-sidebar-link active" in html
+        html_sem_acesso = app.jinja_env.from_string(trecho).render(
+            show_importacao=False, show_nfse_nacional=False, show_documentos=False,
+            can_access_endpoint=lambda endpoint: False,
+        )
+        assert "Integração NFS-e com Lançamentos" not in html_sem_acesso
+
+
 @pytest.fixture
 def cancelamento(monkeypatch):
     from src.routes import nfse_nacional as route

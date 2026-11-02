@@ -776,12 +776,15 @@
                 </ul>
                 {% endif %}
 
-                {% if show_importacao or show_nfse_nacional or show_documentos %}
+                {% if show_importacao or show_nfse_nacional or show_documentos or can_access_endpoint('nfse_nacional.integracao_financeira') %}
                 <div class="ls-sidebar-section-label"><i class="fas fa-file-invoice"></i> Serviços / Fiscal</div>
                 <ul class="ls-sidebar-nav">
                     {% if show_import_nfse %}{% if can_access_endpoint('importacoes.importar_nfse') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.importar_nfse' %}active{% endif %}" href="{{ url_for('importacoes.importar_nfse') }}"><i class="fas fa-file-upload"></i> Importação de XML NFS-e Emitida</a></li>{% endif %}{% endif %}
                     {% if show_nfse_nacional %}
                     {% if can_access_endpoint('nfse_nacional.listagem') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.listagem' %}active{% endif %}" href="{{ url_for('nfse_nacional.listagem') }}"><i class="fas fa-list"></i> NFS-e Emitidas</a></li>{% endif %}
+                    {% endif %}
+                    {% if can_access_endpoint('nfse_nacional.integracao_financeira') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.integracao_financeira' %}active{% endif %}" href="{{ url_for('nfse_nacional.integracao_financeira') }}"><i class="fas fa-file-invoice-dollar"></i> Integração NFS-e com Lançamentos</a></li>{% endif %}
+                    {% if show_nfse_nacional %}
                     {% if can_access_endpoint('nfse_nacional.emissoes') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.emissoes' %}active{% endif %}" href="{{ url_for('nfse_nacional.emissoes') }}"><i class="fas fa-plus-circle"></i> Geração de NFS-e</a></li>{% endif %}
                     {% if can_access_endpoint('nfse_nacional.nfse_consultar') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.nfse_consultar' %}active{% endif %}" href="{{ url_for('nfse_nacional.nfse_consultar') }}"><i class="fas fa-search"></i> Consultar NFS-e</a></li>{% endif %}
                     {% if can_access_endpoint('nfse_nacional.cancelamento') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'nfse_nacional.cancelamento' %}active{% endif %}" href="{{ url_for('nfse_nacional.cancelamento') }}"><i class="fas fa-times-circle"></i> Cancelamento NFS-e</a></li>{% endif %}
