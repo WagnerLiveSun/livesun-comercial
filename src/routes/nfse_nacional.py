@@ -16,6 +16,7 @@ from flask_login import current_user, login_required
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 from cryptography.x509.oid import NameOID
 from werkzeug.utils import secure_filename
+from sqlalchemy.exc import IntegrityError
 
 from src.models import (
     ContaBanco,
@@ -48,6 +49,7 @@ from src.services.nfse_nacional import (
     resolve_xsd_path,
 )
 from src.services.brevo import brevo_service
+from src.services.nfse_retorno import ler_retorno_nfse, atualizar_identificadores_nfse
 from src.tenant import scoped_get_or_404, scoped_query, tenant_id
 
 nfse_nacional_bp = Blueprint("nfse_nacional", __name__, url_prefix="/nfse-nacional")
@@ -152,108 +154,13 @@ def _construir_html_email(mensagem, empresa):
 
 
 def _extrair_identificadores_fiscais_xml(xml_text: str) -> dict:
-    """Extrai número oficial, código verificação e chave do XML da NFS-e.
-
-    Suporta XML puro ou compactado em gzip+base64.
-    Retorna dict com 'numero_nfse', 'codigo_verificacao', 'chave_nfse'.
-    """
-    if not xml_text:
-        return {}
-
-    texto = xml_text.strip() if isinstance(xml_text, str) else ""
-
-    # Tentar descomprimir se for gzip+base64
-    if texto and not texto.lstrip().startswith("<"):
-        try:
-            bruto = base64.b64decode(texto, validate=True)
-            if bruto[:2] == b"\x1f\x8b":
-                bruto = gzip.decompress(bruto)
-            texto = bruto.decode("utf-8", "ignore")
-        except Exception:
-            pass
-
-    if not texto or not texto.lstrip().startswith("<"):
-        return {}
-
-    try:
-        import xml.etree.ElementTree as ET
-        root = ET.fromstring(texto)
-
-        def find_text(path, default=""):
-            node = None
-            for ns in (
-                {"nfse": "http://www.sped.fazenda.gov.br/nfse"},
-                {"nfse": "http://www.abrasf.org.br/nfse"},
-                {},
-            ):
-                node = root.find(path, ns)
-                if node is not None:
-                    break
-            return (node.text or "").strip() if node is not None else default
-
-        numero_nfse = find_text(".//nfse:nNFSe") or find_text(".//nNFSe")
-        codigo_verificacao = find_text(".//nfse:codigoVerificacao") or find_text(".//codigoVerificacao") or find_text(".//nfse:cNFSe") or find_text(".//cNFSe")
-        chave_nfse = find_text(".//nfse:chave") or find_text(".//chave") or find_text(".//nfse:chaveAcesso") or find_text(".//chaveAcesso")
-
-        return {
-            "numero_nfse": numero_nfse,
-            "codigo_verificacao": codigo_verificacao,
-            "chave_nfse": chave_nfse,
-        }
-    except Exception as exc:
-        logging.warning("Falha ao extrair identificadores do XML: %s", exc)
-        return {}
+    dados = ler_retorno_nfse(xml_nfse=xml_text)
+    return {campo: dados[campo] for campo in
+            ("numero_nfse", "codigo_verificacao", "chave_nfse")}
 
 
 def _extrair_xml_nfse_do_payload(payload_retorno):
-    """Recupera o XML da NFS-e do payload de retorno da transmissão.
-
-    O retorno da ADN entrega o XML em três formatos possiveis: texto puro,
-    base64 ou (padrão oficial) `nfseXmlGZipB64`, que é base64 de um gzip.
-    """
-    if not payload_retorno:
-        return ""
-
-    if isinstance(payload_retorno, str):
-        try:
-            payload_retorno = json.loads(payload_retorno)
-        except (TypeError, ValueError):
-            return ""
-
-    if not isinstance(payload_retorno, dict):
-        return ""
-
-    candidatos = []
-    response_body = payload_retorno.get("response_body")
-    if isinstance(response_body, dict):
-        candidatos.extend([
-            response_body.get("nfseXmlGZipB64"),
-            response_body.get("nfseXml"),
-            response_body.get("xml"),
-        ])
-    candidatos.extend([
-        payload_retorno.get("xml_nfse"),
-        payload_retorno.get("nfseXmlGZipB64"),
-        payload_retorno.get("nfseXml"),
-    ])
-
-    for candidato in candidatos:
-        texto = candidato.strip() if isinstance(candidato, str) else ""
-        if not texto:
-            continue
-        if _is_authorized_nfse_xml(texto):
-            return texto
-        # Descomprime o formato gzip+base64 da ADN.
-        try:
-            bruto = base64.b64decode(texto, validate=True)
-            if bruto[:2] == b"\x1f\x8b":
-                bruto = gzip.decompress(bruto)
-            decodificado = bruto.decode("utf-8", "ignore")
-            if _is_authorized_nfse_xml(decodificado):
-                return decodificado
-        except Exception:
-            continue
-    return ""
+    return ler_retorno_nfse(payload_retorno)["xml_nfse"]
 
 
 def _obter_xml_nfse_autorizado(emissao, consultar_api=True):
@@ -281,6 +188,32 @@ def _obter_xml_nfse_autorizado(emissao, consultar_api=True):
         except Exception as exc:
             logging.warning("Falha ao consultar o XML da NFS-e %s: %s", emissao.chave_nfse, exc)
     return ""
+
+
+def _recuperar_dados_fiscais(emissao, consultar_api=False):
+    """Recupera e persiste o retorno existente, sem retransmitir a DPS."""
+    alterou = atualizar_identificadores_nfse(emissao)
+    xml = _obter_xml_nfse_autorizado(emissao, consultar_api=consultar_api)
+    if xml:
+        alterou = atualizar_identificadores_nfse(emissao, xml_nfse=xml) or alterou
+        dados = _authorized_nfse_data(xml, emissao.chave_nfse or "")
+        for campo in ("codigo_tributacao_nacional", "codigo_tributacao_municipal", "local_prestacao"):
+            valor = dados.get(campo)
+            if valor and getattr(emissao, campo, None) != valor:
+                setattr(emissao, campo, valor)
+                alterou = True
+        if dados.get("endereco_tomador"):
+            endereco = dados["endereco_tomador"]
+            if dados.get("numero_tomador"):
+                endereco += f", {dados['numero_tomador']}"
+            if dados.get("bairro_tomador"):
+                endereco += f" - {dados['bairro_tomador']}"
+            if getattr(emissao, "tomador_endereco", None) != endereco:
+                emissao.tomador_endereco = endereco
+                alterou = True
+    if alterou:
+        db.session.commit()
+    return xml
 
 
 def _recuperar_ou_criar_lancamento(emissao, usuario_id=None):
@@ -1458,6 +1391,8 @@ def _build_payload(
         "numero_nfse_sugerido": payload.get("numero_nfse_sugerido"),
         "hash_idempotencia": hash_idempotencia,
         "tomador_id": tomador.id,
+        "data_emissao": payload.get("data_emissao"),
+        "data_vencimento": payload.get("data_vencimento"),
         "tomador_nome": tomador.nome,
         "tomador_documento": tomador.cnpj_cpf,
         "tomador_tipo": tomador.tipo,
@@ -1836,6 +1771,7 @@ def emissoes():
 
     data = request.get_json(silent=True) if request.is_json else request.form
 
+    emissao_reservada_id = None
     try:
         ativo_cfg = NfseNacionalConfiguracao.query.filter_by(empresa_id=empresa_id, emissor_ativo=True).first()
         ambiente_payload = (data.get("ambiente") or "").strip().lower()
@@ -2055,7 +1991,26 @@ def emissoes():
         )
         db.session.add(fila)
 
-        resultado = transmitiremissao(payload, configuracao)
+        # Reserva durável ANTES da chamada externa. Re-POST e concorrência
+        # encontram a mesma emissão, mesmo se o transporte ficar inconclusivo.
+        emissao.status_processamento = "PROCESSANDO"
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            existente = scoped_query(NfseNacionalEmissao).filter_by(
+                hash_idempotencia=hash_idempotencia,
+            ).first()
+            if existente is None:
+                raise
+            if request.is_json:
+                return jsonify({"emissao_id": str(existente.id),
+                                "status": existente.status_processamento,
+                                "situacao_fiscal": existente.situacao_fiscal}), 200
+            return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=existente.id))
+
+        emissao_reservada_id = emissao.id
+        resultado = transmitiremissao({**payload, "xml_dps": emissao.xml_dps}, configuracao)
 
         # Persistir dados fiscais imediatamente após retorno da SEFIN
         emissao.status_processamento = resultado.get("status") or "ERRO"
@@ -2066,20 +2021,7 @@ def emissoes():
         emissao.chave_nfse = resultado.get("chave_nfse")
         emissao.xml_nfse = resultado.get("xml_nfse")
         emissao.payload_retorno = json.dumps(resultado.get("payload_retorno"), ensure_ascii=False, default=str)
-
-        # Se o retorno não trouxe número oficial mas tem XML, tentar extrair do XML
-        if not emissao.numero_nfse and emissao.xml_nfse:
-            try:
-                identificadores = _extrair_identificadores_fiscais_xml(emissao.xml_nfse)
-                if identificadores.get("numero_nfse"):
-                    emissao.numero_nfse = identificadores["numero_nfse"]
-                    logging.info("Número oficial %s extraído do XML após retorno da SEFIN", emissao.numero_nfse)
-                if identificadores.get("codigo_verificacao") and not emissao.codigo_verificacao:
-                    emissao.codigo_verificacao = identificadores["codigo_verificacao"]
-                if identificadores.get("chave_nfse") and not emissao.chave_nfse:
-                    emissao.chave_nfse = identificadores["chave_nfse"]
-            except Exception as exc:
-                logging.warning("Falha ao extrair identificadores do XML após retorno: %s", exc)
+        atualizar_identificadores_nfse(emissao)
 
         emissao.log_tecnico = resultado.get("mensagem")
         if resultado.get("errors"):
@@ -2092,7 +2034,8 @@ def emissoes():
         if not resultado.get("sucesso"):
             emissao.erro_retorno = emissao.log_tecnico
 
-        fila.status_fila = "CONCLUIDO" if resultado.get("sucesso") else "ERRO"
+        fila.status_fila = ("CONCLUIDO" if resultado.get("sucesso") else
+                            "VERIFICAR" if emissao.situacao_fiscal == "PENDENTE" else "ERRO")
         fila.processado_em = datetime.utcnow()
         fila.ultimo_erro = None if resultado.get("sucesso") else emissao.log_tecnico
         fila.payload = emissao.payload_envio
@@ -2114,74 +2057,20 @@ def emissoes():
         # Isso garante que a nota autorizada não seja perdida mesmo se o lançamento falhar
         db.session.commit()
 
-        # Segunda fase: lançamento financeiro (separado do commit fiscal)
+        # Autorizacao persistida: falha financeira nunca reenvia a DPS.
         if resultado.get("sucesso") and emissao.numero_nfse:
             try:
-                # Só criar lançamento financeiro se tiver número oficial da NFS-e
-                conta_banco = _get_or_create_conta_banco_principal(empresa_id)
-                fluxo_conta_id = tomador.fluxo_conta_id or _get_or_create_fluxo_recebimento(empresa_id)
-
-                if conta_banco and fluxo_conta_id:
-                    # Verificar se já existe lançamento vinculado para evitar duplicação
-                    if not emissao.lancamento:
-                        # Usar número oficial da NFS-e como número do documento (idempotente)
-                        numero_documento = emissao.numero_nfse
-
-                        # Verificar se já existe lançamento com mesmo número do documento para evitar duplicação
-                        lancamento_existente = Lancamento.query.filter_by(
-                            empresa_id=empresa_id,
-                            numero_documento=numero_documento,
-                            fonte="nfse_nacional"
-                        ).first()
-
-                        if lancamento_existente:
-                            # Reutilizar lançamento existente
-                            emissao.lancamento = lancamento_existente
-                            db.session.commit()
-                            logging.info(
-                                f"Lançamento existente {lancamento_existente.id} reutilizado para NFS-e {emissao.numero_nfse}"
-                            )
-                        else:
-                            # Criar novo lançamento
-                            lancamento = Lancamento(
-                                empresa_id=empresa_id,
-                                data_evento=_date_from_request(data.get("data_emissao")) or datetime.utcnow().date(),
-                                data_vencimento=_date_from_request(data.get("data_vencimento")) or _date_from_request(data.get("data_emissao")) or datetime.utcnow().date(),
-                                data_pagamento=None,
-                                status="aberto",
-                                entidade_id=tomador.id,
-                                fluxo_conta_id=fluxo_conta_id,
-                                conta_banco_id=conta_banco.id,
-                                valor_real=valor_servico,
-                                valor_pago=Decimal("0.00"),
-                                valor_imposto=valor_iss,
-                                valor_outros_custos=Decimal("0.00"),
-                                numero_documento=numero_documento,  # Número oficial da NFS-e
-                                observacoes=observacoes or servico.descricao,
-                                fonte="nfse_nacional",
-                            )
-                            db.session.add(lancamento)
-                            db.session.flush()
-                            emissao.lancamento = lancamento
-                            db.session.commit()
-                            logging.info(
-                                f"Lançamento {emissao.lancamento.id} criado com número do documento: "
-                                f"{lancamento.numero_documento} (NFS-e oficial: {emissao.numero_nfse})"
-                            )
-                else:
-                    # Log warning sem modificar a emissão (já commitada)
-                    logging.warning(
-                        "Emissão %s autorizada sem lançamento financeiro por ausência de conta bancária principal ou fluxo.",
-                        emissao.id
-                    )
-            except Exception as exc:
-                # Falha no lançamento não deve desfazer a nota já autorizada
-                db.session.rollback()
-                logging.error(
-                    "Falha ao criar lançamento financeiro para emissão %s (nota já autorizada): %s",
-                    emissao.id, exc
+                from src.services.nfse_financeiro import integrar_emissao
+                integrar_emissao(
+                    empresa_id, emissao.id, current_user.id,
+                    _get_or_create_conta_banco_principal, _get_or_create_fluxo_recebimento,
                 )
-                # A nota permanece autorizada; o lançamento pode ser criado posteriormente
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                logging.exception("Nota %s autorizada; integracao financeira pendente.", emissao.id)
+                if not request.is_json:
+                    flash("NFS-e autorizada. Integracao financeira pendente; confira as contas cadastradas.", "warning")
 
         resposta = {
             "emissao_id": str(emissao.id),
@@ -2202,6 +2091,7 @@ def emissoes():
 
         if resultado.get("sucesso"):
             flash("Emissão processada com sucesso.", "success")
+            return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=emissao.id))
         else:
             mensagem_erro = _formatar_mensagem_erro(resultado)
             flash(mensagem_erro, "danger")
@@ -2209,6 +2099,15 @@ def emissoes():
 
     except Exception as exc:
         db.session.rollback()
+        # A reserva fiscal permanece mesmo se falhar a persistência do retorno.
+        # Nunca orientar reenvio automático após uma chamada de resultado incerto.
+        if emissao_reservada_id is not None:
+            logging.exception("Falha após reservar emissão %s; verificar retorno sem retransmitir.", emissao_reservada_id)
+            mensagem = "Emissão registrada, mas o resultado precisa ser verificado. Não emita novamente."
+            if request.is_json:
+                return jsonify({"emissao_id": str(emissao_reservada_id), "error": mensagem}), 202
+            flash(mensagem, "warning")
+            return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao_reservada_id))
         if request.is_json:
             return jsonify(_json_safe({"error": str(exc)})), 400
         flash(f"Erro ao emitir NFS-e: {exc}", "danger")
@@ -2219,8 +2118,54 @@ def emissoes():
 @login_required
 def emissao_detalhe(emissao_id: int):
     emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
+    if atualizar_identificadores_nfse(emissao):
+        db.session.commit()
     _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
     return render_template("nfse_nacional/emissao_detalhe.html", emissao=emissao)
+
+
+@nfse_nacional_bp.route("/emissoes/<int:emissao_id>/conclusao", methods=["GET"])
+@login_required
+def emissao_conclusao(emissao_id: int):
+    emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
+    xml = _recuperar_dados_fiscais(emissao, consultar_api=False)
+    _sincronizar_cancelamento_emissao(emissao, consultar_api=False)
+    return render_template("nfse_nacional/emissao_conclusao.html", emissao=emissao,
+                           danfse_disponivel=bool(xml and emissao.numero_nfse))
+
+
+@nfse_nacional_bp.route("/emissoes/<int:emissao_id>/recuperar-dados", methods=["POST"])
+@login_required
+def emissao_recuperar_dados(emissao_id: int):
+    emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
+    _recuperar_dados_fiscais(emissao, consultar_api=True)
+    if emissao.numero_nfse:
+        flash("Número oficial recuperado, sem nova emissão.", "success")
+    else:
+        flash("Dados fiscais ainda indisponíveis. A nota não foi retransmitida.", "warning")
+    return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=emissao.id))
+
+
+@nfse_nacional_bp.route("/emissoes/<int:emissao_id>/download/danfs", methods=["GET"])
+@login_required
+def emissao_download_danfs(emissao_id: int):
+    emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
+    _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
+    xml = _recuperar_dados_fiscais(emissao, consultar_api=True)
+    if not xml or not emissao.numero_nfse:
+        flash("XML autorizado ou número oficial indisponível para gerar o PDF.", "warning")
+        return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=emissao.id))
+    try:
+        pdf = _gerar_pdf_danfs_emissao(
+            emissao, emissao.empresa, _authorized_nfse_data(xml, emissao.chave_nfse or ""),
+        )
+    except Exception:
+        logging.exception("Falha ao gerar PDF da emissão %s", emissao.id)
+        flash("Não foi possível gerar o PDF. A emissão permanece gravada; tente novamente.", "danger")
+        return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=emissao.id))
+    resposta = Response(pdf, mimetype="application/pdf")
+    resposta.headers["Content-Disposition"] = f'attachment; filename="danfse_{emissao.numero_nfse}.pdf"'
+    return resposta
 
 
 
@@ -2242,24 +2187,13 @@ def emissao_download_dps(emissao_id: int):
 @login_required
 def emissao_download_nfse(emissao_id: int):
     emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
-
-    xml = emissao.xml_nfse if _is_authorized_nfse_xml(emissao.xml_nfse or "") else ""
-    if not xml and emissao.chave_nfse:
-        resultado_consulta = consultar_nfse(
-            chave_acesso=emissao.chave_nfse,
-            configuracao=emissao.configuracao,
-        )
-        candidato = resultado_consulta.get("xml_nfse") if resultado_consulta.get("sucesso") else None
-        if _is_authorized_nfse_xml(candidato or ""):
-            xml = candidato
-
+    xml = _recuperar_dados_fiscais(emissao, consultar_api=True)
     if not xml:
-        flash("XML autorizado da NFS-e não disponível; download não pode ser gerado.", "warning")
+        flash("XML autorizado da NFS-e indisponivel.", "warning")
         return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
-
     resp = Response(xml, mimetype="application/xml; charset=utf-8")
-    name = f"nfse_{emissao.numero_nfse or emissao.numero_interno or emissao.id}.xml"
-    resp.headers["Content-Disposition"] = f'attachment; filename="{name}"'
+    nome = f"nfse_{emissao.numero_nfse or emissao.numero_interno}.xml"
+    resp.headers["Content-Disposition"] = f'attachment; filename="{nome}"'
     return resp
 
 
@@ -2267,232 +2201,18 @@ def emissao_download_nfse(emissao_id: int):
 @login_required
 def emissao_imprimir_danfs(emissao_id: int):
     emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
-    empresa = emissao.empresa
-    
-    # Recarregar empresa do banco para garantir dados atualizados (incluindo logo)
-    db.session.refresh(empresa)
-    
-    # Sincroniza cancelamento (campos locais, evento e API nacional)
-    _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
-    
-    # Tentar extrair o XML correto da NFS-e (não DPS)
-    xml_nfse = None
-    if emissao.xml_nfse and "NFSe" in emissao.xml_nfse:
-        xml_nfse = emissao.xml_nfse
-    elif emissao.payload_retorno:
-        try:
-            payload_retorno = json.loads(emissao.payload_retorno) if isinstance(emissao.payload_retorno, str) else emissao.payload_retorno
-            if isinstance(payload_retorno, dict):
-                response_body = payload_retorno.get("response_body", {})
-                if isinstance(response_body, dict):
-                    xml_nfse = response_body.get("nfseXmlGZipB64") or response_body.get("nfseXml") or response_body.get("xml") or ""
-                    
-                    # Se estiver comprimido em base64, descomprimir
-                    if xml_nfse and isinstance(xml_nfse, str) and len(xml_nfse) > 100:
-                        try:
-                            import gzip
-                            import base64
-                            xml_comprimido = base64.b64decode(xml_nfse)
-                            xml_nfse = gzip.decompress(xml_comprimido).decode("utf-8")
-                        except Exception:
-                            pass
-                
-                if not xml_nfse:
-                    xml_nfse = payload_retorno.get("xml_nfse") or ""
-        except Exception:
-            pass
-    
-    if not _is_authorized_nfse_xml(xml_nfse or "") and emissao.chave_nfse:
-        resultado_consulta = consultar_nfse(
-            chave_acesso=emissao.chave_nfse,
-            configuracao=emissao.configuracao,
-        )
-        candidato = resultado_consulta.get("xml_nfse") if resultado_consulta.get("sucesso") else None
-        xml_nfse = candidato if _is_authorized_nfse_xml(candidato or "") else None
-
-    if not _is_authorized_nfse_xml(xml_nfse or ""):
-        flash("XML autorizado da NFS-e não disponível; DANFSe não pode ser gerado.", "warning")
+    previa = request.args.get("previa") == "1"
+    _sincronizar_cancelamento_emissao(emissao, consultar_api=not previa)
+    xml = _recuperar_dados_fiscais(emissao, consultar_api=not previa)
+    if not xml:
+        flash("XML autorizado indisponivel; DANFS-e nao pode ser gerado.", "warning")
         return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
-
-    dados_autorizados = _authorized_nfse_data(xml_nfse, emissao.chave_nfse or "")
-    emissao.numero_nfse = dados_autorizados.get("numero_nfse") or emissao.numero_nfse
-    emissao.codigo_verificacao = dados_autorizados.get("codigo_verificacao") or emissao.codigo_verificacao
-    emissao.codigo_tributacao_nacional = dados_autorizados.get("codigo_tributacao_nacional") or emissao.codigo_tributacao_nacional
-    emissao.codigo_tributacao_municipal = dados_autorizados.get("codigo_tributacao_municipal") or emissao.codigo_tributacao_municipal
-    emissao.local_prestacao = dados_autorizados.get("local_prestacao") or emissao.local_prestacao
-    if dados_autorizados.get("endereco_tomador"):
-        endereco = dados_autorizados["endereco_tomador"]
-        if dados_autorizados.get("numero_tomador"):
-            endereco += f", {dados_autorizados['numero_tomador']}"
-        if dados_autorizados.get("bairro_tomador"):
-            endereco += f" - {dados_autorizados['bairro_tomador']}"
-        emissao.tomador_endereco = endereco
-    db.session.commit()
-    
-    # Tentar extrair status do XML da NFS-e armazenado
-    if xml_nfse:
-        try:
-            import xml.etree.ElementTree as ET
-            root = ET.fromstring(xml_nfse)
-            
-            # Debug: verificar se o XML tem o campo nNFSe
-            import logging
-            logging.info(f"XML tem {len(str(xml_nfse))} caracteres - nfse_nacional.py:1837")
-            
-            # Tentar diferentes namespaces possíveis
-            namespaces = [
-                {'nfse': 'http://www.sped.fazenda.gov.br/nfse'},
-                {'nfse': 'http://www.abrasf.org.br/nfse'},
-                {'': ''}  # Sem namespace
-            ]
-            
-            for ns in namespaces:
-                # Extrair situação
-                situacao_node = root.find('.//situacao', ns)
-                if situacao_node is None:
-                    situacao_node = root.find('.//nfse:situacao', ns)
-                
-                if situacao_node is not None and situacao_node.text:
-                    emissao.situacao_fiscal = situacao_node.text.upper()
-                
-                # Extrair número da NFS-e - campo correto é nNFSe
-                numero_node = root.find('.//nNFSe', ns)
-                if numero_node is None:
-                    numero_node = root.find('.//nfse:nNFSe', ns)
-                
-                if numero_node is not None and numero_node.text:
-                    emissao.numero_nfse = numero_node.text.strip()
-                    logging.info(f"Número extraído do XML: {emissao.numero_nfse} - nfse_nacional.py:1862")
-                
-                # Extrair código de verificação
-                codigo_verificacao_node = root.find('.//codigoVerificacao', ns)
-                if codigo_verificacao_node is None:
-                    codigo_verificacao_node = root.find('.//nfse:codigoVerificacao', ns)
-                
-                if codigo_verificacao_node is not None and codigo_verificacao_node.text:
-                    emissao.codigo_verificacao = codigo_verificacao_node.text
-                
-                # Extrair chave de acesso do XML da NFS-e
-                chave_acesso_node = root.find('.//chaveAcesso', ns)
-                if chave_acesso_node is None:
-                    chave_acesso_node = root.find('.//nfse:chaveAcesso', ns)
-                
-                if chave_acesso_node is not None and chave_acesso_node.text:
-                    chave_extraida = chave_acesso_node.text.strip()
-                    # A chave deve ter 50 dígitos numéricos
-                    if len(chave_extraida) == 50 and chave_extraida.isdigit():
-                        emissao.chave_nfse = chave_extraida
-                        logging.info(f"Chave de acesso extraída do XML (50 dígitos): {emissao.chave_nfse} - nfse_nacional.py:1882")
-                    else:
-                        logging.warning(f"Chave extraída do XML não tem 50 dígitos: {chave_extraida} (len={len(chave_extraida)}) - nfse_nacional.py:1884")
-                
-                # Extrair dados do tomador (endereço)
-                tomador_endereco_node = root.find('.//endTom', ns)
-                if tomador_endereco_node is None:
-                    tomador_endereco_node = root.find('.//nfse:endTom', ns)
-                
-                if tomador_endereco_node is not None:
-                    # Extrair endereço completo
-                    x_lgr = _find_first(tomador_endereco_node, './/xLgr', './/nfse:xLgr', namespaces=ns)
-                    nro = _find_first(tomador_endereco_node, './/nro', './/nfse:nro', namespaces=ns)
-                    x_bairro = _find_first(tomador_endereco_node, './/xBairro', './/nfse:xBairro', namespaces=ns)
-                    
-                    if x_lgr is not None and nro is not None:
-                        endereco_completo = f"{x_lgr.text}, {nro.text}"
-                        if x_bairro is not None:
-                            endereco_completo += f" - {x_bairro.text}"
-                        emissao.tomador_endereco = endereco_completo
-                
-                # Extrair regime de tributação
-                reg_trib_node = root.find('.//regTrib', ns)
-                if reg_trib_node is None:
-                    reg_trib_node = root.find('.//nfse:regTrib', ns)
-                
-                if reg_trib_node is not None:
-                    op_simp_nac = _find_first(reg_trib_node, './/opSimpNac', './/nfse:opSimpNac', namespaces=ns)
-                    if op_simp_nac is not None and op_simp_nac.text:
-                        emissao.regime_tributacao = op_simp_nac.text
-                
-                # Extrair código de tributação nacional
-                c_trib_nac_node = root.find('.//cTribNac', ns)
-                if c_trib_nac_node is None:
-                    c_trib_nac_node = root.find('.//nfse:cTribNac', ns)
-                
-                if c_trib_nac_node is not None and c_trib_nac_node.text:
-                    emissao.codigo_tributacao_nacional = c_trib_nac_node.text
-                
-                # Extrair código de tributação municipal
-                c_trib_mun_node = root.find('.//cTribMun', ns)
-                if c_trib_mun_node is None:
-                    c_trib_mun_node = root.find('.//nfse:cTribMun', ns)
-                
-                if c_trib_mun_node is not None and c_trib_mun_node.text:
-                    emissao.codigo_tributacao_municipal = c_trib_mun_node.text
-                
-                # Extrair local de prestação
-                c_loc_prestacao_node = root.find('.//cLocPrestacao', ns)
-                if c_loc_prestacao_node is None:
-                    c_loc_prestacao_node = root.find('.//nfse:cLocPrestacao', ns)
-                
-                if c_loc_prestacao_node is not None and c_loc_prestacao_node.text:
-                    emissao.local_prestacao = c_loc_prestacao_node.text
-                
-                # Se encontrou algum dado, para o loop
-                if situacao_node is not None or numero_node is not None:
-                    db.session.commit()
-                    break
-        except Exception as e:
-            logging.error(f"Erro ao extrair dados do XML: {e} - nfse_nacional.py:1942")
-    
-    # Se não encontrou número no XML, tentar do payload_retorno
-    if not emissao.numero_nfse and emissao.payload_retorno:
-        try:
-            payload_retorno = json.loads(emissao.payload_retorno) if isinstance(emissao.payload_retorno, str) else emissao.payload_retorno
-            if isinstance(payload_retorno, dict):
-                response_body = payload_retorno.get("response_body", {})
-                if isinstance(response_body, dict):
-                    numero = response_body.get("numero_nfse")
-                    if numero:
-                        emissao.numero_nfse = str(numero)
-                        db.session.commit()
-                        logging.info(f"Número extraído do payload_retorno: {emissao.numero_nfse} - nfse_nacional.py:1955")
-        except Exception as e:
-            logging.error(f"Erro ao extrair número do payload_retorno: {e} - nfse_nacional.py:1957")
-    
-    # Sempre tentar extrair chave de acesso do payload_retorno (atualizar se necessário)
-    if emissao.payload_retorno:
-        try:
-            payload_retorno = json.loads(emissao.payload_retorno) if isinstance(emissao.payload_retorno, str) else emissao.payload_retorno
-            if isinstance(payload_retorno, dict):
-                # Tentar do response_body primeiro
-                response_body = payload_retorno.get("response_body", {})
-                if isinstance(response_body, dict):
-                    chave = response_body.get("chaveAcesso")
-                    if chave and len(str(chave)) == 50 and str(chave).isdigit():
-                        emissao.chave_nfse = str(chave)
-                        db.session.commit()
-                        logging.info(f"Chave de acesso extraída do response_body: {emissao.chave_nfse} - nfse_nacional.py:1971")
-                # Se não encontrou, tentar do nível superior
-                if not emissao.chave_nfse or len(emissao.chave_nfse) != 50:
-                    chave = payload_retorno.get("chaveAcesso")
-                    if chave and len(str(chave)) == 50 and str(chave).isdigit():
-                        emissao.chave_nfse = str(chave)
-                        db.session.commit()
-                        logging.info(f"Chave de acesso extraída do payload_retorno: {emissao.chave_nfse} - nfse_nacional.py:1978")
-        except Exception as e:
-            logging.error(f"Erro ao extrair chave do payload_retorno: {e} - nfse_nacional.py:1980")
-    
-    # Construir URL do QRCode
-    qr_code_url = None
-    if emissao.chave_nfse and len(emissao.chave_nfse) == 50:
-        qr_code_url = f"https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave={emissao.chave_nfse}"
-    
     return render_template(
-        "nfse_nacional/danfs_print.html",
-        emissao=emissao,
-        empresa=empresa,
-        qr_code_url=qr_code_url,
-        danfse_data=dados_autorizados,
+        "nfse_nacional/danfs_print.html", emissao=emissao, empresa=emissao.empresa,
+        danfse_data=_authorized_nfse_data(xml, emissao.chave_nfse or ""),
+        qr_code_url=(f"https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave={emissao.chave_nfse}"
+                     if emissao.chave_nfse else ""),
+        auto_imprimir=not previa,
     )
 
 
@@ -2837,6 +2557,14 @@ def listagem():
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     
     emissoes = pagination.items
+
+    # Recuperação local das notas antigas da página, sem consulta ou reemissão.
+    alterou_identificadores = False
+    for emissao in emissoes:
+        if not emissao.numero_nfse:
+            alterou_identificadores = atualizar_identificadores_nfse(emissao) or alterou_identificadores
+    if alterou_identificadores:
+        db.session.commit()
     
     # Sincroniza cancelamentos que já ocorreram mas não foram gravados. A
     # consulta à API nacional é limitada por carregamento para não lentar a
@@ -2865,6 +2593,7 @@ def visualizar(id):
     Rota para visualizar detalhes de uma NFS-e emitida.
     """
     emissao = scoped_get_or_404(NfseNacionalEmissao, id)
+    _recuperar_dados_fiscais(emissao, consultar_api=False)
     _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
 
     return render_template(
@@ -2887,18 +2616,24 @@ def recuperar_lancamento(emissao_id):
         flash("Só é possível recuperar lançamento para emissões autorizadas.", "danger")
         return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
 
+    _recuperar_dados_fiscais(emissao, consultar_api=False)
     if not emissao.numero_nfse:
         flash("Emissão não possui número oficial da NFS-e.", "danger")
         return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
 
-    lancamento = _recuperar_ou_criar_lancamento(emissao, usuario_id=current_user.id)
-
-    if lancamento:
-        flash(f"Lançamento financeiro {lancamento.id} vinculado com sucesso.", "success")
-    else:
-        flash("Não foi possível criar/recuperar o lançamento financeiro. Verifique os logs.", "danger")
-
-    return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
+    try:
+        from src.services.nfse_financeiro import integrar_emissao
+        resultado = integrar_emissao(
+            emissao.empresa_id, emissao.id, current_user.id,
+            _get_or_create_conta_banco_principal, _get_or_create_fluxo_recebimento,
+        )
+        db.session.commit()
+        flash(f"Lançamento financeiro {resultado['lancamento_id']} vinculado com sucesso.", "success")
+    except Exception:
+        db.session.rollback()
+        logging.exception("Falha ao recuperar financeiro da emissão %s", emissao.id)
+        flash("Integração pendente. Confira conta bancária, fluxo e vínculos financeiros.", "danger")
+    return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=emissao.id))
 
 
 @nfse_nacional_bp.route("/listagem/<int:id>/enviar-email", methods=["POST"])
@@ -2908,7 +2643,7 @@ def enviar_email(id):
     Envia o DANFS-e autorizado por email ao cliente.
     """
     emissao = scoped_get_or_404(NfseNacionalEmissao, id)
-    empresa = current_user.empresa or emissao.empresa
+    empresa = emissao.empresa
 
     # Destinatário principal: email do tomador
     email_cliente = request.form.get("email_cliente", "").strip()
@@ -2924,15 +2659,17 @@ def enviar_email(id):
     # decidir se o envio é permitido e para marcar o DANFS-e no PDF.
     _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
 
-    autorizada = (
-        emissao.status_processamento == "AUTORIZADA"
-        or emissao.situacao_fiscal == "AUTORIZADA"
-    )
+    autorizada = (emissao.situacao_fiscal == "AUTORIZADA"
+                  and not emissao.cancelado_em and not emissao.protocolo_cancelamento)
     if not autorizada:
         flash("Somente NFS-e autorizada pode ser enviada por email.", "warning")
         return redirect(url_for("nfse_nacional.listagem"))
 
-    numero = emissao.numero_nfse or emissao.numero_interno or str(emissao.id)
+    xml_nfse = _recuperar_dados_fiscais(emissao, consultar_api=True)
+    if not xml_nfse or not emissao.numero_nfse:
+        flash("Recupere o XML autorizado e o número oficial antes de enviar o DANFS-e.", "warning")
+        return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=id))
+    numero = emissao.numero_nfse
     data_emissao = emissao.criado_em.strftime("%d/%m/%Y") if emissao.criado_em else ""
     mensagem = mensagem or MENSAGEM_PADRAO_NFSE.format(
         numero=numero,
@@ -2942,9 +2679,7 @@ def enviar_email(id):
     mensagem = _acrescentar_contato_comercial(mensagem, contato_comercial)
 
     try:
-        danfse_data = _preparar_danfse(emissao)
-        empresa = current_user.empresa or emissao.empresa
-        xml_nfse = None
+        danfse_data = _authorized_nfse_data(xml_nfse, emissao.chave_nfse or "")
         pdf_bytes = _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data)
         nome_cliente = (
             emissao.tomador.contato_comercial or emissao.tomador.nome
@@ -2967,14 +2702,14 @@ def enviar_email(id):
     except Exception as exc:
         logging.exception("Erro ao gerar ou enviar DANFS-e por email")
         flash(f"Erro ao enviar DANFS-e por email: {exc}", "danger")
-        return redirect(url_for("nfse_nacional.listagem"))
+        return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=id))
 
     if enviado:
         flash(f"DANFS-e enviado para {email_cliente}.", "success")
     else:
         flash("Brevo não confirmou o envio do DANFS-e. Verifique a API e o remetente.", "danger")
 
-    return redirect(url_for("nfse_nacional.listagem"))
+    return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=id))
 
 
 @nfse_nacional_bp.route("/cancelamento-substituicao", methods=["GET", "POST"])
@@ -3332,6 +3067,7 @@ def _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data):
         danfse_data=danfse_data,
         qr_code_url=qr_code_url,
         qr_img_url=_qr_code_base64(chave),
+        auto_imprimir=False,
     )
     return HTML(string=html, base_url=request.url_root or "").write_pdf()
 

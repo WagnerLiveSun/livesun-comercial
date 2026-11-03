@@ -189,7 +189,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Mensagem (editável)</label>
-                    <textarea name="mensagem" id="mensagemEmailViz" class="form-control" rows="3">Prezado cliente, segue em anexo nossa NFS-e Nº {{ emissao.numero_nfse or emissao.numero_interno or '' }} emitida em {{ emissao.criado_em.strftime('%d/%m/%Y') if emissao.criado_em else '' }}.{% if emissao.tomador and emissao.tomador.contato_comercial %} Aos cuidados de {{ emissao.tomador.contato_comercial }}.{% endif %}</textarea>
+                    <textarea name="mensagem" id="mensagemEmailViz" class="form-control" rows="3">{% if emissao.numero_nfse %}Prezado cliente, segue em anexo nossa NFS-e Nº {{ emissao.numero_nfse }} emitida em {{ emissao.criado_em.strftime('%d/%m/%Y') if emissao.criado_em else '' }}.{% if emissao.tomador and emissao.tomador.contato_comercial %} Aos cuidados de {{ emissao.tomador.contato_comercial }}.{% endif %}{% endif %}</textarea>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">
                     <i class="fas fa-paper-plane me-2"></i>Enviar E-mail

@@ -85,6 +85,13 @@ tests/
 !/tests/test_contato_comercial_entidades.py
 !/tests/test_proposta_novo_modelo.py
 !/tests/test_nfse_integracao_financeira.py
+!/tests/test_nfse_pos_emissao.py
+!/tests/test_blueprint_names.py
+!/tests/test_database_config.py
+!/src/tests/
+/src/tests/*
+!/src/tests/test_module_authorization.py
+!/src/tests/test_contas_banco_access.py
 backups/
 
 # Keep important files

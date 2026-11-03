@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+{% block title %}Conclusão da NFS-e{% endblock %}
+{% block content %}
+{% set autorizada = emissao.situacao_fiscal == 'AUTORIZADA' and not emissao.cancelado_em and not emissao.protocolo_cancelamento %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="ls-page-title">NFS-e {{ emissao.numero_nfse or '— número pendente' }}</h2>
+        <p class="text-muted mb-0">{{ emissao.ambiente }} · {{ emissao.situacao_fiscal }} · Referência interna: {{ emissao.numero_interno }}</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('nfse_nacional.emissao_detalhe', emissao_id=emissao.id) }}">Detalhes</a>
+</div>
+{% if not autorizada %}
+<div class="alert alert-warning">Esta emissão não está autorizada para envio. Confira a situação nos detalhes. Esta tela não transmite notas.</div>
+{% endif %}
+{% if not danfse_disponivel %}
+<div class="alert alert-warning">
+    XML autorizado ou número oficial ainda indisponível. Não emita outra nota para recuperar os dados.
+    <form method="post" action="{{ url_for('nfse_nacional.emissao_recuperar_dados', emissao_id=emissao.id) }}" class="mt-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-outline-primary" type="submit">Recuperar dados sem reemitir</button>
+    </form>
+</div>
+{% endif %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="ls-card p-3">
+            <div class="d-flex gap-2 mb-3">
+                {% if danfse_disponivel %}
+                <a class="btn btn-primary" href="{{ url_for('nfse_nacional.emissao_download_danfs', emissao_id=emissao.id) }}">Baixar DANFS-e (PDF)</a>
+                <a class="btn btn-outline-primary" target="_blank" rel="noopener" href="{{ url_for('nfse_nacional.emissao_imprimir_danfs', emissao_id=emissao.id) }}">Imprimir</a>
+                {% endif %}
+                <a class="btn btn-outline-secondary" href="{{ url_for('nfse_nacional.listagem') }}">Voltar à listagem</a>
+            </div>
+            {% if danfse_disponivel %}
+            <iframe title="Prévia do DANFS-e autorizado" src="{{ url_for('nfse_nacional.emissao_imprimir_danfs', emissao_id=emissao.id, previa=1) }}" style="width:100%;height:760px;border:0"></iframe>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="ls-card p-4 mb-4">
+            <h5>Integração financeira</h5>
+            {% if emissao.lancamento %}
+            <p class="text-success">Integrada ao lançamento {{ emissao.lancamento.id }}.</p>
+            {% else %}
+            <p class="text-warning">Integração pendente. Nenhum número interno será usado como número fiscal.</p>
+            {% if autorizada and emissao.numero_nfse and can_access_endpoint('nfse_nacional.recuperar_lancamento') %}
+            <form method="post" action="{{ url_for('nfse_nacional.recuperar_lancamento', emissao_id=emissao.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-outline-primary" type="submit">Concluir integração financeira</button>
+            </form>
+            {% endif %}
+            {% endif %}
+        </div>
+        <div class="ls-card p-4">
+            <h5>Enviar DANFS-e ao cliente</h5>
+            {% if autorizada and danfse_disponivel %}
+            <form id="formEnviarDanfse" method="post" action="{{ url_for('nfse_nacional.enviar_email', id=emissao.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label class="form-label" for="emailConclusao">E-mail do cliente</label>
+                <input class="form-control mb-3" type="email" id="emailConclusao" name="email_cliente" required value="{{ (emissao.tomador.email_comercial or emissao.tomador.email or '') if emissao.tomador else '' }}">
+                <label class="form-label" for="mensagemConclusao">Mensagem</label>
+                <textarea class="form-control mb-3" id="mensagemConclusao" name="mensagem" rows="6">Prezado cliente, segue em anexo nossa NFS-e Nº {{ emissao.numero_nfse }} emitida em {{ emissao.criado_em.strftime('%d/%m/%Y') if emissao.criado_em else '' }}.{% if emissao.tomador and emissao.tomador.contato_comercial %} Aos cuidados de {{ emissao.tomador.contato_comercial }}.{% endif %}</textarea>
+                <p class="text-muted">Anexo: danfse_{{ emissao.numero_nfse }}.pdf (gerado com o XML autorizado ao enviar).</p>
+                <button class="btn btn-primary w-100" type="submit">Enviar e-mail com DANFS-e</button>
+                <p class="small text-muted mt-2">O e-mail só será enviado após sua confirmação neste botão.</p>
+            </form>
+            {% else %}
+            <p>O envio ficará disponível após confirmar a autorização, o XML e o número oficial.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('formEnviarDanfse')?.addEventListener('submit', function (event) {
+    if (this.dataset.enviando === 'true') { event.preventDefault(); return; }
+    this.dataset.enviando = 'true';
+    const botao = this.querySelector('button[type="submit"]');
+    botao.disabled = true;
+    botao.textContent = 'Enviando...';
+});
+</script>
+{% endblock %}

@@ -8,7 +8,7 @@ import os
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, has_request_context
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
@@ -198,7 +198,10 @@ _configurar_logger_debug()
 def _get_or_create_default_fluxo_conta_id(empresa_id: int, tipo_movimentacao: str = 'R') -> int | None:
     """Obtém (ou cria) a conta de fluxo padrão por tipo para a empresa."""
     # Validação de segurança: garantir que o empresa_id corresponde ao usuário logado
-    if empresa_id != getattr(current_user, 'empresa_id', None):
+    if has_request_context() and (
+        not getattr(current_user, 'is_authenticated', False)
+        or empresa_id != getattr(current_user, 'empresa_id', None)
+    ):
         logger.warning(f"Tentativa de acesso a conta de fluxo de empresa {empresa_id} pelo usuário {getattr(current_user, 'id', 'unknown')}")
         return None
 
@@ -373,9 +376,12 @@ def obter_ou_criar_entidade(empresa_id: int, cnpj_tomador: str):
     Busca Entidade por CNPJ; se não existir, cria uma nova como Cliente.
     """
     # Validação de segurança: garantir que o empresa_id corresponde ao usuário logado.
-    # Aplica-se somente quando há usuário autenticado no contexto — chamadas de serviço
-    # (testes, jobs) podem processar XML fora de uma request HTTP autenticada.
-    if current_user.is_authenticated and empresa_id != getattr(current_user, 'empresa_id', None):
+    # Requisições HTTP exigem usuário da mesma empresa; chamadas internas
+    # (testes, jobs) podem processar XML fora de uma request HTTP.
+    if has_request_context() and (
+        not getattr(current_user, 'is_authenticated', False)
+        or empresa_id != getattr(current_user, 'empresa_id', None)
+    ):
         logger.warning(f"Tentativa de acesso a entidade de empresa {empresa_id} pelo usuário {getattr(current_user, 'id', 'unknown')}")
         return None, 'Acesso negado: empresa não corresponde ao usuário logado'
 

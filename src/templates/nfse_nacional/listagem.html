@@ -174,7 +174,7 @@
                             <button onclick="abrirModalEmail(this, {{ emissao.id }})"
                                     data-email="{{ (emissao.tomador.email_comercial if emissao.tomador and emissao.tomador.email_comercial else (emissao.tomador.email if emissao.tomador and emissao.tomador.email else '')) }}"
                                     data-contato="{{ (emissao.tomador.contato_comercial if emissao.tomador and emissao.tomador.contato_comercial else '') }}"
-                                    data-numero="{{ (emissao.numero_nfse or emissao.numero_interno or '') }}"
+                                    data-numero="{{ (emissao.numero_nfse or '') }}"
                                     data-data-emissao="{{ (emissao.criado_em.strftime('%d/%m/%Y') if emissao.criado_em else '') }}"
                                     class="btn btn-sm btn-outline-secondary action-btn" title="Enviar por E-mail">
                                 <i class="fas fa-envelope"></i>

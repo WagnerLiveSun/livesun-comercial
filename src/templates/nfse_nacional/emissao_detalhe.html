@@ -9,6 +9,7 @@
         <p class="text-muted mb-0">{{ emissao.numero_interno }}</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{{ url_for('nfse_nacional.emissao_conclusao', emissao_id=emissao.id) }}" class="btn btn-primary">DANFS-e e E-mail</a>
         <a href="{{ url_for('nfse_nacional.emissoes') }}" class="btn btn-outline-secondary">Voltar</a>
         <a href="{{ url_for('nfse_nacional.emissao_download_nfse', emissao_id=emissao.id) }}" class="btn btn-outline-primary">Download XML</a>
         <a href="{{ url_for('nfse_nacional.emissao_imprimir_danfs', emissao_id=emissao.id) }}" target="_blank" class="btn btn-outline-secondary">Imprimir DANFS-e</a>

@@ -486,8 +486,10 @@
 
 </div>
 
+{% if auto_imprimir is not defined or auto_imprimir %}
 <script>
 window.onload = function(){ window.print(); };
 </script>
+{% endif %}
 </body>
 </html>

@@ -85,6 +85,8 @@ class ProductionConfig(Config):
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
+    SECRET_KEY = 'testing-only-not-for-production'
+    ASAAS_ENABLED = False
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,

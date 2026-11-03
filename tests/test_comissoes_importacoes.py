@@ -3,6 +3,8 @@ from datetime import date
 from decimal import Decimal
 import csv
 from io import StringIO
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from sqlalchemy import func
 
@@ -21,6 +23,7 @@ from src.models import (
 )
 from src.services.comissoes import ServicoComissoes
 from src.routes.importacoes import processar_xml_nfse_completo
+from src.routes.importacoes import _get_or_create_default_fluxo_conta_id, obter_ou_criar_entidade
 
 
 class ComissoesImportacoesTestCase(unittest.TestCase):
@@ -146,6 +149,15 @@ class ComissoesImportacoesTestCase(unittest.TestCase):
         )
         db.session.add_all([cls.lancamento_especifico, cls.lancamento_padrao])
         db.session.commit()
+        cls.empresa_id = cls.empresa.id
+        cls.empresa_cnpj = cls.empresa.cnpj
+        cls.vendedor_id = cls.vendedor.id
+        cls.cliente_especifico_id = cls.cliente_especifico.id
+        cls.cliente_padrao_id = cls.cliente_padrao.id
+        cls.fluxo_id = cls.fluxo.id
+        cls.conta_principal_id = cls.conta_principal.id
+        cls.lancamento_especifico_id = cls.lancamento_especifico.id
+        cls.lancamento_padrao_id = cls.lancamento_padrao.id
 
     @classmethod
     def tearDownClass(cls):
@@ -156,6 +168,16 @@ class ComissoesImportacoesTestCase(unittest.TestCase):
 
     def setUp(self):
         self.client = self.app.test_client()
+        self._recarregar_registros()
+
+    def _recarregar_registros(self):
+        for nome, modelo in (
+            ('empresa', Empresa), ('vendedor', Entidade),
+            ('cliente_especifico', Entidade), ('cliente_padrao', Entidade),
+            ('fluxo', FluxoContaModel), ('conta_principal', ContaBanco),
+            ('lancamento_especifico', Lancamento), ('lancamento_padrao', Lancamento),
+        ):
+            setattr(self, nome, db.session.get(modelo, getattr(self, f'{nome}_id')))
 
     def _login(self):
         response = self.client.post(
@@ -168,6 +190,8 @@ class ComissoesImportacoesTestCase(unittest.TestCase):
             follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
+
+        self._recarregar_registros()
 
     def test_apuracao_de_comissoes_usa_aliquota_especifica_e_padrao(self):
         resultado = ServicoComissoes.apurar_comissoes(
@@ -269,6 +293,7 @@ class ComissoesImportacoesTestCase(unittest.TestCase):
         )
         db.session.add(comissao_abril)
         db.session.commit()
+        comissao_abril_id = comissao_abril.id
 
         try:
             response = self.client.get('/comissoes/exportar-csv?data_fim=2026-03-31', follow_redirects=True)
@@ -283,7 +308,7 @@ class ComissoesImportacoesTestCase(unittest.TestCase):
             self.assertIn('7,50', texto_abril)
             self.assertNotIn('105,00', texto_abril)
         finally:
-            db.session.delete(comissao_abril)
+            db.session.delete(db.session.get(Comissao, comissao_abril_id))
             db.session.commit()
 
     def test_processamento_nfse_cria_registros_e_bloqueia_duplicidade(self):
@@ -306,7 +331,7 @@ class ComissoesImportacoesTestCase(unittest.TestCase):
 
         sucesso, mensagem = processar_xml_nfse_completo(xml, self.empresa.id)
 
-        self.assertTrue(sucesso)
+        self.assertTrue(sucesso, mensagem)
         self.assertIn('Nota importada', mensagem)
 
         importacao = ImportacaoNFSe.query.filter_by(
@@ -334,6 +359,19 @@ class ComissoesImportacoesTestCase(unittest.TestCase):
             db.session.query(func.count(ImportacaoNFSe.id)).filter_by(empresa_id=self.empresa.id).scalar(),
             1,
         )
+
+    def test_importacao_http_bloqueia_usuario_anonimo_e_outra_empresa(self):
+        for usuario in (
+            SimpleNamespace(is_authenticated=False, empresa_id=None, id=None),
+            SimpleNamespace(is_authenticated=True, empresa_id=self.empresa_id + 1, id=99),
+        ):
+            with self.app.test_request_context('/importacoes/nfse'), patch(
+                'src.routes.importacoes.current_user', usuario,
+            ):
+                self.assertIsNone(_get_or_create_default_fluxo_conta_id(self.empresa_id))
+                entidade, erro = obter_ou_criar_entidade(self.empresa_id, '99999999000199')
+                self.assertIsNone(entidade)
+                self.assertIn('Acesso negado', erro)
 
 
 if __name__ == '__main__':

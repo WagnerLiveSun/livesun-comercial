@@ -23,6 +23,7 @@ import requests
 from src.models import Empresa
 from src.services.nfse_validation import validate_xml
 from src.services.xml_signer import sign_xml_enveloped
+from src.services.nfse_retorno import ler_retorno_nfse
 
 BASE_DISTRIBUICAO_HOMOLOGACAO = "https://adn.producaorestrita.nfse.gov.br"
 BASE_DISTRIBUICAO_PRODUCAO = "https://adn.nfse.gov.br"
@@ -943,66 +944,7 @@ def transmitiremissao(payload: dict, configuracao=None) -> dict:
             retorno.get("raw") if isinstance(retorno, dict) else retorno
         )
 
-        # A SEFIN devolve o XML da NFS-e dentro de nfseXmlGZipB64 (gzip + base64).
-        # O JSON não traz numero_nfse nem codigo_verificacao: eles só estão no XML.
-        numero_nfse = None
-        codigo_verificacao = None
-        xml_nfse = None
-        if isinstance(retorno, dict):
-            xml_b64 = (
-                retorno.get("nfseXmlGZipB64")
-                or retorno.get("nfseXml")
-                or retorno.get("xml")
-            )
-            if xml_b64 and isinstance(xml_b64, str) and len(xml_b64) > 100:
-                try:
-                    import gzip
-                    import base64
-                    import xml.etree.ElementTree as ET
-                    xml_bytes = base64.b64decode(xml_b64)
-                    if xml_bytes[:2] == b"\x1f\x8b":
-                        xml_bytes = gzip.decompress(xml_bytes)
-                    xml_text = xml_bytes.decode("utf-8")
-                    xml_nfse = xml_text
-
-                    # Extrair identificadores usando helper robusto
-                    root = ET.fromstring(xml_text)
-                    for ns in (
-                        {"nfse": "http://www.sped.fazenda.gov.br/nfse"},
-                        {"nfse": "http://www.abrasf.org.br/nfse"},
-                        {},
-                    ):
-                        nNFSe = (
-                            root.find(".//nfse:nNFSe", ns) or root.find(".//nNFSe", ns)
-                        )
-                        cv = (
-                            root.find(".//nfse:codigoVerificacao", ns)
-                            or root.find(".//codigoVerificacao", ns)
-                            or root.find(".//nfse:cNFSe", ns)
-                            or root.find(".//cNFSe", ns)
-                        )
-                        chave = (
-                            root.find(".//nfse:chave", ns)
-                            or root.find(".//chave", ns)
-                            or root.find(".//nfse:chaveAcesso", ns)
-                            or root.find(".//chaveAcesso", ns)
-                        )
-                        if nNFSe is not None and nNFSe.text:
-                            numero_nfse = nNFSe.text.strip()
-                        if cv is not None and cv.text:
-                            codigo_verificacao = cv.text.strip()
-                        if chave is not None and chave.text:
-                            pass  # Já tratado abaixo via retorno.get("chaveAcesso")
-                        if numero_nfse:
-                            break
-                except Exception:
-                    pass
-            if not xml_nfse:
-                xml_nfse = (
-                    response.text
-                    if str(response.text or "").lstrip().startswith("<")
-                    else None
-                )
+        dados_fiscais = ler_retorno_nfse(retorno, response.text)
 
         return {
             "sucesso": response.ok,
@@ -1013,10 +955,10 @@ def transmitiremissao(payload: dict, configuracao=None) -> dict:
                 retorno.get("situacao_fiscal") if isinstance(retorno, dict) else None
             ) or ("AUTORIZADA" if response.ok else "REJEITADA"),
             "protocolo": retorno.get("protocolo") if isinstance(retorno, dict) else None,
-            "numero_nfse": numero_nfse,
-            "codigo_verificacao": codigo_verificacao,
-            "chave_nfse": retorno.get("chaveAcesso") if isinstance(retorno, dict) else None,
-            "xml_nfse": xml_nfse,
+            "numero_nfse": dados_fiscais["numero_nfse"] or None,
+            "codigo_verificacao": dados_fiscais["codigo_verificacao"] or None,
+            "chave_nfse": dados_fiscais["chave_nfse"] or None,
+            "xml_nfse": dados_fiscais["xml_nfse"] or None,
             "payload_retorno": {
                 "request_url": request_url,
                 "request_content_type": headers_json["Content-Type"],
@@ -1790,8 +1732,8 @@ def consultar_nfse(
             verify=os.environ.get("NFS_CA_BUNDLE") or True,
         )
         
-        # Verificar se a resposta é XML
-        xml_nfse = response.text if str(response.text or "").lstrip().startswith("<") else None
+        dados_fiscais = ler_retorno_nfse(response_payload(response), response.text)
+        xml_nfse = dados_fiscais["xml_nfse"] or None
         
         return {
             "sucesso": response.ok,

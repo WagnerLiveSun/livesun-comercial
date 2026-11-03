@@ -5,6 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from src.models import db, FluxoContaModel, Lancamento, NfseNacionalEmissao
+from src.services.nfse_retorno import atualizar_identificadores_nfse
 
 
 def _data(valor):
@@ -29,17 +30,8 @@ def integrar_emissao(empresa_id, emissao_id, usuario_id, obter_conta, obter_flux
     if emissao.lancamento is not None:
         return {"status": "ja_integrada", "lancamento_id": emissao.lancamento.id}
 
+    atualizar_identificadores_nfse(emissao)
     numero = emissao.numero_nfse
-    if not numero:
-        from xml.etree import ElementTree as ET
-        from src.routes.nfse_nacional import _extrair_xml_nfse_do_payload
-        xml = emissao.xml_nfse or _extrair_xml_nfse_do_payload(emissao.payload_retorno)
-        try:
-            raiz = ET.fromstring(xml or "")
-            numero = next(((n.text or "").strip() for n in raiz.iter()
-                           if n.tag.rsplit("}", 1)[-1] == "nNFSe" and n.text), None)
-        except ET.ParseError:
-            numero = None
     if not numero:
         raise ValueError("Número oficial não disponível no cadastro ou XML armazenado.")
 
