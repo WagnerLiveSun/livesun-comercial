@@ -56,7 +56,7 @@ jobs:
         DB_NAME: test_livesun
         FLASK_ENV: testing
       run: |
-        pytest tests/ -v --cov=src --cov-report=xml
+        python -m pytest tests/ src/tests/ -v --cov=src --cov-report=xml
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
