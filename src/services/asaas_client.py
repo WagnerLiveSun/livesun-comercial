@@ -124,3 +124,40 @@ class AsaasClient:
             return None
         payload = self._request('GET', f'/payments/{payment_id}')
         return payload if isinstance(payload, dict) else None
+
+    def create_boleto_payment(
+        self,
+        *,
+        customer_id: str,
+        value: float,
+        due_date: str,
+        external_reference: str,
+        description: str,
+        interest_percent: float | None = None,
+        fine_percent: float | None = None,
+    ) -> dict[str, Any]:
+        body: dict[str, Any] = {
+            'customer': customer_id,
+            'billingType': 'BOLETO',
+            'value': value,
+            'dueDate': due_date,
+            'externalReference': external_reference,
+            'description': description,
+        }
+        if interest_percent is not None:
+            body['interest'] = {'value': interest_percent}
+        if fine_percent is not None:
+            body['fine'] = {'value': fine_percent}
+        return self._request(
+            'POST',
+            '/payments',
+            json=body,
+        )
+
+    def get_identification_field(self, payment_id: str) -> str | None:
+        payment_id = (payment_id or '').strip()
+        if not payment_id:
+            return None
+        payload = self._request('GET', f'/payments/{payment_id}/identificationField')
+        value = payload.get('identificationField') if isinstance(payload, dict) else None
+        return str(value).strip() if value else None

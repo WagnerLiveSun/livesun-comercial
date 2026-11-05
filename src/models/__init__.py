@@ -1037,6 +1037,7 @@ class ContaBanco(db.Model):
     nome = db.Column(db.String(150), nullable=False, index=True)
 
     banco = db.Column(db.String(50), nullable=False)
+    codigo_banco = db.Column(db.String(3), nullable=True, index=True)
 
     agencia = db.Column(db.String(10), nullable=False)
 
@@ -1077,6 +1078,73 @@ class ContaBanco(db.Model):
     def __repr__(self):
 
         return f'<ContaBanco {self.nome} ({self.banco})>'
+
+
+class AsaasContaConfig(db.Model):
+    """Configuracao opcional de cobranca bancaria Asaas por conta bancaria."""
+
+    __tablename__ = 'asaas_conta_config'
+    __table_args__ = (
+        db.UniqueConstraint('conta_banco_id', name='uq_asaas_conta_config_conta'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    conta_banco_id = db.Column(db.Integer, db.ForeignKey('contas_banco.id'), nullable=False, index=True)
+    cobranca_habilitada = db.Column(db.Boolean, nullable=True, default=None, index=True)
+    ambiente = db.Column(db.String(20), nullable=True)
+    api_key_criptografada = db.Column(db.Text, nullable=True)
+    webhook_token_criptografado = db.Column(db.Text, nullable=True)
+    juros_mensal_percentual = db.Column(db.Numeric(5, 2), nullable=True)
+    multa_percentual = db.Column(db.Numeric(5, 2), nullable=True)
+    ativo = db.Column(db.Boolean, nullable=True, default=None)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    empresa = db.relationship('Empresa', backref='asaas_conta_configs')
+    conta_banco = db.relationship(
+        'ContaBanco',
+        backref=db.backref('asaas_config', uselist=False, cascade='all, delete-orphan'),
+    )
+
+    @property
+    def habilitada(self):
+        return self.cobranca_habilitada is True and self.ativo is not False
+
+
+class InterContaConfig(db.Model):
+    """Configuracao opcional da API de cobranca BolePix do Banco Inter."""
+
+    __tablename__ = 'inter_conta_config'
+    __table_args__ = (
+        db.UniqueConstraint('conta_banco_id', name='uq_inter_conta_config_conta'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    conta_banco_id = db.Column(db.Integer, db.ForeignKey('contas_banco.id'), nullable=False, index=True)
+    cobranca_habilitada = db.Column(db.Boolean, nullable=True, default=None, index=True)
+    ambiente = db.Column(db.String(20), nullable=True)
+    client_id_criptografado = db.Column(db.Text, nullable=True)
+    client_secret_criptografado = db.Column(db.Text, nullable=True)
+    certificado_criptografado = db.Column(db.Text, nullable=True)
+    chave_privada_criptografada = db.Column(db.Text, nullable=True)
+    webhook_token_criptografado = db.Column(db.Text, nullable=True)
+    juros_mensal_percentual = db.Column(db.Numeric(5, 2), nullable=True)
+    multa_percentual = db.Column(db.Numeric(5, 2), nullable=True)
+    ativo = db.Column(db.Boolean, nullable=True, default=None)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    empresa = db.relationship('Empresa', backref='inter_conta_configs')
+    conta_banco = db.relationship(
+        'ContaBanco',
+        backref=db.backref('inter_config', uselist=False, cascade='all, delete-orphan'),
+    )
+
+    @property
+    def habilitada(self):
+        return self.cobranca_habilitada is True and self.ativo is not False
 
 
 
@@ -1165,6 +1233,148 @@ class Lancamento(db.Model):
     def __repr__(self):
 
         return f'<Lancamento {self.numero_documento} - R$ {self.valor_real}>'
+
+
+class AsaasCliente(db.Model):
+    """Vincula uma entidade local ao cliente correspondente no Asaas."""
+
+    __tablename__ = 'asaas_clientes'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'entidade_id', name='uq_asaas_cliente_entidade'),
+        db.UniqueConstraint('empresa_id', 'asaas_customer_id', name='uq_asaas_cliente_externo'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    entidade_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=False, index=True)
+    asaas_customer_id = db.Column(db.String(80), nullable=False)
+    cpf_cnpj = db.Column(db.String(20), nullable=True)
+    nome_razao_social = db.Column(db.String(200), nullable=True)
+    email = db.Column(db.String(200), nullable=True)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    entidade = db.relationship('Entidade', backref='asaas_cliente')
+
+
+class AsaasCobranca(db.Model):
+    """Rastreia a cobranca de boleto vinculada a um lancamento local."""
+
+    __tablename__ = 'asaas_cobrancas'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'external_reference', name='uq_asaas_cobranca_referencia'),
+        db.UniqueConstraint('empresa_id', 'asaas_payment_id', name='uq_asaas_cobranca_payment'),
+        db.Index('idx_asaas_cobranca_lancamento', 'empresa_id', 'lancamento_id'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    conta_banco_id = db.Column(db.Integer, db.ForeignKey('contas_banco.id'), nullable=False, index=True)
+    lancamento_id = db.Column(db.Integer, db.ForeignKey('lancamentos.id'), nullable=False, index=True)
+    entidade_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=False, index=True)
+    asaas_payment_id = db.Column(db.String(80), nullable=True)
+    asaas_customer_id = db.Column(db.String(80), nullable=True)
+    external_reference = db.Column(db.String(150), nullable=False)
+    billing_type = db.Column(db.String(20), nullable=False, default='BOLETO')
+    valor = db.Column(db.Numeric(15, 2), nullable=False)
+    data_vencimento = db.Column(db.Date, nullable=False)
+    status_asaas = db.Column(db.String(40), nullable=True)
+    status_interno = db.Column(db.String(40), nullable=False, default='pendente')
+    invoice_url = db.Column(db.Text, nullable=True)
+    bank_slip_url = db.Column(db.Text, nullable=True)
+    identification_field = db.Column(db.String(120), nullable=True)
+    origem = db.Column(db.String(20), nullable=False, default='lancamento')
+    nfse_emissao_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_emissoes.id'), nullable=True, index=True)
+    juros_mensal_percentual = db.Column(db.Numeric(5, 2), nullable=True)
+    multa_percentual = db.Column(db.Numeric(5, 2), nullable=True)
+    payload = db.Column(db.Text, nullable=True)
+    mensagem_erro = db.Column(db.Text, nullable=True)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    lancamento = db.relationship('Lancamento', backref='asaas_cobrancas')
+    conta_banco = db.relationship('ContaBanco', backref='asaas_cobrancas')
+    nfse_emissao = db.relationship('NfseNacionalEmissao', foreign_keys=[nfse_emissao_id])
+
+
+class AsaasWebhookEvento(db.Model):
+    """Evento Asaas persistido para processamento idempotente."""
+
+    __tablename__ = 'asaas_webhook_eventos'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'evento_id', name='uq_asaas_webhook_empresa_evento'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, nullable=False, index=True)
+    evento_id = db.Column(db.String(120), nullable=False)
+    evento = db.Column(db.String(80), nullable=True)
+    asaas_payment_id = db.Column(db.String(80), nullable=True, index=True)
+    external_reference = db.Column(db.String(150), nullable=True)
+    payload = db.Column(db.Text, nullable=True)
+    status_processamento = db.Column(db.String(30), nullable=False, default='recebido')
+    mensagem_erro = db.Column(db.Text, nullable=True)
+    recebido_em = db.Column(db.DateTime, default=_utcnow)
+    processado_em = db.Column(db.DateTime, nullable=True)
+
+
+class InterCobranca(db.Model):
+    """Rastreia cobrancas BolePix emitidas pelo Banco Inter."""
+
+    __tablename__ = 'inter_cobrancas'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'seu_numero', name='uq_inter_cobranca_seu_numero'),
+        db.UniqueConstraint('empresa_id', 'codigo_solicitacao', name='uq_inter_cobranca_codigo'),
+        db.Index('idx_inter_cobranca_lancamento', 'empresa_id', 'lancamento_id'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=False, index=True)
+    conta_banco_id = db.Column(db.Integer, db.ForeignKey('contas_banco.id'), nullable=False, index=True)
+    lancamento_id = db.Column(db.Integer, db.ForeignKey('lancamentos.id'), nullable=False, index=True)
+    entidade_id = db.Column(db.Integer, db.ForeignKey('entidades.id'), nullable=False, index=True)
+    codigo_solicitacao = db.Column(db.String(100), nullable=True)
+    seu_numero = db.Column(db.String(50), nullable=False)
+    nosso_numero = db.Column(db.String(50), nullable=True)
+    valor = db.Column(db.Numeric(15, 2), nullable=False)
+    data_vencimento = db.Column(db.Date, nullable=False)
+    status_inter = db.Column(db.String(40), nullable=True)
+    status_interno = db.Column(db.String(40), nullable=False, default='pendente')
+    linha_digitavel = db.Column(db.String(150), nullable=True)
+    codigo_barras = db.Column(db.String(100), nullable=True)
+    qr_code = db.Column(db.Text, nullable=True)
+    pdf_url = db.Column(db.Text, nullable=True)
+    origem = db.Column(db.String(20), nullable=False, default='lancamento')
+    nfse_emissao_id = db.Column(db.Integer, db.ForeignKey('nfse_nacional_emissoes.id'), nullable=True, index=True)
+    juros_mensal_percentual = db.Column(db.Numeric(5, 2), nullable=True)
+    multa_percentual = db.Column(db.Numeric(5, 2), nullable=True)
+    payload = db.Column(db.Text, nullable=True)
+    mensagem_erro = db.Column(db.Text, nullable=True)
+    criado_em = db.Column(db.DateTime, default=_utcnow)
+    atualizado_em = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
+
+    lancamento = db.relationship('Lancamento', backref='inter_cobrancas')
+    conta_banco = db.relationship('ContaBanco', backref='inter_cobrancas')
+    nfse_emissao = db.relationship('NfseNacionalEmissao', foreign_keys=[nfse_emissao_id])
+
+
+class InterWebhookEvento(db.Model):
+    """Evento do webhook Inter persistido para processamento idempotente."""
+
+    __tablename__ = 'inter_webhook_eventos'
+    __table_args__ = (
+        db.UniqueConstraint('empresa_id', 'evento_id', name='uq_inter_webhook_empresa_evento'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, nullable=False, index=True)
+    evento_id = db.Column(db.String(120), nullable=False)
+    codigo_solicitacao = db.Column(db.String(100), nullable=True, index=True)
+    payload = db.Column(db.Text, nullable=True)
+    status_processamento = db.Column(db.String(30), nullable=False, default='recebido')
+    mensagem_erro = db.Column(db.Text, nullable=True)
+    recebido_em = db.Column(db.DateTime, default=_utcnow)
+    processado_em = db.Column(db.DateTime, nullable=True)
 
 
 
@@ -3937,6 +4147,3 @@ class PasswordResetCode(db.Model):
     def __repr__(self):
 
         return f'<PasswordResetCode {self.code} for {self.email}>'
-
-
-

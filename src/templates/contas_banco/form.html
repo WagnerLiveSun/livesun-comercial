@@ -34,10 +34,84 @@
                     value="{{ conta.nome if conta else '' }}" required">
             </div>
 
+            <div class="ls-card p-3 mb-4" style="border: 1px solid rgba(37, 99, 235, 0.35);">
+                <h5 class="ls-page-title">Cobrança bancária Asaas</h5>
+                <p class="text-muted small">Opcional. Ao habilitar, os campos de integração tornam-se obrigatórios apenas para esta conta.</p>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="cobranca_bancaria_habilitada"
+                        name="cobranca_bancaria_habilitada" onchange="toggleAsaasFields()"
+                        {% if (asaas_config and asaas_config.cobranca_habilitada) or (inter_config and inter_config.cobranca_habilitada) %}checked{% endif %}>
+                    <label class="form-check-label" for="cobranca_bancaria_habilitada">Habilitar cobrança bancária</label>
+                </div>
+                <div id="asaas-fields" class="{% if not (asaas_config and asaas_config.cobranca_habilitada) %}d-none{% endif %}">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Ambiente *</label>
+                            <select name="asaas_ambiente" id="asaas_ambiente" class="form-control">
+                                <option value="">Selecione...</option>
+                                <option value="SANDBOX" {% if asaas_config and asaas_config.ambiente == 'SANDBOX' %}selected{% endif %}>Sandbox</option>
+                                <option value="PRODUCAO" {% if asaas_config and asaas_config.ambiente == 'PRODUCAO' %}selected{% endif %}>Produção</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">API Key *</label>
+                            <input type="password" name="asaas_api_key" id="asaas_api_key" class="form-control"
+                                autocomplete="new-password" placeholder="{% if asaas_config %}Informar somente para substituir{% endif %}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Token do Webhook *</label>
+                            <input type="password" name="asaas_webhook_token" id="asaas_webhook_token" class="form-control"
+                                autocomplete="new-password" placeholder="{% if asaas_config %}Informar somente para substituir{% endif %}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Juros mensal padrão (%)</label>
+                            <input type="number" min="0" max="100" step="0.01" name="asaas_juros_mensal_percentual" class="form-control"
+                                value="{{ asaas_config.juros_mensal_percentual if asaas_config else '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Multa padrão (%)</label>
+                            <input type="number" min="0" max="100" step="0.01" name="asaas_multa_percentual" class="form-control"
+                                value="{{ asaas_config.multa_percentual if asaas_config else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="col-md-6 mb-3">
                 <label class="form-label">Banco *</label>
                 <input type="text" name="banco" class="form-control"
                     value="{{ conta.banco if conta else '' }}" required">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Código do Banco</label>
+                <input type="text" name="codigo_banco" id="codigo_banco" class="form-control"
+                    maxlength="3" inputmode="numeric" placeholder="077 ou 461"
+                    value="{{ conta.codigo_banco if conta and conta.codigo_banco else '' }}"
+                    onchange="toggleProviderFields()">
+            </div>
+        </div>
+
+        <div class="ls-card p-3 mb-4 d-none" id="inter-fields" style="border: 1px solid rgba(37, 99, 235, 0.35);">
+            <h5 class="ls-page-title">Cobrança bancária Banco Inter</h5>
+            <p class="text-muted small">Use o certificado e a chave privada emitidos pelo Banco Inter para a integração BolePix.</p>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Ambiente *</label>
+                    <select name="inter_ambiente" id="inter_ambiente" class="form-control">
+                        <option value="">Selecione...</option>
+                        <option value="SANDBOX" {% if inter_config and inter_config.ambiente == 'SANDBOX' %}selected{% endif %}>Sandbox</option>
+                        <option value="PRODUCAO" {% if inter_config and inter_config.ambiente == 'PRODUCAO' %}selected{% endif %}>Produção</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3"><label class="form-label">Client ID *</label><input type="password" name="inter_client_id" id="inter_client_id" class="form-control" autocomplete="new-password"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Client Secret *</label><input type="password" name="inter_client_secret" id="inter_client_secret" class="form-control" autocomplete="new-password"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Certificado .crt *</label><textarea name="inter_certificado" id="inter_certificado" class="form-control" rows="4" placeholder="Cole o conteúdo PEM"></textarea></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Chave privada .key *</label><textarea name="inter_chave_privada" id="inter_chave_privada" class="form-control" rows="4" placeholder="Cole o conteúdo PEM"></textarea></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Token do Webhook *</label><input type="password" name="inter_webhook_token" id="inter_webhook_token" class="form-control" autocomplete="new-password"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Juros mensal padrão (%)</label><input type="number" min="0" max="100" step="0.01" name="inter_juros_mensal_percentual" class="form-control" value="{{ inter_config.juros_mensal_percentual if inter_config else '' }}"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Multa padrão (%)</label><input type="number" min="0" max="100" step="0.01" name="inter_multa_percentual" class="form-control" value="{{ inter_config.multa_percentual if inter_config else '' }}"></div>
             </div>
         </div>
 
@@ -134,4 +208,30 @@
         border-color: #2563eb;
     }
 </style>
+<script>
+function toggleAsaasFields() {
+    const enabled = document.getElementById('cobranca_bancaria_habilitada').checked;
+    const fields = document.getElementById('asaas-fields');
+    fields.classList.toggle('d-none', !enabled);
+    document.getElementById('asaas_ambiente').required = enabled;
+    document.getElementById('asaas_api_key').required = enabled && {{ 'false' if asaas_config else 'true' }};
+    document.getElementById('asaas_webhook_token').required = enabled && {{ 'false' if asaas_config else 'true' }};
+}
+function toggleProviderFields() {
+    const codigo = (document.getElementById('codigo_banco').value || '').replace(/\D/g, '').padStart(3, '0');
+    const enabled = document.getElementById('cobranca_bancaria_habilitada').checked;
+    const asaas = codigo === '461';
+    const inter = codigo === '077';
+    document.getElementById('asaas-fields').classList.toggle('d-none', !enabled || !asaas);
+    document.getElementById('inter-fields').classList.toggle('d-none', !enabled || !inter);
+    document.getElementById('asaas_ambiente').required = enabled && asaas;
+    document.getElementById('asaas_api_key').required = enabled && asaas && {{ 'false' if asaas_config else 'true' }};
+    document.getElementById('asaas_webhook_token').required = enabled && asaas && {{ 'false' if asaas_config else 'true' }};
+    ['inter_ambiente', 'inter_client_id', 'inter_client_secret', 'inter_certificado', 'inter_chave_privada', 'inter_webhook_token']
+        .forEach(id => document.getElementById(id).required = enabled && inter && {{ 'false' if inter_config else 'true' }});
+}
+document.getElementById('cobranca_bancaria_habilitada').addEventListener('change', toggleProviderFields);
+document.getElementById('codigo_banco').addEventListener('input', toggleProviderFields);
+toggleProviderFields();
+</script>
 {% endblock %}

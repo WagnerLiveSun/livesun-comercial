@@ -75,7 +75,7 @@ def ler_retorno_nfse(payload=None, xml_nfse=None):
             valor = texto(*nomes)
             if valor:
                 if dados[campo] and dados[campo] != valor:
-                    logging.warning("Divergência em %s do retorno NFS-e; prevalece o XML autorizado.", campo)
+                    logging.warning("Divergência em %s do retorno NFSe; prevalece o XML autorizado. - nfse_retorno.py:78", campo)
                 dados[campo] = valor
         identificador = inf.get("Id", "")
         if not dados["chave_nfse"] and identificador.startswith("NFS"):

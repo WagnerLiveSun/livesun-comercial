@@ -701,6 +701,7 @@
                  {% set show_propostas = (show_orcamentos or show_propostas_aprovacao) %}
 
                 {% set show_lancamentos = can_access_endpoint('lancamentos.index') %}
+                {% set show_cobrancas_bancarias = can_access_endpoint('cobrancas_bancarias.index') %}
                 {% set show_comissoes = can_access_endpoint('comissoes.listar') %}
                 {% set show_relatorios = can_access_endpoint('relatorio_fluxo.index') or can_access_endpoint('relatorios.listagem_lancamentos') %}
                 {% set show_import_nfse = can_access_endpoint('importacoes.importar_nfse') %}
@@ -708,7 +709,7 @@
                 {% set show_conciliacao = can_access_endpoint('conciliacao.index') %}
                 {% set show_importacao = has_activity('servicos') and (show_import_nfse or show_import_ofx or show_conciliacao) %}
                 {% set show_nfse_nacional = can_access_endpoint('nfse_nacional.index') %}
-                {% set show_financeiro = show_lancamentos or show_import_ofx or show_conciliacao or show_comissoes or show_relatorios %}
+                {% set show_financeiro = show_lancamentos or show_cobrancas_bancarias or show_import_ofx or show_conciliacao or show_comissoes or show_relatorios %}
                 
                 {% set show_contratos = can_access_endpoint('contratos.index') %}
                 {% set show_clausulas = can_access_endpoint('contratos.clausulas_lista') %}
@@ -821,6 +822,7 @@
                 <div class="ls-sidebar-section-label"><i class="fas fa-hand-holding-usd"></i> Financeiro</div>
                 <ul class="ls-sidebar-nav">
                     {% if show_lancamentos %}{% if can_access_endpoint('lancamentos.index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('lancamentos.') %}active{% endif %}" href="{{ url_for('lancamentos.index') }}"><i class="fas fa-receipt"></i> Lançamentos</a></li>{% endif %}{% endif %}
+                    {% if show_cobrancas_bancarias %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('cobrancas_bancarias.') %}active{% endif %}" href="{{ url_for('cobrancas_bancarias.index') }}"><i class="fas fa-barcode"></i> Cobranças Bancárias</a></li>{% endif %}
                     {% if show_import_ofx %}{% if can_access_endpoint('importacoes.importar_ofx') %}<li><a class="ls-sidebar-link {% if request.endpoint == 'importacoes.import_ofx'%}active{% endif %}" href="{{ url_for('importacoes.importar_ofx') }}"><i class="fas fa-file-upload"></i> Importar OFX</a></li>{% endif %}{% endif %}
                     {% if show_conciliacao %}{% if can_access_endpoint('conciliacao.index') %}<li><a class="ls-sidebar-link {% if request.endpoint and request.endpoint.startswith('conciliacao.') %}active{% endif %}" href="{{ url_for('conciliacao.index') }}"><i class="fas fa-receipt"></i> Conciliação Bancária</a></li>{% endif %}{% endif %}
                     {% if show_comissoes %}

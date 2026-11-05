@@ -54,6 +54,7 @@ class Config:
     ASAAS_API_KEY = os.environ.get('ASAAS_API_KEY', '')
     ASAAS_BASE_URL = os.environ.get('ASAAS_BASE_URL', 'https://sandbox.asaas.com/api/v3')
     ASAAS_TIMEOUT_SECONDS = int(os.environ.get('ASAAS_TIMEOUT_SECONDS', 15))
+    ASAAS_ENCRYPTION_KEY = os.environ.get('ASAAS_ENCRYPTION_KEY', '')
     ASAAS_BILLING_TYPE = os.environ.get('ASAAS_BILLING_TYPE', 'BOLETO').upper()
     ASSINATURA_TRIAL_DIAS = int(os.environ.get('ASSINATURA_TRIAL_DIAS', 7))
 

@@ -273,7 +273,7 @@ def validate_catalog_references(payload: dict) -> None:
             from src.models import NfseNbsReferencia
             nbs = NfseNbsReferencia.query.filter_by(codigo_nbs=codigo_nbs, ativo=True).first()
             if not nbs:
-                logging.warning("Codigo NBS nao encontrado no catalogo: %s - nfse_nacional.py:271", codigo_nbs)
+                logging.warning("Codigo NBS nao encontrado no catalogo: %s - nfse_nacional.py:276", codigo_nbs)
         except ImportError:
             pass
 
@@ -585,7 +585,7 @@ def builddpsxml(payload: dict) -> str:
     cmun7 = codigo_mun.zfill(7)[-7:]
     
     # Debug: mostrar código do município emissor
-    logging.info(f"[DEBUG] Código município emissor: {codigo_mun} (cmun7: {cmun7}) - nfse_nacional.py:583")
+    logging.info(f"[DEBUG] Código município emissor: {codigo_mun} (cmun7: {cmun7}) - nfse_nacional.py:588")
     
     # Tentar buscar nome do município para debug
     try:
@@ -595,11 +595,11 @@ def builddpsxml(payload: dict) -> str:
             ativo=True
         ).first()
         if municipio_ref:
-            logging.info(f"[DEBUG] Nome município emissor: {municipio_ref.nome_municipio}  {municipio_ref.uf_sigla} - nfse_nacional.py:593")
+            logging.info(f"[DEBUG] Nome município emissor: {municipio_ref.nome_municipio}  {municipio_ref.uf_sigla} - nfse_nacional.py:598")
         else:
-            logging.info(f"[DEBUG] Município não encontrado na tabela de referência - nfse_nacional.py:595")
+            logging.info(f"[DEBUG] Município não encontrado na tabela de referência - nfse_nacional.py:600")
     except Exception as e:
-        logging.info(f"[DEBUG] Erro ao buscar nome do município: {e} - nfse_nacional.py:597")
+        logging.info(f"[DEBUG] Erro ao buscar nome do município: {e} - nfse_nacional.py:602")
 
     local_prestacao = str(payload.get("servico_local_prestacao") or payload.get("servicolocalprestacao") or "emitente").strip().lower()
     tomador_codigo_municipio = resolve_municipio_codigo_ibge(
@@ -641,17 +641,17 @@ def builddpsxml(payload: dict) -> str:
     inscricao_municipal = first_non_empty(payload, "inscricao_municipal", "empresa_inscricao_municipal", "im", "inscricaomunicipal")
     
     # Debug: mostrar inscrição municipal
-    logging.info(f"[DEBUG] Inscrição Municipal encontrada: {inscricao_municipal} - nfse_nacional.py:639")
+    logging.info(f"[DEBUG] Inscrição Municipal encontrada: {inscricao_municipal} - nfse_nacional.py:644")
     
     # O município do Rio de Janeiro (3304557) não aceita IM pois não tem informações complementares no CNC
     if inscricao_municipal and codigo_mun != "3304557":
         ET.SubElement(prest, q("IM")).text = inscricao_municipal
-        logging.info(f"[DEBUG] Campo IM adicionado ao XML: {inscricao_municipal} - nfse_nacional.py:644")
+        logging.info(f"[DEBUG] Campo IM adicionado ao XML: {inscricao_municipal} - nfse_nacional.py:649")
     else:
         if codigo_mun == "3304557":
-            logging.info(f"[DEBUG] Campo IM NÃO adicionado ao XML (município Rio de Janeiro não aceita IM) - nfse_nacional.py:647")
+            logging.info(f"[DEBUG] Campo IM NÃO adicionado ao XML (município Rio de Janeiro não aceita IM) - nfse_nacional.py:652")
         else:
-            logging.info(f"[DEBUG] Campo IM NÃO adicionado ao XML (inscrição municipal não informada) - nfse_nacional.py:649")
+            logging.info(f"[DEBUG] Campo IM NÃO adicionado ao XML (inscrição municipal não informada) - nfse_nacional.py:654")
 
     # Endereço do prestador não deve ser informado quando o próprio prestador for o emitente (tpEmit=1)
     if tp_emit != "1":
@@ -662,9 +662,9 @@ def builddpsxml(payload: dict) -> str:
         ET.SubElement(end, q("xLgr")).text = limpar_texto_xml(prestador["Rua"])
         ET.SubElement(end, q("nro")).text = str(prestador["Numero"]).strip()
         ET.SubElement(end, q("xBairro")).text = limpar_texto_xml(prestador["Bairro"])
-        logging.info(f"[DEBUG] Endereço do prestador adicionado (tpEmit={tp_emit}) - nfse_nacional.py:660")
+        logging.info(f"[DEBUG] Endereço do prestador adicionado (tpEmit={tp_emit}) - nfse_nacional.py:665")
     else:
-        logging.info(f"[DEBUG] Endereço do prestador NÃO adicionado (tpEmit=1  prestador é emitente) - nfse_nacional.py:662")
+        logging.info(f"[DEBUG] Endereço do prestador NÃO adicionado (tpEmit=1  prestador é emitente) - nfse_nacional.py:667")
 
     reg = ET.SubElement(prest, q("regTrib"))
     # Buscar do cadastro da empresa: op_simp_nac (1=Não Optante, 2=MEI, 3=ME/EPP)
@@ -672,13 +672,13 @@ def builddpsxml(payload: dict) -> str:
     ET.SubElement(reg, q("opSimpNac")).text = str(op_simp_nac or "3")
     
     # Debug: mostrar opSimpNac
-    logging.info(f"[DEBUG] opSimpNac usado: {op_simp_nac or '3'} - nfse_nacional.py:670")
+    logging.info(f"[DEBUG] opSimpNac usado: {op_simp_nac or '3'} - nfse_nacional.py:675")
     
     # Quando opSimpNac = 3 (ME/EPP), é obrigatório informar regApTribSN
     if op_simp_nac == "3":
         reg_ap_trib_sn = first_non_empty(payload, "reg_ap_trib_sn", "regApTribSN", "empresa_reg_ap_trib_sn")
         ET.SubElement(reg, q("regApTribSN")).text = str(reg_ap_trib_sn or "1")
-        logging.info(f"[DEBUG] regApTribSN adicionado: {reg_ap_trib_sn or '1'} - nfse_nacional.py:676")
+        logging.info(f"[DEBUG] regApTribSN adicionado: {reg_ap_trib_sn or '1'} - nfse_nacional.py:681")
     
     ET.SubElement(reg, q("regEspTrib")).text = str(payload.get("regEspTrib") or "0")
 
@@ -778,10 +778,10 @@ def builddpsxml(payload: dict) -> str:
         # Para ME/EPP, usa pTotTribSN (percentual do Simples Nacional)
         reg_ap_trib_sn = first_non_empty(payload, "reg_ap_trib_sn", "regApTribSN", "empresa_reg_ap_trib_sn")
         ET.SubElement(tottrib, q("pTotTribSN")).text = str(reg_ap_trib_sn or "6.00")
-        logging.info(f"[DEBUG] totTrib adicionado com pTotTribSN={reg_ap_trib_sn or '6.00'} (opSimpNac=3  ME/EPP) - nfse_nacional.py:734")
+        logging.info(f"[DEBUG] totTrib adicionado com pTotTribSN={reg_ap_trib_sn or '6.00'} (opSimpNac=3  ME/EPP) - nfse_nacional.py:781")
     else:
         ET.SubElement(tottrib, q("indTotTrib")).text = "0"
-        logging.info(f"[DEBUG] totTrib adicionado com indTotTrib=0 (opSimpNac={op_simp_nac}) - nfse_nacional.py:737")
+        logging.info(f"[DEBUG] totTrib adicionado com indTotTrib=0 (opSimpNac={op_simp_nac}) - nfse_nacional.py:784")
 
     def limpa_espaco(elem):
         for node in elem.iter():
@@ -891,7 +891,7 @@ def transmitiremissao(payload: dict, configuracao=None) -> dict:
     )
 
     if not validation.get("valid"):
-        logging.error("Falha na validacao antes do envio: %s - nfse_nacional.py:845", validation.get("errors"))
+        logging.error("Falha na validacao antes do envio: %s - nfse_nacional.py:894", validation.get("errors"))
         return {
             "sucesso": False,
             "status": "REJEITADA_VALIDACAO",
@@ -1041,7 +1041,7 @@ def validate_ctrib_mun(codigo_ibge: str, ctribmun: str) -> tuple[bool, str]:
         
         return True, ""
     except Exception as exc:
-        logging.warning(f"Erro ao validar cTribMun: {exc} - nfse_nacional.py:993")
+        logging.warning(f"Erro ao validar cTribMun: {exc} - nfse_nacional.py:1044")
         return True, ""  # Em caso de erro, não bloqueia
 
 
@@ -1417,7 +1417,7 @@ def transmitireventocancelamentosubstituicao(
     )
     
     if not validation.get("valid"):
-        logging.error("Falha na validacao do evento antes do envio: %s - nfse_nacional.py:1369", validation.get("errors"))
+        logging.error("Falha na validacao do evento antes do envio: %s - nfse_nacional.py:1420", validation.get("errors"))
         return {
             "sucesso": False,
             "status": "REJEITADA_VALIDACAO",
@@ -1469,7 +1469,7 @@ def transmitireventocancelamentosubstituicao(
             verify=os.environ.get("NFS_CA_BUNDLE") or True,
         )
         
-        logging.info(f"Resposta da API (cancelamento substituicao): {response.status_code}  {response.text[:500]} - nfse_nacional.py:1421")
+        logging.info(f"Resposta da API (cancelamento substituicao): {response.status_code}  {response.text[:500]} - nfse_nacional.py:1472")
         
         if response.ok:
             retorno = response.json()
@@ -1562,7 +1562,7 @@ def transmitireventocancelamento(
     )
     
     if not validation.get("valid"):
-        logging.error("Falha na validacao do evento antes do envio: %s - nfse_nacional.py:1514", validation.get("errors"))
+        logging.error("Falha na validacao do evento antes do envio: %s - nfse_nacional.py:1565", validation.get("errors"))
         return {
             "sucesso": False,
             "status": "REJEITADA_VALIDACAO",
@@ -1616,10 +1616,10 @@ def transmitireventocancelamento(
         retorno = response_payload(response)
         
         # Log para debug do evento de cancelamento
-        logging.error(f"[CANCELAMENTO DEBUG] URL: {request_url} - nfse_nacional.py:1568")
-        logging.error(f"[CANCELAMENTO DEBUG] Status: {response.status_code} - nfse_nacional.py:1569")
-        logging.error(f"[CANCELAMENTO DEBUG] Request Body: {jsonsafe(request_json_body)} - nfse_nacional.py:1570")
-        logging.error(f"[CANCELAMENTO DEBUG] Response Body: {retorno} - nfse_nacional.py:1571")
+        logging.error(f"[CANCELAMENTO DEBUG] URL: {request_url} - nfse_nacional.py:1619")
+        logging.error(f"[CANCELAMENTO DEBUG] Status: {response.status_code} - nfse_nacional.py:1620")
+        logging.error(f"[CANCELAMENTO DEBUG] Request Body: {jsonsafe(request_json_body)} - nfse_nacional.py:1621")
+        logging.error(f"[CANCELAMENTO DEBUG] Response Body: {retorno} - nfse_nacional.py:1622")
         
         mensagem = "Processado com sucesso." if response.ok else str(
             retorno.get("raw") if isinstance(retorno, dict) else retorno

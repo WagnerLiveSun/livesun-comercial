@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block title %}Cobranças Bancárias{% endblock %}
+{% block content %}
+<style>
+    input[type="number"].cobranca-valor {
+        -moz-appearance: textfield;
+    }
+
+    input[type="number"].cobranca-valor::-webkit-inner-spin-button,
+    input[type="number"].cobranca-valor::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold ls-page-title">Cobranças Bancárias</h2>
+</div>
+<div class="ls-card p-4">
+    <p class="text-muted">Selecione explicitamente a origem da cobrança. Os parâmetros de juros e multa são opcionais e, quando vazios, usam o padrão da conta Asaas.</p>
+    <form method="POST" action="{{ url_for('cobrancas_bancarias.gerar') }}" id="form-cobranca">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Origem *</label>
+                <select name="origem" id="origem" class="form-control" required onchange="toggleOrigem()">
+                    <option value="">Selecione...</option>
+                    <option value="nfse">NFS-e autorizada</option>
+                    <option value="lancamento">Lançamento existente</option>
+                    <option value="avulsa">Cobrança avulsa</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Conta bancária do provedor *</label>
+                <select name="conta_banco_id" class="form-control" required>
+                    <option value="">Selecione...</option>
+                    {% for conta in contas_banco %}<option value="{{ conta.id }}">{{ conta.nome }} - {{ conta.banco }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+        <div id="origem-nfse" class="d-none mb-3">
+            <label class="form-label">NFS-e autorizada *</label>
+            <select name="nfse_emissao_id" class="form-control">
+                <option value="">Selecione...</option>
+                {% for emissao in emissoes %}<option value="{{ emissao.id }}">{{ emissao.numero_nfse or emissao.numero_interno }} - {{ emissao.tomador.nome }}</option>{% endfor %}
+            </select>
+        </div>
+        <div id="origem-lancamento" class="d-none mb-3">
+            <label class="form-label">Lançamento de recebimento *</label>
+            <select name="lancamento_id" class="form-control">
+                <option value="">Selecione...</option>
+                {% for lancamento in lancamentos %}<option value="{{ lancamento.id }}">{{ lancamento.numero_documento or lancamento.id }} - {{ lancamento.entidade.nome }} - R$ {{ lancamento.valor_real|brl }}</option>{% endfor %}
+            </select>
+        </div>
+        <div id="origem-avulsa" class="d-none">
+            <div class="row">
+                <div class="col-md-4 mb-3"><label class="form-label">Cliente *</label><select name="entidade_id" class="form-control">{% for entidade in entidades %}<option value="{{ entidade.id }}">{{ entidade.nome }} - {{ entidade.cnpj_cpf }}</option>{% endfor %}</select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Conta de fluxo *</label><select name="fluxo_conta_id" class="form-control">{% for fluxo in fluxos %}<option value="{{ fluxo.id }}">{{ fluxo.codigo }} - {{ fluxo.descricao }}</option>{% endfor %}</select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Valor *</label><input name="valor_real" type="number" step="0.01" min="0.01" class="form-control cobranca-valor"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Data do evento *</label><input name="data_evento" type="date" class="form-control"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Vencimento *</label><input name="data_vencimento" type="date" class="form-control"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Documento</label><input name="numero_documento" class="form-control"></div>
+                <div class="col-md-12 mb-3"><label class="form-label">Observações</label><textarea name="observacoes" class="form-control"></textarea></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3 mb-3"><label class="form-label">Juros mensal (%)</label><input name="juros_mensal_percentual" type="number" min="0" max="100" step="0.01" class="form-control cobranca-valor"></div>
+            <div class="col-md-3 mb-3"><label class="form-label">Multa (%)</label><input name="multa_percentual" type="number" min="0" max="100" step="0.01" class="form-control cobranca-valor"></div>
+        </div>
+        <button type="submit" class="btn ls-btn-primary"><i class="fas fa-barcode"></i> Gerar boleto</button>
+    </form>
+</div>
+<script>
+function toggleOrigem() {
+    const origem = document.getElementById('origem').value;
+    ['nfse', 'lancamento', 'avulsa'].forEach(item => document.getElementById('origem-' + item).classList.toggle('d-none', origem !== item));
+}
+</script>
+{% endblock %}

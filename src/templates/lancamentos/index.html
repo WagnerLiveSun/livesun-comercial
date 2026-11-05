@@ -7,8 +7,12 @@
     .lancamentos-table {
         width: 100% !important;
         max-width: none !important;
-        min-width: 1500px;
+        min-width: 0;
         table-layout: fixed;
+    }
+
+    .lancamentos-table-wrapper {
+        overflow-x: hidden;
     }
 
     .lancamentos-table thead th {
@@ -34,13 +38,13 @@
 
     .lancamentos-table td.col-doc,
     .lancamentos-table th.col-doc {
-        width: 110px;
+        width: 8%;
         white-space: nowrap;
     }
 
     .lancamentos-table td.col-entidade,
     .lancamentos-table th.col-entidade {
-        width: 240px;
+        width: 15%;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -48,13 +52,13 @@
 
     .lancamentos-table td.col-data,
     .lancamentos-table th.col-data {
-        width: 120px;
+        width: 9%;
         white-space: nowrap;
     }
 
     .lancamentos-table td.col-fluxo,
     .lancamentos-table th.col-fluxo {
-        width: 320px;
+        width: 17%;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -62,7 +66,7 @@
 
     .lancamentos-table td.col-money,
     .lancamentos-table th.col-money {
-        width: 160px;
+        width: 12%;
         text-align: right;
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
@@ -70,14 +74,14 @@
 
     .lancamentos-table td.col-status,
     .lancamentos-table th.col-status {
-        width: 110px;
+        width: 8%;
         white-space: nowrap;
         text-align: center;
     }
 
     .lancamentos-table td.col-actions,
     .lancamentos-table th.col-actions {
-        width: 145px;
+        width: 10%;
         white-space: nowrap;
         text-align: center;
     }
@@ -155,7 +159,7 @@
 
 <!-- Table -->
 <div class="ls-card">
-    <div class="table-responsive">
+    <div class="table-responsive lancamentos-table-wrapper">
         <table class="table table-hover mb-0 lancamentos-table" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
             <thead>
                 <tr>
@@ -203,6 +207,16 @@
                                 <i class="fas fa-edit"></i>
                             </a>
                             {% if lancamento.status != 'pago' %}
+                            {% if lancamento.conta_banco and ((lancamento.conta_banco.codigo_banco == '461' and lancamento.conta_banco.asaas_config and lancamento.conta_banco.asaas_config.habilitada) or (lancamento.conta_banco.codigo_banco == '077' and lancamento.conta_banco.inter_config and lancamento.conta_banco.inter_config.habilitada)) %}
+                            {% if not lancamento.asaas_cobrancas and not lancamento.inter_cobrancas %}
+                            <form method="POST" action="{{ url_for('asaas_boleto.gerar', id=lancamento.id) if lancamento.conta_banco.codigo_banco == '461' else url_for('inter_bolepix.gerar', id=lancamento.id) }}" style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-warning btn-sm" title="Gerar cobrança bancária">
+                                    <i class="fas fa-barcode"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            {% endif %}
                             <form method="POST" action="{{ url_for('lancamentos.pagar', id=lancamento.id) }}" style="display: inline;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-outline-success btn-sm" title="Marcar como pago">

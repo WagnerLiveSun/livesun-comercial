@@ -1,10 +1,68 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required
 from flask_login import current_user
-from src.models import db, ContaBanco, FluxoContaModel
+from src.models import db, ContaBanco, FluxoContaModel, Lancamento
+from src.services.asaas_boleto import AsaasBoletoError, configurar_conta_asaas
+from src.services.inter_bolepix import InterBolePixError, configurar_conta_inter
 from src.tenant import scoped_query, scoped_get_or_404, tenant_id
 
 contas_banco_bp = Blueprint('contas_banco', __name__, url_prefix='/contas-banco')
+
+
+def _codigo_banco(value: str | None) -> str:
+    digits = ''.join(char for char in str(value or '') if char.isdigit())
+    return digits.zfill(3) if digits else ''
+
+
+def _configurar_cobranca(conta: ContaBanco, form) -> None:
+    habilitada = form.get('cobranca_bancaria_habilitada') == 'on'
+    codigo = _codigo_banco(conta.codigo_banco)
+    if codigo == '461':
+        configurar_conta_inter(
+            conta_banco_id=conta.id,
+            empresa_id=conta.empresa_id,
+            habilitada=False,
+            ambiente=None,
+            client_id=None,
+            client_secret=None,
+            certificado=None,
+            chave_privada=None,
+            webhook_token=None,
+        )
+        configurar_conta_asaas(
+            conta_banco_id=conta.id,
+            empresa_id=conta.empresa_id,
+            habilitada=habilitada,
+            ambiente=form.get('asaas_ambiente'),
+            api_key=form.get('asaas_api_key'),
+            webhook_token=form.get('asaas_webhook_token'),
+            juros_mensal_percentual=form.get('asaas_juros_mensal_percentual'),
+            multa_percentual=form.get('asaas_multa_percentual'),
+        )
+    elif codigo == '077':
+        configurar_conta_asaas(
+            conta_banco_id=conta.id,
+            empresa_id=conta.empresa_id,
+            habilitada=False,
+            ambiente=None,
+            api_key=None,
+            webhook_token=None,
+        )
+        configurar_conta_inter(
+            conta_banco_id=conta.id,
+            empresa_id=conta.empresa_id,
+            habilitada=habilitada,
+            ambiente=form.get('inter_ambiente'),
+            client_id=form.get('inter_client_id'),
+            client_secret=form.get('inter_client_secret'),
+            certificado=form.get('inter_certificado'),
+            chave_privada=form.get('inter_chave_privada'),
+            webhook_token=form.get('inter_webhook_token'),
+            juros_mensal_percentual=form.get('inter_juros_mensal_percentual'),
+            multa_percentual=form.get('inter_multa_percentual'),
+        )
+    elif habilitada:
+        raise AsaasBoletoError('Informe o código 077 para Banco Inter ou 461 para Asaas antes de habilitar a cobrança.')
 
 
 @contas_banco_bp.route('/')
@@ -41,6 +99,7 @@ def criar():
                 empresa_id=tenant_id(),
                 nome=request.form.get('nome'),
                 banco=request.form.get('banco'),
+                codigo_banco=_codigo_banco(request.form.get('codigo_banco')) or None,
                 agencia=request.form.get('agencia'),
                 numero_conta=request.form.get('numero_conta'),
                 dv=request.form.get('dv'),
@@ -59,11 +118,16 @@ def criar():
                 if total_contas == 0:
                     conta.is_principal = True
             db.session.add(conta)
+            db.session.flush()
+            _configurar_cobranca(conta, request.form)
             db.session.commit()
             
             flash(f'Conta bancária {conta.nome} criada com sucesso', 'success')
             return redirect(url_for('contas_banco.index'))
         
+        except (AsaasBoletoError, InterBolePixError) as e:
+            db.session.rollback()
+            flash(str(e), 'danger')
         except Exception as e:
             import logging, traceback
             db.session.rollback()
@@ -74,7 +138,9 @@ def criar():
     return render_template(
         'contas_banco/form.html',
         action='criar',
-        contas_fluxo=contas_fluxo
+        contas_fluxo=contas_fluxo,
+        asaas_config=None,
+        inter_config=None,
     )
 
 
@@ -89,6 +155,7 @@ def editar(id):
         try:
             conta.nome = request.form.get('nome')
             conta.banco = request.form.get('banco')
+            conta.codigo_banco = _codigo_banco(request.form.get('codigo_banco')) or None
             conta.agencia = request.form.get('agencia')
             conta.numero_conta = request.form.get('numero_conta')
             conta.dv = request.form.get('dv')
@@ -108,11 +175,15 @@ def editar(id):
                     conta.is_principal = True
                 else:
                     conta.is_principal = False
+            _configurar_cobranca(conta, request.form)
             db.session.commit()
             
             flash(f'Conta bancária {conta.nome} atualizada com sucesso', 'success')
             return redirect(url_for('contas_banco.index'))
         
+        except (AsaasBoletoError, InterBolePixError) as e:
+            db.session.rollback()
+            flash(str(e), 'danger')
         except Exception as e:
             import logging, traceback
             db.session.rollback()
@@ -123,7 +194,9 @@ def editar(id):
         'contas_banco/form.html',
         action='editar',
         conta=conta,
-        contas_fluxo=contas_fluxo
+        contas_fluxo=contas_fluxo,
+        asaas_config=conta.asaas_config,
+        inter_config=conta.inter_config,
     )
 
 
@@ -132,7 +205,7 @@ def editar(id):
 def ver(id):
     """View bank account details"""
     conta = scoped_get_or_404(ContaBanco, id)
-    lancamentos = conta.lancamentos.order_by('data_evento DESC').limit(20).all()
+    lancamentos = conta.lancamentos.order_by(Lancamento.data_evento.desc()).limit(20).all()
     
     return render_template(
         'contas_banco/details.html',

@@ -74,6 +74,7 @@ ENDPOINT_PERMISSION_MAP = {
     'lancamentos.editar': 'lancamentos',
     'lancamentos.pagar': 'lancamentos',
     'lancamentos.deletar': 'lancamentos',
+    'asaas_boleto.gerar': 'lancamentos',
 
     'comissoes.listar': 'comissoes',
     'comissoes.apurar': 'comissoes',
@@ -264,6 +265,9 @@ def create_app(config_name=None):
     from src.routes.nfse_nacional import nfse_nacional_bp
     from src.routes.conciliacao import conciliacao_bp
     from src.routes.comercial import comercial_webhook_bp
+    from src.routes.asaas_boleto import asaas_boleto_bp
+    from src.routes.inter_bolepix import inter_bolepix_bp
+    from src.routes.cobrancas_bancarias import cobrancas_bancarias_bp
     from src.routes.admin_comercial import admin_comercial_bp
     from src.routes.comercial_operacional import comercial_bp
     from src.routes.locacao import locacao_bp
@@ -283,6 +287,9 @@ def create_app(config_name=None):
     app.register_blueprint(nfse_nacional_bp)
     app.register_blueprint(conciliacao_bp)
     app.register_blueprint(comercial_webhook_bp)
+    app.register_blueprint(asaas_boleto_bp)
+    app.register_blueprint(inter_bolepix_bp)
+    app.register_blueprint(cobrancas_bancarias_bp)
     app.register_blueprint(admin_comercial_bp)
     app.register_blueprint(comercial_bp)
     app.register_blueprint(locacao_bp)
