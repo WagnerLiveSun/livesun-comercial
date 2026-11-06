@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required
 from flask_login import current_user
-from src.models import db, ContaBanco, FluxoContaModel, Lancamento
+from src.models import db, ContaBanco, FluxoContaModel, InstituicaoBancaria, Lancamento
 from src.services.asaas_boleto import AsaasBoletoError, configurar_conta_asaas
 from src.services.inter_bolepix import InterBolePixError, configurar_conta_inter
 from src.tenant import scoped_query, scoped_get_or_404, tenant_id
@@ -12,6 +12,19 @@ contas_banco_bp = Blueprint('contas_banco', __name__, url_prefix='/contas-banco'
 def _codigo_banco(value: str | None) -> str:
     digits = ''.join(char for char in str(value or '') if char.isdigit())
     return digits.zfill(3) if digits else ''
+
+
+def _atualizar_dados_bancarios(form, conta: ContaBanco) -> None:
+    tipo_conta = (form.get('tipo') or '').strip()
+    codigo = _codigo_banco(form.get('codigo_banco'))
+    instituicao = InstituicaoBancaria.query.filter_by(codigo_banco=codigo).first() if codigo else None
+    if tipo_conta not in {'Conta Corrente', 'Conta Poupança', 'Caixa'}:
+        raise ValueError('Selecione o tipo de conta.')
+    if tipo_conta in {'Conta Corrente', 'Conta Poupança'} and not instituicao:
+        raise ValueError('Selecione um código de banco válido para contas corrente ou poupança.')
+    conta.tipo = tipo_conta
+    conta.codigo_banco = codigo or None
+    conta.banco = instituicao.nome_banco if instituicao else 'Caixa'
 
 
 def _configurar_cobranca(conta: ContaBanco, form) -> None:
@@ -98,17 +111,16 @@ def criar():
             conta = ContaBanco(
                 empresa_id=tenant_id(),
                 nome=request.form.get('nome'),
-                banco=request.form.get('banco'),
-                codigo_banco=_codigo_banco(request.form.get('codigo_banco')) or None,
+                banco='Caixa',
                 agencia=request.form.get('agencia'),
                 numero_conta=request.form.get('numero_conta'),
                 dv=request.form.get('dv'),
-                tipo=request.form.get('tipo'),
                 fluxo_conta_id=request.form.get('fluxo_conta_id', type=int),
                 saldo_inicial=request.form.get('saldo_inicial', type=float),
                 ativo=request.form.get('ativo') == 'on',
                 is_principal=is_principal
             )
+            _atualizar_dados_bancarios(request.form, conta)
             if is_principal:
                 # Desmarcar outras contas principais da mesma empresa
                 ContaBanco.query.filter_by(empresa_id=conta.empresa_id, is_principal=True).update({'is_principal': False})
@@ -128,6 +140,9 @@ def criar():
         except (AsaasBoletoError, InterBolePixError) as e:
             db.session.rollback()
             flash(str(e), 'danger')
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'danger')
         except Exception as e:
             import logging, traceback
             db.session.rollback()
@@ -139,6 +154,7 @@ def criar():
         'contas_banco/form.html',
         action='criar',
         contas_fluxo=contas_fluxo,
+        instituicoes_bancarias=InstituicaoBancaria.query.order_by(InstituicaoBancaria.codigo_banco).all(),
         asaas_config=None,
         inter_config=None,
     )
@@ -154,12 +170,10 @@ def editar(id):
     if request.method == 'POST':
         try:
             conta.nome = request.form.get('nome')
-            conta.banco = request.form.get('banco')
-            conta.codigo_banco = _codigo_banco(request.form.get('codigo_banco')) or None
             conta.agencia = request.form.get('agencia')
             conta.numero_conta = request.form.get('numero_conta')
             conta.dv = request.form.get('dv')
-            conta.tipo = request.form.get('tipo')
+            _atualizar_dados_bancarios(request.form, conta)
             conta.fluxo_conta_id = request.form.get('fluxo_conta_id', type=int)
             conta.saldo_inicial = request.form.get('saldo_inicial', type=float)
             conta.ativo = request.form.get('ativo') == 'on'
@@ -184,6 +198,9 @@ def editar(id):
         except (AsaasBoletoError, InterBolePixError) as e:
             db.session.rollback()
             flash(str(e), 'danger')
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'danger')
         except Exception as e:
             import logging, traceback
             db.session.rollback()
@@ -195,6 +212,7 @@ def editar(id):
         action='editar',
         conta=conta,
         contas_fluxo=contas_fluxo,
+        instituicoes_bancarias=InstituicaoBancaria.query.order_by(InstituicaoBancaria.codigo_banco).all(),
         asaas_config=conta.asaas_config,
         inter_config=conta.inter_config,
     )

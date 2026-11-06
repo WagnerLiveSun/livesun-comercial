@@ -1020,6 +1020,15 @@ class FluxoContaModel(db.Model):
 
 
 
+class InstituicaoBancaria(db.Model):
+
+    __tablename__ = 'instituicoes_bancarias'
+
+    codigo_banco = db.Column(db.String(3), primary_key=True)
+    nome_banco = db.Column(db.String(150), nullable=False)
+    criado_em = db.Column(db.DateTime, default=_utcnow, nullable=False)
+
+
 class ContaBanco(db.Model):
 
     """Bank Account - Conta de Banco"""
