@@ -26,6 +26,7 @@ from src.models import (
     InterCobranca,
     InterWebhookEvento,
     Lancamento,
+    NfseNacionalEmissao,
     db,
 )
 from src.services.asaas_boleto import AsaasBoletoError, proteger_credencial, revelar_credencial
@@ -275,7 +276,20 @@ def gerar_bolepix(
         multa_percentual if multa_percentual is not None else config.multa_percentual,
         'Multa',
     )
-    seu_numero = f'LS{lancamento.empresa_id}-{lancamento.id}'
+    emissao = (
+        NfseNacionalEmissao.query.filter_by(
+            id=nfse_emissao_id,
+            empresa_id=lancamento.empresa_id,
+        ).first()
+        if nfse_emissao_id
+        else None
+    )
+    identificacao = (
+        f'NFS-e {emissao.numero_nfse}'
+        if emissao and emissao.numero_nfse
+        else f'Documento {lancamento.numero_documento or lancamento.id}'
+    )
+    seu_numero = identificacao[:50]
     try:
         client, paths = _client(config)
     except InterBolePixError:
@@ -395,3 +409,46 @@ def processar_webhook(payload: dict[str, Any], event_id: str) -> bool:
     evento.processado_em = datetime.utcnow()
     db.session.commit()
     return True
+
+
+def baixar_bolepix_pdf(cobranca: InterCobranca) -> bytes:
+    client, paths = _client(
+        InterContaConfig.query.filter_by(
+            conta_banco_id=cobranca.conta_banco_id,
+            empresa_id=cobranca.empresa_id,
+        ).first_or_404(),
+    )
+    try:
+        return client.baixar_pdf(cobranca.codigo_solicitacao or '')
+    except InterApiError as exc:
+        raise InterBolePixError(str(exc)) from exc
+    finally:
+        for path in paths:
+            try:
+                os.unlink(path)
+            except OSError:
+                logger.warning('Não foi possível remover arquivo temporário do certificado Inter.')
+
+
+def cancelar_bolepix(cobranca: InterCobranca) -> InterCobranca:
+    config = InterContaConfig.query.filter_by(
+        conta_banco_id=cobranca.conta_banco_id,
+        empresa_id=cobranca.empresa_id,
+    ).first_or_404()
+    client, paths = _client(config)
+    try:
+        client.cancelar_cobranca(cobranca.codigo_solicitacao or '')
+        cobranca.status_inter = 'CANCELADA'
+        cobranca.status_interno = 'cancelado'
+        cobranca.atualizado_em = datetime.utcnow()
+        db.session.commit()
+        return cobranca
+    except InterApiError as exc:
+        db.session.rollback()
+        raise InterBolePixError(str(exc)) from exc
+    finally:
+        for path in paths:
+            try:
+                os.unlink(path)
+            except OSError:
+                logger.warning('Não foi possível remover arquivo temporário do certificado Inter.')

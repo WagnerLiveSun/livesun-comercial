@@ -223,7 +223,13 @@
                         <td><input type="checkbox" class="selecao-boleto" name="cobranca_ids" value="{{ cobranca.id }}"></td>
                         <td><div class="cliente-cobranca"><span class="cliente-avatar">{{ nome_cliente[:1]|upper }}</span><span>{{ nome_cliente }}</span></div></td>
                         <td>R$ {{ cobranca.valor|brl }}</td>
-                        <td title="{{ cobranca.lancamento.observacoes if cobranca.lancamento else '' }}">{{ cobranca.lancamento.numero_documento if cobranca.lancamento and cobranca.lancamento.numero_documento else 'Cobrança bancária' }}</td>
+                        <td title="{{ cobranca.lancamento.observacoes if cobranca.lancamento else '' }}">
+                            {% if cobranca.nfse_emissao and cobranca.nfse_emissao.numero_nfse %}
+                            NFS-e {{ cobranca.nfse_emissao.numero_nfse }}
+                            {% else %}
+                            Documento {{ cobranca.lancamento.numero_documento if cobranca.lancamento and cobranca.lancamento.numero_documento else cobranca.lancamento.id }}
+                            {% endif %}
+                        </td>
                         <td>Boleto Bancário</td>
                         <td>{{ cobranca.data_vencimento.strftime('%d/%m/%Y') }}</td>
                         <td><span class="badge status-boleto bg-{{ 'success' if status in ['received', 'paid', 'pago'] else 'danger' if status in ['overdue', 'vencido', 'canceled', 'cancelado'] else 'warning' }}">{{ cobranca.status_asaas or cobranca.status_interno }}</span></td>
@@ -231,13 +237,14 @@
                             <div class="acoes-boleto">
                                 {% if cobranca.invoice_url or cobranca.bank_slip_url %}
                                 <a class="btn" href="{{ cobranca.bank_slip_url or cobranca.invoice_url }}" target="_blank" rel="noopener" title="Abrir e imprimir"><i class="fas fa-print"></i></a>
-                                <form method="POST" action="{{ url_for('cobrancas_bancarias.enviar_email', id=cobranca.id) }}" onsubmit="return confirmarEnvio(this);">
+                                <form method="POST" action="{{ url_for('cobrancas_bancarias.enviar_email', id=cobranca.id) }}" onsubmit="return prepararEnvio(this);">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="destinatario" value="{{ email_cliente }}">
+                                    <input type="hidden" name="mensagem">
                                     <button class="btn" type="submit" title="Enviar ao cliente"><i class="fas fa-envelope"></i></button>
                                 </form>
                                 {% if status not in ['paid', 'pago', 'received', 'confirmed', 'canceled', 'cancelado'] %}
-                                <form method="POST" action="{{ url_for('cobrancas_bancarias.cancelar', id=cobranca.id) }}" onsubmit="return confirm('Cancelar este boleto no Asaas?');">
+                                <form method="POST" action="{{ url_for('cobrancas_bancarias.cancelar', id=cobranca.id) }}" onsubmit="return confirm('Cancelar este boleto?');">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button class="btn text-danger" type="submit" title="Cancelar boleto"><i class="fas fa-trash"></i></button>
                                 </form>
@@ -257,14 +264,24 @@
                         <td></td>
                         <td><div class="cliente-cobranca"><span class="cliente-avatar">{{ nome_cliente[:1]|upper }}</span><span>{{ nome_cliente }}</span></div></td>
                         <td>R$ {{ cobranca.valor|brl }}</td>
-                        <td title="{{ cobranca.lancamento.observacoes if cobranca.lancamento else '' }}">{{ cobranca.lancamento.numero_documento if cobranca.lancamento and cobranca.lancamento.numero_documento else 'Cobrança bancária' }}</td>
+                        <td title="{{ cobranca.lancamento.observacoes if cobranca.lancamento else '' }}">{{ cobranca.seu_numero }}</td>
                         <td>BolePix Inter</td>
                         <td>{{ cobranca.data_vencimento.strftime('%d/%m/%Y') }}</td>
                         <td><span class="badge status-boleto bg-{{ 'success' if status in ['received', 'paid', 'pago'] else 'danger' if status in ['overdue', 'vencido', 'canceled', 'cancelado'] else 'warning' }}">{{ cobranca.status_inter or cobranca.status_interno }}</span></td>
                         <td>
                             <div class="acoes-boleto">
-                                {% if cobranca.pdf_url %}
-                                <a class="btn" href="{{ cobranca.pdf_url }}" target="_blank" rel="noopener" title="Abrir e imprimir"><i class="fas fa-print"></i></a>
+                                <a class="btn" href="{{ url_for('cobrancas_bancarias.inter_pdf', id=cobranca.id) }}" target="_blank" rel="noopener" title="Abrir e imprimir"><i class="fas fa-print"></i></a>
+                                <form method="POST" action="{{ url_for('cobrancas_bancarias.inter_enviar_email', id=cobranca.id) }}" onsubmit="return prepararEnvio(this);">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="destinatario" value="{{ email_cliente }}">
+                                    <input type="hidden" name="mensagem">
+                                    <button class="btn" type="submit" title="Enviar ao cliente"><i class="fas fa-envelope"></i></button>
+                                </form>
+                                {% if status not in ['paid', 'pago', 'received', 'confirmed', 'canceled', 'cancelado'] %}
+                                <form method="POST" action="{{ url_for('cobrancas_bancarias.inter_cancelar', id=cobranca.id) }}" onsubmit="return confirm('Cancelar este BolePix no Banco Inter?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn text-danger" type="submit" title="Cancelar boleto"><i class="fas fa-trash"></i></button>
+                                </form>
                                 {% endif %}
                                 <small class="text-muted" title="Código da solicitação">{{ cobranca.codigo_solicitacao }}</small>
                             </div>
@@ -306,9 +323,14 @@ function limparFiltros() {
     atualizarListaBoletos();
 }
 
-function confirmarEnvio(formulario) {
-    const destinatario = formulario.querySelector('[name="destinatario"]').value || 'o e-mail cadastrado do cliente';
-    return window.confirm('Enviar este boleto para ' + destinatario + '?');
+function prepararEnvio(formulario) {
+    const destinatario = window.prompt('Destinatário do boleto:', formulario.querySelector('[name="destinatario"]').value || '');
+    if (destinatario === null || !destinatario.trim()) return false;
+    const mensagem = window.prompt('Mensagem do e-mail:', 'Segue o boleto bancário para pagamento.');
+    if (mensagem === null) return false;
+    formulario.querySelector('[name="destinatario"]').value = destinatario.trim();
+    formulario.querySelector('[name="mensagem"]').value = mensagem.trim();
+    return window.confirm('Enviar o boleto para ' + destinatario.trim() + '?');
 }
 
 function confirmarEnvioLote() {

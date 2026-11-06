@@ -21,6 +21,7 @@ from src.models import (
     AsaasWebhookEvento,
     Entidade,
     Lancamento,
+    NfseNacionalEmissao,
     db,
 )
 from src.services.asaas_client import AsaasApiError, AsaasClient
@@ -229,6 +230,19 @@ def gerar_boleto(
         db.session.add(customer)
         db.session.flush()
 
+    emissao = (
+        NfseNacionalEmissao.query.filter_by(
+            id=nfse_emissao_id,
+            empresa_id=lancamento.empresa_id,
+        ).first()
+        if nfse_emissao_id
+        else None
+    )
+    identificacao = (
+        f'NFS-e {emissao.numero_nfse}'
+        if emissao and emissao.numero_nfse
+        else f'Documento {lancamento.numero_documento or lancamento.id}'
+    )
     reference = f'LIVESUN:{lancamento.empresa_id}:LANCAMENTO:{lancamento.id}'
     try:
         payment = client.create_boleto_payment(
@@ -236,7 +250,7 @@ def gerar_boleto(
             value=float(lancamento.valor_real),
             due_date=lancamento.data_vencimento.isoformat(),
             external_reference=reference,
-            description=f'LiveSun Comercial - {lancamento.numero_documento or lancamento.id}',
+            description=f'LiveSun Comercial - {identificacao}',
             interest_percent=float(juros) if juros is not None else None,
             fine_percent=float(multa) if multa is not None else None,
         )

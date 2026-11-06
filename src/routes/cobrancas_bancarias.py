@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from io import BytesIO
 from datetime import datetime
 from decimal import Decimal
 from html import escape
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for, send_file
 from flask_login import current_user, login_required
 from sqlalchemy import or_
 
@@ -22,7 +23,12 @@ from src.models import (
 )
 from src.services.asaas_boleto import AsaasBoletoError, cancelar_boleto, gerar_boleto
 from src.services.asaas_client import AsaasApiError
-from src.services.inter_bolepix import InterBolePixError, gerar_bolepix
+from src.services.inter_bolepix import (
+    InterBolePixError,
+    baixar_bolepix_pdf,
+    cancelar_bolepix,
+    gerar_bolepix,
+)
 from src.services.brevo import brevo_service
 from src.tenant import scoped_get_or_404, scoped_query, tenant_id
 
@@ -112,7 +118,7 @@ def index():
 def enviar_email(id):
     cobranca = scoped_get_or_404(AsaasCobranca, id)
     entidade = cobranca.lancamento.entidade if cobranca.lancamento else None
-    email = (entidade.email if entidade else '').strip()
+    email = (request.form.get('destinatario') or (entidade.email if entidade else '')).strip()
     if not email:
         flash('O cliente não possui e-mail cadastrado.', 'danger')
         return redirect(url_for('cobrancas_bancarias.index'))
@@ -124,7 +130,7 @@ def enviar_email(id):
     nome_cliente = entidade.nome if entidade else email
     empresa = getattr(current_user, 'empresa', None)
     nome_empresa = (getattr(empresa, 'nome_fantasia', None) or getattr(empresa, 'nome', None) or 'LiveSun Comercial')
-    html_content = (
+    mensagem = (request.form.get('mensagem') or '').strip() or (
         f'<p>Olá, {escape(nome_cliente)}.</p>'
         f'<p>Segue o boleto referente à cobrança no valor de '
         f'<strong>R$ {cobranca.valor:,.2f}</strong>, com vencimento em '
@@ -136,12 +142,76 @@ def enviar_email(id):
         email,
         nome_cliente,
         f'Boleto bancário - {nome_empresa}',
-        html_content,
+        mensagem,
     )
     if enviado:
         flash(f'Boleto enviado para {email}.', 'success')
     else:
         flash('O Brevo não confirmou o envio do boleto. Verifique a configuração de e-mail.', 'danger')
+    return redirect(url_for('cobrancas_bancarias.index'))
+
+
+@cobrancas_bancarias_bp.route('/inter/<int:id>/pdf')
+@login_required
+def inter_pdf(id):
+    cobranca = scoped_get_or_404(InterCobranca, id)
+    try:
+        pdf = baixar_bolepix_pdf(cobranca)
+        return send_file(
+            BytesIO(pdf),
+            mimetype='application/pdf',
+            download_name=f'bolepix_{cobranca.codigo_solicitacao}.pdf',
+            as_attachment=False,
+        )
+    except InterBolePixError as exc:
+        flash(str(exc), 'danger')
+        return redirect(url_for('cobrancas_bancarias.index'))
+
+
+@cobrancas_bancarias_bp.route('/inter/<int:id>/enviar-email', methods=['POST'])
+@login_required
+def inter_enviar_email(id):
+    cobranca = scoped_get_or_404(InterCobranca, id)
+    entidade = cobranca.lancamento.entidade if cobranca.lancamento else None
+    email = (request.form.get('destinatario') or (entidade.email if entidade else '')).strip()
+    if not email:
+        flash('Informe o e-mail do cliente.', 'danger')
+        return redirect(url_for('cobrancas_bancarias.index'))
+    empresa = getattr(current_user, 'empresa', None)
+    nome_empresa = getattr(empresa, 'nome_fantasia', None) or getattr(empresa, 'nome', None) or 'LiveSun Comercial'
+    nome_cliente = entidade.nome if entidade else email
+    mensagem = (request.form.get('mensagem') or '').strip() or (
+        f'<p>Olá, {escape(nome_cliente)}.</p>'
+        f'<p>Segue o BolePix referente à cobrança no valor de '
+        f'<strong>R$ {cobranca.valor:,.2f}</strong>, com vencimento em '
+        f'<strong>{cobranca.data_vencimento.strftime("%d/%m/%Y")}</strong>.</p>'
+    )
+    try:
+        pdf = baixar_bolepix_pdf(cobranca)
+        enviado = brevo_service.send_transactional_email(
+            email,
+            nome_cliente,
+            f'BolePix - {nome_empresa}',
+            mensagem,
+            attachment={'name': f'bolepix_{cobranca.codigo_solicitacao}.pdf', 'content': pdf},
+            cc=empresa.email if empresa and empresa.email else None,
+        )
+        flash(f'BolePix enviado para {email}.' if enviado else 'O Brevo não confirmou o envio.', 'success' if enviado else 'danger')
+    except InterBolePixError as exc:
+        flash(str(exc), 'danger')
+    return redirect(url_for('cobrancas_bancarias.index'))
+
+
+@cobrancas_bancarias_bp.route('/inter/<int:id>/cancelar', methods=['POST'])
+@login_required
+def inter_cancelar(id):
+    cobranca = scoped_get_or_404(InterCobranca, id)
+    try:
+        cancelar_bolepix(cobranca)
+        flash('BolePix cancelado com sucesso.', 'success')
+    except InterBolePixError as exc:
+        db.session.rollback()
+        flash(str(exc), 'danger')
     return redirect(url_for('cobrancas_bancarias.index'))
 
 
