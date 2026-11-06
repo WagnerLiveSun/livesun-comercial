@@ -95,6 +95,9 @@
                     {% if (asaas_config and asaas_config.cobranca_habilitada) or (inter_config and inter_config.cobranca_habilitada) %}checked{% endif %}>
                 <label class="form-check-label" for="cobranca_bancaria_habilitada">Habilitar cobrança bancária</label>
             </div>
+            <div id="cobranca-nao-implementada" class="alert alert-warning d-none mb-3" role="alert">
+                Banco não implementado para cobrança bancária.
+            </div>
             <div id="asaas-fields" class="{% if not (asaas_config and asaas_config.cobranca_habilitada) %}d-none{% endif %}">
                 <h6>Asaas</h6>
                 <div class="row">
@@ -136,13 +139,20 @@
 <script>
 function toggleProviderFields() {
     const codigo = document.getElementById('codigo_banco').value;
-    const enabled = document.getElementById('cobranca_bancaria_habilitada').checked;
+    const checkbox = document.getElementById('cobranca_bancaria_habilitada');
     const tipo = document.getElementById('tipo_conta').value;
     const option = document.querySelector('#codigo_banco option:checked');
     document.getElementById('banco').value = option && option.dataset.nome ? option.dataset.nome : (tipo === 'Caixa' ? 'Caixa' : '');
     document.getElementById('codigo_banco').required = tipo !== 'Caixa';
     const asaas = codigo === '461';
     const inter = codigo === '077';
+    const implementado = asaas || inter;
+    checkbox.disabled = !implementado;
+    if (!implementado) {
+        checkbox.checked = false;
+    }
+    document.getElementById('cobranca-nao-implementada').classList.toggle('d-none', implementado);
+    const enabled = checkbox.checked && implementado;
     document.getElementById('asaas-fields').classList.toggle('d-none', !enabled || !asaas);
     document.getElementById('inter-fields').classList.toggle('d-none', !enabled || !inter);
     document.getElementById('asaas_ambiente').required = enabled && asaas;
