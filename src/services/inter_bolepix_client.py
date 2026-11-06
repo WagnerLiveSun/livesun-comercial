@@ -117,4 +117,14 @@ def _error_message(payload: dict[str, Any]) -> str:
     for key in ('message', 'mensagem', 'title', 'detail', 'error_description'):
         if payload.get(key):
             return str(payload[key])
+    errors = payload.get('errors')
+    if isinstance(errors, list):
+        messages = [
+            str(item.get('message') or item.get('mensagem') or item.get('detail') or item)
+            if isinstance(item, dict)
+            else str(item)
+            for item in errors
+        ]
+        if messages:
+            return '; '.join(messages)
     return str(payload)

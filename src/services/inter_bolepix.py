@@ -114,6 +114,15 @@ def _documento(value: str | None) -> str:
     return digits
 
 
+def _telefone(value: str | None) -> tuple[str, str] | None:
+    digits = ''.join(char for char in str(value or '') if char.isdigit())
+    if digits.startswith('55') and len(digits) in {12, 13}:
+        digits = digits[2:]
+    if len(digits) in {10, 11}:
+        return digits[:2], digits[2:]
+    return None
+
+
 def _client(config: InterContaConfig) -> tuple[InterBolePixClient, list[str]]:
     try:
         client_id = revelar_credencial(config.client_id_criptografado)
@@ -189,24 +198,28 @@ def gerar_bolepix(
     except InterBolePixError:
         raise
     try:
+        pagador: dict[str, Any] = {
+            'cpfCnpj': _documento(entidade.cnpj_cpf),
+            'tipoPessoa': 'FISICA' if len(_documento(entidade.cnpj_cpf)) == 11 else 'JURIDICA',
+            'nome': entidade.nome,
+            'endereco': entidade.endereco_rua or '',
+            'numero': entidade.endereco_numero or 'S/N',
+            'bairro': entidade.endereco_bairro or '',
+            'cidade': entidade.endereco_cidade or '',
+            'uf': entidade.endereco_uf or '',
+            'cep': entidade.endereco_cep or '',
+        }
+        if entidade.email:
+            pagador['email'] = entidade.email
+        telefone = _telefone(entidade.telefone)
+        if telefone:
+            pagador['ddd'], pagador['telefone'] = telefone
         body: dict[str, Any] = {
             'seuNumero': seu_numero,
             'valorNominal': f'{Decimal(str(lancamento.valor_real)):.2f}',
             'dataVencimento': lancamento.data_vencimento.isoformat(),
             'numDiasAgenda': '30',
-            'pagador': {
-                'cpfCnpj': _documento(entidade.cnpj_cpf),
-                'tipoPessoa': 'FISICA' if len(_documento(entidade.cnpj_cpf)) == 11 else 'JURIDICA',
-                'nome': entidade.nome,
-                'endereco': entidade.endereco_rua or '',
-                'numero': entidade.endereco_numero or 'S/N',
-                'bairro': entidade.endereco_bairro or '',
-                'cidade': entidade.endereco_cidade or '',
-                'uf': entidade.endereco_uf or '',
-                'cep': entidade.endereco_cep or '',
-                'email': entidade.email or '',
-                'telefone': entidade.telefone or '',
-            },
+            'pagador': pagador,
         }
         if multa is not None:
             body['multa'] = {'codigo': 'PERCENTUAL', 'taxa': f'{multa:.2f}'}
@@ -241,7 +254,10 @@ def gerar_bolepix(
         db.session.add(cobranca)
         db.session.commit()
         return cobranca
-    except (InterApiError, InterBolePixError):
+    except InterApiError as exc:
+        db.session.rollback()
+        raise InterBolePixError(str(exc)) from exc
+    except InterBolePixError:
         db.session.rollback()
         raise
     except Exception as exc:
