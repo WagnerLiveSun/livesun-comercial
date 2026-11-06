@@ -129,7 +129,7 @@ def uri_without_password(uri: str) -> str:
 def sqlalchemy_engine_options(database_uri: str) -> dict:
     options = {
         'pool_pre_ping': True,
-        'pool_recycle': int(os.getenv('DB_POOL_RECYCLE', '1800')),
+        'pool_recycle': int(os.getenv('DB_POOL_RECYCLE', '900')),
     }
     if is_postgresql_uri(database_uri):
         options.update(
@@ -139,6 +139,19 @@ def sqlalchemy_engine_options(database_uri: str) -> dict:
                 'pool_timeout': int(os.getenv('DB_POOL_TIMEOUT', '30')),
                 'connect_args': {
                     'options': '-csearch_path=app,security,pg_catalog',
+                },
+            }
+        )
+    elif str(database_uri).lower().startswith('mysql'):
+        options.update(
+            {
+                'pool_size': int(os.getenv('DB_POOL_SIZE', '5')),
+                'max_overflow': int(os.getenv('DB_MAX_OVERFLOW', '10')),
+                'pool_timeout': int(os.getenv('DB_POOL_TIMEOUT', '30')),
+                'connect_args': {
+                    'connect_timeout': int(os.getenv('DB_CONNECT_TIMEOUT', '10')),
+                    'read_timeout': int(os.getenv('DB_READ_TIMEOUT', '30')),
+                    'write_timeout': int(os.getenv('DB_WRITE_TIMEOUT', '30')),
                 },
             }
         )
