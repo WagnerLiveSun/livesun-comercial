@@ -169,6 +169,10 @@ def _telefone(value: str | None) -> tuple[str, str] | None:
     return None
 
 
+def _cep(value: str | None) -> str:
+    return ''.join(char for char in str(value or '') if char.isdigit())
+
+
 def _validar_pagador(entidade: Entidade) -> None:
     required = {
         'nome': entidade.nome,
@@ -279,7 +283,7 @@ def gerar_bolepix(
             'bairro': entidade.endereco_bairro or '',
             'cidade': entidade.endereco_cidade or '',
             'uf': entidade.endereco_uf or '',
-            'cep': entidade.endereco_cep or '',
+            'cep': _cep(entidade.endereco_cep),
         }
         if entidade.email:
             pagador['email'] = entidade.email
