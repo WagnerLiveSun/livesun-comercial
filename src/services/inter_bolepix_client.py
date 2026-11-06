@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import logging
 from typing import Any
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 class InterApiError(RuntimeError):
@@ -82,6 +85,14 @@ class InterBolePixClient:
             )
         payload = _response_payload(response)
         if response.status_code >= 400:
+            logger.warning(
+                'API Inter rejeitou %s %s: status=%s, chaves_resposta=%s, tamanho_resposta=%s',
+                method,
+                path,
+                response.status_code,
+                sorted(payload.keys()),
+                len(response.content),
+            )
             raise InterApiError(f'Inter {response.status_code}: {_error_message(payload)}')
         return payload
 
@@ -119,6 +130,13 @@ def _response_payload(response: requests.Response) -> dict[str, Any]:
 
 def _error_message(payload: dict[str, Any]) -> str:
     messages = _collect_error_messages(payload)
+    correlation_id = (
+        payload.get('correlationId')
+        or payload.get('correlationID')
+        or payload.get('correlation_id')
+    )
+    if correlation_id:
+        messages.append(f'Código de correlação: {correlation_id}')
     if messages:
         return '; '.join(messages)
     return json.dumps(payload, ensure_ascii=False, separators=(',', ':'))
