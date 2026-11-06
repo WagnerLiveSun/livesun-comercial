@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS instituicoes_bancarias (
     codigo_banco VARCHAR(3) NOT NULL PRIMARY KEY,
     nome_banco VARCHAR(150) NOT NULL,
     criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-), ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO instituicoes_bancarias (codigo_banco, nome_banco) VALUES ('001', 'Banco do Brasil S.A.') ON DUPLICATE KEY UPDATE nome_banco = VALUES(nome_banco);
 INSERT INTO instituicoes_bancarias (codigo_banco, nome_banco) VALUES ('070', 'BRB - BANCO DE BRASILIA S.A.') ON DUPLICATE KEY UPDATE nome_banco = VALUES(nome_banco);
