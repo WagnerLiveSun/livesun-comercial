@@ -221,7 +221,14 @@ def _client(config: InterContaConfig) -> tuple[InterBolePixClient, list[str]]:
         private_key_path=paths[1],
         base_url=base_url,
         conta_corrente=(
-            ''.join(char for char in str(config.conta_banco.numero_conta or '') if char.isdigit())
+            ''.join(
+                char
+                for char in (
+                    f'{config.conta_banco.numero_conta or ""}'
+                    f'{config.conta_banco.dv or ""}'
+                )
+                if char.isdigit()
+            )
             if config.ambiente == 'PRODUCAO'
             else None
         ),
