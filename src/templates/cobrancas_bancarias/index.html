@@ -235,6 +235,12 @@
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button class="btn" type="submit" title="Enviar ao cliente"><i class="fas fa-envelope"></i></button>
                                 </form>
+                                {% if status not in ['paid', 'pago', 'received', 'confirmed', 'canceled', 'cancelado'] %}
+                                <form method="POST" action="{{ url_for('cobrancas_bancarias.cancelar', id=cobranca.id) }}" onsubmit="return confirm('Cancelar este boleto no Asaas?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn text-danger" type="submit" title="Cancelar boleto"><i class="fas fa-trash"></i></button>
+                                </form>
+                                {% endif %}
                                 {% endif %}
                             </div>
                         </td>

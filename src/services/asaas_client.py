@@ -125,6 +125,13 @@ class AsaasClient:
         payload = self._request('GET', f'/payments/{payment_id}')
         return payload if isinstance(payload, dict) else None
 
+    def cancel_payment(self, payment_id: str) -> dict[str, Any]:
+        payment_id = (payment_id or '').strip()
+        if not payment_id:
+            raise AsaasApiError('O Asaas não retornou o identificador da cobrança.')
+        payload = self._request('DELETE', f'/payments/{payment_id}')
+        return payload if isinstance(payload, dict) else {}
+
     def create_boleto_payment(
         self,
         *,

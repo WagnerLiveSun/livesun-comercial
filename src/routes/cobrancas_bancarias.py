@@ -19,7 +19,7 @@ from src.models import (
     ContaBanco,
     db,
 )
-from src.services.asaas_boleto import AsaasBoletoError, gerar_boleto
+from src.services.asaas_boleto import AsaasBoletoError, cancelar_boleto, gerar_boleto
 from src.services.asaas_client import AsaasApiError
 from src.services.inter_bolepix import InterBolePixError, gerar_bolepix
 from src.services.brevo import brevo_service
@@ -145,6 +145,7 @@ def enviar_email_lote():
         flash('Selecione ao menos um boleto.', 'warning')
         return redirect(url_for('cobrancas_bancarias.index'))
 
+
     enviados = 0
     falhas = 0
     for cobranca in scoped_query(AsaasCobranca).filter(AsaasCobranca.id.in_(ids)).all():
@@ -183,6 +184,19 @@ def enviar_email_lote():
         flash(f'{enviados} boleto(s) enviado(s) ao cliente.', 'success')
     if falhas:
         flash(f'{falhas} boleto(s) não puderam ser enviados.', 'warning')
+    return redirect(url_for('cobrancas_bancarias.index'))
+
+
+@cobrancas_bancarias_bp.route('/<int:id>/cancelar', methods=['POST'])
+@login_required
+def cancelar(id):
+    cobranca = scoped_get_or_404(AsaasCobranca, id)
+    try:
+        cancelar_boleto(cobranca)
+        flash('Boleto cancelado com sucesso.', 'success')
+    except (AsaasBoletoError, AsaasApiError) as exc:
+        db.session.rollback()
+        flash(str(exc), 'danger')
     return redirect(url_for('cobrancas_bancarias.index'))
 
 

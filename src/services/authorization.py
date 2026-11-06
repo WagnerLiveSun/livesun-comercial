@@ -48,7 +48,7 @@ _register('entidades', 'index criar editar ver deletar api_search', 'entidades',
 _register('fluxo', 'index criar editar deletar api_search', 'financeiro', 'fluxo', 2)
 _register('contas_banco', 'index criar editar ver deletar api_search', 'financeiro', 'contas_banco')
 _register('lancamentos', 'index criar editar pagar deletar', 'financeiro', 'lancamentos')
-_register('cobrancas_bancarias', 'index gerar', 'financeiro', 'cobrancas_bancarias')
+_register('cobrancas_bancarias', 'index gerar enviar_email enviar_email_lote cancelar', 'financeiro', 'cobrancas_bancarias')
 _register('asaas_boleto', 'gerar', 'financeiro', 'cobrancas_bancarias')
 _register('asaas_boleto', 'webhook', None, 'cobrancas_bancarias')
 _register('inter_bolepix', 'gerar', 'financeiro', 'cobrancas_bancarias')

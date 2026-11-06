@@ -277,6 +277,30 @@ def gerar_boleto(
         raise AsaasBoletoError('Não foi possível registrar o boleto. Consulte os logs técnicos.')
 
 
+def cancelar_boleto(cobranca: AsaasCobranca) -> AsaasCobranca:
+    if not cobranca.asaas_payment_id:
+        raise AsaasBoletoError('A cobrança não possui identificador no Asaas.')
+    if cobranca.status_interno in {'pago', 'cancelado'}:
+        raise AsaasBoletoError('Este boleto não pode ser cancelado no status atual.')
+
+    config = AsaasContaConfig.query.filter_by(
+        conta_banco_id=cobranca.conta_banco_id,
+        empresa_id=cobranca.empresa_id,
+    ).first()
+    if not config or not config.cobranca_habilitada:
+        raise AsaasBoletoError('A conta Asaas desta cobrança não está habilitada.')
+    client = _client(config)
+    payment = client.get_payment(cobranca.asaas_payment_id)
+    if payment and str(payment.get('status') or '').upper() in {'RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'}:
+        raise AsaasBoletoError('Boleto já pago não pode ser cancelado.')
+    result = client.cancel_payment(cobranca.asaas_payment_id)
+    cobranca.status_asaas = str(result.get('status') or 'CANCELED').upper()
+    cobranca.status_interno = 'cancelado'
+    cobranca.mensagem_erro = None
+    db.session.commit()
+    return cobranca
+
+
 def processar_webhook(payload: dict[str, Any], event_id: str, event_type: str) -> bool:
     payment = payload.get('payment') if isinstance(payload.get('payment'), dict) else payload
     reference = str(payment.get('externalReference') or '').strip()
