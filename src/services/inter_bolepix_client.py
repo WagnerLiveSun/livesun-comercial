@@ -171,5 +171,21 @@ def _collect_error_messages(value: Any) -> list[str]:
         'data',
     ):
         if key in value:
-            messages.extend(_collect_error_messages(value[key]))
+            messages.extend(_collect_error_details(value[key]))
     return messages
+
+
+def _collect_error_details(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    if isinstance(value, list):
+        messages: list[str] = []
+        for item in value:
+            messages.extend(_collect_error_details(item))
+        return messages
+    if isinstance(value, dict):
+        messages: list[str] = []
+        for item in value.values():
+            messages.extend(_collect_error_details(item))
+        return messages
+    return []
