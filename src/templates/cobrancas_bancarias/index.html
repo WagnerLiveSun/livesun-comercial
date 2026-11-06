@@ -176,7 +176,7 @@
 </div>
 
 <div class="ls-card p-4">
-    <form method="POST" action="{{ url_for('cobrancas_bancarias.enviar_email_lote') }}" id="form-lote">
+    <form method="POST" action="{{ url_for('cobrancas_bancarias.enviar_email_lote') }}" id="form-lote" onsubmit="return confirmarEnvioLote();">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="boletos-toolbar mb-4">
             <div class="boletos-search">
@@ -231,8 +231,9 @@
                             <div class="acoes-boleto">
                                 {% if cobranca.invoice_url or cobranca.bank_slip_url %}
                                 <a class="btn" href="{{ cobranca.bank_slip_url or cobranca.invoice_url }}" target="_blank" rel="noopener" title="Abrir e imprimir"><i class="fas fa-print"></i></a>
-                                <form method="POST" action="{{ url_for('cobrancas_bancarias.enviar_email', id=cobranca.id) }}">
+                                <form method="POST" action="{{ url_for('cobrancas_bancarias.enviar_email', id=cobranca.id) }}" onsubmit="return confirmarEnvio(this);">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="destinatario" value="{{ email_cliente }}">
                                     <button class="btn" type="submit" title="Enviar ao cliente"><i class="fas fa-envelope"></i></button>
                                 </form>
                                 {% if status not in ['paid', 'pago', 'received', 'confirmed', 'canceled', 'cancelado'] %}
@@ -278,6 +279,16 @@ function limparFiltros() {
     document.getElementById('busca-boletos').value = '';
     document.getElementById('filtro-status').value = '';
     atualizarListaBoletos();
+}
+
+function confirmarEnvio(formulario) {
+    const destinatario = formulario.querySelector('[name="destinatario"]').value || 'o e-mail cadastrado do cliente';
+    return window.confirm('Enviar este boleto para ' + destinatario + '?');
+}
+
+function confirmarEnvioLote() {
+    const selecionados = document.querySelectorAll('.selecao-boleto:checked').length;
+    return window.confirm('Enviar ' + selecionados + ' boleto(s) para os e-mails cadastrados dos clientes?');
 }
 
 document.getElementById('busca-boletos').addEventListener('input', atualizarListaBoletos);
