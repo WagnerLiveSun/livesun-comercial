@@ -218,41 +218,53 @@ def inter_cancelar(id):
 @cobrancas_bancarias_bp.route('/enviar-email-lote', methods=['POST'])
 @login_required
 def enviar_email_lote():
-    ids = request.form.getlist('cobranca_ids', type=int)
-    if not ids:
+    selecionados = request.form.getlist('cobranca_ids')
+    if not selecionados:
         flash('Selecione ao menos um boleto.', 'warning')
         return redirect(url_for('cobrancas_bancarias.index'))
 
-
     enviados = 0
     falhas = 0
-    for cobranca in scoped_query(AsaasCobranca).filter(AsaasCobranca.id.in_(ids)).all():
+    mensagem_customizada = (request.form.get('mensagem') or '').strip()
+    empresa = getattr(current_user, 'empresa', None)
+    nome_empresa = (
+        getattr(empresa, 'nome_fantasia', None)
+        or getattr(empresa, 'nome', None)
+        or 'LiveSun Comercial'
+    )
+    asaas_ids = [int(value.split(':', 1)[1]) for value in selecionados if value.startswith('asaas:')]
+    inter_ids = [int(value.split(':', 1)[1]) for value in selecionados if value.startswith('inter:')]
+    cobrancas = [(cobranca, 'asaas') for cobranca in scoped_query(AsaasCobranca).filter(AsaasCobranca.id.in_(asaas_ids)).all()]
+    cobrancas += [(cobranca, 'inter') for cobranca in scoped_query(InterCobranca).filter(InterCobranca.id.in_(inter_ids)).all()]
+    for cobranca, provedor in cobrancas:
         entidade = cobranca.lancamento.entidade if cobranca.lancamento else None
         email = (entidade.email if entidade else '').strip()
         link = (cobranca.bank_slip_url or cobranca.invoice_url or '').strip()
-        if not email or not link:
+        if not email or (provedor == 'asaas' and not link):
             falhas += 1
             continue
         nome_cliente = entidade.nome if entidade else email
-        empresa = getattr(current_user, 'empresa', None)
-        nome_empresa = (
-            getattr(empresa, 'nome_fantasia', None)
-            or getattr(empresa, 'nome', None)
-            or 'LiveSun Comercial'
-        )
-        html_content = (
-            f'<p>Olá, {escape(nome_cliente)}.</p>'
+        html_content = mensagem_customizada or ''.join((
+            f'<p>Olá, {escape(nome_cliente)}.</p>',
             f'<p>Segue o boleto referente à cobrança no valor de '
             f'<strong>R$ {cobranca.valor:,.2f}</strong>, com vencimento em '
-            f'<strong>{cobranca.data_vencimento.strftime("%d/%m/%Y")}</strong>.</p>'
-            f'<p><a href="{escape(link, quote=True)}">Abrir e imprimir boleto</a></p>'
-            f'<p>Atenciosamente,<br>{escape(nome_empresa)}</p>'
-        )
+            f'<strong>{cobranca.data_vencimento.strftime("%d/%m/%Y")}</strong>.</p>',
+            f'<p><a href="{escape(link, quote=True)}">Abrir e imprimir boleto</a></p>' if link else '',
+            f'<p>Atenciosamente,<br>{escape(nome_empresa)}</p>',
+        ))
+        attachment = None
+        if provedor == 'inter':
+            try:
+                attachment = {
+                    'name': f'bolepix_{cobranca.seu_numero}.pdf',
+                    'content': baixar_bolepix_pdf(cobranca),
+                }
+            except InterBolePixError:
+                falhas += 1
+                continue
         if brevo_service.send_transactional_email(
-            email,
-            nome_cliente,
-            f'Boleto bancário - {nome_empresa}',
-            html_content,
+            email, nome_cliente, f'Boleto bancário - {nome_empresa}',
+            html_content, attachment=attachment,
         ):
             enviados += 1
         else:

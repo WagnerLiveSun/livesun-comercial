@@ -205,7 +205,7 @@
                         <th><input type="checkbox" id="selecionar-todos" aria-label="Selecionar todos"></th>
                         <th>Nome</th>
                         <th>Valor</th>
-                        <th>Descrição</th>
+                        <th>Documento</th>
                         <th>Forma de pagamento</th>
                         <th>Data de vencimento</th>
                         <th>Status</th>
@@ -220,14 +220,14 @@
                     {% set status = (cobranca.status_asaas or cobranca.status_interno or 'pendente')|lower %}
                     {% set status_filtro = 'pago' if status in ['received', 'confirmed', 'paid', 'pago'] else 'vencido' if status in ['overdue', 'vencido'] else 'cancelado' if status in ['canceled', 'cancelado'] else 'pendente' %}
                     <tr data-busca="{{ (nome_cliente ~ ' ' ~ email_cliente)|lower }}" data-status="{{ status_filtro }}">
-                        <td><input type="checkbox" class="selecao-boleto" name="cobranca_ids" value="{{ cobranca.id }}"></td>
+                        <td><input type="checkbox" class="selecao-boleto" name="cobranca_ids" value="asaas:{{ cobranca.id }}"></td>
                         <td><div class="cliente-cobranca"><span class="cliente-avatar">{{ nome_cliente[:1]|upper }}</span><span>{{ nome_cliente }}</span></div></td>
                         <td>R$ {{ cobranca.valor|brl }}</td>
                         <td title="{{ cobranca.lancamento.observacoes if cobranca.lancamento else '' }}">
                             {% if cobranca.nfse_emissao and cobranca.nfse_emissao.numero_nfse %}
-                            NFS-e {{ cobranca.nfse_emissao.numero_nfse }}
+                            {{ cobranca.nfse_emissao.numero_nfse }}
                             {% else %}
-                            Documento {{ cobranca.lancamento.numero_documento if cobranca.lancamento and cobranca.lancamento.numero_documento else cobranca.lancamento.id }}
+                            {{ cobranca.lancamento.numero_documento if cobranca.lancamento and cobranca.lancamento.numero_documento else cobranca.lancamento.id }}
                             {% endif %}
                         </td>
                         <td>Boleto Bancário</td>
@@ -261,10 +261,10 @@
                     {% set status = (cobranca.status_inter or cobranca.status_interno or 'pendente')|lower %}
                     {% set status_filtro = 'pago' if status in ['received', 'confirmed', 'paid', 'pago'] else 'vencido' if status in ['overdue', 'vencido'] else 'cancelado' if status in ['canceled', 'cancelado'] else 'pendente' %}
                     <tr data-busca="{{ (nome_cliente ~ ' ' ~ email_cliente)|lower }}" data-status="{{ status_filtro }}">
-                        <td></td>
+                        <td><input type="checkbox" class="selecao-boleto" name="cobranca_ids" value="inter:{{ cobranca.id }}"></td>
                         <td><div class="cliente-cobranca"><span class="cliente-avatar">{{ nome_cliente[:1]|upper }}</span><span>{{ nome_cliente }}</span></div></td>
                         <td>R$ {{ cobranca.valor|brl }}</td>
-                        <td title="{{ cobranca.lancamento.observacoes if cobranca.lancamento else '' }}">{{ cobranca.seu_numero }}</td>
+                        <td title="{{ cobranca.lancamento.observacoes if cobranca.lancamento else '' }}">{% if cobranca.nfse_emissao and cobranca.nfse_emissao.numero_nfse %}{{ cobranca.nfse_emissao.numero_nfse }}{% else %}{{ cobranca.lancamento.numero_documento if cobranca.lancamento and cobranca.lancamento.numero_documento else cobranca.lancamento.id }}{% endif %}</td>
                         <td>BolePix Inter</td>
                         <td>{{ cobranca.data_vencimento.strftime('%d/%m/%Y') }}</td>
                         <td><span class="badge status-boleto bg-{{ 'success' if status in ['received', 'paid', 'pago'] else 'danger' if status in ['overdue', 'vencido', 'canceled', 'cancelado'] else 'warning' }}">{{ cobranca.status_inter or cobranca.status_interno }}</span></td>
@@ -283,7 +283,6 @@
                                     <button class="btn text-danger" type="submit" title="Cancelar boleto"><i class="fas fa-trash"></i></button>
                                 </form>
                                 {% endif %}
-                                <small class="text-muted" title="Código da solicitação">{{ cobranca.codigo_solicitacao }}</small>
                             </div>
                         </td>
                     </tr>
@@ -335,6 +334,14 @@ function prepararEnvio(formulario) {
 
 function confirmarEnvioLote() {
     const selecionados = document.querySelectorAll('.selecao-boleto:checked').length;
+    if (!selecionados) return false;
+    const mensagem = window.prompt('Mensagem do e-mail (opcional):', '');
+    if (mensagem === null) return false;
+    const campo = document.createElement('input');
+    campo.type = 'hidden';
+    campo.name = 'mensagem';
+    campo.value = mensagem;
+    document.getElementById('form-lote').appendChild(campo);
     return window.confirm('Enviar ' + selecionados + ' boleto(s) para os e-mails cadastrados dos clientes?');
 }
 
