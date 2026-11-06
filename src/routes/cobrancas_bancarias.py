@@ -14,6 +14,7 @@ from src.models import (
     Entidade,
     FluxoContaModel,
     InterContaConfig,
+    InterCobranca,
     Lancamento,
     NfseNacionalEmissao,
     ContaBanco,
