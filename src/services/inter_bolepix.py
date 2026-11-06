@@ -170,6 +170,9 @@ def _client(config: InterContaConfig) -> tuple[InterBolePixClient, list[str]]:
         certificate_path=paths[0],
         private_key_path=paths[1],
         base_url=base_url,
+        conta_corrente=''.join(
+            char for char in str(config.conta_banco.numero_conta or '') if char.isdigit()
+        ),
         timeout_seconds=int(current_app.config.get('INTER_TIMEOUT_SECONDS') or 20),
     ), paths
 

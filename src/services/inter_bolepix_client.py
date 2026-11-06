@@ -20,6 +20,7 @@ class InterBolePixClient:
     certificate_path: str
     private_key_path: str
     base_url: str
+    conta_corrente: str | None = None
     timeout_seconds: int = 20
 
     def __post_init__(self) -> None:
@@ -58,6 +59,8 @@ class InterBolePixClient:
             'content-type': 'application/json',
             'Authorization': f'Bearer {token}',
         }
+        if self.conta_corrente:
+            headers['x-conta-corrente'] = self.conta_corrente
         response = requests.request(
             method,
             f'{self.base_url}{path}',
