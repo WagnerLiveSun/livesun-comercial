@@ -114,17 +114,27 @@ def _response_payload(response: requests.Response) -> dict[str, Any]:
 
 
 def _error_message(payload: dict[str, Any]) -> str:
-    for key in ('message', 'mensagem', 'title', 'detail', 'error_description'):
-        if payload.get(key):
-            return str(payload[key])
-    errors = payload.get('errors')
-    if isinstance(errors, list):
-        messages = [
-            str(item.get('message') or item.get('mensagem') or item.get('detail') or item)
-            if isinstance(item, dict)
-            else str(item)
-            for item in errors
-        ]
-        if messages:
-            return '; '.join(messages)
+    messages = _collect_error_messages(payload)
+    if messages:
+        return '; '.join(messages)
     return str(payload)
+
+
+def _collect_error_messages(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    if isinstance(value, list):
+        messages: list[str] = []
+        for item in value:
+            messages.extend(_collect_error_messages(item))
+        return messages
+    if not isinstance(value, dict):
+        return []
+    messages: list[str] = []
+    for key in ('message', 'mensagem', 'title', 'detail', 'error_description'):
+        if key in value:
+            messages.extend(_collect_error_messages(value[key]))
+    for key in ('errors', 'violacoes', 'violations', 'data'):
+        if key in value:
+            messages.extend(_collect_error_messages(value[key]))
+    return messages
