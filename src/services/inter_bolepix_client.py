@@ -142,6 +142,9 @@ def _error_message(payload: dict[str, Any]) -> str:
     )
     if correlation_id:
         messages.append(f'Código de correlação: {correlation_id}')
+    timestamp = payload.get('timestamp')
+    if timestamp:
+        messages.append(f'Horário Inter: {timestamp}')
     if messages:
         return '; '.join(messages)
     return json.dumps(payload, ensure_ascii=False, separators=(',', ':'))
