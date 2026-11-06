@@ -246,9 +246,34 @@
                             </div>
                         </td>
                     </tr>
-                    {% else %}
-                    <tr><td colspan="8" class="text-center text-muted py-4">Nenhum boleto gerado.</td></tr>
                     {% endfor %}
+                    {% for cobranca in cobrancas_inter %}
+                    {% set cliente = cobranca.lancamento.entidade if cobranca.lancamento else None %}
+                    {% set nome_cliente = cliente.nome if cliente else 'Cliente não identificado' %}
+                    {% set email_cliente = cliente.email if cliente else '' %}
+                    {% set status = (cobranca.status_inter or cobranca.status_interno or 'pendente')|lower %}
+                    {% set status_filtro = 'pago' if status in ['received', 'confirmed', 'paid', 'pago'] else 'vencido' if status in ['overdue', 'vencido'] else 'cancelado' if status in ['canceled', 'cancelado'] else 'pendente' %}
+                    <tr data-busca="{{ (nome_cliente ~ ' ' ~ email_cliente)|lower }}" data-status="{{ status_filtro }}">
+                        <td></td>
+                        <td><div class="cliente-cobranca"><span class="cliente-avatar">{{ nome_cliente[:1]|upper }}</span><span>{{ nome_cliente }}</span></div></td>
+                        <td>R$ {{ cobranca.valor|brl }}</td>
+                        <td title="{{ cobranca.lancamento.observacoes if cobranca.lancamento else '' }}">{{ cobranca.lancamento.numero_documento if cobranca.lancamento and cobranca.lancamento.numero_documento else 'Cobrança bancária' }}</td>
+                        <td>BolePix Inter</td>
+                        <td>{{ cobranca.data_vencimento.strftime('%d/%m/%Y') }}</td>
+                        <td><span class="badge status-boleto bg-{{ 'success' if status in ['received', 'paid', 'pago'] else 'danger' if status in ['overdue', 'vencido', 'canceled', 'cancelado'] else 'warning' }}">{{ cobranca.status_inter or cobranca.status_interno }}</span></td>
+                        <td>
+                            <div class="acoes-boleto">
+                                {% if cobranca.pdf_url %}
+                                <a class="btn" href="{{ cobranca.pdf_url }}" target="_blank" rel="noopener" title="Abrir e imprimir"><i class="fas fa-print"></i></a>
+                                {% endif %}
+                                <small class="text-muted" title="Código da solicitação">{{ cobranca.codigo_solicitacao }}</small>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not cobrancas_asaas and not cobrancas_inter %}
+                    <tr><td colspan="8" class="text-center text-muted py-4">Nenhum boleto gerado.</td></tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>

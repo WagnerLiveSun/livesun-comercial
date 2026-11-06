@@ -87,6 +87,12 @@ def index():
         .limit(50)
         .all()
     )
+    cobrancas_inter = (
+        scoped_query(InterCobranca)
+        .order_by(InterCobranca.criado_em.desc())
+        .limit(50)
+        .all()
+    )
     return render_template(
         'cobrancas_bancarias/index.html',
         contas_banco=_contas_habilitadas(),
@@ -96,6 +102,7 @@ def index():
         fluxos=fluxos,
         empresa_id=empresa_id,
         cobrancas_asaas=cobrancas_asaas,
+        cobrancas_inter=cobrancas_inter,
     )
 
 
