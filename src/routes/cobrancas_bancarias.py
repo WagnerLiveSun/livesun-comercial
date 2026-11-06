@@ -18,6 +18,7 @@ from src.models import (
     db,
 )
 from src.services.asaas_boleto import AsaasBoletoError, gerar_boleto
+from src.services.asaas_client import AsaasApiError
 from src.services.inter_bolepix import InterBolePixError, gerar_bolepix
 from src.tenant import scoped_get_or_404, scoped_query, tenant_id
 
@@ -152,7 +153,7 @@ def gerar():
             f'Cobrança gerada com sucesso. {identificador}.',
             'success',
         )
-    except (AsaasBoletoError, InterBolePixError) as exc:
+    except (AsaasBoletoError, AsaasApiError, InterBolePixError) as exc:
         db.session.rollback()
         flash(str(exc), 'danger')
     except (TypeError, ValueError):
