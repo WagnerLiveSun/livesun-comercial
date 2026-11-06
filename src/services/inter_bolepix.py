@@ -107,7 +107,6 @@ def configurar_conta_inter(
         'Client Secret': client_secret,
         'certificado .crt': certificado,
         'chave privada .key': chave_privada,
-        'token do webhook': webhook_token,
     }
     if config is None and any(not str(value or '').strip() for value in values.values()):
         raise InterBolePixError('As credenciais e certificados do Banco Inter são obrigatórios ao habilitar a cobrança.')
@@ -138,7 +137,13 @@ def configurar_conta_inter(
     for field, value in encrypted_fields.items():
         if value and str(value).strip():
             setattr(config, field, proteger_credencial(str(value)))
-    if any(not getattr(config, field) for field in encrypted_fields):
+    required_fields = (
+        'client_id_criptografado',
+        'client_secret_criptografado',
+        'certificado_criptografado',
+        'chave_privada_criptografada',
+    )
+    if any(not getattr(config, field) for field in required_fields):
         raise InterBolePixError('A configuração do Banco Inter está incompleta.')
     config.cobranca_habilitada = True
     config.ativo = True
