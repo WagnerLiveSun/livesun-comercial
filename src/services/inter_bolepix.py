@@ -6,7 +6,7 @@ import json
 import logging
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 from typing import Any
 
@@ -123,6 +123,24 @@ def _telefone(value: str | None) -> tuple[str, str] | None:
     return None
 
 
+def _validar_pagador(entidade: Entidade) -> None:
+    required = {
+        'nome': entidade.nome,
+        'endereço': entidade.endereco_rua,
+        'cidade': entidade.endereco_cidade,
+        'UF': entidade.endereco_uf,
+        'CEP': entidade.endereco_cep,
+        'número': entidade.endereco_numero,
+    }
+    missing = [label for label, value in required.items() if not str(value or '').strip()]
+    if missing:
+        raise InterBolePixError(
+            f'Complete os dados do pagador antes de emitir: {", ".join(missing)}.'
+        )
+    if not _telefone(entidade.telefone) and entidade.telefone:
+        raise InterBolePixError('O telefone do pagador deve conter DDD e número válidos.')
+
+
 def _client(config: InterContaConfig) -> tuple[InterBolePixClient, list[str]]:
     try:
         client_id = revelar_credencial(config.client_id_criptografado)
@@ -184,6 +202,9 @@ def gerar_bolepix(
     entidade = Entidade.query.filter_by(id=lancamento.entidade_id, empresa_id=lancamento.empresa_id).first()
     if not entidade:
         raise InterBolePixError('Pagador do lançamento não encontrado.')
+    _validar_pagador(entidade)
+    if lancamento.data_vencimento <= date.today():
+        raise InterBolePixError('A data de vencimento deve ser posterior à data atual.')
     juros = _percentual(
         juros_mensal_percentual if juros_mensal_percentual is not None else config.juros_mensal_percentual,
         'Juros mensal',

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from typing import Any
 
 import requests
@@ -117,7 +118,7 @@ def _error_message(payload: dict[str, Any]) -> str:
     messages = _collect_error_messages(payload)
     if messages:
         return '; '.join(messages)
-    return str(payload)
+    return json.dumps(payload, ensure_ascii=False, separators=(',', ':'))
 
 
 def _collect_error_messages(value: Any) -> list[str]:
@@ -134,7 +135,15 @@ def _collect_error_messages(value: Any) -> list[str]:
     for key in ('message', 'mensagem', 'title', 'detail', 'error_description'):
         if key in value:
             messages.extend(_collect_error_messages(value[key]))
-    for key in ('errors', 'violacoes', 'violations', 'data'):
+    for key in (
+        'errors',
+        'erros',
+        'violacoes',
+        'violations',
+        'mensagens',
+        'details',
+        'data',
+    ):
         if key in value:
             messages.extend(_collect_error_messages(value[key]))
     return messages
