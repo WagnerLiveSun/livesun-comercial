@@ -35,17 +35,22 @@ class InterBolePixClient:
         return self.certificate_path, self.private_key_path
 
     def _request_token(self) -> str:
-        response = requests.post(
-            f'{self.base_url}/oauth/v2/token',
-            data={
-                'client_id': self.client_id,
-                'client_secret': self.client_secret,
-                'grant_type': 'client_credentials',
-                'scope': 'boleto-cobranca.read boleto-cobranca.write',
-            },
-            cert=self._certificate,
-            timeout=self.timeout_seconds,
-        )
+        try:
+            response = requests.post(
+                f'{self.base_url}/oauth/v2/token',
+                data={
+                    'client_id': self.client_id,
+                    'client_secret': self.client_secret,
+                    'grant_type': 'client_credentials',
+                    'scope': 'boleto-cobranca.read boleto-cobranca.write',
+                },
+                cert=self._certificate,
+                timeout=self.timeout_seconds,
+            )
+        except requests.exceptions.SSLError as exc:
+            raise InterApiError(
+                'Certificado e chave privada do Banco Inter não correspondem ou estão inválidos.'
+            ) from exc
         payload = _response_payload(response)
         if response.status_code >= 400:
             raise InterApiError(f'Inter OAuth {response.status_code}: {_error_message(payload)}')

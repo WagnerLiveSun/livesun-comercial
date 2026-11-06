@@ -10,6 +10,12 @@ from datetime import datetime, date
 from decimal import Decimal
 from typing import Any
 
+from cryptography import x509
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    PublicFormat,
+    load_pem_private_key,
+)
 from flask import current_app
 from sqlalchemy.exc import IntegrityError
 
@@ -34,6 +40,27 @@ INTER_PRODUCTION_BASE_URL = 'https://cdpj.partners.bancointer.com.br'
 
 class InterBolePixError(ValueError):
     """Erro de validacao ou regra de negocio do Banco Inter."""
+
+
+def _validar_certificado_chave(certificado: str, chave_privada: str) -> None:
+    try:
+        cert = x509.load_pem_x509_certificate(certificado.encode('utf-8'))
+        key = load_pem_private_key(chave_privada.encode('utf-8'), password=None)
+    except (ValueError, TypeError) as exc:
+        raise InterBolePixError(
+            'Certificado ou chave privada inválidos. Cole os conteúdos PEM completos.'
+        ) from exc
+    if cert.public_key().public_bytes(
+        encoding=Encoding.DER,
+        format=PublicFormat.SubjectPublicKeyInfo,
+    ) != key.public_key().public_bytes(
+        encoding=Encoding.DER,
+        format=PublicFormat.SubjectPublicKeyInfo,
+    ):
+        raise InterBolePixError(
+            'O certificado e a chave privada não pertencem ao mesmo par. '
+            'Use o .crt/.pem e .key gerados juntos pelo Banco Inter.'
+        )
 
 
 def _percentual(value: str | float | Decimal | None, label: str) -> Decimal | None:
@@ -87,6 +114,20 @@ def configurar_conta_inter(
     if config is None:
         config = InterContaConfig(empresa_id=empresa_id, conta_banco_id=conta_banco_id)
         db.session.add(config)
+    try:
+        saved_certificate = revelar_credencial(config.certificado_criptografado) if config.certificado_criptografado else ''
+        saved_private_key = revelar_credencial(config.chave_privada_criptografada) if config.chave_privada_criptografada else ''
+    except AsaasBoletoError as exc:
+        raise InterBolePixError(str(exc)) from exc
+    effective_certificate = str(certificado or '').strip() or saved_certificate
+    effective_private_key = str(chave_privada or '').strip() or saved_private_key
+    if (
+        effective_certificate
+        and effective_private_key
+        and '-----END ' in effective_certificate
+        and '-----END ' in effective_private_key
+    ):
+        _validar_certificado_chave(effective_certificate, effective_private_key)
     encrypted_fields = {
         'client_id_criptografado': client_id,
         'client_secret_criptografado': client_secret,
