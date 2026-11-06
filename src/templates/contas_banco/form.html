@@ -147,11 +147,13 @@ function toggleProviderFields() {
     const asaas = codigo === '461';
     const inter = codigo === '077';
     const implementado = asaas || inter;
-    checkbox.disabled = !implementado;
-    if (!implementado) {
+    const bancoInformado = Boolean(tipo && codigo);
+    const bancoNaoImplementado = bancoInformado && !implementado;
+    checkbox.disabled = bancoNaoImplementado;
+    if (bancoNaoImplementado) {
         checkbox.checked = false;
     }
-    document.getElementById('cobranca-nao-implementada').classList.toggle('d-none', implementado);
+    document.getElementById('cobranca-nao-implementada').classList.toggle('d-none', !bancoNaoImplementado);
     const enabled = checkbox.checked && implementado;
     document.getElementById('asaas-fields').classList.toggle('d-none', !enabled || !asaas);
     document.getElementById('inter-fields').classList.toggle('d-none', !enabled || !inter);
