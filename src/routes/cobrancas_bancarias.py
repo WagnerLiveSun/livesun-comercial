@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from html import escape
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import login_required
+from flask_login import current_user, login_required
 from sqlalchemy import or_
 
 from src.models import (
     AsaasContaConfig,
+    AsaasCobranca,
     Entidade,
     FluxoContaModel,
     InterContaConfig,
@@ -20,6 +22,7 @@ from src.models import (
 from src.services.asaas_boleto import AsaasBoletoError, gerar_boleto
 from src.services.asaas_client import AsaasApiError
 from src.services.inter_bolepix import InterBolePixError, gerar_bolepix
+from src.services.brevo import brevo_service
 from src.tenant import scoped_get_or_404, scoped_query, tenant_id
 
 cobrancas_bancarias_bp = Blueprint(
@@ -78,6 +81,12 @@ def index():
     )
     entidades = scoped_query(Entidade).filter_by(ativo=True).order_by(Entidade.nome.asc()).all()
     fluxos = scoped_query(FluxoContaModel).filter_by(ativo=True, tipo='R').all()
+    cobrancas_asaas = (
+        scoped_query(AsaasCobranca)
+        .order_by(AsaasCobranca.criado_em.desc())
+        .limit(50)
+        .all()
+    )
     return render_template(
         'cobrancas_bancarias/index.html',
         contas_banco=_contas_habilitadas(),
@@ -86,7 +95,95 @@ def index():
         entidades=entidades,
         fluxos=fluxos,
         empresa_id=empresa_id,
+        cobrancas_asaas=cobrancas_asaas,
     )
+
+
+@cobrancas_bancarias_bp.route('/<int:id>/enviar-email', methods=['POST'])
+@login_required
+def enviar_email(id):
+    cobranca = scoped_get_or_404(AsaasCobranca, id)
+    entidade = cobranca.lancamento.entidade if cobranca.lancamento else None
+    email = (entidade.email if entidade else '').strip()
+    if not email:
+        flash('O cliente não possui e-mail cadastrado.', 'danger')
+        return redirect(url_for('cobrancas_bancarias.index'))
+    link = (cobranca.bank_slip_url or cobranca.invoice_url or '').strip()
+    if not link:
+        flash('O Asaas não retornou um link para o boleto.', 'danger')
+        return redirect(url_for('cobrancas_bancarias.index'))
+
+    nome_cliente = entidade.nome if entidade else email
+    empresa = getattr(current_user, 'empresa', None)
+    nome_empresa = (getattr(empresa, 'nome_fantasia', None) or getattr(empresa, 'nome', None) or 'LiveSun Comercial')
+    html_content = (
+        f'<p>Olá, {escape(nome_cliente)}.</p>'
+        f'<p>Segue o boleto referente à cobrança no valor de '
+        f'<strong>R$ {cobranca.valor:,.2f}</strong>, com vencimento em '
+        f'<strong>{cobranca.data_vencimento.strftime("%d/%m/%Y")}</strong>.</p>'
+        f'<p><a href="{escape(link, quote=True)}">Abrir e imprimir boleto</a></p>'
+        f'<p>Atenciosamente,<br>{escape(nome_empresa)}</p>'
+    )
+    enviado = brevo_service.send_transactional_email(
+        email,
+        nome_cliente,
+        f'Boleto bancário - {nome_empresa}',
+        html_content,
+    )
+    if enviado:
+        flash(f'Boleto enviado para {email}.', 'success')
+    else:
+        flash('O Brevo não confirmou o envio do boleto. Verifique a configuração de e-mail.', 'danger')
+    return redirect(url_for('cobrancas_bancarias.index'))
+
+
+@cobrancas_bancarias_bp.route('/enviar-email-lote', methods=['POST'])
+@login_required
+def enviar_email_lote():
+    ids = request.form.getlist('cobranca_ids', type=int)
+    if not ids:
+        flash('Selecione ao menos um boleto.', 'warning')
+        return redirect(url_for('cobrancas_bancarias.index'))
+
+    enviados = 0
+    falhas = 0
+    for cobranca in scoped_query(AsaasCobranca).filter(AsaasCobranca.id.in_(ids)).all():
+        entidade = cobranca.lancamento.entidade if cobranca.lancamento else None
+        email = (entidade.email if entidade else '').strip()
+        link = (cobranca.bank_slip_url or cobranca.invoice_url or '').strip()
+        if not email or not link:
+            falhas += 1
+            continue
+        nome_cliente = entidade.nome if entidade else email
+        empresa = getattr(current_user, 'empresa', None)
+        nome_empresa = (
+            getattr(empresa, 'nome_fantasia', None)
+            or getattr(empresa, 'nome', None)
+            or 'LiveSun Comercial'
+        )
+        html_content = (
+            f'<p>Olá, {escape(nome_cliente)}.</p>'
+            f'<p>Segue o boleto referente à cobrança no valor de '
+            f'<strong>R$ {cobranca.valor:,.2f}</strong>, com vencimento em '
+            f'<strong>{cobranca.data_vencimento.strftime("%d/%m/%Y")}</strong>.</p>'
+            f'<p><a href="{escape(link, quote=True)}">Abrir e imprimir boleto</a></p>'
+            f'<p>Atenciosamente,<br>{escape(nome_empresa)}</p>'
+        )
+        if brevo_service.send_transactional_email(
+            email,
+            nome_cliente,
+            f'Boleto bancário - {nome_empresa}',
+            html_content,
+        ):
+            enviados += 1
+        else:
+            falhas += 1
+
+    if enviados:
+        flash(f'{enviados} boleto(s) enviado(s) ao cliente.', 'success')
+    if falhas:
+        flash(f'{falhas} boleto(s) não puderam ser enviados.', 'warning')
+    return redirect(url_for('cobrancas_bancarias.index'))
 
 
 @cobrancas_bancarias_bp.route('/gerar', methods=['POST'])

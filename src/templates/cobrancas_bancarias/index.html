@@ -1,79 +1,289 @@
 {% extends "layout.html" %}
-{% block title %}Cobranças Bancárias{% endblock %}
+{% block title %}Boletos{% endblock %}
 {% block content %}
 <style>
-    input[type="number"].cobranca-valor {
-        -moz-appearance: textfield;
+    .boletos-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
     }
 
-    input[type="number"].cobranca-valor::-webkit-inner-spin-button,
-    input[type="number"].cobranca-valor::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
+    .boletos-search {
+        display: flex;
+        flex: 1 1 360px;
+        min-width: 260px;
+    }
+
+    .boletos-search input {
+        border-radius: 24px 0 0 24px;
+        border-right: 0;
+    }
+
+    .boletos-search button {
+        border-radius: 0 24px 24px 0;
+        border-left: 0;
+    }
+
+    .boletos-table {
+        border-collapse: separate;
+        border-spacing: 0 8px;
+    }
+
+    .boletos-table thead th {
+        border: 0;
+        color: #64748b;
+        font-size: .82rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .boletos-table tbody tr {
+        background: rgba(248, 250, 252, .96);
+        box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .2);
+    }
+
+    .boletos-table tbody td {
+        border: 0;
+        color: #0f172a;
+        padding: 14px 10px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .boletos-table tbody td:first-child {
+        border-radius: 16px 0 0 16px;
+    }
+
+    .boletos-table tbody td:last-child {
+        border-radius: 0 16px 16px 0;
+    }
+
+    .cliente-cobranca {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        min-width: 180px;
+    }
+
+    .cliente-avatar {
+        align-items: center;
+        background: #dbeafe;
+        border-radius: 50%;
+        color: #1d4ed8;
+        display: inline-flex;
+        flex: 0 0 30px;
+        font-size: .8rem;
+        font-weight: 700;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+    }
+
+    .acoes-boleto {
+        display: flex;
+        gap: 4px;
+        justify-content: flex-end;
+    }
+
+    .acoes-boleto .btn {
+        border: 0;
+        color: #1d4ed8;
+        padding: 4px 6px;
+    }
+
+    .status-boleto {
+        border-radius: 999px;
+        font-size: .75rem;
+        padding: 4px 9px;
+    }
+
+    .filtro-boleto {
+        border-radius: 22px;
+        min-width: 150px;
+    }
+
+    @media (max-width: 768px) {
+        .boletos-table { min-width: 980px; }
     }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold ls-page-title">Cobranças Bancárias</h2>
+    <div>
+        <h2 class="fw-bold ls-page-title mb-1">Boletos</h2>
+        <p class="text-muted mb-0">Gerencie cobranças, impressão e envio aos clientes.</p>
+    </div>
+    <button class="btn ls-btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#painel-nova-cobranca">
+        <i class="fas fa-plus"></i> Adicionar cobrança
+    </button>
 </div>
-<div class="ls-card p-4">
-    <p class="text-muted">Selecione explicitamente a origem da cobrança. Os parâmetros de juros e multa são opcionais e, quando vazios, usam o padrão da conta Asaas.</p>
-    <form method="POST" action="{{ url_for('cobrancas_bancarias.gerar') }}" id="form-cobranca">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Origem *</label>
-                <select name="origem" id="origem" class="form-control" required onchange="toggleOrigem()">
-                    <option value="">Selecione...</option>
-                    <option value="nfse">NFS-e autorizada</option>
-                    <option value="lancamento">Lançamento existente</option>
-                    <option value="avulsa">Cobrança avulsa</option>
-                </select>
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Conta bancária do provedor *</label>
-                <select name="conta_banco_id" class="form-control" required>
-                    <option value="">Selecione...</option>
-                    {% for conta in contas_banco %}<option value="{{ conta.id }}">{{ conta.nome }} - {{ conta.banco }}</option>{% endfor %}
-                </select>
-            </div>
-        </div>
-        <div id="origem-nfse" class="d-none mb-3">
-            <label class="form-label">NFS-e autorizada *</label>
-            <select name="nfse_emissao_id" class="form-control">
-                <option value="">Selecione...</option>
-                {% for emissao in emissoes %}<option value="{{ emissao.id }}">{{ emissao.numero_nfse or emissao.numero_interno }} - {{ emissao.tomador.nome }}</option>{% endfor %}
-            </select>
-        </div>
-        <div id="origem-lancamento" class="d-none mb-3">
-            <label class="form-label">Lançamento de recebimento *</label>
-            <select name="lancamento_id" class="form-control">
-                <option value="">Selecione...</option>
-                {% for lancamento in lancamentos %}<option value="{{ lancamento.id }}">{{ lancamento.numero_documento or lancamento.id }} - {{ lancamento.entidade.nome }} - R$ {{ lancamento.valor_real|brl }}</option>{% endfor %}
-            </select>
-        </div>
-        <div id="origem-avulsa" class="d-none">
+
+<div class="collapse mb-4" id="painel-nova-cobranca">
+    <div class="ls-card p-4">
+        <h4 class="ls-page-title mb-3">Nova cobrança</h4>
+        <form method="POST" action="{{ url_for('cobrancas_bancarias.gerar') }}" id="form-cobranca">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="row">
-                <div class="col-md-4 mb-3"><label class="form-label">Cliente *</label><select name="entidade_id" class="form-control">{% for entidade in entidades %}<option value="{{ entidade.id }}">{{ entidade.nome }} - {{ entidade.cnpj_cpf }}</option>{% endfor %}</select></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Conta de fluxo *</label><select name="fluxo_conta_id" class="form-control">{% for fluxo in fluxos %}<option value="{{ fluxo.id }}">{{ fluxo.codigo }} - {{ fluxo.descricao }}</option>{% endfor %}</select></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Valor *</label><input name="valor_real" type="number" step="0.01" min="0.01" class="form-control cobranca-valor"></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Data do evento *</label><input name="data_evento" type="date" class="form-control"></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Vencimento *</label><input name="data_vencimento" type="date" class="form-control"></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Documento</label><input name="numero_documento" class="form-control"></div>
-                <div class="col-md-12 mb-3"><label class="form-label">Observações</label><textarea name="observacoes" class="form-control"></textarea></div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Origem *</label>
+                    <select name="origem" id="origem" class="form-control" required onchange="toggleOrigem()">
+                        <option value="">Selecione...</option>
+                        <option value="nfse">NFS-e autorizada</option>
+                        <option value="lancamento">Lançamento existente</option>
+                        <option value="avulsa">Cobrança avulsa</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Conta bancária do provedor *</label>
+                    <select name="conta_banco_id" class="form-control" required>
+                        <option value="">Selecione...</option>
+                        {% for conta in contas_banco %}<option value="{{ conta.id }}">{{ conta.nome }} - {{ conta.banco }}</option>{% endfor %}
+                    </select>
+                </div>
             </div>
+            <div id="origem-nfse" class="d-none mb-3">
+                <label class="form-label">NFS-e autorizada *</label>
+                <select name="nfse_emissao_id" class="form-control">
+                    <option value="">Selecione...</option>
+                    {% for emissao in emissoes %}<option value="{{ emissao.id }}">{{ emissao.numero_nfse or emissao.numero_interno }} - {{ emissao.tomador.nome }}</option>{% endfor %}
+                </select>
+            </div>
+            <div id="origem-lancamento" class="d-none mb-3">
+                <label class="form-label">Lançamento de recebimento *</label>
+                <select name="lancamento_id" class="form-control">
+                    <option value="">Selecione...</option>
+                    {% for lancamento in lancamentos %}<option value="{{ lancamento.id }}">{{ lancamento.numero_documento or lancamento.id }} - {{ lancamento.entidade.nome }} - R$ {{ lancamento.valor_real|brl }}</option>{% endfor %}
+                </select>
+            </div>
+            <div id="origem-avulsa" class="d-none">
+                <div class="row">
+                    <div class="col-md-4 mb-3"><label class="form-label">Cliente *</label><select name="entidade_id" class="form-control">{% for entidade in entidades %}<option value="{{ entidade.id }}">{{ entidade.nome }} - {{ entidade.cnpj_cpf }}</option>{% endfor %}</select></div>
+                    <div class="col-md-4 mb-3"><label class="form-label">Conta de fluxo *</label><select name="fluxo_conta_id" class="form-control">{% for fluxo in fluxos %}<option value="{{ fluxo.id }}">{{ fluxo.codigo }} - {{ fluxo.descricao }}</option>{% endfor %}</select></div>
+                    <div class="col-md-4 mb-3"><label class="form-label">Valor *</label><input name="valor_real" type="number" step="0.01" min="0.01" class="form-control"></div>
+                    <div class="col-md-4 mb-3"><label class="form-label">Data do evento *</label><input name="data_evento" type="date" class="form-control"></div>
+                    <div class="col-md-4 mb-3"><label class="form-label">Vencimento *</label><input name="data_vencimento" type="date" class="form-control"></div>
+                    <div class="col-md-4 mb-3"><label class="form-label">Documento</label><input name="numero_documento" class="form-control"></div>
+                    <div class="col-md-12 mb-3"><label class="form-label">Observações</label><textarea name="observacoes" class="form-control"></textarea></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 mb-3"><label class="form-label">Juros mensal (%)</label><input name="juros_mensal_percentual" type="number" min="0" max="100" step="0.01" class="form-control"></div>
+                <div class="col-md-3 mb-3"><label class="form-label">Multa (%)</label><input name="multa_percentual" type="number" min="0" max="100" step="0.01" class="form-control"></div>
+            </div>
+            <button type="submit" class="btn ls-btn-primary"><i class="fas fa-barcode"></i> Gerar boleto</button>
+        </form>
+    </div>
+</div>
+
+<div class="ls-card p-4">
+    <form method="POST" action="{{ url_for('cobrancas_bancarias.enviar_email_lote') }}" id="form-lote">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="boletos-toolbar mb-4">
+            <div class="boletos-search">
+                <input type="search" id="busca-boletos" class="form-control" placeholder="Procurar por nome ou e-mail do cliente">
+                <button class="btn btn-outline-primary" type="button" aria-label="Pesquisar"><i class="fas fa-search"></i></button>
+            </div>
+            <select id="filtro-status" class="form-control filtro-boleto">
+                <option value="">Todos os status</option>
+                <option value="pendente">Pendente</option>
+                <option value="pago">Pago</option>
+                <option value="vencido">Vencido</option>
+                <option value="cancelado">Cancelado</option>
+            </select>
+            <button class="btn btn-outline-primary filtro-boleto" type="button" onclick="limparFiltros()">
+                <i class="fas fa-filter"></i> Limpar filtros
+            </button>
+            <button class="btn btn-outline-primary" type="submit" id="acao-lote" disabled>
+                <i class="fas fa-envelope"></i> Enviar selecionados
+            </button>
         </div>
-        <div class="row">
-            <div class="col-md-3 mb-3"><label class="form-label">Juros mensal (%)</label><input name="juros_mensal_percentual" type="number" min="0" max="100" step="0.01" class="form-control cobranca-valor"></div>
-            <div class="col-md-3 mb-3"><label class="form-label">Multa (%)</label><input name="multa_percentual" type="number" min="0" max="100" step="0.01" class="form-control cobranca-valor"></div>
+
+        <div class="table-responsive">
+            <table class="table boletos-table mb-0" id="tabela-boletos">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selecionar-todos" aria-label="Selecionar todos"></th>
+                        <th>Nome</th>
+                        <th>Valor</th>
+                        <th>Descrição</th>
+                        <th>Forma de pagamento</th>
+                        <th>Data de vencimento</th>
+                        <th>Status</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cobranca in cobrancas_asaas %}
+                    {% set cliente = cobranca.lancamento.entidade if cobranca.lancamento else None %}
+                    {% set nome_cliente = cliente.nome if cliente else 'Cliente não identificado' %}
+                    {% set email_cliente = cliente.email if cliente else '' %}
+                    {% set status = (cobranca.status_asaas or cobranca.status_interno or 'pendente')|lower %}
+                    {% set status_filtro = 'pago' if status in ['received', 'confirmed', 'paid', 'pago'] else 'vencido' if status in ['overdue', 'vencido'] else 'cancelado' if status in ['canceled', 'cancelado'] else 'pendente' %}
+                    <tr data-busca="{{ (nome_cliente ~ ' ' ~ email_cliente)|lower }}" data-status="{{ status_filtro }}">
+                        <td><input type="checkbox" class="selecao-boleto" name="cobranca_ids" value="{{ cobranca.id }}"></td>
+                        <td><div class="cliente-cobranca"><span class="cliente-avatar">{{ nome_cliente[:1]|upper }}</span><span>{{ nome_cliente }}</span></div></td>
+                        <td>R$ {{ cobranca.valor|brl }}</td>
+                        <td title="{{ cobranca.lancamento.observacoes if cobranca.lancamento else '' }}">{{ cobranca.lancamento.numero_documento if cobranca.lancamento and cobranca.lancamento.numero_documento else 'Cobrança bancária' }}</td>
+                        <td>Boleto Bancário</td>
+                        <td>{{ cobranca.data_vencimento.strftime('%d/%m/%Y') }}</td>
+                        <td><span class="badge status-boleto bg-{{ 'success' if status in ['received', 'paid', 'pago'] else 'danger' if status in ['overdue', 'vencido', 'canceled', 'cancelado'] else 'warning' }}">{{ cobranca.status_asaas or cobranca.status_interno }}</span></td>
+                        <td>
+                            <div class="acoes-boleto">
+                                {% if cobranca.invoice_url or cobranca.bank_slip_url %}
+                                <a class="btn" href="{{ cobranca.bank_slip_url or cobranca.invoice_url }}" target="_blank" rel="noopener" title="Abrir e imprimir"><i class="fas fa-print"></i></a>
+                                <form method="POST" action="{{ url_for('cobrancas_bancarias.enviar_email', id=cobranca.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn" type="submit" title="Enviar ao cliente"><i class="fas fa-envelope"></i></button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="8" class="text-center text-muted py-4">Nenhum boleto gerado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <button type="submit" class="btn ls-btn-primary"><i class="fas fa-barcode"></i> Gerar boleto</button>
     </form>
 </div>
+
 <script>
 function toggleOrigem() {
     const origem = document.getElementById('origem').value;
     ['nfse', 'lancamento', 'avulsa'].forEach(item => document.getElementById('origem-' + item).classList.toggle('d-none', origem !== item));
 }
+
+function atualizarListaBoletos() {
+    const busca = document.getElementById('busca-boletos').value.toLowerCase().trim();
+    const status = document.getElementById('filtro-status').value;
+    document.querySelectorAll('#tabela-boletos tbody tr[data-busca]').forEach(row => {
+        const visivel = (!busca || row.dataset.busca.includes(busca)) && (!status || row.dataset.status.includes(status));
+        row.classList.toggle('d-none', !visivel);
+    });
+}
+
+function atualizarAcaoLote() {
+    const selecionados = document.querySelectorAll('.selecao-boleto:checked').length;
+    document.getElementById('acao-lote').disabled = selecionados === 0;
+}
+
+function limparFiltros() {
+    document.getElementById('busca-boletos').value = '';
+    document.getElementById('filtro-status').value = '';
+    atualizarListaBoletos();
+}
+
+document.getElementById('busca-boletos').addEventListener('input', atualizarListaBoletos);
+document.getElementById('filtro-status').addEventListener('change', atualizarListaBoletos);
+document.getElementById('selecionar-todos').addEventListener('change', function () {
+    document.querySelectorAll('#tabela-boletos tbody tr[data-busca]').forEach(row => {
+        if (!row.classList.contains('d-none')) {
+            row.querySelector('.selecao-boleto').checked = this.checked;
+        }
+    });
+    atualizarAcaoLote();
+});
+document.querySelectorAll('.selecao-boleto').forEach(item => item.addEventListener('change', atualizarAcaoLote));
 </script>
 {% endblock %}
