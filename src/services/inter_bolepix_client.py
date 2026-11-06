@@ -123,7 +123,7 @@ class InterBolePixClient:
         return self._request(
             'POST',
             f'/cobranca/v3/cobrancas/{codigo_solicitacao}/cancelar',
-            json={},
+            json={'motivoCancelamento': 'APEDIDODOCLIENTE'},
         )
 
 
