@@ -28,6 +28,8 @@ from src.services.inter_bolepix_client import InterApiError, InterBolePixClient
 logger = logging.getLogger(__name__)
 
 INTER_CODIGO_BANCO = '077'
+INTER_SANDBOX_BASE_URL = 'https://cdpj-sandbox.partners.uatinter.co'
+INTER_PRODUCTION_BASE_URL = 'https://cdpj.partners.bancointer.com.br'
 
 
 class InterBolePixError(ValueError):
@@ -123,9 +125,9 @@ def _client(config: InterContaConfig) -> tuple[InterBolePixClient, list[str]]:
     if not all((client_id, client_secret, certificate, private_key)):
         raise InterBolePixError('Conta Inter habilitada sem credenciais ou certificados configurados.')
     base_url = (
-        'https://cdpj.partners.bancointer.com.br'
+        INTER_PRODUCTION_BASE_URL
         if config.ambiente == 'PRODUCAO'
-        else 'https://cdpj-sandbox.partners.bancointer.com.br'
+        else INTER_SANDBOX_BASE_URL
     )
     paths: list[str] = []
     for suffix, content in (('.crt', certificate), ('.key', private_key)):
