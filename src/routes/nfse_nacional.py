@@ -2117,7 +2117,7 @@ def emissao_download_dps(emissao_id: int):
 @login_required
 def emissao_download_nfse(emissao_id: int):
     emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
-    xml = _recuperar_dados_fiscais(emissao, consultar_api=True)
+    xml = _obter_xml_nfse_autorizado(emissao, consultar_api=True)
     if not xml:
         flash("XML autorizado da NFS-e indisponivel.", "warning")
         return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
@@ -2132,7 +2132,7 @@ def emissao_download_nfse(emissao_id: int):
 def emissao_imprimir_danfs(emissao_id: int):
     emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
     _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
-    xml = _recuperar_dados_fiscais(emissao, consultar_api=True)
+    xml = _obter_xml_nfse_autorizado(emissao, consultar_api=True)
     if not xml:
         flash("XML autorizado indisponivel; DANFS-e nao pode ser gerado.", "warning")
         return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
