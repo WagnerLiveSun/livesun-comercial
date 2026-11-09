@@ -1,0 +1,59 @@
+{% set modulos = [
+    ('propostas', 'Propostas', 'fa-file-invoice-dollar', [
+        ('comercial_operacional.orcamentos_index', 'Propostas comerciais', 'fa-file-invoice-dollar'),
+        ('comercial_operacional.propostas_aprovacao', 'Aprovação de propostas', 'fa-clipboard-check')
+    ]),
+    ('fiscal', 'Fiscal', 'fa-file-invoice', [
+        ('nfse_nacional.listagem', 'NFS-e Emitidas', 'fa-list'),
+        ('nfse_nacional.emissoes', 'Geração de NFS-e', 'fa-plus-circle')
+    ]),
+    ('financeiro', 'Financeiro', 'fa-hand-holding-usd', [
+        ('lancamentos.index', 'Lançamentos', 'fa-receipt'),
+        ('cobrancas_bancarias.index', 'Cobranças bancárias', 'fa-barcode')
+    ])
+] %}
+{% set disponiveis = namespace(modulos=[]) %}
+{% for chave, titulo, icone, acoes in modulos %}
+    {% set permitidas = namespace(acoes=[]) %}
+    {% for endpoint, rotulo, icone_acao in acoes %}
+        {% if can_access_endpoint(endpoint) %}
+            {% set permitidas.acoes = permitidas.acoes + [(endpoint, rotulo, icone_acao)] %}
+        {% endif %}
+    {% endfor %}
+    {% if permitidas.acoes %}
+        {% set disponiveis.modulos = disponiveis.modulos + [(chave, titulo, icone, permitidas.acoes)] %}
+    {% endif %}
+{% endfor %}
+{% if disponiveis.modulos %}
+<section class="ls-card ls-quick-actions p-4 mb-4" aria-labelledby="acoes-rapidas-titulo">
+    <div class="d-flex align-items-start gap-3 mb-4">
+        <span class="ls-quick-actions-icon" aria-hidden="true"><i class="fas fa-bolt"></i></span>
+        <div>
+            <h2 id="acoes-rapidas-titulo" class="h5 fw-bold mb-1">Ações rápidas</h2>
+            <p class="text-muted small mb-0">Acesse os principais processos por módulo.</p>
+        </div>
+    </div>
+    <div class="row g-3">
+        {% for chave, titulo, icone, acoes in disponiveis.modulos %}
+        <div class="col-12 col-md" data-quick-actions-module="{{ chave }}">
+            <nav class="ls-quick-actions-module h-100 p-3" aria-labelledby="acoes-rapidas-{{ chave }}">
+                <h3 id="acoes-rapidas-{{ chave }}" class="h6 fw-bold mb-3">
+                    <i class="fas {{ icone }} me-2" aria-hidden="true"></i>{{ titulo }}
+                </h3>
+                <ul class="list-unstyled d-grid gap-2 mb-0">
+                    {% for endpoint, rotulo, icone_acao in acoes %}
+                    <li>
+                        <a class="ls-quick-action" href="{{ url_for(endpoint) }}">
+                            <i class="fas {{ icone_acao }} ls-quick-action-icon" aria-hidden="true"></i>
+                            <span>{{ rotulo }}</span>
+                            <i class="fas fa-chevron-right ls-quick-action-arrow" aria-hidden="true"></i>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}

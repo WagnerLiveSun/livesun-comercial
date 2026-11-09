@@ -2,6 +2,11 @@
 
 {% block title %}Painel Gerencial{% endblock %}
 
+{% block extra_css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_geral.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
@@ -9,6 +14,8 @@
         <p class="text-muted">Visão geral do sistema</p>
     </div>
 </div>
+
+{% include 'dashboard_acoes_rapidas.html' %}
 
 <!-- KPIs de Entidades -->
 <div class="row mb-4">
