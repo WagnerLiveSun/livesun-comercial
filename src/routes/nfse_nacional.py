@@ -190,6 +190,32 @@ def _obter_xml_nfse_autorizado(emissao, consultar_api=True):
     return ""
 
 
+def _recuperar_dados_fiscais(emissao, consultar_api=False):
+    """Recupera dados fiscais persistidos sem retransmitir a DPS."""
+    alterou = atualizar_identificadores_nfse(emissao)
+    xml = _obter_xml_nfse_autorizado(emissao, consultar_api=consultar_api)
+    if xml:
+        alterou = atualizar_identificadores_nfse(emissao, xml_nfse=xml) or alterou
+        dados = _authorized_nfse_data(xml, emissao.chave_nfse or "")
+        for campo in ("codigo_tributacao_nacional", "codigo_tributacao_municipal", "local_prestacao"):
+            valor = dados.get(campo)
+            if valor and getattr(emissao, campo, None) != valor:
+                setattr(emissao, campo, valor)
+                alterou = True
+        if dados.get("endereco_tomador"):
+            endereco = dados["endereco_tomador"]
+            if dados.get("numero_tomador"):
+                endereco += f", {dados['numero_tomador']}"
+            if dados.get("bairro_tomador"):
+                endereco += f" - {dados['bairro_tomador']}"
+            if getattr(emissao, "tomador_endereco", None) != endereco:
+                emissao.tomador_endereco = endereco
+                alterou = True
+    if alterou:
+        db.session.commit()
+    return xml
+
+
 def _recuperar_ou_criar_lancamento(emissao, usuario_id=None):
     """Recupera ou cria o lançamento financeiro de forma idempotente.
 
@@ -1365,6 +1391,8 @@ def _build_payload(
         "numero_nfse_sugerido": payload.get("numero_nfse_sugerido"),
         "hash_idempotencia": hash_idempotencia,
         "tomador_id": tomador.id,
+        "data_emissao": payload.get("data_emissao"),
+        "data_vencimento": payload.get("data_vencimento"),
         "tomador_nome": tomador.nome,
         "tomador_documento": tomador.cnpj_cpf,
         "tomador_tipo": tomador.tipo,
@@ -1743,6 +1771,7 @@ def emissoes():
 
     data = request.get_json(silent=True) if request.is_json else request.form
 
+    emissao_reservada_id = None
     try:
         ativo_cfg = NfseNacionalConfiguracao.query.filter_by(empresa_id=empresa_id, emissor_ativo=True).first()
         ambiente_payload = (data.get("ambiente") or "").strip().lower()
@@ -1980,7 +2009,8 @@ def emissoes():
                                 "situacao_fiscal": existente.situacao_fiscal}), 200
             return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=existente.id))
 
-        resultado = transmitiremissao(payload, configuracao)
+        emissao_reservada_id = emissao.id
+        resultado = transmitiremissao({**payload, "xml_dps": emissao.xml_dps}, configuracao)
 
         # Persistir dados fiscais imediatamente após retorno da SEFIN
         emissao.status_processamento = resultado.get("status") or "ERRO"
@@ -2082,6 +2112,15 @@ def emissoes():
 
     except Exception as exc:
         db.session.rollback()
+        # A reserva permanece mesmo quando o retorno da chamada fiscal é incerto.
+        # Não sugerir nova emissão nem perder a referência para conferência.
+        if emissao_reservada_id is not None:
+            logging.exception("Falha após reservar emissão %s; verificar retorno sem retransmitir.", emissao_reservada_id)
+            mensagem = "Emissão registrada, mas o resultado precisa ser verificado. Não emita novamente."
+            if request.is_json:
+                return jsonify({"emissao_id": str(emissao_reservada_id), "error": mensagem}), 202
+            flash(mensagem, "warning")
+            return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao_reservada_id))
         if request.is_json:
             return jsonify(_json_safe({"error": str(exc)})), 400
         flash(f"Erro ao emitir NFS-e: {exc}", "danger")
@@ -2097,6 +2136,56 @@ def emissao_detalhe(emissao_id: int):
     _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
     return render_template("nfse_nacional/emissao_detalhe.html", emissao=emissao)
 
+
+@nfse_nacional_bp.route("/emissoes/<int:emissao_id>/conclusao", methods=["GET"])
+@login_required
+def emissao_conclusao(emissao_id: int):
+    emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
+    xml = _recuperar_dados_fiscais(emissao, consultar_api=False)
+    _sincronizar_cancelamento_emissao(emissao, consultar_api=False)
+    return render_template(
+        "nfse_nacional/emissao_conclusao.html",
+        emissao=emissao,
+        danfse_disponivel=bool(xml and emissao.numero_nfse),
+    )
+
+
+@nfse_nacional_bp.route("/emissoes/<int:emissao_id>/recuperar-dados", methods=["POST"])
+@login_required
+def emissao_recuperar_dados(emissao_id: int):
+    emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
+    _recuperar_dados_fiscais(emissao, consultar_api=True)
+    if emissao.numero_nfse:
+        flash("Número oficial recuperado, sem nova emissão.", "success")
+    else:
+        flash("Dados fiscais ainda indisponíveis. A nota não foi retransmitida.", "warning")
+    return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=emissao.id))
+
+
+@nfse_nacional_bp.route("/emissoes/<int:emissao_id>/download/danfs", methods=["GET"])
+@login_required
+def emissao_download_danfs(emissao_id: int):
+    emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
+    _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
+    xml = _recuperar_dados_fiscais(emissao, consultar_api=True)
+    if not xml or not emissao.numero_nfse:
+        flash("XML autorizado ou número oficial indisponível para gerar o PDF.", "warning")
+        return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=emissao.id))
+    try:
+        pdf = _gerar_pdf_danfs_emissao(
+            emissao,
+            emissao.empresa,
+            _authorized_nfse_data(xml, emissao.chave_nfse or ""),
+        )
+    except Exception:
+        logging.exception("Falha ao gerar PDF da emissão %s", emissao.id)
+        flash("Não foi possível gerar o PDF. A emissão permanece gravada; tente novamente.", "danger")
+        return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=emissao.id))
+    resposta = Response(pdf, mimetype="application/pdf")
+    resposta.headers["Content-Disposition"] = (
+        f'attachment; filename="danfse_{emissao.numero_nfse}.pdf"'
+    )
+    return resposta
 
 
 
@@ -2117,7 +2206,7 @@ def emissao_download_dps(emissao_id: int):
 @login_required
 def emissao_download_nfse(emissao_id: int):
     emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
-    xml = _obter_xml_nfse_autorizado(emissao, consultar_api=True)
+    xml = _recuperar_dados_fiscais(emissao, consultar_api=True)
     if not xml:
         flash("XML autorizado da NFS-e indisponivel.", "warning")
         return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
@@ -2132,7 +2221,7 @@ def emissao_download_nfse(emissao_id: int):
 def emissao_imprimir_danfs(emissao_id: int):
     emissao = scoped_get_or_404(NfseNacionalEmissao, emissao_id)
     _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
-    xml = _obter_xml_nfse_autorizado(emissao, consultar_api=True)
+    xml = _recuperar_dados_fiscais(emissao, consultar_api=True)
     if not xml:
         flash("XML autorizado indisponivel; DANFS-e nao pode ser gerado.", "warning")
         return redirect(url_for("nfse_nacional.emissao_detalhe", emissao_id=emissao.id))
@@ -2557,7 +2646,7 @@ def enviar_email(id):
     Envia o DANFS-e autorizado por email ao cliente.
     """
     emissao = scoped_get_or_404(NfseNacionalEmissao, id)
-    empresa = current_user.empresa or emissao.empresa
+    empresa = emissao.empresa
 
     # Destinatário principal: email do tomador
     email_cliente = request.form.get("email_cliente", "").strip()
@@ -2572,6 +2661,7 @@ def enviar_email(id):
     # Sincroniza cancelamento (campos locais, evento e API nacional) antes de
     # decidir se o envio é permitido e para marcar o DANFS-e no PDF.
     _sincronizar_cancelamento_emissao(emissao, consultar_api=True)
+    _recuperar_dados_fiscais(emissao, consultar_api=True)
 
     autorizada = (
         emissao.status_processamento == "AUTORIZADA"
@@ -2592,7 +2682,6 @@ def enviar_email(id):
 
     try:
         danfse_data = _preparar_danfse(emissao)
-        empresa = current_user.empresa or emissao.empresa
         xml_nfse = None
         pdf_bytes = _gerar_pdf_danfs_emissao(emissao, empresa, danfse_data)
         nome_cliente = (
@@ -2623,7 +2712,7 @@ def enviar_email(id):
     else:
         flash("Brevo não confirmou o envio do DANFS-e. Verifique a API e o remetente.", "danger")
 
-    return redirect(url_for("nfse_nacional.listagem"))
+    return redirect(url_for("nfse_nacional.emissao_conclusao", emissao_id=emissao.id))
 
 
 @nfse_nacional_bp.route("/cancelamento-substituicao", methods=["GET", "POST"])

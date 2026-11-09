@@ -131,8 +131,8 @@ class ContasBancoAccessTestCase(unittest.TestCase):
             db.session.commit()
 
     def form(self):
-        return dict(nome='Nova Conta', banco='Banco', agencia='1', numero_conta='123',
-                    tipo='Corrente', fluxo_conta_id=str(self.fluxo_id), saldo_inicial='10',
+        return dict(nome='Nova Conta', banco='Caixa', agencia='1', numero_conta='123',
+                    tipo='Caixa', fluxo_conta_id=str(self.fluxo_id), saldo_inicial='10',
                     ativo='on', csrf_token=self.client.get('/csrf-token').get_data(as_text=True))
 
     def routes(self):

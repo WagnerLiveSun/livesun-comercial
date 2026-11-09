@@ -911,7 +911,6 @@ def transmitiremissao(payload: dict, configuracao=None) -> dict:
     request_json_body = build_emissao_json_payload(payload, dps_xml_assinado)
 
     base_emissao = get_base_emissao(configuracao=configuracao, ambiente=ambiente)
-    base_distribuicao = get_base_distribuicao(configuracao=configuracao, ambiente=ambiente)
 
     emission_candidates = candidate_emission_urls(base_emissao)
     request_url = emission_candidates[0] if emission_candidates else f"{base_emissao}/nfse"
@@ -964,7 +963,6 @@ def transmitiremissao(payload: dict, configuracao=None) -> dict:
                 "request_content_type": headers_json["Content-Type"],
                 "request_body": jsonsafe(request_json_body),
                 "base_emissao": base_emissao,
-                "base_distribuicao": base_distribuicao,
                 "response_headers": dict(response.headers),
                 "response_body": retorno,
             },
