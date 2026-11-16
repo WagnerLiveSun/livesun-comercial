@@ -6,7 +6,7 @@ from datetime import date, datetime, timezone, timedelta
 from flask import Flask
 from flask_login import LoginManager
 import pytest
-from src.models import db, Empresa, User, AssinaturaEmpresa
+from src.models import db, Empresa, User, AssinaturaEmpresa, CatalogoPlanoComercial
 from src.models.central_integracao import CentralConfiguracao, CentralVinculo, CentralCadastroPendente
 from src.routes.central_integracao import register
 from src.services.central_assinaturas import cipher, enabled
@@ -165,3 +165,42 @@ def test_valid_courtesy_callback_does_not_activate_or_change_legacy(application)
     db.session.refresh(legacy)
     assert legacy.status=='suspensa' and legacy.bonus_dias==20
     assert not enabled()
+
+
+def test_catalog_export_is_signed_readonly_and_preserves_values(application):
+    active=CatalogoPlanoComercial(codigo_plano='premium',nome_exibicao='Premium',periodicidade='mensal',
+        versao_oferta=1,preco='99.90',moeda='BRL',limite_usuarios=7,ativo=True)
+    used=CatalogoPlanoComercial(codigo_plano='basic',nome_exibicao='Básico antigo',periodicidade='mensal',
+        versao_oferta=1,preco='49.90',moeda='BRL',limite_usuarios=2,ativo=False)
+    unused=CatalogoPlanoComercial(codigo_plano='basic',nome_exibicao='Inativo sem contrato',periodicidade='mensal',
+        versao_oferta=2,preco='59.90',moeda='BRL',ativo=False)
+    db.session.add_all([active,used,unused]);db.session.flush()
+    db.session.query(AssinaturaEmpresa).one().catalogo_plano_id=used.id
+    db.session.commit()
+    client=application.test_client()
+    path='/central/planos?apos=0'
+    assert client.get(path).status_code==401
+    response=client.get(path,headers=signed(path.encode()))
+    assert response.status_code==200
+    rows=response.json['planos']
+    assert [row['id'] for row in rows]==[active.id,used.id]
+    assert rows[0]['preco']=='99.90' and rows[0]['usuarios']==7
+    assert rows[1]['contratado'] and not rows[1]['ativo']
+    assert db.session.query(CatalogoPlanoComercial).count()==3
+    assert db.session.query(CentralVinculo).count()==0
+    assert not enabled()
+
+
+def test_catalog_pagination_and_query_authentication(application):
+    for number in range(1,54):
+        db.session.add(CatalogoPlanoComercial(codigo_plano='premium',nome_exibicao=f'Oferta {number}',
+            periodicidade='mensal',versao_oferta=number,preco='99.90',ativo=True))
+    db.session.commit()
+    client=application.test_client()
+    path='/central/planos?apos=0'
+    first=client.get(path,headers=signed(path.encode())).json
+    assert len(first['planos'])==50 and first['proximo']==50
+    next_path='/central/planos?apos=50'
+    assert client.get(next_path,headers=signed(path.encode())).status_code==401
+    second=client.get(next_path,headers=signed(next_path.encode())).json
+    assert len(second['planos'])==3 and second['proximo'] is None

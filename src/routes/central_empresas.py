@@ -1,7 +1,17 @@
 """Rotas somente de leitura para preparar a virada antes da ativação."""
 from flask import request, abort
 from src.routes.central_integracao import central_bp, authenticate
-from src.services.central_empresas import companies
+from src.services.central_empresas import companies, catalog
+
+
+@central_bp.get('/central/planos')
+def existing_plans():
+    authenticate(request.full_path.rstrip('?').encode(), allow_inactive=True)
+    cursor = request.args.get('apos', default=0, type=int)
+    if cursor is None or not 0 <= cursor <= 2147483647:
+        abort(422)
+    rows, next_cursor = catalog(cursor)
+    return {'produto': 'COMERCIAL', 'planos': rows, 'proximo': next_cursor}
 
 
 @central_bp.get('/central/empresas')

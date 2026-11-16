@@ -2,8 +2,9 @@
 import hashlib
 import json
 from datetime import timedelta
-from src.models import db, Empresa, User, AssinaturaEmpresa
+from src.models import db, Empresa, User, AssinaturaEmpresa, CatalogoPlanoComercial
 from src.models.central_integracao import CentralVinculo
+from sqlalchemy import or_, exists
 from sqlalchemy.orm import joinedload
 
 
@@ -13,6 +14,25 @@ def legacy_event(company_id):
 
 def fingerprint(item):
     return hashlib.sha256(json.dumps(item, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()).hexdigest()
+
+
+def catalog(cursor=0):
+    """Ofertas ativas ou contratadas; sem alterar catálogo nem inventar preços."""
+    referenced = exists().where(AssinaturaEmpresa.catalogo_plano_id == CatalogoPlanoComercial.id)
+    offers = list(db.session.scalars(db.select(CatalogoPlanoComercial).where(
+        CatalogoPlanoComercial.id > cursor, or_(CatalogoPlanoComercial.ativo.is_(True), referenced))
+        .order_by(CatalogoPlanoComercial.id).limit(51)))
+    ids = [offer.id for offer in offers[:50]]
+    used = set(db.session.scalars(db.select(AssinaturaEmpresa.catalogo_plano_id).where(
+        AssinaturaEmpresa.catalogo_plano_id.in_(ids)))) if ids else set()
+    return [{
+        'id': offer.id, 'categoria': offer.codigo_plano, 'nome': offer.nome_exibicao,
+        'periodicidade': offer.periodicidade, 'versao': offer.versao_oferta,
+        'preco': str(offer.preco), 'moeda': offer.moeda, 'usuarios': offer.limite_usuarios,
+        'ativo': bool(offer.ativo), 'contratado': offer.id in used,
+        'vigencia_inicio': offer.vigencia_inicio.isoformat() if offer.vigencia_inicio else None,
+        'vigencia_fim': offer.vigencia_fim.isoformat() if offer.vigencia_fim else None,
+    } for offer in offers[:50]], offers[49].id if len(offers) > 50 else None
 
 
 def legacy_terms(company, subscription):

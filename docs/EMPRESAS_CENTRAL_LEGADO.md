@@ -6,6 +6,11 @@ O procedimento e descrito em:
 - Banco do Comercial permanece MySQL da Hostinger, sem conexao direta pelo Central.
 - Novas rotas GET `/central/empresas` e `/central/empresas/<id>` exigem HMAC valido
   mesmo com controle desativado. A assinatura inclui a query string da listagem.
+- GET `/central/planos?apos=N` exporta somente ofertas ativas ou usadas em contratos,
+  em paginas de 50, preservando preco, periodicidade, moeda e limite. Exige o mesmo
+  HMAC, funciona antes da ativacao e nao modifica o catalogo ou as assinaturas locais.
+- No Central, importar primeiro os planos pela previa do catalogo e depois confirmar
+  as assinaturas por empresa; nao e necessario recriar manualmente as ofertas validas.
 - Callback legado permite preparar vinculos antes da ativacao, conferindo documento,
   evento, hash da origem, plano, situacao, bonificacao e validade do estado recebido.
 - A preparacao nao muda assinatura legada, plano/limites locais, cobrancas ou acesso.
