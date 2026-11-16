@@ -87,13 +87,15 @@ def validate(data, customer):
     return until.astimezone(timezone.utc).replace(tzinfo=None)
 
 
-def store(link, data, ttl=900):
+def store(link, data, ttl=900, apply_company=True):
     until = validate(data, link.cliente_id)
     if (data['assinatura_id'], data['versao']) < (link.assinatura_id, link.versao):
         return False
     link.payload = data
     link.assinatura_id, link.versao = data['assinatura_id'], data['versao']
     link.valido_ate = min(until, datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(seconds=ttl))
+    if not apply_company:
+        return True
     # Plano oficial é espelhado; não sincroniza módulos nem permissões internas.
     company = db.session.get(Empresa, link.empresa_id)
     plan = str(data.get('plano', '')).lower().removesuffix('_anual')

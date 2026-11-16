@@ -14,9 +14,9 @@ from src.services.central_assinaturas import cipher, config, store, validate
 central_bp = Blueprint('central_integracao', __name__)
 
 
-def authenticate(raw):
+def authenticate(raw, allow_inactive=False):
     cfg = config()
-    if not cfg or not cfg.ativo:
+    if not cfg or (not cfg.ativo and not allow_inactive) or not cfg.hmac_secret:
         abort(503)
     stamp = request.headers.get('X-LiveSun-Timestamp','')
     try:
@@ -153,4 +153,5 @@ def register(app, environment):
     from src.services.central_assinaturas import configure_environment
     configure_environment(app,environment)
     from src.routes import central_autocadastro  # registra rotas antes do blueprint
+    from src.routes import central_empresas
     app.register_blueprint(central_bp)

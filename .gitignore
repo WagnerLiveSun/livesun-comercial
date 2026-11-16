@@ -103,6 +103,7 @@ tests/
 !/tests/test_central_assinatura_separation.py
 !/tests/test_central_autocadastro.py
 !/tests/test_central_env.py
+!/tests/test_central_empresas.py
 !/tests/test_central_theme.py
 !/tests/test_commercial_access_page.py
 !/tests/test_bind_csrf.py
