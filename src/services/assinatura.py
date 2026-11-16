@@ -228,6 +228,9 @@ class ServicoAssinatura:
         assinatura: AssinaturaEmpresa,
         billing_type_override: str | None = None,
     ) -> None:
+        from src.services.central_assinaturas import enabled
+        if enabled():
+            raise ValueError('Assinaturas LiveSun são provisionadas exclusivamente pelo Central.')
         if not assinatura or assinatura.gateway != 'asaas':
             return
         if not ServicoAssinatura._is_asaas_enabled():
@@ -299,6 +302,9 @@ class ServicoAssinatura:
 
     @staticmethod
     def sincronizar_cobranca_pendente_asaas(assinatura: AssinaturaEmpresa) -> dict[str, Any] | None:
+        from src.services.central_assinaturas import enabled
+        if enabled():
+            raise ValueError('Cobrança da assinatura transferida para o Central.')
         if not assinatura or assinatura.gateway != 'asaas':
             return None
         if not assinatura.gateway_subscription_id:

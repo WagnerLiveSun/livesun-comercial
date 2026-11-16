@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+{% block title %}Atendimento e acesso · LiveSun Comercial{% endblock %}
+{% block extra_css %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static',filename='css/commercial-access.css') }}">{% endblock %}
+{% block restricted_content %}
+<main class="commercial-access" aria-labelledby="access-title">
+    <section class="ls-card commercial-access-card">
+        <img class="commercial-access-logo" src="{{ url_for('static',filename='images/logo.png') }}" alt="LiveSun Tecnologia">
+        <p class="commercial-access-label">LIVESUN COMERCIAL · {{ 'VERIFICAÇÃO DE ACESSO' if temporary else 'ATENDIMENTO AO CLIENTE' }}</p>
+        <h1 id="access-title">{{ 'Estamos verificando seu acesso' if temporary else 'Vamos ajudar você a retomar o acesso' }}</h1>
+        <p class="commercial-access-description">{{ message }}</p>
+        <section class="commercial-access-support" aria-labelledby="support-title">
+            <h2 id="support-title">Fale com a LiveSun</h2>
+            <p>Informe o nome da sua empresa e o CPF/CNPJ para agilizar o atendimento. Não envie sua senha.</p>
+            <a class="btn ls-btn-primary" href="https://app.pipefy.com/public/form/ETeM9Gbz" target="_blank" rel="noopener noreferrer">Entrar em contato com o suporte<span class="visually-hidden"> (abre em nova aba)</span></a>
+            <a class="commercial-access-contact" href="mailto:suporte@livesun.com.br"><span>E-mail de suporte</span><strong>suporte@livesun.com.br</strong></a>
+            <a class="commercial-access-contact" href="tel:+5571999990204"><span>Telefone</span><strong>71 99999-0204</strong></a>
+        </section>
+        <p class="commercial-access-description">Esta restrição não exclui os dados da sua empresa.</p>
+        <div class="commercial-access-actions">
+            <a class="btn ls-btn-primary" href="{{ url_for('dashboard.index') }}">Verificar acesso novamente</a>
+            {% if current_user.is_authenticated %}<a class="btn ls-btn-secondary" href="{{ url_for('auth.logout') }}">Sair da conta</a>
+            {% else %}<a class="btn ls-btn-secondary" href="{{ url_for('auth.login') }}">Voltar ao login</a>{% endif %}
+        </div>
+    </section>
+</main>
+{% endblock %}

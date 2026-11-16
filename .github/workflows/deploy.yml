@@ -65,9 +65,10 @@ jobs:
         fail_ci_if_error: false
 
   deploy-railway:
+    # Destino legado desativado: producao atual hospedada no Render.
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: ${{ false }}
     
     steps:
     - uses: actions/checkout@v3
@@ -81,9 +82,10 @@ jobs:
       continue-on-error: true
 
   deploy-hostinger:
+    # Hostinger hospeda o MySQL; nao publicar codigo por FTP nesta atualizacao.
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: ${{ false }}
     
     steps:
     - uses: actions/checkout@v3

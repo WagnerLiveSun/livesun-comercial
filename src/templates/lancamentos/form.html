@@ -19,7 +19,7 @@
     <h2 class="fw-bold ls-page-title">
         {% if action == 'editar' %}Editar Lançamento{% else %}Novo Lançamento{% endif %}
     </h2>
-    <a href="{{ url_for('lancamentos.index') }}" class="btn btn-outline-secondary">
+    <a href="{{ return_url }}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-left"></i> Voltar
     </a>
 </div>
@@ -27,6 +27,8 @@
 <div class="ls-card p-4">
     <form method="POST" id="form-lancamento">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ return_url }}">
+        <p class="text-muted">Para registrar a baixa, informe data e valor pago/recebido. Para reabrir, limpe a data e o valor da baixa e salve.</p>
         <!-- Empresa (informativo) -->
         <div class="row mb-3">
             <div class="col-md-3">
@@ -55,7 +57,7 @@
             <div class="col-md-4 mb-3">
                 <label class="form-label">Data de Pagamento</label>
                 <input type="date" name="data_pagamento" class="form-control"
-                    value="{{ lancamento.data_pagamento if lancamento else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    value="{{ (lancamento.data_pagamento or '') if lancamento else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
             </div>
         </div>
 
@@ -78,8 +80,9 @@
                 <label class="form-label">Tipo da Movimentação *</label>
                 <select name="tipo_movimentacao" id="tipo_movimentacao" class="form-control" required style="background-color: rgba(30, 41, 59, 0.8); color: #e5e7eb; border-color: rgba(148, 163, 184, 0.25);">
                     <option value="">Selecione...</option>
-                    <option value="R" {% if lancamento and lancamento.fluxo_conta and lancamento.fluxo_conta.tipo == 'R' %}selected{% endif %}>Recebimento</option>
-                    <option value="P" {% if lancamento and lancamento.fluxo_conta and lancamento.fluxo_conta.tipo == 'P' %}selected{% endif %}>Pagamento</option>
+                    {% set tipo_atual = request.form.get('tipo_movimentacao', '') if request.method == 'POST' else (lancamento.fluxo_conta.tipo if lancamento and lancamento.fluxo_conta else '') %}
+                    <option value="R" {% if tipo_atual == 'R' %}selected{% endif %}>Recebimento</option>
+                    <option value="P" {% if tipo_atual == 'P' %}selected{% endif %}>Pagamento</option>
                 </select>
                 <small class="text-muted">No plano Básico, a conta de fluxo é definida automaticamente.</small>
             </div>
@@ -125,8 +128,8 @@
             </div>
 
             <div class="col-md-3 mb-3">
-                <label class="form-label">Valor Pago</label>
-                <input type="number" name="valor_pago" class="form-control lancamento-valor" step="0.01"
+                <label class="form-label">Valor Pago/Recebido</label>
+                <input type="number" name="valor_pago" class="form-control lancamento-valor" step="0.01" min="0.01"
                     value="{{ lancamento.valor_pago if lancamento and lancamento.valor_pago != 0 else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
             </div>
         </div>
@@ -135,7 +138,7 @@
             <div class="col-md-3 mb-3">
                 <label class="form-label">Valor Imposto</label>
                 <input type="number" name="valor_imposto" class="form-control lancamento-valor" step="0.01"
-                    value="{{ '%.2f' % lancamento.valor_imposto if lancamento and lancamento.valor_imposto is not none else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
+                    value="{{ lancamento.valor_imposto if lancamento and lancamento.valor_imposto is not none else '' }}" style="background-color: rgba(30, 41, 59, 0.8); border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
             </div>
 
             <div class="col-md-3 mb-3">
@@ -156,7 +159,7 @@
             <button type="submit" class="btn ls-btn-primary" id="btn-salvar-lancamento">
                 <i class="fas fa-save"></i> Salvar
             </button>
-            <a href="{{ url_for('lancamentos.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ return_url }}" class="btn btn-outline-secondary">
                 Cancelar
             </a>
         </div>
@@ -164,14 +167,14 @@
 </div>
 
 <style>
-    .form-control:focus, .form-select:focus {
+    #form-lancamento .form-control:focus, #form-lancamento .form-select:focus {
         border-color: #2563eb !important;
         box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25) !important;
     }
-    .form-label, .form-control, .form-select, input, textarea, select {
+    #form-lancamento .form-label, #form-lancamento .form-control {
         font-size: 0.92rem !important;
     }
-    .form-control, .form-select, input, textarea, select {
+    #form-lancamento input.form-control, #form-lancamento select.form-control {
         padding: 0.35rem 0.5rem !important;
         height: 2.1rem !important;
     }
@@ -181,6 +184,7 @@
     .ls-card {
         font-size: 0.95rem !important;
     }
+    #form-lancamento textarea.form-control { min-height: 6rem; height: auto !important; resize: vertical; }
 </style>
 
 <script>
@@ -191,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const tipoEntidadeInput = document.getElementById('tipo_entidade');
     const tipoFluxoDescricaoInput = document.getElementById('tipo_fluxo_descricao');
 
-    function preencherTipoFluxoBanco() {
+    function preencherTipoFluxoBanco(aplicarPadroes = true) {
         if (!entidadeSelect) return;
         const selectedOption = entidadeSelect.options[entidadeSelect.selectedIndex];
         const tipoEntidade = selectedOption.getAttribute('data-tipo') || '';
@@ -199,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
             tipoEntidadeInput.value = tipoEntidade;
         }
         const fluxoContaId = selectedOption.getAttribute('data-fluxo-conta-id');
-        if (fluxoContaId && fluxoContaSelect) {
+        if (aplicarPadroes && fluxoContaId && fluxoContaSelect) {
             for (let i = 0; i < fluxoContaSelect.options.length; i++) {
                 if (fluxoContaSelect.options[i].value === fluxoContaId) {
                     fluxoContaSelect.selectedIndex = i;
@@ -208,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         const contaBancoId = selectedOption.getAttribute('data-conta-banco-id');
-        if (contaBancoId && contaBancoSelect) {
+        if (aplicarPadroes && contaBancoId && contaBancoSelect) {
             for (let i = 0; i < contaBancoSelect.options.length; i++) {
                 if (contaBancoSelect.options[i].value === contaBancoId) {
                     contaBancoSelect.selectedIndex = i;
@@ -232,8 +236,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (entidadeSelect) {
-        entidadeSelect.addEventListener('change', preencherTipoFluxoBanco);
-        preencherTipoFluxoBanco();
+        entidadeSelect.addEventListener('change', function () { preencherTipoFluxoBanco(true); });
+        preencherTipoFluxoBanco(false);
     }
 
     if (fluxoContaSelect) {

@@ -614,7 +614,9 @@
     </style>
 </head>
 <body>
-    {% if current_user.is_authenticated %}
+    {% if access_restricted %}
+        {% block restricted_content %}{% endblock %}
+    {% elif current_user.is_authenticated %}
     <div class="ls-shell">
         <nav class="navbar navbar-expand-lg ls-topbar">
             <div class="container-fluid">

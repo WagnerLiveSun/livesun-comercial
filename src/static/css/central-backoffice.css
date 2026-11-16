@@ -1,0 +1,44 @@
+/* Apenas as telas de integração: reutiliza os tokens originais do Comercial. */
+.central-backoffice { color: var(--ls-text-main); }
+.central-backoffice h1, .central-backoffice h2, .central-backoffice h3 {
+    color: var(--ls-page-title);
+}
+.central-backoffice .ls-card { color: var(--ls-text-main); }
+.central-backoffice .form-label, .central-backoffice label {
+    color: var(--ls-text-main);
+}
+.central-backoffice .ls-theme-control {
+    background-color: var(--ls-input-bg);
+    color: var(--ls-text-main);
+    border-color: var(--ls-input-border);
+}
+.central-backoffice .ls-theme-control::placeholder {
+    color: var(--ls-text-muted);
+    opacity: 1;
+}
+.central-backoffice .ls-theme-control option {
+    background-color: var(--ls-bg-elevated);
+    color: var(--ls-text-main);
+}
+.central-backoffice .ls-theme-control:focus-visible {
+    outline: 2px solid var(--ls-accent);
+    outline-offset: 2px;
+}
+.central-backoffice .ls-btn-secondary {
+    background: var(--ls-primary-soft);
+    color: var(--ls-text-main);
+    border: 1px solid var(--ls-border-subtle);
+}
+.central-backoffice .ls-btn-secondary:hover {
+    background: var(--ls-hover-bg);
+    color: var(--ls-text-strong);
+    border-color: var(--ls-border-strong);
+}
+/* Corrige contraste apenas neste escopo, sem redefinir a paleta global. */
+:root[data-theme="bluemetal"] .central-backoffice .ls-btn-primary,
+:root[data-theme="sunset"] .central-backoffice .ls-btn-primary {
+    color: #fff !important;
+}
+:root[data-theme="moonlight"] .central-backoffice .ls-btn-primary {
+    color: var(--ls-bg-main) !important;
+}

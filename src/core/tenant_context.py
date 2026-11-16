@@ -23,6 +23,7 @@ PUBLIC_ENDPOINT_PREFIXES = (
     'auth.forgot_password',
     'auth.reset_password',
     'comercial_webhook.',
+    'central_integracao.',
 )
 
 PUBLIC_PATH_PREFIXES = (
@@ -32,6 +33,7 @@ PUBLIC_PATH_PREFIXES = (
     '/auth/forgot-password',
     '/auth/reset-password',
     '/webhooks/',
+    '/central/',
 )
 
 

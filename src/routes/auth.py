@@ -549,6 +549,17 @@ def login():
                     return redirect(url_for('auth.login'))
 
                 # Bloqueio por assinatura: usuários de empresas suspensas/canceladas/excluídas
+                from src.services.central_assinaturas import enabled as central_enabled, check as central_check
+                from src.services.central_autocadastro import awaits_approval
+                if user.empresa_id is not None and awaits_approval(user.empresa_id):
+                    from flask import abort
+                    abort(403, description='Cadastro recebido. Aguarde habilitação e vínculo pela LiveSun.')
+                if central_enabled():
+                    if user.empresa_id is not None:
+                        central_check(user.empresa_id)
+                    login_user(user, remember=request.form.get('remember'))
+                    persist_auth_tenant_session(user)
+                    return redirect(url_for('admin_comercial.index' if user.empresa_id is None else 'dashboard.index'))
                 # não podem entrar (controle tem autoridade sobre o acesso da empresa).
                 if user.empresa_id is not None:
                     from src.models import AssinaturaEmpresa
@@ -604,6 +615,9 @@ def login():
                 next_page = request.args.get('next')
                 return redirect(next_page) if next_page else redirect(url_for('dashboard.index'))
             except Exception as e:
+                from werkzeug.exceptions import HTTPException
+                if isinstance(e, HTTPException):
+                    raise
                 import logging, traceback
                 logging.error('Erro ao processar login: %s\n%s - auth.py:579', e, traceback.format_exc())
                 flash('Erro interno ao processar login. Tente novamente ou contate o suporte.', 'danger')
@@ -770,12 +784,20 @@ def register():
             sync_empresa_modules(empresa, 'intermediate')
 
             # Cria assinatura inicial para garantir visibilidade imediata de trial/cobranca no onboarding.
-            ServicoAssinatura.obter_ou_criar_assinatura(
-                empresa.id, trial_dias=7, provisionar_gateway=False,
-            )
+            from src.services.central_assinaturas import enabled as central_enabled
+            from src.services.central_autocadastro import enqueue as enqueue_central, notify_after_commit
+            pending_central = enqueue_central(empresa,user)
+            if not pending_central and not central_enabled():
+                ServicoAssinatura.obter_ou_criar_assinatura(
+                    empresa.id, trial_dias=7, provisionar_gateway=False,
+                )
+            company_created_id = empresa.id
             db.session.commit()
-
-            flash('Empresa e usuário administrador criados com sucesso. Faça login para continuar.', 'success')
+            if pending_central:
+                notify_after_commit(company_created_id)
+                flash('Cadastro realizado. Aguarde a habilitação e o vínculo pela LiveSun.', 'success')
+            else:
+                flash('Empresa e usuário administrador criados com sucesso. Faça login para continuar.', 'success')
             return redirect(url_for('auth.login'))
         except Exception as e:
             import logging, traceback
@@ -988,6 +1010,12 @@ def perfil():
 @auth_bp.route('/assinatura', methods=['GET', 'POST'])
 @login_required
 def assinatura():
+    from src.services.central_assinaturas import enabled as central_enabled
+    if central_enabled():
+        if request.method != 'GET':
+            from flask import abort
+            abort(409, description='Assinatura administrada exclusivamente pelo Central.')
+        return render_template('auth/central_subscription.html')
     if not current_user.is_admin:
         # Usuários comuns precisam de destino terminal, sem loop com Dashboard.
         from src.models import AssinaturaEmpresa

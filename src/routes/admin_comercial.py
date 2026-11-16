@@ -52,6 +52,14 @@ def _safe_all(query, padrao=None, rotulo='consulta'):
 admin_comercial_bp = Blueprint('admin_comercial', __name__, url_prefix='/backoffice/comercial')
 
 
+@admin_comercial_bp.before_request
+def central_owns_subscriptions():
+    from src.services.central_assinaturas import enabled
+    if enabled() and request.method != 'GET' and request.endpoint not in (
+            'admin_comercial.atualizar_modulos', 'admin_comercial.acesso', 'admin_comercial.sair'):
+        abort(409, description='Ações de assinatura e purga foram transferidas para o Central.')
+
+
 def _split_csv(value: str | None) -> list[str]:
     if not value:
         return []
@@ -207,8 +215,12 @@ def index():
     if gate:
         return gate
 
-    # Purga definitiva de empresas excluídas há mais de 60 dias (retenção).
-    _purge_expired_exclusions()
+    from src.services.central_assinaturas import enabled
+    if enabled():
+        from src.services.authorization import MODULE_LABELS
+        return render_template('admin/central_modules.html', companies=Empresa.query.order_by(Empresa.nome).all(), modules=MODULE_LABELS)
+
+    # Purga agora depende de autorização rastreável do Central; GET nunca apaga dados.
 
     assinaturas = AssinaturaEmpresa.query.all()
     assinaturas_map = {a.empresa_id: a for a in assinaturas}

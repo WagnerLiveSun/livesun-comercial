@@ -234,6 +234,8 @@ def create_app(config_name=None):
     # Initialize Flask-WTF CSRF Protection
     from src.extensions import csrf
     csrf.init_app(app)
+    from src.core.form_security import register_form_errors
+    register_form_errors(app)
     
     @app.before_request
     def apply_tenant_rls_from_session():
@@ -295,6 +297,10 @@ def create_app(config_name=None):
     app.register_blueprint(locacao_bp)
     app.register_blueprint(contratos_bp)
     app.register_blueprint(relatorios_p1_bp)
+    from src.routes.central_integracao import register as register_central
+    from src.routes.central_backoffice import central_admin
+    register_central(app, config_name)
+    app.register_blueprint(central_admin)
 
     @app.route('/suporte')
     def suporte():
@@ -359,7 +365,8 @@ def create_app(config_name=None):
         from src.models import AssinaturaEmpresa
 
         assinatura_pagamento_pendente = False
-        if current_user.is_authenticated and getattr(current_user, 'empresa_id', None):
+        from src.services.central_assinaturas import enabled as central_enabled
+        if current_user.is_authenticated and getattr(current_user, 'empresa_id', None) and not central_enabled():
             assinatura_menu = AssinaturaEmpresa.query.filter_by(empresa_id=current_user.empresa_id).first()
             assinatura_pagamento_pendente = ServicoAssinatura.exige_pagamento_apos_trial(assinatura_menu)
 
@@ -408,10 +415,21 @@ def create_app(config_name=None):
         endpoint_name = request.endpoint
         if not endpoint_name:
             return None
+        from src.services.central_assinaturas import enabled as central_enabled, check as central_check
+        managed_by_central = central_enabled()
+        from src.services.central_autocadastro import awaits_approval
+        if (getattr(current_user,'empresa_id',None) is not None and awaits_approval(current_user.empresa_id)
+                and endpoint_name not in ('auth.logout','static','suporte') and not endpoint_name.startswith('central_integracao.')):
+            from src.core.commercial_access import CommercialAccessError
+            raise CommercialAccessError('Seu cadastro foi recebido e aguarda habilitação pela LiveSun. Fale com nossa equipe para acompanhar o atendimento.')
+        if managed_by_central and getattr(current_user, 'empresa_id', None) is not None:
+            if endpoint_name not in ('auth.logout', 'static', 'suporte', 'central_integracao.webhook',
+                    'central_integracao.state', 'central_integracao.purge') and not endpoint_name.startswith(('central_admin.', 'admin_comercial.')):
+                central_check(current_user.empresa_id)
 
         # Trial vencido: autenticar permite regularizar, não executar rotinas.
         # Não isentar todo auth.* (há gravações administrativas nesse blueprint).
-        if getattr(current_user, 'empresa_id', None) is not None:
+        if not managed_by_central and getattr(current_user, 'empresa_id', None) is not None:
             from src.models import AssinaturaEmpresa
             from src.services.assinatura import ServicoAssinatura
             assinatura_trial = AssinaturaEmpresa.query.filter_by(
@@ -429,7 +447,7 @@ def create_app(config_name=None):
         # cancelada ou excluída. Admins LiveSun (sem empresa) e rotas de
         # autenticação/backoffice ficam isentos.
         # ------------------------------------------------------------------
-        if not endpoint_name.startswith(('auth.', 'admin_comercial.', 'static')):
+        if not managed_by_central and not endpoint_name.startswith(('auth.', 'admin_comercial.', 'static')):
             from src.models import AssinaturaEmpresa
             assinatura = None
             try:

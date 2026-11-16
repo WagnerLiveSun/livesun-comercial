@@ -31,7 +31,7 @@ class ModuleAuthorizationTestCase(unittest.TestCase):
 
     def test_every_managed_route_has_explicit_rule(self):
         for path in (SRC / 'routes').glob('*.py'):
-            if path.stem in {'auth', 'admin_comercial', 'comercial'}:
+            if path.stem in {'auth', 'admin_comercial', 'comercial', 'central_integracao', 'central_backoffice', 'central_autocadastro'}:
                 continue
             tree = ast.parse(path.read_text(encoding='utf-8-sig'))
             for node in tree.body:

@@ -44,6 +44,17 @@ chave API AsaaS.txt
 Key_Brevo.txt
 ngrok_recovery_codes.txt
 
+# Credenciais locais e certificados: nunca publicar com o codigo.
+.env*
+/.venv313/
+/Asaas_Boletos/
+/Dados Inter/
+*.pfx
+*.p12
+*.key
+*.pem
+*.crt
+
 # Ignore Flask
 instance/
 .webassets-cache
@@ -89,10 +100,20 @@ tests/
 !/tests/test_blueprint_names.py
 !/tests/test_database_config.py
 !/tests/test_dashboard_acoes_rapidas.py
+!/tests/test_central_assinatura_separation.py
+!/tests/test_central_autocadastro.py
+!/tests/test_central_env.py
+!/tests/test_central_theme.py
+!/tests/test_commercial_access_page.py
+!/tests/test_bind_csrf.py
+!/tests/test_lancamentos_manutencao.py
 !/src/tests/
 /src/tests/*
 !/src/tests/test_module_authorization.py
 !/src/tests/test_contas_banco_access.py
+!/src/tests/test_central_integration.py
+!/src/tests/test_registration_trial.py
+!/src/tests/test_trial_payment_gate.py
 backups/
 
 # Keep important files

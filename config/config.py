@@ -22,6 +22,8 @@ class Config:
     SQLALCHEMY_ECHO = os.environ.get('SQLALCHEMY_ECHO', 'False').lower() == 'true'
     
     # Session
+    SESSION_COOKIE_NAME = 'livesun_comercial_session'
+    REMEMBER_COOKIE_NAME = 'livesun_comercial_remember'
     PERMANENT_SESSION_LIFETIME = timedelta(hours=1)
     SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
     SESSION_COOKIE_HTTPONLY = True

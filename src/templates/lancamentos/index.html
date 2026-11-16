@@ -4,19 +4,28 @@
 
 {% block content %}
 <style>
-    .lancamentos-table {
+    .ls-card .lancamentos-table {
         width: 100% !important;
         max-width: none !important;
-        min-width: 0;
+        min-width: 1240px;
         table-layout: fixed;
     }
 
     .lancamentos-table-wrapper {
-        overflow-x: hidden;
+        overflow: auto;
+        max-height: 65vh;
+        scrollbar-gutter: stable;
+        scrollbar-width: auto;
+        scrollbar-color: #64748b transparent;
     }
 
+    .lancamentos-table-wrapper::-webkit-scrollbar { width: 14px; height: 14px; }
+    .lancamentos-table-wrapper::-webkit-scrollbar-thumb { background: #64748b; border-radius: 6px; }
+    .lancamentos-actions { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; }
+    .lancamentos-table-wrapper:focus-visible { outline: 2px solid #60a5fa; }
+
     .lancamentos-table thead th {
-        white-space: nowrap;
+        white-space: normal;
         background: rgba(148, 163, 184, 0.12);
         color: var(--ls-text-strong);
         border-color: var(--ls-border-subtle);
@@ -38,50 +47,44 @@
 
     .lancamentos-table td.col-doc,
     .lancamentos-table th.col-doc {
-        width: 8%;
-        white-space: nowrap;
+        width: 110px;
+        overflow-wrap: anywhere;
     }
 
     .lancamentos-table td.col-entidade,
     .lancamentos-table th.col-entidade {
-        width: 15%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        width: 250px;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 
     .lancamentos-table td.col-data,
     .lancamentos-table th.col-data {
-        width: 9%;
+        width: 120px;
         white-space: nowrap;
-    }
-
-    .lancamentos-table td.col-fluxo,
-    .lancamentos-table th.col-fluxo {
-        width: 17%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 
     .lancamentos-table td.col-money,
     .lancamentos-table th.col-money {
-        width: 12%;
+        width: 130px;
         text-align: right;
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
     }
 
+    .lancamentos-table .col-paid { width: 170px; }
+    .lancamentos-table thead th.col-money { white-space: normal; }
+
     .lancamentos-table td.col-status,
     .lancamentos-table th.col-status {
-        width: 8%;
+        width: 100px;
         white-space: nowrap;
         text-align: center;
     }
 
     .lancamentos-table td.col-actions,
     .lancamentos-table th.col-actions {
-        width: 10%;
+        width: 240px;
         white-space: nowrap;
         text-align: center;
     }
@@ -153,13 +156,15 @@
             <button type="submit" class="btn ls-btn-primary w-100">
                 <i class="fas fa-search"></i> Filtrar
             </button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('lancamentos.index', select_mode=1 if select_mode else None, conciliacao_id=conciliacao_id, item_id=item_id) }}">Limpar</a>
         </div>
     </form>
 </div>
 
 <!-- Table -->
 <div class="ls-card">
-    <div class="table-responsive lancamentos-table-wrapper">
+    <div class="p-3 text-muted" id="lancamentos-scroll-help">{{ pagination.total }} título(s). Role a tabela para consultar todas as colunas. Use Editar para manutenção e Baixar para registrar pagamento/recebimento.</div>
+    <div class="table-responsive lancamentos-table-wrapper" tabindex="0" role="region" aria-label="Títulos lançados" aria-describedby="lancamentos-scroll-help">
         <table class="table table-hover mb-0 lancamentos-table" style="border-color: rgba(148, 163, 184, 0.25); color: #e5e7eb;">
             <thead>
                 <tr>
@@ -167,9 +172,8 @@
                     <th class="col-entidade">Entidade</th>
                     <th class="col-data">Data Evento</th>
                     <th class="col-data">Data Vencimento</th>
-                    <th class="col-fluxo">Conta Fluxo</th>
                     <th class="col-money">Valor Real</th>
-                    <th class="col-money">Valor Pago/Recebido</th>
+                    <th class="col-money col-paid">Valor Pago/Recebido</th>
                     <th class="col-status">Status</th>
                     <th class="col-actions">Ações</th>
                 </tr>
@@ -181,9 +185,8 @@
                     <td class="col-entidade" title="{{ lancamento.entidade.nome if lancamento.entidade else '-' }}">{{ lancamento.entidade.nome if lancamento.entidade else '-' }}</td>
                     <td class="col-data">{{ lancamento.data_evento.strftime('%d/%m/%Y') if lancamento.data_evento else 'N/A' }}</td>
                     <td class="col-data">{{ lancamento.data_vencimento.strftime('%d/%m/%Y') if lancamento.data_vencimento else 'N/A' }}</td>
-                    <td class="col-fluxo" title="{% if lancamento.fluxo_conta %}{{ lancamento.fluxo_conta.codigo }} - {{ lancamento.fluxo_conta.descricao }} ({{ lancamento.fluxo_conta.get_tipo_descricao() }}){% else %}N/A{% endif %}">{% if lancamento.fluxo_conta %}{{ lancamento.fluxo_conta.codigo }} - {{ lancamento.fluxo_conta.descricao }} ({{ lancamento.fluxo_conta.get_tipo_descricao() }}){% else %}N/A{% endif %}</td>
                     <td class="col-money fw-bold" style="color: #22c55e;">R$ {{ lancamento.valor_real|brl }}</td>
-                    <td class="col-money fw-bold" style="color: #93c5fd;">R$ {{ lancamento.valor_pago|brl }}</td>
+                    <td class="col-money col-paid fw-bold" style="color: #93c5fd;">R$ {{ lancamento.valor_pago|brl }}</td>
                     <td class="col-status">
                         {% if lancamento.status == 'pago' %}
                             <span class="badge bg-success">Pago</span>
@@ -202,9 +205,9 @@
                             </button>
                         </form>
                         {% else %}
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a href="{{ url_for('lancamentos.editar', id=lancamento.id) }}" class="btn btn-outline-primary">
-                                <i class="fas fa-edit"></i>
+                        <div class="lancamentos-actions" role="group" aria-label="Ações do lançamento {{ lancamento.numero_documento }}">
+                            <a href="{{ url_for('lancamentos.editar', id=lancamento.id, next=return_url) }}" class="btn btn-sm btn-outline-primary" title="Editar lançamento">
+                                <i class="fas fa-edit" aria-hidden="true"></i> Editar
                             </a>
                             {% if lancamento.status != 'pago' %}
                             {% if lancamento.conta_banco and ((lancamento.conta_banco.codigo_banco == '461' and lancamento.conta_banco.asaas_config and lancamento.conta_banco.asaas_config.habilitada) or (lancamento.conta_banco.codigo_banco == '077' and lancamento.conta_banco.inter_config and lancamento.conta_banco.inter_config.habilitada)) %}
@@ -217,16 +220,15 @@
                             </form>
                             {% endif %}
                             {% endif %}
-                            <form method="POST" action="{{ url_for('lancamentos.pagar', id=lancamento.id) }}" style="display: inline;">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-outline-success btn-sm" title="Marcar como pago">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#modal-baixa"
+                                data-baixa-url="{{ url_for('lancamentos.pagar', id=lancamento.id) }}" data-documento="{{ lancamento.numero_documento }}" data-valor="{{ lancamento.valor_real }}" title="Registrar baixa">
+                                <i class="fas fa-check" aria-hidden="true"></i> Baixar
+                            </button>
                             {% endif %}
                             <form method="POST" action="{{ url_for('lancamentos.deletar', id=lancamento.id) }}" style="display: inline;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Tem certeza?')">
+                                <input type="hidden" name="next" value="{{ return_url }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir lançamento" aria-label="Excluir lançamento" onclick="return confirm('Excluir este lançamento e seus reflexos no fluxo de caixa?')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -236,7 +238,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-4">
+                    <td colspan="8" class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                         Nenhum lançamento encontrado
                     </td>
@@ -246,6 +248,49 @@
         </table>
     </div>
 </div>
+
+<div class="modal fade" id="modal-baixa" tabindex="-1" aria-labelledby="modal-baixa-title" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content ls-card">
+        <form method="POST" id="form-baixa">
+            <div class="modal-header">
+                <h3 class="modal-title fs-5" id="modal-baixa-title">Registrar baixa manual</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="next" value="{{ return_url }}">
+                <p>Documento: <strong id="baixa-documento"></strong></p>
+                <label for="baixa-data" class="form-label">Data do pagamento/recebimento</label>
+                <input id="baixa-data" name="data_pagamento" type="date" class="form-control mb-3" required>
+                <label for="baixa-valor" class="form-label">Valor pago/recebido</label>
+                <input id="baixa-valor" name="valor_pago" type="number" min="0.01" step="0.01" class="form-control" required>
+                <small class="text-muted">Esta ação quita o título pelo valor informado. Para corrigir ou reabrir, use Editar.</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-success" id="confirmar-baixa">Confirmar baixa</button>
+            </div>
+        </form>
+    </div></div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('modal-baixa');
+    const form = document.getElementById('form-baixa');
+    const submit = document.getElementById('confirmar-baixa');
+    modal.addEventListener('show.bs.modal', function (event) {
+        const trigger = event.relatedTarget;
+        if (!trigger) return;
+        form.action = trigger.dataset.baixaUrl;
+        document.getElementById('baixa-documento').textContent = trigger.dataset.documento;
+        document.getElementById('baixa-valor').value = trigger.dataset.valor;
+        const now = new Date();
+        document.getElementById('baixa-data').value = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+        submit.disabled = false;
+    });
+    form.addEventListener('submit', function () { submit.disabled = true; });
+});
+</script>
 
 <!-- Pagination -->
 {% if pagination.pages > 1 %}

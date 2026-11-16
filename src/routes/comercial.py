@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, abort
 
 from src.extensions import csrf
 from src.services.assinatura import ServicoAssinatura
@@ -12,6 +12,9 @@ comercial_webhook_bp = Blueprint('comercial_webhook', __name__, url_prefix='/web
 @comercial_webhook_bp.route('/asaas', methods=['POST'])
 @csrf.exempt
 def webhook_asaas():
+    from src.services.central_assinaturas import enabled
+    if enabled():
+        abort(410, description='Webhook de assinatura transferido para o Central.')
     payload = request.get_json(silent=True) or {}
     event_id = (
         request.headers.get('Asaas-Event-Id')
