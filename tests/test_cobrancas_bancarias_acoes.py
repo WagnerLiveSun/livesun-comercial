@@ -34,7 +34,7 @@ class CobrancasBancariasAcoesTests(unittest.TestCase):
             conta_banco_id=1, empresa_id=1, valor=Decimal('100.00'),
             data_vencimento=date(2026, 12, 10), status_interno='pendente',
             linha_digitavel='123', codigo_barras='456', qr_code='pix', pdf_url=None,
-            lancamento=SimpleNamespace(entidade=SimpleNamespace(nome='Cliente', email='cliente@example.com')),
+            lancamento=SimpleNamespace(entidade=SimpleNamespace(nome='Cliente', contato_comercial='Maria Silva', email='cliente@example.com')),
         )
         self.empresa = SimpleNamespace(nome='Empresa', nome_fantasia=None, email='empresa@example.com')
 
@@ -123,6 +123,10 @@ class CobrancasBancariasAcoesTests(unittest.TestCase):
         self.assertEqual(payload['to'][0]['email'], 'cliente@example.com')
         self.assertEqual(base64.b64decode(payload['attachment'][0]['content']), PDF)
         self.assertEqual(payload['attachment'][0]['name'], 'bolepix_solicitacao-test.pdf')
+        self.assertIn('Prezado Maria Silva,', payload['htmlContent'])
+        self.assertIn('LiveSun Financeiro<br>financeiro@livesun.com.br', payload['htmlContent'])
+        self.assertIn('Segue em anexo nosso boleto bancário para pagamento.', payload['htmlContent'])
+        self.assertIn('Atenciosamente,<br>LiveSun Financeiro', payload['htmlContent'])
         self.assertEqual(self.flashes()[0][0], 'success')
 
     @patch('src.routes.cobrancas_bancarias.current_user')
@@ -164,7 +168,25 @@ class CobrancasBancariasAcoesTests(unittest.TestCase):
         response = self.client.post('/cobrancas-bancarias/enviar-email-lote', data={'cobranca_ids': ['inter:2']})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(send.call_args.kwargs['attachment']['content'], PDF)
+        self.assertIn('Prezado Maria Silva,', send.call_args.args[3])
+        self.assertIn('LiveSun Financeiro<br>financeiro@livesun.com.br', send.call_args.args[3])
+        self.assertIn('Segue em anexo nosso boleto bancário para pagamento.', send.call_args.args[3])
+        self.assertIn('Atenciosamente,<br>LiveSun Financeiro', send.call_args.args[3])
         self.assertEqual(self.flashes()[0][0], 'success')
+
+    @patch('src.routes.cobrancas_bancarias.current_user')
+    @patch('src.routes.cobrancas_bancarias.scoped_get_or_404')
+    @patch('src.routes.cobrancas_bancarias.baixar_bolepix_pdf', return_value=PDF)
+    @patch('src.routes.cobrancas_bancarias.brevo_service.send_transactional_email', return_value=True)
+    def test_mensagem_personalizada_preservada_e_nome_padrao_escapado(self, send, download, lookup, user):
+        user.empresa = self.empresa
+        lookup.return_value = self.cobranca
+        self.cobranca.lancamento.entidade.contato_comercial = 'Maria <Teste> & Silva'
+        url = '/cobrancas-bancarias/inter/2/enviar-email'
+        self.client.post(url)
+        self.assertIn('Prezado Maria &lt;Teste&gt; &amp; Silva,', send.call_args.args[3])
+        self.client.post(url, data={'mensagem': 'Mensagem personalizada'})
+        self.assertEqual(send.call_args.args[3], 'Mensagem personalizada')
 
     @patch('src.routes.cobrancas_bancarias.current_user')
     @patch('src.routes.cobrancas_bancarias.scoped_query')

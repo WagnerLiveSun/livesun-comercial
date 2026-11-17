@@ -271,7 +271,7 @@
                         <td>
                             <div class="acoes-boleto">
                                 <a class="btn" href="{{ url_for('cobrancas_bancarias.inter_pdf', id=cobranca.id) }}" target="_blank" rel="noopener" title="Abrir e imprimir"><i class="fas fa-print"></i></a>
-                                <form method="POST" action="{{ url_for('cobrancas_bancarias.inter_enviar_email', id=cobranca.id) }}" onsubmit="return prepararEnvio(this);">
+                                <form method="POST" action="{{ url_for('cobrancas_bancarias.inter_enviar_email', id=cobranca.id) }}" data-mensagem-padrao="Prezado {{ (cliente.contato_comercial or '')|trim if cliente else '' }},&#10;&#10;Segue em anexo nosso boleto bancário para pagamento.&#10;&#10;Atenciosamente,&#10;LiveSun Financeiro&#10;financeiro@livesun.com.br" onsubmit="return prepararEnvio(this);">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="destinatario" value="{{ email_cliente }}">
                                     <input type="hidden" name="mensagem">
@@ -325,7 +325,7 @@ function limparFiltros() {
 function prepararEnvio(formulario) {
     const destinatario = window.prompt('Destinatário do boleto:', formulario.querySelector('[name="destinatario"]').value || '');
     if (destinatario === null || !destinatario.trim()) return false;
-    const mensagem = window.prompt('Mensagem do e-mail:', 'Segue o boleto bancário para pagamento.');
+    const mensagem = window.prompt('Mensagem do e-mail:', formulario.dataset.mensagemPadrao || 'Segue o boleto bancário para pagamento.');
     if (mensagem === null) return false;
     formulario.querySelector('[name="destinatario"]').value = destinatario.trim();
     formulario.querySelector('[name="mensagem"]').value = mensagem.trim();

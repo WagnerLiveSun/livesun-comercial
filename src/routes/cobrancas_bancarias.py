@@ -181,10 +181,9 @@ def inter_enviar_email(id):
     nome_empresa = getattr(empresa, 'nome_fantasia', None) or getattr(empresa, 'nome', None) or 'LiveSun Comercial'
     nome_cliente = entidade.nome if entidade else email
     mensagem = (request.form.get('mensagem') or '').strip() or (
-        f'<p>Olá, {escape(nome_cliente)}.</p>'
-        f'<p>Segue o BolePix referente à cobrança no valor de '
-        f'<strong>R$ {cobranca.valor:,.2f}</strong>, com vencimento em '
-        f'<strong>{cobranca.data_vencimento.strftime("%d/%m/%Y")}</strong>.</p>'
+        f'<p>Prezado {escape((getattr(entidade, "contato_comercial", None) or "").strip())},</p>'
+        '<p>Segue em anexo nosso boleto bancário para pagamento.</p>'
+        '<p>Atenciosamente,<br>LiveSun Financeiro<br>financeiro@livesun.com.br</p>'
     )
     try:
         pdf = baixar_bolepix_pdf(cobranca)
@@ -245,12 +244,15 @@ def enviar_email_lote():
             continue
         nome_cliente = entidade.nome if entidade else email
         html_content = mensagem_customizada or ''.join((
-            f'<p>Olá, {escape(nome_cliente)}.</p>',
-            f'<p>Segue o boleto referente à cobrança no valor de '
-            f'<strong>R$ {cobranca.valor:,.2f}</strong>, com vencimento em '
-            f'<strong>{cobranca.data_vencimento.strftime("%d/%m/%Y")}</strong>.</p>',
+            (f'<p>Prezado {escape((getattr(entidade, "contato_comercial", None) or "").strip())},</p>'
+             if provedor == 'inter' else f'<p>Prezado cliente {escape(nome_cliente)},</p>'),
+            '<p>Segue em anexo nosso boleto bancário para pagamento.</p>' if provedor == 'inter' else (
+                f'<p>Segue o boleto referente à cobrança no valor de '
+                f'<strong>R$ {cobranca.valor:,.2f}</strong>, com vencimento em '
+                f'<strong>{cobranca.data_vencimento.strftime("%d/%m/%Y")}</strong>.</p>'
+            ),
             f'<p><a href="{escape(link, quote=True)}">Abrir e imprimir boleto</a></p>' if link else '',
-            f'<p>Atenciosamente,<br>{escape(nome_empresa)}</p>',
+            '<p>Atenciosamente,<br>LiveSun Financeiro<br>financeiro@livesun.com.br</p>' if provedor == 'inter' else f'<p>Atenciosamente,<br>{escape(nome_empresa)}</p>',
         ))
         attachment = None
         if provedor == 'inter':
