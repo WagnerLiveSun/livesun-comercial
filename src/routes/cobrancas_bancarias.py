@@ -238,8 +238,8 @@ def enviar_email_lote():
     cobrancas += [(cobranca, 'inter') for cobranca in scoped_query(InterCobranca).filter(InterCobranca.id.in_(inter_ids)).all()]
     for cobranca, provedor in cobrancas:
         entidade = cobranca.lancamento.entidade if cobranca.lancamento else None
-        email = (entidade.email if entidade else '').strip()
-        link = (cobranca.bank_slip_url or cobranca.invoice_url or '').strip()
+        email = ((entidade.email if entidade else '') or '').strip()
+        link = (cobranca.bank_slip_url or cobranca.invoice_url or '').strip() if provedor == 'asaas' else ''
         if not email or (provedor == 'asaas' and not link):
             falhas += 1
             continue

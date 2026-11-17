@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, flash, jsonify, redirect, request, url_for
 from flask_login import login_required
 
 from src.extensions import csrf
@@ -19,10 +19,21 @@ asaas_boleto_bp = Blueprint('asaas_boleto', __name__, url_prefix='/asaas-boletos
 @login_required
 def gerar(id):
     lancamento = scoped_get_or_404(Lancamento, id)
+    retorno_pagina = (
+        request.form.get('retorno') == 'pagina'
+        or request.accept_mimetypes.best_match(['application/json', 'text/html']) == 'text/html'
+    )
     try:
         cobranca = gerar_boleto(lancamento)
     except AsaasBoletoError as exc:
+        if retorno_pagina:
+            flash(str(exc), 'danger')
+            return redirect(url_for('cobrancas_bancarias.index'))
         return jsonify({'sucesso': False, 'mensagem': str(exc)}), 422
+
+    if retorno_pagina:
+        flash(f'Cobrança gerada com sucesso. Asaas: {cobranca.asaas_payment_id}.', 'success')
+        return redirect(url_for('cobrancas_bancarias.index'))
 
     return jsonify({
         'sucesso': True,

@@ -214,6 +214,7 @@
                             {% if not lancamento.asaas_cobrancas and not lancamento.inter_cobrancas %}
                             <form method="POST" action="{{ url_for('asaas_boleto.gerar', id=lancamento.id) if lancamento.conta_banco.codigo_banco == '461' else url_for('inter_bolepix.gerar', id=lancamento.id) }}" style="display: inline;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="retorno" value="pagina">
                                 <button type="submit" class="btn btn-outline-warning btn-sm" title="Gerar cobrança bancária">
                                     <i class="fas fa-barcode"></i>
                                 </button>

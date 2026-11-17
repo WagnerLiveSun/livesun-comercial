@@ -108,6 +108,8 @@ tests/
 !/tests/test_commercial_access_page.py
 !/tests/test_bind_csrf.py
 !/tests/test_lancamentos_manutencao.py
+!/tests/test_inter_bolepix_pdf.py
+!/tests/test_cobrancas_bancarias_acoes.py
 !/src/tests/
 /src/tests/*
 !/src/tests/test_module_authorization.py

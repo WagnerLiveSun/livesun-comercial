@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import base64
+import binascii
 import json
 import logging
 from typing import Any
@@ -108,16 +110,53 @@ class InterBolePixClient:
         return self._request('GET', f'/cobranca/v3/cobrancas/{codigo_solicitacao}')
 
     def baixar_pdf(self, codigo_solicitacao: str) -> bytes:
-        token = self._access_token or self._request_token()
-        response = requests.get(
-            f'{self.base_url}/cobranca/v3/cobrancas/{codigo_solicitacao}/pdf',
-            headers={'Authorization': f'Bearer {token}'},
-            cert=self._certificate,
-            timeout=self.timeout_seconds,
-        )
+        try:
+            token = self._access_token or self._request_token()
+            headers = {
+                'accept': 'application/json',
+                'Authorization': f'Bearer {token}',
+            }
+            if self.conta_corrente:
+                headers['x-conta-corrente'] = self.conta_corrente
+            url = f'{self.base_url}/cobranca/v3/cobrancas/{codigo_solicitacao}/pdf'
+            response = requests.get(
+                url,
+                headers=headers,
+                cert=self._certificate,
+                timeout=self.timeout_seconds,
+            )
+            if response.status_code == 401:
+                headers['Authorization'] = f'Bearer {self._request_token()}'
+                response = requests.get(
+                    url,
+                    headers=headers,
+                    cert=self._certificate,
+                    timeout=self.timeout_seconds,
+                )
+        except requests.exceptions.RequestException as exc:
+            raise InterApiError(
+                'Não foi possível obter o PDF do Banco Inter. Tente novamente.'
+            ) from exc
         if response.status_code >= 400:
-            raise InterApiError(f'Inter PDF {response.status_code}: {response.text[:500]}')
-        return response.content
+            raise InterApiError(
+                f'Inter PDF {response.status_code}: {_error_message(_response_payload(response))}'
+            )
+        if response.content.startswith(b'%PDF-'):
+            return response.content
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise InterApiError('O Banco Inter não retornou um PDF válido para a cobrança.') from exc
+        encoded_pdf = payload.get('pdf') if isinstance(payload, dict) else None
+        if not isinstance(encoded_pdf, str) or not encoded_pdf.strip():
+            raise InterApiError('O Banco Inter não retornou o PDF da cobrança.')
+        try:
+            pdf = base64.b64decode(''.join(encoded_pdf.split()), validate=True)
+        except (ValueError, binascii.Error) as exc:
+            raise InterApiError('O Banco Inter retornou o PDF com codificação Base64 inválida.') from exc
+        if not pdf.startswith(b'%PDF-'):
+            raise InterApiError('O Banco Inter não retornou um PDF válido para a cobrança.')
+        return pdf
 
     def cancelar_cobranca(self, codigo_solicitacao: str) -> dict[str, Any]:
         return self._request(
