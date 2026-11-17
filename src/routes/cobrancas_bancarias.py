@@ -168,6 +168,33 @@ def inter_pdf(id):
         return redirect(url_for('cobrancas_bancarias.index'))
 
 
+def _mensagem_boleto_html(texto):
+    """Converte o texto editavel em paragrafos HTML, preservando suas quebras."""
+    texto = texto.replace('\r\n', '\n').replace('\r', '\n')
+    paragrafos = ''.join(
+        '<p style="margin:0 0 20px;">'
+        + escape(paragrafo).replace('\n', '<br>')
+        + '</p>'
+        for paragrafo in texto.split('\n\n') if paragrafo.strip()
+    )
+    return (
+        '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;'
+        'line-height:1.6;max-width:640px;padding:24px;">'
+        + paragrafos + '</div>'
+    )
+
+
+def _texto_boleto_inter(entidade):
+    contato = (getattr(entidade, 'contato_comercial', None) or '').strip()
+    nome = contato or (getattr(entidade, 'nome', None) or '').strip()
+    saudacao = f'Prezado {nome},' if nome else 'Prezado(a),'
+    return (
+        f'{saudacao}\n\n'
+        'Segue em anexo nosso boleto bancário para pagamento.\n\n'
+        'Atenciosamente,\nLiveSun Financeiro\nfinanceiro@livesun.com.br'
+    )
+
+
 @cobrancas_bancarias_bp.route('/inter/<int:id>/enviar-email', methods=['POST'])
 @login_required
 def inter_enviar_email(id):
@@ -180,10 +207,8 @@ def inter_enviar_email(id):
     empresa = getattr(current_user, 'empresa', None)
     nome_empresa = getattr(empresa, 'nome_fantasia', None) or getattr(empresa, 'nome', None) or 'LiveSun Comercial'
     nome_cliente = entidade.nome if entidade else email
-    mensagem = (request.form.get('mensagem') or '').strip() or (
-        f'<p>Prezado {escape((getattr(entidade, "contato_comercial", None) or "").strip())},</p>'
-        '<p>Segue em anexo nosso boleto bancário para pagamento.</p>'
-        '<p>Atenciosamente,<br>LiveSun Financeiro<br>financeiro@livesun.com.br</p>'
+    mensagem = _mensagem_boleto_html(
+        (request.form.get('mensagem') or '').strip() or _texto_boleto_inter(entidade)
     )
     try:
         pdf = baixar_bolepix_pdf(cobranca)
@@ -254,6 +279,8 @@ def enviar_email_lote():
             f'<p><a href="{escape(link, quote=True)}">Abrir e imprimir boleto</a></p>' if link else '',
             '<p>Atenciosamente,<br>LiveSun Financeiro<br>financeiro@livesun.com.br</p>' if provedor == 'inter' else f'<p>Atenciosamente,<br>{escape(nome_empresa)}</p>',
         ))
+        if provedor == 'inter':
+            html_content = _mensagem_boleto_html(mensagem_customizada or _texto_boleto_inter(entidade))
         attachment = None
         if provedor == 'inter':
             try:

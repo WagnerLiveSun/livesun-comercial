@@ -159,6 +159,36 @@ class CobrancasBancariasAcoesTests(unittest.TestCase):
         return query
 
     @patch('src.routes.cobrancas_bancarias.current_user')
+    @patch('src.routes.cobrancas_bancarias.scoped_get_or_404')
+    @patch('src.routes.cobrancas_bancarias.baixar_bolepix_pdf', return_value=PDF)
+    @patch('src.routes.cobrancas_bancarias.brevo_service.send_transactional_email', return_value=True)
+    def test_texto_do_formulario_preserva_paragrafos_e_quebras_na_assinatura(self, send, download, lookup, user):
+        user.empresa = self.empresa
+        lookup.return_value = self.cobranca
+        texto = ('Prezado Maria,\r\n\r\nSegue em anexo nosso boleto bancário para pagamento.'
+                 '\r\n\r\nAtenciosamente,\r\nLiveSun Financeiro\r\nfinanceiro@livesun.com.br')
+        self.client.post('/cobrancas-bancarias/inter/2/enviar-email', data={'mensagem': texto})
+        html = send.call_args.args[3]
+        self.assertEqual(html.count('<p '), 3)
+        self.assertIn('Prezado Maria,</p>', html)
+        self.assertIn('Atenciosamente,<br>LiveSun Financeiro<br>financeiro@livesun.com.br</p>', html)
+        self.assertIn('font-family:Arial', html)
+
+    @patch('src.routes.cobrancas_bancarias.current_user')
+    @patch('src.routes.cobrancas_bancarias.scoped_get_or_404')
+    @patch('src.routes.cobrancas_bancarias.baixar_bolepix_pdf', return_value=PDF)
+    @patch('src.routes.cobrancas_bancarias.brevo_service.send_transactional_email', return_value=True)
+    def test_contato_ausente_usa_nome_cliente_e_texto_html_e_escapado(self, send, download, lookup, user):
+        user.empresa = self.empresa
+        lookup.return_value = self.cobranca
+        self.cobranca.lancamento.entidade.contato_comercial = '   '
+        self.client.post('/cobrancas-bancarias/inter/2/enviar-email')
+        self.assertIn('Prezado Cliente,', send.call_args.args[3])
+        self.client.post('/cobrancas-bancarias/inter/2/enviar-email', data={'mensagem': '<script>teste</script>'})
+        self.assertNotIn('<script>', send.call_args.args[3])
+        self.assertIn('&lt;script&gt;', send.call_args.args[3])
+
+    @patch('src.routes.cobrancas_bancarias.current_user')
     @patch('src.routes.cobrancas_bancarias.scoped_query')
     @patch('src.routes.cobrancas_bancarias.baixar_bolepix_pdf', return_value=PDF)
     @patch('src.routes.cobrancas_bancarias.brevo_service.send_transactional_email', return_value=True)
@@ -186,7 +216,7 @@ class CobrancasBancariasAcoesTests(unittest.TestCase):
         self.client.post(url)
         self.assertIn('Prezado Maria &lt;Teste&gt; &amp; Silva,', send.call_args.args[3])
         self.client.post(url, data={'mensagem': 'Mensagem personalizada'})
-        self.assertEqual(send.call_args.args[3], 'Mensagem personalizada')
+        self.assertIn('Mensagem personalizada</p>', send.call_args.args[3])
 
     @patch('src.routes.cobrancas_bancarias.current_user')
     @patch('src.routes.cobrancas_bancarias.scoped_query')
