@@ -19,10 +19,12 @@
 
 ## Publicacao e conferencia
 
-- O workflow Render e manual; exige o repository secret `RENDER_DEPLOY_HOOK_URL`.
-  Nunca inserir o valor diretamente no YAML ou em documentacao.
+- Em 17/11/2026, por solicitacao do responsavel, os arquivos de deploy do Render
+  foram restaurados a versao anterior ao commit `1436aa2`: push na `main`
+  volta a acionar o workflow e `render.yaml` volta a declarar `autoDeploy: true`.
+  Esse fluxo legado nao depende do secret `RENDER_DEPLOY_HOOK_URL`.
 - Os jobs legados Railway/FTP estao desativados para evitar publicacoes paralelas.
-- Render deve publicar o commit explicitamente selecionado e continuar usando MySQL.
+- Render continua usando MySQL; conferir no painel qual commit entrou em producao.
 - Conferir `/auth/login` e a tela `/backoffice/comercial/central/` com usuario
   autorizado ao backoffice. A rota exige autenticacao e autorizacao adicional.
 - Conferir lancamentos: oito colunas, sem Conta Fluxo, sem botoes fixos sobre linhas.

@@ -1,15 +1,14 @@
 name: Deploy to Render
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main  # Altere para 'master' se necessário
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render Deploy Hook
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          test -n "$RENDER_DEPLOY_HOOK_URL" || { echo "Configure RENDER_DEPLOY_HOOK_URL nos secrets do repositorio."; exit 1; }
-          curl --fail --silent --show-error -X POST "${RENDER_DEPLOY_HOOK_URL}&ref=${GITHUB_SHA}" --output /dev/null
+          curl -X GET "https://api.render.com/deploy/srv-d6earcktgctc73durllg?key=PZK1Sbtqg3o"
