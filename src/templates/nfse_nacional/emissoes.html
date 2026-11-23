@@ -4,6 +4,8 @@
 
 {% block content %}
 {% set replicar = replicar if replicar is defined else None %}
+{% set replica_form = replica_form if replica_form is defined else {} %}
+{% set chave_emissao = chave_emissao if chave_emissao is defined else '' %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold ls-page-title mb-1">Emissões</h2>
@@ -82,7 +84,7 @@ input[type="number"]::-webkit-outer-spin-button {
             <div class="alert alert-info mb-2 py-2">
                 <strong>Replicando a NFS-e nº {{ replicar.numero_nfse or replicar.numero_interno }}</strong>
                 (tomador: {{ replicar.tomador.nome if replicar.tomador else '-' }}).
-                Tomador, serviço e configurações tributárias foram preenchidos; informe o <strong>valor</strong> e a <strong>data de emissão</strong> da nova prestação.
+                Os dados foram copiados só para esta tela. A emissão gera uma <strong>nota nova</strong> (número e DPS novos); nada é gravado até você clicar em Emitir. Confira valor e data da nova prestação.
             </div>
             {% endif %}
             <div class="helper-box rounded-3 px-3 py-2">
@@ -109,6 +111,7 @@ input[type="number"]::-webkit-outer-spin-button {
     </div>
     <form method="post" action="{{ url_for('nfse_nacional.emissoes') }}" id="formEmitirNfse">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="chave_emissao" value="{{ chave_emissao }}">
         <div class="row g-3">
             {# Ambiente mostrado no resumo da empresa; removido aqui para evitar redundância #}
             <div class="col-md-4">
@@ -208,25 +211,25 @@ input[type="number"]::-webkit-outer-spin-button {
             </div>
             <div class="col-md-4">
                 <label class="form-label">Alíquota ISS (%)</label>
-                <input type="number" step="0.01" name="aliquota_iss" class="form-control ls-theme-control" value="0.00">
+                <input type="number" step="0.01" name="aliquota_iss" class="form-control ls-theme-control" value="{{ replica_form.aliquota_iss if replica_form.aliquota_iss else '0.00' }}">
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">Valor serviço</label>
-                <input type="number" step="0.01" name="valor_servico" class="form-control ls-theme-control" required value="">
+                <input type="number" step="0.01" name="valor_servico" class="form-control ls-theme-control" required value="{{ replica_form.valor_servico or '' }}">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Deduções</label>
-                <input type="number" step="0.01" name="valor_deducoes" class="form-control ls-theme-control" value="0.00">
+                <input type="number" step="0.01" name="valor_deducoes" class="form-control ls-theme-control" value="{{ replica_form.valor_deducoes if replica_form.valor_deducoes else '0.00' }}">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Data de emissão</label>
-                <input type="date" name="data_emissao" class="form-control ls-theme-control" value="">
+                <input type="date" name="data_emissao" class="form-control ls-theme-control" value="{{ replica_form.data_emissao or '' }}">
             </div>
 
             <div class="col-md-6">
                 <label class="form-label">Data de vencimento</label>
-                <input type="date" name="data_vencimento" class="form-control ls-theme-control">
+                <input type="date" name="data_vencimento" class="form-control ls-theme-control" value="{{ replica_form.data_vencimento or '' }}">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Origem tipo</label>
@@ -291,11 +294,6 @@ input[type="number"]::-webkit-outer-spin-button {
     const codigoServico = document.getElementById('codigoServico');
     const nbsServico = document.getElementById('nbsServico');
 
-    function limparTomador() {
-        tomadorNome.value = '';
-        tomadorDocumento.value = '';
-    }
-
     function preencherServico() {
         const option = servicoSelect.options[servicoSelect.selectedIndex];
         if (!option || !option.value) {
@@ -315,7 +313,6 @@ input[type="number"]::-webkit-outer-spin-button {
     function preencherTomador() {
         const option = tomadorSelect.options[tomadorSelect.selectedIndex];
         if (!option || !option.value) {
-            limparTomador();
             return;
         }
 

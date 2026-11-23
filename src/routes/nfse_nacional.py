@@ -6,6 +6,7 @@ import gzip
 import json
 import logging
 import re
+import uuid
 from datetime import datetime, date
 from decimal import Decimal
 from pathlib import Path
@@ -58,6 +59,76 @@ INFO_COMPLEMENTAR_PADRAO = (
     "Totais aproximados dos Tributos cfe. Lei n° 12.741/2012: "
     "Federais: -; Estaduais: -; Municipais: -;"
 )
+
+
+def _payload_envio_dict(emissao) -> dict:
+    raw = getattr(emissao, "payload_envio", None) or ""
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _valores_formulario_replica(replicar) -> dict:
+    """Só para pré-preencher a tela. Não grava nem reaproveita nDPS/número fiscal."""
+    if replicar is None:
+        return {}
+    payload = _payload_envio_dict(replicar)
+    valor_servico = _decimal(getattr(replicar, "valor_servico", None))
+    valor_iss = _decimal(getattr(replicar, "valor_iss", None))
+    valor_deducoes = _decimal(getattr(replicar, "valor_deducoes", None))
+    aliquota = _decimal(payload.get("aliquota_iss"))
+    if aliquota <= 0 and valor_servico > 0 and valor_iss > 0:
+        aliquota = (valor_iss * Decimal("100") / valor_servico).quantize(Decimal("0.01"))
+    return {
+        "valor_servico": f"{valor_servico:.2f}",
+        "valor_deducoes": f"{valor_deducoes:.2f}",
+        "aliquota_iss": f"{aliquota:.2f}",
+        "data_emissao": str(payload.get("data_emissao") or "")[:10],
+        "data_vencimento": str(payload.get("data_vencimento") or "")[:10],
+    }
+
+
+def _hash_base_nova_emissao(
+    *,
+    empresa_id: int,
+    ambiente: str,
+    tomador,
+    servico,
+    data,
+    valor_servico,
+    valor_deducoes,
+    valor_iss,
+    origem_tipo: str,
+    origem_id,
+    origem_referencia,
+    canal_origem: str,
+) -> dict:
+    """Idempotência de duplo clique/F5, sem bloquear réplica nem nova nota do mesmo cliente."""
+    hash_base = {
+        "empresa_id": empresa_id,
+        "ambiente": ambiente,
+        "tomador_documento": tomador.cnpj_cpf,
+        "servico_codigo": servico.codigo_interno,
+        "servico_local_prestacao": (data.get("servico_local_prestacao") or "emitente").strip().lower(),
+        "tpRetISSQN": (data.get("tpRetISSQN") or "1").strip(),
+        "valor_servico": str(valor_servico),
+        "valor_deducoes": str(valor_deducoes),
+        "valor_iss": str(valor_iss),
+        "origem_tipo": origem_tipo,
+        "origem_id": origem_id,
+        "origem_referencia": origem_referencia,
+        "canal_origem": canal_origem,
+    }
+    chave_emissao = (data.get("chave_emissao") or "").strip()
+    if chave_emissao:
+        hash_base["chave_emissao"] = chave_emissao
+    elif not str(origem_id or "").strip():
+        hash_base["chave_emissao"] = str(uuid.uuid4())
+    return hash_base
 
 
 def _decimal(value, default: Decimal = Decimal("0.00")) -> Decimal:
@@ -1747,7 +1818,7 @@ def emissoes():
             "nbs_opcoes": empresa.fiscal_valores_por_tipo("nbs"),
         }
 
-        # Carregar emissão para réplica se o parâmetro foi informado
+        # Carregar emissão só para pré-preencher a tela; nada é gravado neste GET.
         replicar = None
         if replicar_id:
             try:
@@ -1767,6 +1838,8 @@ def emissoes():
             filtro_busca=filtro_busca,
             fiscal_defaults=fiscal_defaults,
             replicar=replicar,
+            replica_form=_valores_formulario_replica(replicar),
+            chave_emissao=str(uuid.uuid4()),
         )
 
     data = request.get_json(silent=True) if request.is_json else request.form
@@ -1840,23 +1913,22 @@ def emissoes():
         ).strip()
         observacoes = informacoes_complementares
 
-        # Hash de idempotencia: apenas dados fiscais + origem (SEM numero_interno
-        # aleatorio) para que duplo clique / F5 / re-POST deduplique de verdade.
-        hash_base = {
-            "empresa_id": empresa_id,
-            "ambiente": ambiente,
-            "tomador_documento": tomador.cnpj_cpf,
-            "servico_codigo": servico.codigo_interno,
-            "servico_local_prestacao": (data.get("servico_local_prestacao") or "emitente").strip().lower(),
-            "tpRetISSQN": (data.get("tpRetISSQN") or "1").strip(),
-            "valor_servico": str(valor_servico),
-            "valor_deducoes": str(valor_deducoes),
-            "valor_iss": str(valor_iss),
-            "origem_tipo": origem_tipo,
-            "origem_id": origem_id,
-            "origem_referencia": origem_referencia,
-            "canal_origem": canal_origem,
-        }
+        # Duplo clique / F5 reusa chave_emissao do formulário. Réplica e nova
+        # emissão do mesmo tomador/serviço/valor geram chave nova e seguem.
+        hash_base = _hash_base_nova_emissao(
+            empresa_id=empresa_id,
+            ambiente=ambiente,
+            tomador=tomador,
+            servico=servico,
+            data=data,
+            valor_servico=valor_servico,
+            valor_deducoes=valor_deducoes,
+            valor_iss=valor_iss,
+            origem_tipo=origem_tipo,
+            origem_id=origem_id,
+            origem_referencia=origem_referencia,
+            canal_origem=canal_origem,
+        )
         hash_idempotencia = buildidempotencyhash(hash_base)
 
         existente = scoped_query(NfseNacionalEmissao).filter_by(hash_idempotencia=hash_idempotencia).first()

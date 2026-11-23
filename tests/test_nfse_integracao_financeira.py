@@ -138,6 +138,9 @@ def test_rotas_templates_e_formulario():
     formulario = (raiz / "src/templates/nfse_nacional/emissoes.html").read_text(encoding="utf-8")
     assert "::-webkit-inner-spin-button" in formulario
     assert "passive: false" in formulario
+    assert 'name="chave_emissao"' in formulario
+    assert "replica_form.valor_servico" in formulario
+    assert "nota nova" in formulario
     template = (raiz / "src/templates/nfse_nacional/danfs_print.html").read_text(encoding="utf-8")
     assert "emissao.observacoes or" in template
     ast.parse((raiz / "src/routes/nfse_financeiro.py").read_text(encoding="utf-8"))
@@ -301,3 +304,64 @@ def test_substituicao_grava_cancelamento_apenas_no_sucesso():
     assert not any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
                    and n.func.id == "_gravar_cancelamento_local"
                    for bloco in sucesso.orelse for n in ast.walk(bloco))
+
+
+def test_replica_preenche_tela_sem_reusar_numero_fiscal():
+    from src.routes.nfse_nacional import _valores_formulario_replica
+    replicar = SimpleNamespace(
+        valor_servico=Decimal("200.00"),
+        valor_iss=Decimal("10.00"),
+        valor_deducoes=Decimal("0.00"),
+        payload_envio='{"aliquota_iss":"5.00","data_emissao":"2026-10-31","data_vencimento":"2026-11-15"}',
+        numero_nfse="99",
+        xml_dps="<nDPS>99</nDPS>",
+    )
+    valores = _valores_formulario_replica(replicar)
+    assert valores["valor_servico"] == "200.00"
+    assert valores["aliquota_iss"] == "5.00"
+    assert valores["data_emissao"] == "2026-10-31"
+    assert "99" not in valores.values()
+
+
+def test_idempotencia_manual_nao_prende_na_nota_replicada():
+    from src.routes.nfse_nacional import _hash_base_nova_emissao, buildidempotencyhash
+    tomador = SimpleNamespace(cnpj_cpf="12345678901")
+    servico = SimpleNamespace(codigo_interno="SERV001")
+    fiscais = dict(
+        empresa_id=1,
+        ambiente="producao",
+        tomador=tomador,
+        servico=servico,
+        valor_servico=Decimal("200.00"),
+        valor_deducoes=Decimal("0.00"),
+        valor_iss=Decimal("10.00"),
+        origem_tipo="MANUAL",
+        origem_id=None,
+        origem_referencia=None,
+        canal_origem="manual",
+    )
+    hash_producao_antiga = buildidempotencyhash({
+        "empresa_id": 1,
+        "ambiente": "producao",
+        "tomador_documento": "12345678901",
+        "servico_codigo": "SERV001",
+        "servico_local_prestacao": "emitente",
+        "tpRetISSQN": "1",
+        "valor_servico": "200.00",
+        "valor_deducoes": "0.00",
+        "valor_iss": "10.00",
+        "origem_tipo": "MANUAL",
+        "origem_id": None,
+        "origem_referencia": None,
+        "canal_origem": "manual",
+    })
+    hash_replica = buildidempotencyhash(
+        _hash_base_nova_emissao(data={"chave_emissao": "form-novo"}, **fiscais)
+    )
+    hash_mesmo_form = buildidempotencyhash(
+        _hash_base_nova_emissao(data={"chave_emissao": "form-novo"}, **fiscais)
+    )
+    hash_sem_chave_no_post = buildidempotencyhash(_hash_base_nova_emissao(data={}, **fiscais))
+    assert hash_replica != hash_producao_antiga
+    assert hash_sem_chave_no_post != hash_producao_antiga
+    assert hash_replica == hash_mesmo_form
